@@ -8,9 +8,7 @@ import { usePathname } from "next/navigation";
 import toggleStore from "@/store/toggleStore";
 import "react-tooltip/dist/react-tooltip.css";
 import NavSidebar from "@/components/sidebar/NavSidebar";
-if (typeof window !== "undefined") {
-  import("bootstrap");
-}
+ 
 
 const dmSans = DM_Sans({
   subsets: ["latin"],
@@ -22,13 +20,15 @@ export default function RootLayout({ children }) {
   const isListingActive = toggleStore((state) => state.isListingActive);
   const path = usePathname();
 
+ 
   // wow js
   useEffect(() => {
-    const { WOW } = require("wowjs");
-    const wow = new WOW({
-      live: false,
+    import("bootstrap");
+
+    import("wowjs").then(({ WOW }) => {
+      const wow = new WOW({ live: false });
+      wow.init();
     });
-    wow.init();
   }, [path]);
 
   return (
