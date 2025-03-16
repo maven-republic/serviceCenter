@@ -2,7 +2,7 @@
 import { funfactsData2 } from "@/data/fanfact";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
-import Link from "next/link";
+
 export default function About4() {
   const path = usePathname();
 
@@ -211,10 +211,10 @@ export default function About4() {
                       ))}
                     </ul>
                   </div>
-                  <Link href="/service-single" className="ud-btn btn-thm2">
+                  <a href="/service-single" className="ud-btn btn-thm2">
                     See More
                     <i className="fal fa-arrow-right-long" />
-                  </Link>
+                  </a>
                 </div>
               </div>
             </div>

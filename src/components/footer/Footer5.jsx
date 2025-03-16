@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { about, category, support } from "@/data/footer";
-import FooterSelect1 from "./ui/FooterSelect";
+import FooterSelect1 from "./ui/FooterSelect1";
 import FooterHeader3 from "./ui/FooterHeader3";
 
 export default function Footer5() {

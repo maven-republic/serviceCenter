@@ -2,7 +2,7 @@
 import { lan, momney } from "@/data/footer";
 import { useState } from "react";
 
-export default function FooterSelect() {
+export default function FooterSelect1() {
     const [getMoneySelect, setMoneySelect] = useState("Euro");
     const [getLanSelect, setLanSelect] = useState("English");
 

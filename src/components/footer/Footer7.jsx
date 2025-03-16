@@ -2,7 +2,7 @@
 import { about, category, support } from "@/data/footer";
 import Link from "next/link";
 import Image from "next/image";
-import FooterSelect1 from "./ui/FooterSelect";
+import FooterSelect1 from "./ui/FooterSelect1";
 import FooterSocial3 from "./ui/FooterSocial3";
 
 export default function Footer7() {
