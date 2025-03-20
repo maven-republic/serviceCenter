@@ -1,4 +1,5 @@
 "use client";
+import { logout } from "@/app/(auth)/logout/actions";
 import { dasboardNavigation } from "@/data/dashboard";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -44,15 +45,32 @@ export default function DashboardSidebar() {
           <p className="fz15 fw400 ff-heading pl30 mt30">Account</p>
           {dasboardNavigation.slice(13, 15).map((item,i) => (
             <div key={ i } className="sidebar_list_item mb-1">
-              <Link
-                href={item.path}
-                className={`items-center ${
-                  path === item.path ? "-is-active" : ""
-                }`}
-              >
-                <i className={`${item.icon} mr15`} />
-                {item.name}
-              </Link>
+              {
+                item.name === "Logout" ? 
+                <form className="sidebar_list_item mb-1">
+                  <button 
+                    className={`items-center ${
+                      path === item.path ? "-is-active" : ""
+                    }`}
+                    formAction={logout}
+                  >
+                    <i className={`${item.icon} mr15`} />
+                    {item.name}
+                  </button>
+                </form>
+                :
+                <Link
+                  href={item.path}
+                  className={`items-center ${
+                    path === item.path ? "-is-active" : ""
+                  }`}
+                  formAction={logout}
+                >
+                  <i className={`${item.icon} mr15`} />
+                  {item.name}
+                </Link>
+              }
+              
             </div>
           ))}
         </div>
