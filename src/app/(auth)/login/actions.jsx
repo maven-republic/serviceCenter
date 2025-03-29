@@ -2,12 +2,14 @@
 
 //import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
-
+import { useLoaderStore } from '@/store/loaderStore'
 import { createClient } from '../../../../utils/supabase/server'
 
 export async function login(formData) {
   const supabase = await createClient()
+  const { startLoading, stopLoading } = useLoaderStore.getState()
 
+  startLoading();
   //Extract email and password from form data
   const userEmail = formData.get('email')
   const userPassword = formData.get('password')
@@ -31,17 +33,14 @@ export async function login(formData) {
 
  //Handle Error
   if (error) {
+    console.log(error.message);
     //Displaying Superbass error message
     redirect('/login?error=' + encodeURIComponent(error.message))
   }
 
   //revalidate path and redirect to homepage
-  // revalidatePath('/')
-  // return redirect('/')
+  stopLoading();
   redirect('/dashboard')
-
-  // return {success: true}
-
 }
 
 

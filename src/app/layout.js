@@ -8,6 +8,7 @@ import { usePathname } from "next/navigation";
 import toggleStore from "@/store/toggleStore";
 import "react-tooltip/dist/react-tooltip.css";
 import NavSidebar from "@/components/sidebar/NavSidebar";
+import Loader from '@/components/loader/Loader'
 if (typeof window !== "undefined") {
   import("bootstrap");
 }
@@ -33,7 +34,9 @@ export default function RootLayout({ children }) {
 
   return (
     <html lang="en">
+      
       <body className={`${dmSans.className}`}>
+        <Loader />
         <SearchModal1 />
         {children}
 

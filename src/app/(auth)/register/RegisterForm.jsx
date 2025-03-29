@@ -5,7 +5,7 @@ import Link from "next/link"
 
 export default function RegisterForm({ errorMessage }) {
   return (
-    <form method="post" action={signup}>
+    <form method="POST" action={signup}>
       <div className="container">
         <div className="row">
           <div className="col-lg-6 m-auto wow fadeInUp" data-wow-delay="300ms">
@@ -28,28 +28,28 @@ export default function RegisterForm({ errorMessage }) {
               </div>
               <div className="mb25">
                 <label className="form-label fw500 dark-color">
-                  Display Name
+                  First Name
                 </label>
                 <input
                   type="text"
-                  name="displayName"
+                  name="firstName"
                   className="form-control"
-                  placeholder="ali"
+                  placeholder="John"
                   required
                 />
               </div>
               <div className="mb25">
                 <label className="form-label fw500 dark-color">
-                  Username
+                  Last Name
                 </label>
                 <input
                   type="text"
-                  name="username"
+                  name="lastName"
                   className="form-control"
-                  placeholder="alitf"
+                  placeholder="Doe"
                   required
                 />
-              </div>
+              </div> 
               <div className="mb25">
                 <label className="form-label fw500 dark-color">
                   Email
@@ -59,9 +59,43 @@ export default function RegisterForm({ errorMessage }) {
                   name="email"
                   type="email"
                   className="form-control"
-                  placeholder="alitfn58@gmail.com"
+                  placeholder="johndoe@email.com"
                   required
                 />
+              </div>
+              <div className="mb25">
+                <label className="form-label fw500 dark-color">
+                  Phone Number
+                </label> 
+                <input
+                  id="phone"
+                  type="tel" 
+                  name="phone"
+                  className="form-control"
+                  placeholder="123-456-7890"
+                  pattern="[0-9]{3}[0-9]{3}[0-9]{4}"
+                  required 
+                />
+              </div>
+              <div className='mb25'>
+                  <label className='form-label fw500 dark-color'>
+                    Who would you like to signup as?
+                  </label>
+                  <select name='role' className='form-control' required>
+                      <option value=''>Select Role</option>   
+                      <option value='customer'>Customer</option>
+                      <option value='service_provider'>Service Provider</option>
+                  </select>
+              </div>
+              <div className='mb25'>
+                  <label className='form-label fw500 dark-color'>
+                    Gender
+                  </label>
+                  <select name='gender' className='form-control' required>
+                      <option value=''>Select gender</option>   
+                      <option value='male'>Male</option>
+                      <option value='female'>Female</option>
+                  </select>
               </div>
               <div className="mb15">
                 <label className="form-label fw500 dark-color">
@@ -88,17 +122,7 @@ export default function RegisterForm({ errorMessage }) {
                     placeholder='*******'
                     required
                     />
-                </div>
-                <div className='mb25'>
-                    <label className='form-label fw500 dark-color'>
-                        Role
-                        </label>
-                        <select name='role' className='form-control' required>
-                            <option value=''>Select Role</option>   
-                            <option value='customer'>Customer</option>
-                            <option value='service_provider'>Service Provider</option>
-                            </select>
-                        </div>
+              </div> 
               <div className="d-grid mb20">
                 <button
                   className="ud-btn btn-thm default-box-shadow2"
