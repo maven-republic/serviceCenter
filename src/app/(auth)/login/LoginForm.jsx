@@ -3,8 +3,21 @@
 'use client'
 
 import { login } from './actions'
+import { useEffect } from 'react'
+import { useUserStore } from '@/store/userStore';
+// import { createClient } from '../../../../utils/supabase/server'
 
 export default function LoginForm({errorMessage}) {
+  // const supabase = await createClient()
+  // const { data, error } = await supabase.auth.getUser()
+  // const { user, fetchUser } = useUserStore()
+
+  // useEffect(()=>{
+  //   return () => {
+  //     fetchUser(data?.user.id);
+  //   }
+  // })
+  
   return (
     <form action={login} method="post">
       <div className="container">

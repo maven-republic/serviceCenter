@@ -3,10 +3,27 @@
 import toggleStore from "@/store/toggleStore";
 import DashboardHeader from "./header/DashboardHeader";
 import DashboardSidebar from "./sidebar/DashboardSidebar";
-import DashboardFooter from "./footer/DashboardFooter";
+import DashboardFooter from "./footer/DashboardFooter"; 
+import { useUserStore } from "@/store/userStore";
+import { getSession } from '../../../utils/supabase/client'; // Helper function to get user session
+import { useEffect } from "react"; 
 
 export default function DashboardLayout({ children }) {
-  const isActive = toggleStore((state) => state.isDasboardSidebarActive);
+  const isActive = toggleStore((state) => state.isDasboardSidebarActive); 
+  const { user, fetchUser } = useUserStore()
+
+  useEffect(() => {    
+    async function setUser() {
+      const session = await getSession()
+      if (session) {
+        console.log("session.user: ", session.user);
+        fetchUser(session.user) 
+      }
+    }  
+
+    user === null && 
+    setUser()  
+  }, [])
 
   return (
     <>

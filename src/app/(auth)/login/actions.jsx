@@ -3,10 +3,13 @@
 //import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { useLoaderStore } from '@/store/loaderStore'
+// import { useUserStore } from '@/store/userStore'
 import { createClient } from '../../../../utils/supabase/server'
 
 export async function login(formData) {
   const supabase = await createClient()
+  // const { fetchUser } = useUserStore()
+
   const { startLoading, stopLoading } = useLoaderStore.getState()
 
   startLoading();
@@ -23,11 +26,15 @@ export async function login(formData) {
 
 
   //Sign in user with email and password
-  const { error } = await supabase.auth.signInWithPassword({
+  const { data, error } = await supabase.auth.signInWithPassword({
     email: userEmail,
     password: userPassword,
   })
-
+  // console.log("data: ", data);
+  // useEffect(() => {
+  //   fetchUser(userId)
+  // }, [userId])
+  
   //debug purposes
   console.log('Supabase signIn error:', error)
 

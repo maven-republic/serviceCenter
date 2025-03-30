@@ -5,9 +5,9 @@ import Link from "next/link";
 import Image from "next/image";
 import { useUserStore } from "@/store/userStore";
 
-export default function ProfileDetails() {
+export default function AddressInfo() {
   const { user, fetchUser, updateUser } = useUserStore()
-  console.log("user: ",user);
+
   const [getHourly, setHourly] = useState({
     option: "Select",
     value: null,
@@ -128,26 +128,24 @@ export default function ProfileDetails() {
               <div className="col-sm-6">
                 <div className="mb20">
                   <label className="heading-color ff-heading fw500 mb10">
-                    Name
+                    Username
                   </label>
                   <input
                     type="text"
-                    className="form-control" 
-                    value={user?.full_name}
-                    disabled
+                    className="form-control"
+                    placeholder="i will"
                   />
                 </div>
               </div>
               <div className="col-sm-6">
                 <div className="mb20">
                   <label className="heading-color ff-heading fw500 mb10">
-                    Email Address ({user?.email_confirmed_at.length > 0 && <span style={{color: "green"}}>verified</span>})
+                    Email Address
                   </label>
                   <input
                     type="email"
-                    className="form-control" 
-                    value={user?.email}
-                    disabled
+                    className="form-control"
+                    placeholder="i will"
                   />
                 </div>
               </div>
@@ -158,28 +156,43 @@ export default function ProfileDetails() {
                   </label>
                   <input
                     type="text"
-                    className="form-control" 
-                    value={user?.user_metadata?.phone }
-                    disabled
+                    className="form-control"
+                    placeholder="i will"
                   />
                 </div>
               </div>
               <div className="col-sm-6">
                 <div className="mb20">
                   <label className="heading-color ff-heading fw500 mb10">
-                    Account Type
+                    Tagline
                   </label>
                   <input
                     type="text"
                     className="form-control"
-                    value={user?.role == "service_provider" ? "Service Provider" : "Client"}
-                    disabled
+                    placeholder="i will"
                   />
                 </div>
-              </div> 
+              </div>
               <div className="col-sm-6">
                 <div className="mb20">
-                  {/* <SelectInput
+                  <SelectInput
+                    label="Hourly Rate"
+                    defaultSelect={getHourly}
+                    data={[
+                      { option: "$50", value: "50" },
+                      { option: "$60", value: "60" },
+                      { option: "$70", value: "70" },
+                      { option: "$80", value: "80" },
+                      { option: "$90", value: "90" },
+                      { option: "$100", value: "100" },
+                    ]}
+                    handler={hourlyHandler}
+                  />
+                </div>
+              </div>
+              <div className="col-sm-6">
+                <div className="mb20">
+                  <SelectInput
                     label="Gender"
                     defaultSelect={getGender}
                     data={[
@@ -190,21 +203,11 @@ export default function ProfileDetails() {
                       },
                       { option: "Other", value: "other" },
                     ]}
-                    value={user?.gender}
                     handler={genderHandler}
-                  /> */}
-                  <label className="heading-color ff-heading fw500 mb10">
-                    Gender
-                  </label>
-                  <input
-                    type="text"
-                    className="form-control" 
-                    value={user?.gender}
-                    disabled
                   />
                 </div>
               </div>
-              {/* <div className="col-sm-6">
+              <div className="col-sm-6">
                 <div className="mb20">
                   <SelectInput
                     label="Specialization"
@@ -220,8 +223,8 @@ export default function ProfileDetails() {
                     handler={specializationHandler}
                   />
                 </div>
-              </div> */}
-              {/* <div className="col-sm-6">
+              </div>
+              <div className="col-sm-6">
                 <div className="mb20">
                   <SelectInput
                     label="Type"
@@ -361,19 +364,19 @@ export default function ProfileDetails() {
                     handler={lanLevelHandler}
                   />
                 </div>
-              </div> */}
-              {/* <div className="col-md-12">
+              </div>
+              <div className="col-md-12">
                 <div className="mb10">
                   <label className="heading-color ff-heading fw500 mb10">
                     Introduce Yourself
                   </label>
                   <textarea cols={30} rows={6} placeholder="Description" />
                 </div>
-              </div> */}
+              </div>
               <div className="col-md-12">
                 <div className="text-start">
                   <Link className="ud-btn btn-thm" href="/contact">
-                    Update
+                    Save
                     <i className="fal fa-arrow-right-long" />
                   </Link>
                 </div>

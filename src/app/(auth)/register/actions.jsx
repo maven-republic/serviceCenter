@@ -43,21 +43,7 @@ export async function signup(formData) {
   if (existingUser) {
     redirect('/register?error=' + encodeURIComponent('Email is already registered. Please log in.'));
   }
-
-  const { data: existingUserDetails, error: fetchError } = await supabase
-  .from('user_details')
-  .select('id')
-  .eq('phone', phoneNumber)
-  .single();
-
-  if (fetchError && fetchError.code !== 'PGRST116') {
-    console.error('Error checking phone number:', fetchError);
-  }
-  
-  if (existingUserDetails) {
-    console.error('Phone number already in use:', phoneNumber); 
-    redirect('/register?error=' + encodeURIComponent("This phone number is already registered."));
-  }
+ 
   // Sign up the user
   const { data, error } = await supabase.auth.signUp({
     email: userEmail,
@@ -84,8 +70,7 @@ export async function signup(formData) {
         role: role,
         full_name: firstName+" "+lastName,
         gender: gender,
-        profile_img: "",
-        phone: phoneNumber,
+        profile_img: "", 
         created_at: new Date(),
         updated_at: new Date(),
     }
