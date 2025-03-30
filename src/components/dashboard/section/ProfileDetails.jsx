@@ -172,7 +172,7 @@ export default function ProfileDetails() {
                   <input
                     type="text"
                     className="form-control"
-                    value={user?.role == "service_provider" ? "Service Provider" : "Client"}
+                    value={user?.role == "service_provider" ? "Service Provider" : "Customer"}
                     disabled
                   />
                 </div>
