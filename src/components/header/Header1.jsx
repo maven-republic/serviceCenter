@@ -27,9 +27,9 @@ export default function Header1() {
                                             href="/"
                                         >
                                             <Image
-                                                height={40}
+                                                height={50}
                                                 width={133}
-                                                src="/images/header-logo.svg"
+                                                src="/images/SMP-logo.svg"
                                                 alt="Header Logo"
                                             />
                                         </Link>
@@ -40,7 +40,7 @@ export default function Header1() {
                                             <Image
                                                 height={40}
                                                 width={133}
-                                                src="/images/header-logo2.svg"
+                                                src="/images/SMP-logo.svg"
                                                 alt="Header Logo"
                                             />
                                         </Link>

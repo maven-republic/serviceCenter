@@ -1,0 +1,16 @@
+
+<svg width="300" height="100" viewBox="0 0 300 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <style>
+    .text { font: bold 48px sans-serif; fill: #1A2E45; }
+    .house { fill: #1A2E45; }
+    .pin-outer { fill: #34A853; }
+    .pin-inner { fill: white; }
+  </style>
+  <!-- House icon -->
+  <path class="house" d="M30 60 L30 40 L50 25 L70 40 L70 60 Z"/>
+  <!-- Pin inside house -->
+  <circle class="pin-outer" cx="50" cy="45" r="9"/>
+  <circle class="pin-inner" cx="50" cy="45" r="3"/>
+  <!-- SMP text -->
+  <text x="90" y="65" class="text">SMP</text>
+</svg>

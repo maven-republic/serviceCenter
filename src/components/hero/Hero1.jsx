@@ -10,25 +10,22 @@ import { useRouter } from "next/navigation";
 
 const role = [
   "Select Role",
-  "Graphics & Design",
-  "Digital Marketing",
-  "Writing & Translation",
-  "Video & Animation",
-  "Music & Audio",
-  "Programming & Tech",
+  "Customer",
+  "Service Provider",
 ];
 
-const popular = [
-  "Designer",
-  "Developer",
-  "Web",
-  "IOS",
-  "PHP",
-  "Senior",
-  "Engineer",
-];
+// const popular = [
+//   "Designer",
+//   "Developer",
+//   "Web",
+//   "IOS",
+//   "PHP",
+//   "Senior",
+//   "Engineer",
+// ];
 
-const hero = ["/images/home/home-1.jpg", "/images/home/home-2.jpg"];
+// const hero = ["/images/home/home-1.jpg", "/images/home/home-2.jpg"];
+const hero = ["/images/home/ServiceMarketPlace3.png", "/images/home/ServiceMarketPlace3.png"];
 
 export default function Hero1() {
   const [getSelectedRole, setSelectedRole] = useState(null);
@@ -73,8 +70,8 @@ export default function Hero1() {
                       {hero.map((item, index) => (
                         <SwiperSlide key={index}>
                           <Image
-                            height={4000}
-                            width={4000}
+                            height={1920}
+                            width={1080}
                             src={item}
                             className="ui-hero-slide__img"
                             alt="Hero Banner"
@@ -106,10 +103,6 @@ export default function Hero1() {
                     <br className="d-none d-lg-block" />
                     any job, online.
                   </h3>
-                  <p className="banner-text text-white ff-heading mb25 animate-up-3">
-                    Millions of people use freeio.com to turn their ideas into
-                    reality.
-                  </p>
                   <div className="advance-search-tab bgc-white bgct-sm p10 p0-md bdrs4 banner-btn position-relative zi9 animate-up-4">
                     <div className="row">
                       <div className="col-md-5 col-lg-6 col-xl-6">
@@ -174,7 +167,7 @@ export default function Hero1() {
                       </div>
                     </div>
                   </div>
-                  <div className="d-none d-md-flex mt30 banner-text animate-up-5">
+                  {/* <div className="d-none d-md-flex mt30 banner-text animate-up-5">
                     <p className="hero-text fz15 me-2 text-white mb-0">
                       Popular Searches
                     </p>
@@ -182,7 +175,7 @@ export default function Hero1() {
                           {`${elm}${(i != (popular.length -1)) ? ',':' '}`}
                         </a>)}
                    
-                  </div>
+                  </div> */}
                 </div>
               </div>
             </div>
