@@ -68,7 +68,7 @@ export default function ProfileDetails() {
     <>
     <div className="ps-widget bgc-white bdrs4 p30 mb30 overflow-hidden position-relative">
       <div className="bdrb1 pb15 mb25">
-        <h5 className="list-title">Profile Details</h5>
+        <h5 className="list-title">Account Information</h5>
       </div>
       <div className="col-xl-7">
         <div className="profile-box d-sm-flex align-items-center mb30">
@@ -107,7 +107,7 @@ export default function ProfileDetails() {
             <div className="col-sm-6">
               <div className="mb20">
                 <label className="heading-color ff-heading fw500 mb10">
-                  Email Address {user?.email_confirmed_at && <span style={{color: "green"}}>(verified)</span>}
+                  Email Address {user?.email_confirmed_at && <span style={{color: "green"}}>(Verified)</span>}
                 </label>
                 <input
                   type="email"
@@ -133,7 +133,7 @@ export default function ProfileDetails() {
             <div className="col-sm-6">
               <div className="mb20">
                 <label className="heading-color ff-heading fw500 mb10">
-                  Account Type
+                Membership                
                 </label>
                 <input
                   type="text"
