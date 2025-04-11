@@ -5,7 +5,7 @@ import { createClient } from '../../../../utils/supabase/server'
 import { useLoaderStore } from '@/store/loaderStore'
 export async function signup(formData) {
   const supabase = await createClient();
- const { startLoading, stopLoading } = useLoaderStore.getState()
+  const { startLoading, stopLoading } = useLoaderStore.getState()
 
   const firstName = formData.get('firstName');
   const lastName = formData.get('lastName'); 
@@ -44,15 +44,11 @@ export async function signup(formData) {
     redirect('/register?error=' + encodeURIComponent('Email is already registered. Please log in.'));
   }
  
-  // Sign up the user
+ 
+  // Sign up the user in Supabase Auth
   const { data, error } = await supabase.auth.signUp({
     email: userEmail,
-    password: password,  
-    options: {
-        data: {
-            phone: phoneNumber
-        }
-      }
+    password: password
   });
 
   if (error) {
@@ -62,22 +58,77 @@ export async function signup(formData) {
   // Get the user's ID from the response
   const userId = data?.user?.id;
 
-  const { error: detailsError } = await supabase
-  .from('user_details')
-  .insert([
-    {
-        id: userId, // Ensure the ID matches auth.users.id
-        role: role,
-        full_name: firstName+" "+lastName,
-        gender: gender,
-        profile_img: "", 
-        created_at: new Date(),
-        updated_at: new Date(),
+  
+
+  // Begin transaction to create related records
+  const { error: accountError } = await supabase
+    .from('account')
+    .insert([{
+      account_id: userId, // Use auth user ID as account ID
+      email: userEmail,
+      password_hash: 'MANAGED_BY_SUPABASE', // Password is managed by Supabase Auth
+      first_name: firstName,
+      last_name: lastName,
+      account_status: 'pending',
+      email_verified: false
+    }]);
+
+  if (accountError) {
+    redirect('/register?error=' + encodeURIComponent('Failed to create account.'));
+  }
+
+  // Create account role
+  const { error: roleError } = await supabase
+    .from('account_role')
+    .insert([{
+      account_id: userId,
+      role_type: role, // Will directly be either 'professional' or 'customer'    ,
+      is_primary: true
+    }]);
+
+  if (roleError) {
+    redirect('/register?error=' + encodeURIComponent('Failed to assign role.'));
+  }
+
+  // Create phone number record
+  const { error: phoneError } = await supabase
+    .from('phone')
+    .insert([{
+      account_id: userId,
+      phone_type: 'mobile',
+      phone_number: phoneNumber,
+      is_primary: true
+    }]);
+
+  if (phoneError) {
+    redirect('/register?error=' + encodeURIComponent('Failed to save phone number.'));
+  }
+
+  // Create profile based on role
+  if (role === 'customer') {
+    const { error: customerError } = await supabase
+      .from('individual_customer')
+      .insert([{
+        account_id: userId,
+        gender: gender
+      }]);
+    
+    if (customerError) {
+      redirect('/register?error=' + encodeURIComponent('Failed to create customer profile.'));
     }
-  ]);
-  console.log("detailsError: ", detailsError);
+  } else if (role === 'service_provider') {
+    const { error: professionalError } = await supabase
+      .from('individual_professional')
+      .insert([{
+        account_id: userId,
+        verification_status: 'pending'
+      }]);
+    
+    if (professionalError) {
+      redirect('/register?error=' + encodeURIComponent('Failed to create professional profile.'));
+    }
+  }
 
   stopLoading()
-  // Redirect on successful signup
-  redirect('/login'); // Change to your success page
+  redirect('/login');
 }

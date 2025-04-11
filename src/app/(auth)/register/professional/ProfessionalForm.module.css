@@ -1,0 +1,49 @@
+/* app/(auth)/register/professional/ProfessionalForm.module.css */
+
+.stepIndicator {
+    width: 18%;
+    text-align: center;
+    padding: 8px 0;
+    border-radius: 4px;
+    background-color: #f0f0f0;
+    color: #666;
+    font-size: 14px;
+    position: relative;
+  }
+  
+  .stepIndicator.active {
+    background-color: #3377ff;
+    color: white;
+  }
+  
+  .stepIndicator:not(:last-child):after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    right: -10%;
+    width: 20%;
+    height: 2px;
+    background-color: #ddd;
+    z-index: -1;
+  }
+  
+  .stepIndicator.active:not(:last-child):after {
+    background-color: #3377ff;
+  }
+  
+  /* Card selection styling */
+  .card {
+    transition: all 0.2s ease-in-out;
+    border: 1px solid #dee2e6;
+  }
+  
+  .card:hover {
+    box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+    transform: translateY(-2px);
+  }
+  
+  .cardSelected {
+    border-color: #3377ff !important;
+    border-width: 2px;
+    background-color: rgba(51, 119, 255, 0.05);
+  }

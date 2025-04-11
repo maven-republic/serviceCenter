@@ -45,6 +45,20 @@ export async function login(formData) {
     redirect('/login?error=' + encodeURIComponent(error.message))
   }
 
+  // Add email verification synchronization here
+  const user = data.user
+  if (user.email_confirmed_at) {
+    // Update account table to match authentication status
+    const { error: syncError } = await supabase
+      .from('account')
+      .update({ email_verified: true })
+      .eq('account_id', user.id)
+    
+    if (syncError) {
+      console.error('Failed to sync email verification status:', syncError)
+    }
+  }
+
   //revalidate path and redirect to homepage
   stopLoading();
   redirect('/dashboard')

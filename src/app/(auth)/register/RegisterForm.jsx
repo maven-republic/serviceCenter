@@ -82,10 +82,10 @@ export default function RegisterForm({ errorMessage }) {
                     Who would you like to signup as?
                   </label>
                   <select name='role' className='form-control' required>
-                      <option value=''>Select Role</option>   
-                      <option value='customer'>Customer</option>
-                      <option value='service_provider'>Service Provider</option>
-                  </select>
+    <option value=''>Select Role</option>   
+    <option value='customer'>Customer</option>
+    <option value='professional'>Professional</option>
+</select>
               </div>
               <div className='mb25'>
                   <label className='form-label fw500 dark-color'>

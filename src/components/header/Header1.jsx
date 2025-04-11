@@ -67,7 +67,7 @@ export default function Header1() {
                                         <span className="d-none d-xl-inline-block">
                                             Become a
                                         </span>{" "}
-                                        Seller
+                                        {/* Seller */}
                                     </Link>
                                     <Link
                                         className={`login-info mr15-lg mr30`}

@@ -14,932 +14,793 @@ export default function Mega({ staticMenuClass }) {
               staticMenuClass ? staticMenuClass : ""
             } `}
           />
-          Categories
+           Services
         </a>
         <ul className="menu ps-0">
+          {/* Interior Home Services */}
           <li>
             <a className="dropdown">
-              <span className="menu-icn flaticon-developer" />
-              <span className="menu-title">Development &amp; IT</span>
+              <span className="menu-icn flaticon-interior-design" />
+              <span className="menu-title">Interior Services</span>
             </a>
             <div className="drop-menu d-flex justify-content-between">
               <div className="one-third">
-                <div className="h6 cat-title">Web &amp; App Design</div>
+                <div className="h6 cat-title">Kitchen & Bath</div>
                 <ul className="ps-0 mb40">
                   <li>
-                    <Link href="/">Website Design</Link>
+                    <Link href="/">Kitchen Services</Link>
                   </li>
                   <li>
-                    <Link href="/">App DesignUX Design</Link>
+                    <Link href="/">Bathroom Services</Link>
                   </li>
                   <li>
-                    <Link href="/">Landing Page Design</Link>
+                    <Link href="/">Cabinet Makers</Link>
                   </li>
                   <li>
-                    <Link href="/">Icon Design</Link>
+                    <Link href="/">Cabinet Refacing</Link>
+                  </li>
+                  <li>
+                    <Link href="/">Countertop Installation</Link>
+                  </li>
+                  <li>
+                    <Link href="/">Bathtub Refinishing</Link>
                   </li>
                 </ul>
-                <div className="h6 cat-title">Marketing Design</div>
+                <div className="h6 cat-title">Design & Décor</div>
                 <ul className="ps-0 mb-0">
                   <li>
-                    <Link href="/">Social Media Design</Link>
+                    <Link href="/">Interior Design</Link>
                   </li>
                   <li>
-                    <Link href="/">Email Design</Link>
+                    <Link href="/">Closet Design</Link>
                   </li>
                   <li>
-                    <Link href="/">Web Banners</Link>
+                    <Link href="/">Home Staging</Link>
                   </li>
                   <li>
-                    <Link href="/">Signage Design</Link>
+                    <Link href="/">Furniture Services</Link>
+                  </li>
+                  <li>
+                    <Link href="/">Upholstery</Link>
                   </li>
                 </ul>
               </div>
               <div className="one-third">
-                <div className="h6 cat-title">Art &amp; Illustration</div>
+                <div className="h6 cat-title">Flooring & Surfaces</div>
                 <ul className="ps-0 mb40">
                   <li>
-                    <Link href="/">Illustration</Link>
+                    <Link href="/">Flooring</Link>
                   </li>
                   <li>
-                    <Link href="/">NFT Art</Link>
+                    <Link href="/">Carpet Services</Link>
                   </li>
                   <li>
-                    <Link href="/">Pattern Design</Link>
+                    <Link href="/">Hardwood Floors</Link>
                   </li>
                   <li>
-                    <Link href="/">Portraits &amp; Caricatures</Link>
+                    <Link href="/">Tile Installation</Link>
                   </li>
                   <li>
-                    <Link href="/">Cartoons &amp; Comics</Link>
+                    <Link href="/">Concrete Services</Link>
                   </li>
                   <li>
-                    <Link href="/">Tattoo Design</Link>
-                  </li>
-                  <li>
-                    <Link href="/">Storyboards</Link>
+                    <Link href="/">Epoxy Flooring</Link>
                   </li>
                 </ul>
-                <div className="h6 cat-title">Gaming</div>
+                <div className="h6 cat-title">Walls & Ceilings</div>
                 <ul className="ps-0 mb-0">
                   <li>
-                    <Link href="/">Game Art</Link>
+                    <Link href="/">Painting & Finishing</Link>
                   </li>
                   <li>
-                    <Link href="/">Graphics for Streamers</Link>
+                    <Link href="/">Drywall</Link>
                   </li>
                   <li>
-                    <Link href="/">Twitch Store</Link>
+                    <Link href="/">Wallpaper Hanger</Link>
+                  </li>
+                  <li>
+                    <Link href="/">Wallpaper Removal</Link>
+                  </li>
+                  <li>
+                    <Link href="/">Plastering</Link>
                   </li>
                 </ul>
               </div>
               <div className="one-third">
-                <div className="h6 cat-title">Visual Design</div>
+                <div className="h6 cat-title">Basement & Structure</div>
                 <ul className="ps-0 mb40">
                   <li>
-                    <Link href="/">Image Editing</Link>
+                    <Link href="/">Basement Services</Link>
                   </li>
                   <li>
-                    <Link href="/">Presentation Design</Link>
+                    <Link href="/">Basement Waterproofing</Link>
                   </li>
                   <li>
-                    <Link href="/">Infographic Design</Link>
+                    <Link href="/">Foundation Services</Link>
                   </li>
                   <li>
-                    <Link href="/">Vector Tracing</Link>
+                    <Link href="/">Masonry</Link>
                   </li>
                   <li>
-                    <Link href="/">Resume Design</Link>
+                    <Link href="/">Structural Engineering</Link>
+                  </li>
+                  <li>
+                    <Link href="/">Egress Window</Link>
                   </li>
                 </ul>
-                <div className="h6 cat-title">Print Design</div>
+                <div className="h6 cat-title">Remodeling</div>
                 <ul className="ps-0 mb-0">
                   <li>
-                    <Link href="/">T-Shirts &amp; Merchandise</Link>
+                    <Link href="/">Home Remodeling</Link>
                   </li>
                   <li>
-                    <Link href="/">Flyer Design</Link>
+                    <Link href="/">Contractors</Link>
                   </li>
                   <li>
-                    <Link href="/">Brochure Design</Link>
+                    <Link href="/">Architecture</Link>
                   </li>
                   <li>
-                    <Link href="/">Poster Design</Link>
-                  </li>
-                  <li>
-                    <Link href="/">Catalog Design</Link>
+                    <Link href="/">Mobile Home Remodeling</Link>
                   </li>
                 </ul>
               </div>
             </div>
           </li>
+
+          {/* Exterior Home Services */}
           <li>
             <a className="dropdown">
-              <span className="menu-icn flaticon-web-design-1" />
-              <span className="menu-title">Design &amp; Creative</span>
+              <span className="menu-icn flaticon-house" />
+              <span className="menu-title">Exterior Services</span>
             </a>
             <div className="drop-menu d-flex justify-content-between">
               <div className="one-third">
-                <div className="h6 cat-title">Web &amp; App Design</div>
+                <div className="h6 cat-title">Roofing & Gutters</div>
                 <ul className="ps-0 mb40">
                   <li>
-                    <Link href="/">Website Design</Link>
+                    <Link href="/">Roofing</Link>
                   </li>
                   <li>
-                    <Link href="/">App DesignUX Design</Link>
+                    <Link href="/">Roof Cleaning</Link>
                   </li>
                   <li>
-                    <Link href="/">Landing Page Design</Link>
+                    <Link href="/">Gutter Services</Link>
                   </li>
                   <li>
-                    <Link href="/">Icon Design</Link>
+                    <Link href="/">Gutter Cleaning</Link>
+                  </li>
+                  <li>
+                    <Link href="/">Gutter Repair</Link>
                   </li>
                 </ul>
-                <div className="h6 cat-title">Marketing Design</div>
+                <div className="h6 cat-title">Siding & Exterior</div>
                 <ul className="ps-0 mb-0">
                   <li>
-                    <Link href="/">Social Media Design</Link>
+                    <Link href="/">Exterior Siding</Link>
                   </li>
                   <li>
-                    <Link href="/">Email Design</Link>
+                    <Link href="/">House Painting</Link>
                   </li>
                   <li>
-                    <Link href="/">Web Banners</Link>
+                    <Link href="/">Stucco</Link>
                   </li>
                   <li>
-                    <Link href="/">Signage Design</Link>
+                    <Link href="/">Pressure Washing</Link>
                   </li>
                 </ul>
               </div>
               <div className="one-third">
-                <div className="h6 cat-title">Art &amp; Illustration</div>
+                <div className="h6 cat-title">Windows & Doors</div>
                 <ul className="ps-0 mb40">
                   <li>
-                    <Link href="/">Illustration</Link>
+                    <Link href="/">Window Services</Link>
                   </li>
                   <li>
-                    <Link href="/">NFT Art</Link>
+                    <Link href="/">Window Cleaning</Link>
                   </li>
                   <li>
-                    <Link href="/">Pattern Design</Link>
+                    <Link href="/">Window Replacement</Link>
                   </li>
                   <li>
-                    <Link href="/">Portraits &amp; Caricatures</Link>
+                    <Link href="/">Window Treatment</Link>
                   </li>
                   <li>
-                    <Link href="/">Cartoons &amp; Comics</Link>
+                    <Link href="/">Door Services</Link>
                   </li>
                   <li>
-                    <Link href="/">Tattoo Design</Link>
+                    <Link href="/">Garage Services</Link>
                   </li>
                   <li>
-                    <Link href="/">Storyboards</Link>
+                    <Link href="/">Garage Doors</Link>
                   </li>
                 </ul>
-                <div className="h6 cat-title">Gaming</div>
+                <div className="h6 cat-title">Driveways & Concrete</div>
                 <ul className="ps-0 mb-0">
                   <li>
-                    <Link href="/">Game Art</Link>
+                    <Link href="/">Driveway Services</Link>
                   </li>
                   <li>
-                    <Link href="/">Graphics for Streamers</Link>
+                    <Link href="/">Concrete Driveways</Link>
                   </li>
                   <li>
-                    <Link href="/">Twitch Store</Link>
+                    <Link href="/">Driveway Pavers</Link>
+                  </li>
+                  <li>
+                    <Link href="/">Stamped Concrete</Link>
                   </li>
                 </ul>
               </div>
               <div className="one-third">
-                <div className="h6 cat-title">Visual Design</div>
+                <div className="h6 cat-title">Outdoor Structures</div>
                 <ul className="ps-0 mb40">
                   <li>
-                    <Link href="/">Image Editing</Link>
+                    <Link href="/">Decks & Porches</Link>
                   </li>
                   <li>
-                    <Link href="/">Presentation Design</Link>
+                    <Link href="/">Fencing & Gates</Link>
                   </li>
                   <li>
-                    <Link href="/">Infographic Design</Link>
+                    <Link href="/">Dock Building</Link>
                   </li>
                   <li>
-                    <Link href="/">Vector Tracing</Link>
+                    <Link href="/">Patios</Link>
                   </li>
                   <li>
-                    <Link href="/">Resume Design</Link>
+                    <Link href="/">Awnings</Link>
+                  </li>
+                  <li>
+                    <Link href="/">Outdoor Kitchens</Link>
                   </li>
                 </ul>
-                <div className="h6 cat-title">Print Design</div>
+                <div className="h6 cat-title">Protection</div>
                 <ul className="ps-0 mb-0">
                   <li>
-                    <Link href="/">T-Shirts &amp; Merchandise</Link>
+                    <Link href="/">Hurricane Shutters</Link>
                   </li>
                   <li>
-                    <Link href="/">Flyer Design</Link>
+                    <Link href="/">Window Security Film</Link>
                   </li>
                   <li>
-                    <Link href="/">Brochure Design</Link>
+                    <Link href="/">Window Tinting</Link>
                   </li>
                   <li>
-                    <Link href="/">Poster Design</Link>
-                  </li>
-                  <li>
-                    <Link href="/">Catalog Design</Link>
+                    <Link href="/">Disaster Preparedness</Link>
                   </li>
                 </ul>
               </div>
             </div>
           </li>
+
+          {/* Mechanical & Utilities */}
           <li>
             <a className="dropdown">
-              <span className="menu-icn flaticon-digital-marketing" />
-              <span className="menu-title">Digital Marketing</span>
+              <span className="menu-icn flaticon-electric" />
+              <span className="menu-title">Mechanical & Utilities</span>
             </a>
             <div className="drop-menu d-flex justify-content-between">
               <div className="one-third">
-                <div className="h6 cat-title">Web &amp; App Design</div>
+                <div className="h6 cat-title">Plumbing</div>
                 <ul className="ps-0 mb40">
                   <li>
-                    <Link href="/">Website Design</Link>
+                    <Link href="/">Plumbing</Link>
                   </li>
                   <li>
-                    <Link href="/">App DesignUX Design</Link>
+                    <Link href="/">Water Systems</Link>
                   </li>
                   <li>
-                    <Link href="/">Landing Page Design</Link>
+                    <Link href="/">Water Heaters</Link>
                   </li>
                   <li>
-                    <Link href="/">Icon Design</Link>
-                  </li>
-                </ul>
-                <div className="h6 cat-title">Marketing Design</div>
-                <ul className="ps-0 mb-0">
-                  <li>
-                    <Link href="/">Social Media Design</Link>
+                    <Link href="/">Water Softeners</Link>
                   </li>
                   <li>
-                    <Link href="/">Email Design</Link>
+                    <Link href="/">Drain Cleaning</Link>
                   </li>
                   <li>
-                    <Link href="/">Web Banners</Link>
+                    <Link href="/">Drain Pipe Installation</Link>
                   </li>
                   <li>
-                    <Link href="/">Signage Design</Link>
+                    <Link href="/">Sewer Cleaning</Link>
+                  </li>
+                  <li>
+                    <Link href="/">Septic Tank Service</Link>
+                  </li>
+                  <li>
+                    <Link href="/">Water Damage Restoration</Link>
                   </li>
                 </ul>
               </div>
               <div className="one-third">
-                <div className="h6 cat-title">Art &amp; Illustration</div>
+                <div className="h6 cat-title">Electrical & Lighting</div>
                 <ul className="ps-0 mb40">
                   <li>
-                    <Link href="/">Illustration</Link>
+                    <Link href="/">Electrical Services</Link>
                   </li>
                   <li>
-                    <Link href="/">NFT Art</Link>
+                    <Link href="/">Lighting</Link>
                   </li>
                   <li>
-                    <Link href="/">Pattern Design</Link>
+                    <Link href="/">Ceiling Fan Installation</Link>
                   </li>
                   <li>
-                    <Link href="/">Portraits &amp; Caricatures</Link>
+                    <Link href="/">Home Automation</Link>
                   </li>
                   <li>
-                    <Link href="/">Cartoons &amp; Comics</Link>
-                  </li>
-                  <li>
-                    <Link href="/">Tattoo Design</Link>
-                  </li>
-                  <li>
-                    <Link href="/">Storyboards</Link>
+                    <Link href="/">Generator Service</Link>
                   </li>
                 </ul>
-                <div className="h6 cat-title">Gaming</div>
+                <div className="h6 cat-title">HVAC</div>
                 <ul className="ps-0 mb-0">
                   <li>
-                    <Link href="/">Game Art</Link>
+                    <Link href="/">HVAC</Link>
                   </li>
                   <li>
-                    <Link href="/">Graphics for Streamers</Link>
+                    <Link href="/">Air Quality</Link>
                   </li>
                   <li>
-                    <Link href="/">Twitch Store</Link>
+                    <Link href="/">Air Duct Cleaning</Link>
+                  </li>
+                  <li>
+                    <Link href="/">Heating Oil Company</Link>
+                  </li>
+                  <li>
+                    <Link href="/">Fireplace & Chimney</Link>
                   </li>
                 </ul>
               </div>
               <div className="one-third">
-                <div className="h6 cat-title">Visual Design</div>
+                <div className="h6 cat-title">Home Technology</div>
                 <ul className="ps-0 mb40">
                   <li>
-                    <Link href="/">Image Editing</Link>
+                    <Link href="/">Home Entertainment</Link>
                   </li>
                   <li>
-                    <Link href="/">Presentation Design</Link>
+                    <Link href="/">Home Security</Link>
                   </li>
                   <li>
-                    <Link href="/">Infographic Design</Link>
+                    <Link href="/">Home Theater Installation</Link>
                   </li>
                   <li>
-                    <Link href="/">Vector Tracing</Link>
-                  </li>
-                  <li>
-                    <Link href="/">Resume Design</Link>
+                    <Link href="/">Central Vacuum Cleaning</Link>
                   </li>
                 </ul>
-                <div className="h6 cat-title">Print Design</div>
+                <div className="h6 cat-title">Energy</div>
                 <ul className="ps-0 mb-0">
                   <li>
-                    <Link href="/">T-Shirts &amp; Merchandise</Link>
+                    <Link href="/">Solar Services</Link>
                   </li>
                   <li>
-                    <Link href="/">Flyer Design</Link>
+                    <Link href="/">Home Energy Audit</Link>
                   </li>
                   <li>
-                    <Link href="/">Brochure Design</Link>
-                  </li>
-                  <li>
-                    <Link href="/">Poster Design</Link>
-                  </li>
-                  <li>
-                    <Link href="/">Catalog Design</Link>
+                    <Link href="/">Insulation</Link>
                   </li>
                 </ul>
               </div>
             </div>
           </li>
+
+          {/* Landscape & Outdoor */}
           <li>
             <a className="dropdown">
-              <span className="menu-icn flaticon-translator" />
-              <span className="menu-title">Writing &amp; Translation</span>
+              <span className="menu-icn flaticon-landscape" />
+              <span className="menu-title">Landscape & Outdoor</span>
             </a>
             <div className="drop-menu d-flex justify-content-between">
               <div className="one-third">
-                <div className="h6 cat-title">Web &amp; App Design</div>
+                <div className="h6 cat-title">Lawn & Garden</div>
                 <ul className="ps-0 mb40">
                   <li>
-                    <Link href="/">Website Design</Link>
+                    <Link href="/">Lawn Care</Link>
                   </li>
                   <li>
-                    <Link href="/">App DesignUX Design</Link>
+                    <Link href="/">Landscaping</Link>
                   </li>
                   <li>
-                    <Link href="/">Landing Page Design</Link>
+                    <Link href="/">Lawn & Landscaping</Link>
                   </li>
                   <li>
-                    <Link href="/">Icon Design</Link>
+                    <Link href="/">Lawn Treatment</Link>
+                  </li>
+                  <li>
+                    <Link href="/">Irrigation System</Link>
+                  </li>
+                  <li>
+                    <Link href="/">Mulch Delivering</Link>
+                  </li>
+                  <li>
+                    <Link href="/">Nurseries</Link>
                   </li>
                 </ul>
-                <div className="h6 cat-title">Marketing Design</div>
+                <div className="h6 cat-title">Tree & Plants</div>
                 <ul className="ps-0 mb-0">
                   <li>
-                    <Link href="/">Social Media Design</Link>
+                    <Link href="/">Tree Services</Link>
                   </li>
                   <li>
-                    <Link href="/">Email Design</Link>
-                  </li>
-                  <li>
-                    <Link href="/">Web Banners</Link>
-                  </li>
-                  <li>
-                    <Link href="/">Signage Design</Link>
+                    <Link href="/">Leaf Removal</Link>
                   </li>
                 </ul>
               </div>
               <div className="one-third">
-                <div className="h6 cat-title">Art &amp; Illustration</div>
+                <div className="h6 cat-title">Outdoor Features</div>
                 <ul className="ps-0 mb40">
                   <li>
-                    <Link href="/">Illustration</Link>
+                    <Link href="/">Water Features</Link>
                   </li>
                   <li>
-                    <Link href="/">NFT Art</Link>
+                    <Link href="/">Fountains</Link>
                   </li>
                   <li>
-                    <Link href="/">Pattern Design</Link>
+                    <Link href="/">Pool Installers</Link>
                   </li>
                   <li>
-                    <Link href="/">Portraits &amp; Caricatures</Link>
+                    <Link href="/">Landscape Lighting</Link>
                   </li>
                   <li>
-                    <Link href="/">Cartoons &amp; Comics</Link>
+                    <Link href="/">Playground Equipment Installation</Link>
                   </li>
                   <li>
-                    <Link href="/">Tattoo Design</Link>
-                  </li>
-                  <li>
-                    <Link href="/">Storyboards</Link>
+                    <Link href="/">Dog Fencing</Link>
                   </li>
                 </ul>
-                <div className="h6 cat-title">Gaming</div>
+                <div className="h6 cat-title">Seasonal</div>
                 <ul className="ps-0 mb-0">
                   <li>
-                    <Link href="/">Game Art</Link>
+                    <Link href="/">Snow Removal</Link>
                   </li>
                   <li>
-                    <Link href="/">Graphics for Streamers</Link>
+                    <Link href="/">Roof Snow Removal</Link>
                   </li>
                   <li>
-                    <Link href="/">Twitch Store</Link>
+                    <Link href="/">Holiday Services</Link>
+                  </li>
+                  <li>
+                    <Link href="/">Holiday Decorating</Link>
                   </li>
                 </ul>
               </div>
               <div className="one-third">
-                <div className="h6 cat-title">Visual Design</div>
+                <div className="h6 cat-title">Outdoor Maintenance</div>
                 <ul className="ps-0 mb40">
                   <li>
-                    <Link href="/">Image Editing</Link>
+                    <Link href="/">Lawn Mower Repair</Link>
                   </li>
                   <li>
-                    <Link href="/">Presentation Design</Link>
+                    <Link href="/">Rototilling</Link>
                   </li>
                   <li>
-                    <Link href="/">Infographic Design</Link>
+                    <Link href="/">Stone & Gravel</Link>
                   </li>
                   <li>
-                    <Link href="/">Vector Tracing</Link>
-                  </li>
-                  <li>
-                    <Link href="/">Resume Design</Link>
+                    <Link href="/">Hardscaping</Link>
                   </li>
                 </ul>
-                <div className="h6 cat-title">Print Design</div>
+                <div className="h6 cat-title">Excavation</div>
                 <ul className="ps-0 mb-0">
                   <li>
-                    <Link href="/">T-Shirts &amp; Merchandise</Link>
-                  </li>
-                  <li>
-                    <Link href="/">Flyer Design</Link>
-                  </li>
-                  <li>
-                    <Link href="/">Brochure Design</Link>
-                  </li>
-                  <li>
-                    <Link href="/">Poster Design</Link>
-                  </li>
-                  <li>
-                    <Link href="/">Catalog Design</Link>
+                    <Link href="/">Excavation</Link>
                   </li>
                 </ul>
               </div>
             </div>
           </li>
+
+          {/* Cleaning & Maintenance */}
           <li>
             <a className="dropdown">
-              <span className="menu-icn flaticon-microphone" />
-              <span className="menu-title">Music &amp; Audio</span>
+              <span className="menu-icn flaticon-broom" />
+              <span className="menu-title">Cleaning & Maintenance</span>
             </a>
             <div className="drop-menu d-flex justify-content-between">
               <div className="one-third">
-                <div className="h6 cat-title">Web &amp; App Design</div>
+                <div className="h6 cat-title">General Cleaning</div>
                 <ul className="ps-0 mb40">
                   <li>
-                    <Link href="/">Website Design</Link>
+                    <Link href="/">Home Cleaning</Link>
                   </li>
                   <li>
-                    <Link href="/">App DesignUX Design</Link>
+                    <Link href="/">House Cleaning</Link>
                   </li>
                   <li>
-                    <Link href="/">Landing Page Design</Link>
+                    <Link href="/">Carpet Cleaning</Link>
                   </li>
                   <li>
-                    <Link href="/">Icon Design</Link>
+                    <Link href="/">Cleaning Services</Link>
+                  </li>
+                  <li>
+                    <Link href="/">Floor Buffing</Link>
+                  </li>
+                  <li>
+                    <Link href="/">Floor Cleaning</Link>
                   </li>
                 </ul>
-                <div className="h6 cat-title">Marketing Design</div>
+                <div className="h6 cat-title">Professional Organizers</div>
                 <ul className="ps-0 mb-0">
                   <li>
-                    <Link href="/">Social Media Design</Link>
-                  </li>
-                  <li>
-                    <Link href="/">Email Design</Link>
-                  </li>
-                  <li>
-                    <Link href="/">Web Banners</Link>
-                  </li>
-                  <li>
-                    <Link href="/">Signage Design</Link>
+                    <Link href="/">Professional Organizers</Link>
                   </li>
                 </ul>
               </div>
               <div className="one-third">
-                <div className="h6 cat-title">Art &amp; Illustration</div>
+                <div className="h6 cat-title">Specialty Cleaning</div>
                 <ul className="ps-0 mb40">
                   <li>
-                    <Link href="/">Illustration</Link>
+                    <Link href="/">Specialty Cleaning</Link>
                   </li>
                   <li>
-                    <Link href="/">NFT Art</Link>
+                    <Link href="/">Oriental Rug Cleaning</Link>
                   </li>
                   <li>
-                    <Link href="/">Pattern Design</Link>
+                    <Link href="/">Blind Cleaning</Link>
                   </li>
                   <li>
-                    <Link href="/">Portraits &amp; Caricatures</Link>
+                    <Link href="/">Chimney Sweep</Link>
                   </li>
                   <li>
-                    <Link href="/">Cartoons &amp; Comics</Link>
+                    <Link href="/">Drapery Cleaning</Link>
                   </li>
                   <li>
-                    <Link href="/">Tattoo Design</Link>
-                  </li>
-                  <li>
-                    <Link href="/">Storyboards</Link>
+                    <Link href="/">Upholstery Cleaning</Link>
                   </li>
                 </ul>
-                <div className="h6 cat-title">Gaming</div>
+                <div className="h6 cat-title">Waste Management</div>
                 <ul className="ps-0 mb-0">
                   <li>
-                    <Link href="/">Game Art</Link>
+                    <Link href="/">Waste Management</Link>
                   </li>
                   <li>
-                    <Link href="/">Graphics for Streamers</Link>
+                    <Link href="/">Dumpster Rental</Link>
                   </li>
                   <li>
-                    <Link href="/">Twitch Store</Link>
+                    <Link href="/">Hauling</Link>
+                  </li>
+                  <li>
+                    <Link href="/">Trash Removal</Link>
                   </li>
                 </ul>
               </div>
               <div className="one-third">
-                <div className="h6 cat-title">Visual Design</div>
+                <div className="h6 cat-title">Hazardous Materials</div>
                 <ul className="ps-0 mb40">
                   <li>
-                    <Link href="/">Image Editing</Link>
+                    <Link href="/">Hazardous Materials</Link>
                   </li>
                   <li>
-                    <Link href="/">Presentation Design</Link>
+                    <Link href="/">Mold Removal</Link>
                   </li>
                   <li>
-                    <Link href="/">Infographic Design</Link>
+                    <Link href="/">Asbestos Removal</Link>
                   </li>
                   <li>
-                    <Link href="/">Vector Tracing</Link>
+                    <Link href="/">Lead Paint Removal</Link>
                   </li>
                   <li>
-                    <Link href="/">Resume Design</Link>
+                    <Link href="/">Biohazard Cleanup</Link>
+                  </li>
+                  <li>
+                    <Link href="/">Radon Mitigation</Link>
                   </li>
                 </ul>
-                <div className="h6 cat-title">Print Design</div>
+                <div className="h6 cat-title">Animal Services</div>
                 <ul className="ps-0 mb-0">
                   <li>
-                    <Link href="/">T-Shirts &amp; Merchandise</Link>
+                    <Link href="/">Animal Services</Link>
                   </li>
                   <li>
-                    <Link href="/">Flyer Design</Link>
+                    <Link href="/">Animal Removal</Link>
                   </li>
                   <li>
-                    <Link href="/">Brochure Design</Link>
-                  </li>
-                  <li>
-                    <Link href="/">Poster Design</Link>
-                  </li>
-                  <li>
-                    <Link href="/">Catalog Design</Link>
+                    <Link href="/">Pest Control</Link>
                   </li>
                 </ul>
               </div>
             </div>
           </li>
+
+          {/* Repairs & Specialty */}
           <li>
             <a className="dropdown">
-              <span className="menu-icn flaticon-video-file" />
-              <span className="menu-title">Video &amp; Animation</span>
+              <span className="menu-icn flaticon-tools" />
+              <span className="menu-title">Repairs & Specialty</span>
             </a>
             <div className="drop-menu d-flex justify-content-between">
               <div className="one-third">
-                <div className="h6 cat-title">Web &amp; App Design</div>
+                <div className="h6 cat-title">Appliance & Electronics</div>
                 <ul className="ps-0 mb40">
                   <li>
-                    <Link href="/">Website Design</Link>
+                    <Link href="/">Appliance Repair</Link>
                   </li>
                   <li>
-                    <Link href="/">App DesignUX Design</Link>
+                    <Link href="/">Large Appliances</Link>
                   </li>
                   <li>
-                    <Link href="/">Landing Page Design</Link>
+                    <Link href="/">Small Appliance Repair</Link>
                   </li>
                   <li>
-                    <Link href="/">Icon Design</Link>
-                  </li>
-                </ul>
-                <div className="h6 cat-title">Marketing Design</div>
-                <ul className="ps-0 mb-0">
-                  <li>
-                    <Link href="/">Social Media Design</Link>
+                    <Link href="/">Grill Repair</Link>
                   </li>
                   <li>
-                    <Link href="/">Email Design</Link>
+                    <Link href="/">Electronics Repair</Link>
                   </li>
                   <li>
-                    <Link href="/">Web Banners</Link>
+                    <Link href="/">Computer Repair</Link>
                   </li>
                   <li>
-                    <Link href="/">Signage Design</Link>
+                    <Link href="/">Phone Repair</Link>
+                  </li>
+                  <li>
+                    <Link href="/">Antenna Repair</Link>
+                  </li>
+                  <li>
+                    <Link href="/">Satellite Tv</Link>
                   </li>
                 </ul>
               </div>
               <div className="one-third">
-                <div className="h6 cat-title">Art &amp; Illustration</div>
+                <div className="h6 cat-title">Specialty Crafts</div>
                 <ul className="ps-0 mb40">
                   <li>
-                    <Link href="/">Illustration</Link>
+                    <Link href="/">Glass Services</Link>
                   </li>
                   <li>
-                    <Link href="/">NFT Art</Link>
+                    <Link href="/">Glass Block</Link>
                   </li>
                   <li>
-                    <Link href="/">Pattern Design</Link>
+                    <Link href="/">Glass Repair</Link>
                   </li>
                   <li>
-                    <Link href="/">Portraits &amp; Caricatures</Link>
+                    <Link href="/">Screen Repair</Link>
                   </li>
                   <li>
-                    <Link href="/">Cartoons &amp; Comics</Link>
+                    <Link href="/">Metal Services</Link>
                   </li>
                   <li>
-                    <Link href="/">Tattoo Design</Link>
+                    <Link href="/">Iron Work</Link>
                   </li>
                   <li>
-                    <Link href="/">Storyboards</Link>
-                  </li>
-                </ul>
-                <div className="h6 cat-title">Gaming</div>
-                <ul className="ps-0 mb-0">
-                  <li>
-                    <Link href="/">Game Art</Link>
+                    <Link href="/">Metal Fabrication</Link>
                   </li>
                   <li>
-                    <Link href="/">Graphics for Streamers</Link>
+                    <Link href="/">Welding</Link>
                   </li>
                   <li>
-                    <Link href="/">Twitch Store</Link>
+                    <Link href="/">Woodworking</Link>
                   </li>
                 </ul>
               </div>
               <div className="one-third">
-                <div className="h6 cat-title">Visual Design</div>
+                <div className="h6 cat-title">Home Services</div>
                 <ul className="ps-0 mb40">
                   <li>
-                    <Link href="/">Image Editing</Link>
+                    <Link href="/">Handyman</Link>
                   </li>
                   <li>
-                    <Link href="/">Presentation Design</Link>
+                    <Link href="/">Gas Leak Repair</Link>
                   </li>
                   <li>
-                    <Link href="/">Infographic Design</Link>
+                    <Link href="/">Dryer Vent Cleaning</Link>
                   </li>
                   <li>
-                    <Link href="/">Vector Tracing</Link>
+                    <Link href="/">Childproofing</Link>
                   </li>
                   <li>
-                    <Link href="/">Resume Design</Link>
-                  </li>
-                </ul>
-                <div className="h6 cat-title">Print Design</div>
-                <ul className="ps-0 mb-0">
-                  <li>
-                    <Link href="/">T-Shirts &amp; Merchandise</Link>
+                    <Link href="/">Child Safety</Link>
                   </li>
                   <li>
-                    <Link href="/">Flyer Design</Link>
+                    <Link href="/">Furniture Refinishing</Link>
                   </li>
                   <li>
-                    <Link href="/">Brochure Design</Link>
+                    <Link href="/">Leather Repair</Link>
                   </li>
                   <li>
-                    <Link href="/">Poster Design</Link>
+                    <Link href="/">Mailbox Repair</Link>
                   </li>
                   <li>
-                    <Link href="/">Catalog Design</Link>
+                    <Link href="/">Well & Water Pump Repair</Link>
                   </li>
                 </ul>
               </div>
             </div>
           </li>
+
+          {/* Professional Services */}
           <li>
             <a className="dropdown">
-              <span className="menu-icn flaticon-ruler" />
-              <span className="menu-title">Engineering &amp; Architecture</span>
+              <span className="menu-icn flaticon-inspection" />
+              <span className="menu-title">Professional Services</span>
             </a>
             <div className="drop-menu d-flex justify-content-between">
               <div className="one-third">
-                <div className="h6 cat-title">Web &amp; App Design</div>
+                <div className="h6 cat-title">Property Assessment</div>
                 <ul className="ps-0 mb40">
                   <li>
-                    <Link href="/">Website Design</Link>
+                    <Link href="/">Home Inspection</Link>
                   </li>
                   <li>
-                    <Link href="/">App DesignUX Design</Link>
+                    <Link href="/">Appraisal Services</Link>
                   </li>
                   <li>
-                    <Link href="/">Landing Page Design</Link>
+                    <Link href="/">Real Estate Appraising</Link>
                   </li>
                   <li>
-                    <Link href="/">Icon Design</Link>
+                    <Link href="/">Jewelry Appraising</Link>
+                  </li>
+                  <li>
+                    <Link href="/">Land Surveying</Link>
                   </li>
                 </ul>
-                <div className="h6 cat-title">Marketing Design</div>
+                <div className="h6 cat-title">Real Estate</div>
                 <ul className="ps-0 mb-0">
                   <li>
-                    <Link href="/">Social Media Design</Link>
+                    <Link href="/">Real Estate</Link>
                   </li>
                   <li>
-                    <Link href="/">Email Design</Link>
+                    <Link href="/">Real Estate Agent</Link>
                   </li>
                   <li>
-                    <Link href="/">Web Banners</Link>
+                    <Link href="/">Home Protection</Link>
                   </li>
                   <li>
-                    <Link href="/">Signage Design</Link>
+                    <Link href="/">Home Warranty</Link>
                   </li>
                 </ul>
               </div>
               <div className="one-third">
-                <div className="h6 cat-title">Art &amp; Illustration</div>
+                <div className="h6 cat-title">Contractors & Builders</div>
                 <ul className="ps-0 mb40">
                   <li>
-                    <Link href="/">Illustration</Link>
+                    <Link href="/">General Contractors</Link>
                   </li>
                   <li>
-                    <Link href="/">NFT Art</Link>
+                    <Link href="/">Home Builder</Link>
                   </li>
                   <li>
-                    <Link href="/">Pattern Design</Link>
-                  </li>
-                  <li>
-                    <Link href="/">Portraits &amp; Caricatures</Link>
-                  </li>
-                  <li>
-                    <Link href="/">Cartoons &amp; Comics</Link>
-                  </li>
-                  <li>
-                    <Link href="/">Tattoo Design</Link>
-                  </li>
-                  <li>
-                    <Link href="/">Storyboards</Link>
+                    <Link href="/">Home Remodeling</Link>
                   </li>
                 </ul>
-                <div className="h6 cat-title">Gaming</div>
+                <div className="h6 cat-title">Moving Services</div>
                 <ul className="ps-0 mb-0">
                   <li>
-                    <Link href="/">Game Art</Link>
+                    <Link href="/">Moving Services</Link>
                   </li>
                   <li>
-                    <Link href="/">Graphics for Streamers</Link>
+                    <Link href="/">Movers</Link>
                   </li>
                   <li>
-                    <Link href="/">Twitch Store</Link>
+                    <Link href="/">Piano Movers</Link>
                   </li>
                 </ul>
               </div>
               <div className="one-third">
-                <div className="h6 cat-title">Visual Design</div>
+                <div className="h6 cat-title">Specialized Professionals</div>
                 <ul className="ps-0 mb40">
                   <li>
-                    <Link href="/">Image Editing</Link>
+                    <Link href="/">Architect</Link>
                   </li>
                   <li>
-                    <Link href="/">Presentation Design</Link>
+                    <Link href="/">Structural Engineering</Link>
                   </li>
                   <li>
-                    <Link href="/">Infographic Design</Link>
-                  </li>
-                  <li>
-                    <Link href="/">Vector Tracing</Link>
-                  </li>
-                  <li>
-                    <Link href="/">Resume Design</Link>
+                    <Link href="/">Skylight Installation</Link>
                   </li>
                 </ul>
-                <div className="h6 cat-title">Print Design</div>
+                <div className="h6 cat-title">Chimney Services</div>
                 <ul className="ps-0 mb-0">
                   <li>
-                    <Link href="/">T-Shirts &amp; Merchandise</Link>
+                    <Link href="/">Chimney Cap Repair</Link>
                   </li>
                   <li>
-                    <Link href="/">Flyer Design</Link>
+                    <Link href="/">Chimney Repair</Link>
                   </li>
                   <li>
-                    <Link href="/">Brochure Design</Link>
+                    <Link href="/">Fireplace Services</Link>
                   </li>
                   <li>
-                    <Link href="/">Poster Design</Link>
+                    <Link href="/">Gas Fireplace Repair</Link>
                   </li>
                   <li>
-                    <Link href="/">Catalog Design</Link>
-                  </li>
-                </ul>
-              </div>
-            </div>
-          </li>
-          <li>
-            <a className="dropdown">
-              <span className="menu-icn flaticon-goal" />
-              <span className="menu-title">Finance &amp; Accounting</span>
-            </a>
-            <div className="drop-menu d-flex justify-content-between">
-              <div className="one-third">
-                <div className="h6 cat-title">Web &amp; App Design</div>
-                <ul className="ps-0 mb40">
-                  <li>
-                    <Link href="/">Website Design</Link>
-                  </li>
-                  <li>
-                    <Link href="/">App DesignUX Design</Link>
-                  </li>
-                  <li>
-                    <Link href="/">Landing Page Design</Link>
-                  </li>
-                  <li>
-                    <Link href="/">Icon Design</Link>
-                  </li>
-                </ul>
-                <div className="h6 cat-title">Marketing Design</div>
-                <ul className="ps-0 mb-0">
-                  <li>
-                    <Link href="/">Social Media Design</Link>
-                  </li>
-                  <li>
-                    <Link href="/">Email Design</Link>
-                  </li>
-                  <li>
-                    <Link href="/">Web Banners</Link>
-                  </li>
-                  <li>
-                    <Link href="/">Signage Design</Link>
-                  </li>
-                </ul>
-              </div>
-              <div className="one-third">
-                <div className="h6 cat-title">Art &amp; Illustration</div>
-                <ul className="ps-0 mb40">
-                  <li>
-                    <Link href="/">Illustration</Link>
-                  </li>
-                  <li>
-                    <Link href="/">NFT Art</Link>
-                  </li>
-                  <li>
-                    <Link href="/">Pattern Design</Link>
-                  </li>
-                  <li>
-                    <Link href="/">Portraits &amp; Caricatures</Link>
-                  </li>
-                  <li>
-                    <Link href="/">Cartoons &amp; Comics</Link>
-                  </li>
-                  <li>
-                    <Link href="/">Tattoo Design</Link>
-                  </li>
-                  <li>
-                    <Link href="/">Storyboards</Link>
-                  </li>
-                </ul>
-                <div className="h6 cat-title">Gaming</div>
-                <ul className="ps-0 mb-0">
-                  <li>
-                    <Link href="/">Game Art</Link>
-                  </li>
-                  <li>
-                    <Link href="/">Graphics for Streamers</Link>
-                  </li>
-                  <li>
-                    <Link href="/">Twitch Store</Link>
-                  </li>
-                </ul>
-              </div>
-              <div className="one-third">
-                <div className="h6 cat-title">Visual Design</div>
-                <ul className="ps-0 mb40">
-                  <li>
-                    <Link href="/">Image Editing</Link>
-                  </li>
-                  <li>
-                    <Link href="/">Presentation Design</Link>
-                  </li>
-                  <li>
-                    <Link href="/">Infographic Design</Link>
-                  </li>
-                  <li>
-                    <Link href="/">Vector Tracing</Link>
-                  </li>
-                  <li>
-                    <Link href="/">Resume Design</Link>
-                  </li>
-                </ul>
-                <div className="h6 cat-title">Print Design</div>
-                <ul className="ps-0 mb-0">
-                  <li>
-                    <Link href="/">T-Shirts &amp; Merchandise</Link>
-                  </li>
-                  <li>
-                    <Link href="/">Flyer Design</Link>
-                  </li>
-                  <li>
-                    <Link href="/">Brochure Design</Link>
-                  </li>
-                  <li>
-                    <Link href="/">Poster Design</Link>
-                  </li>
-                  <li>
-                    <Link href="/">Catalog Design</Link>
+                    <Link href="/">Firewood Company</Link>
                   </li>
                 </ul>
               </div>

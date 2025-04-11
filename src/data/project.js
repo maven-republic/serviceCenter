@@ -3,7 +3,7 @@ export const browserCategory = [
     id: 1,
     icon: "flaticon-developer",
     skill: 1.853,
-    title: "Development & IT",
+    // title: "Development & IT",
     brif: "Software Engineer, Web / Mobile Developer & More",
     img: "/images/listings/category-1.jpg",
   },
