@@ -47,7 +47,7 @@ export default function ProfessionalServicesManagement() {
   const [addingService, setAddingService] = useState(false);
   const [removingService, setRemovingService] = useState(null);
   const [showAddForm, setShowAddForm] = useState(false);
-  const [viewMode, setViewMode] = useState('grid');
+  const [viewMode, setViewMode] = useState('list');
 
   // Initialize Supabase client
   const supabase = createClient();
@@ -352,6 +352,111 @@ export default function ProfessionalServicesManagement() {
     }
   };
 
+  
+
+  // * Edit an existing service
+  // * - Updates service details in the database
+  // * - Updates the service in the UI
+  
+ const editService = async () => {
+   try {
+     if (!editingService || !editingService.professional_service_id) {
+       toast.error('No service selected for editing');
+       return;
+     }
+ 
+     setIsEditing(true);
+ 
+     // Update service in database
+     const { error: updateError } = await supabase
+       .from('professional_service')
+       .update({
+         custom_price: editingService.custom_price || null,
+         custom_duration_minutes: editingService.custom_duration || null,
+         additional_notes: editingService.additional_notes || null
+       })
+       .eq('professional_service_id', editingService.professional_service_id);
+ 
+     if (updateError) throw updateError;
+ 
+     // Fetch the updated service data
+     const { data: updatedService, error: fetchError } = await supabase
+       .from('professional_service')
+       .select(`
+         professional_service_id,
+         service_id,
+         custom_price,
+         custom_duration_minutes,
+         additional_notes,
+         service:service_id(
+           name,
+           description,
+           service_subcategory(
+             category_id,
+             name
+           )
+         )
+       `)
+       .eq('professional_service_id', editingService.professional_service_id)
+       .single();
+ 
+     if (fetchError) throw fetchError;
+ 
+     // Update the service in state
+     setProfessionalServices(prev =>
+       prev.map(ps =>
+         ps.professional_service_id === updatedService.professional_service_id
+           ? updatedService
+           : ps
+       )
+     );
+ 
+     // Show success notification
+     toast.success('Service updated successfully', {
+       description: `${updatedService.service.name} has been updated with your changes.`
+     });
+ 
+     // Reset editing state
+     setEditingService(null);
+     setIsEditing(false);
+   } catch (err) {
+     console.error('Error updating service:', err);
+     toast.error('Failed to update service', {
+       description: err.message || 'Please try again.'
+     });
+   } finally {
+     setIsEditing(false);
+   }
+ };
+ 
+ // Function to start editing a service
+const startEditing = (service) => {
+  setEditingService({
+    professional_service_id: service.professional_service_id,
+    service_id: service.service_id,
+    custom_price: service.custom_price || '',
+    custom_duration: service.custom_duration_minutes || '',
+    additional_notes: service.additional_notes || '',
+    service: service.service
+  });
+  setShowAddForm(false); // Close the add form if it's open
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+};
+
+// Handle edit form input changes
+const handleEditChange = (e) => {
+  const { name, value } = e.target;
+  setEditingService(prev => ({
+    ...prev,
+    [name]: value
+  }));
+};
+
+// Function to cancel editing
+const cancelEditing = () => {
+  setEditingService(null);
+};
+
   /**
    * Remove a service from professional's services
    * - Sets the service as inactive in the database
@@ -618,6 +723,7 @@ export default function ProfessionalServicesManagement() {
                 <i className="fa fa-search position-absolute" style={{ right: '10px', top: '50%', transform: 'translateY(-50%)' }}></i>
               </div>
               
+              
               {/* Bulk actions */}
               {selectedServices.length > 0 && (
                 <button 
@@ -727,6 +833,15 @@ export default function ProfessionalServicesManagement() {
                             <i className="fa fa-trash-alt thin-icon"></i>
                           )}
                         </button>
+
+                        {/* edit button
+                        <button 
+                              className="btn btn-icon btn-sm btn-outline-primary rounded-circle mr10"
+                              onClick={() => startEditing(ps)}
+                              aria-label="Edit service"
+                            >
+                              <i className="fa fa-edit thin-icon"></i>
+                            </button> */}
                       </div>
                     </div>
                   </div>
