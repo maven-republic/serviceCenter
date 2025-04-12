@@ -3,24 +3,37 @@
 import { useState, useEffect } from "react";
 import { createClient } from '../../../../utils/supabase/client';
 import Link from "next/link";
-import { toast } from "sonner"; // Changed from react-hot-toast to sonner
+import { toast } from "sonner"; // For toast notifications
 
+/*
+ * Professional Services Management Component
+ * 
+ * This component allows professionals to manage services they offer:
+ * - View their current services
+ * - Add new services
+ * - Remove existing services
+ * - Search, filter, and select services
+ */
 export default function ProfessionalServicesManagement() {
-  // State for professional ID
+  //============================================================================
+  // STATE MANAGEMENT
+  //============================================================================
+  
+  // Professional identity state
   const [professionalId, setProfessionalId] = useState(null);
 
-  // State for categories and services
+  // Services and categories data state
   const [categories, setCategories] = useState([]);
   const [services, setServices] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState('');
   const [filteredServices, setFilteredServices] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   
-  // State for professional's current services
+  // Professional's services state
   const [professionalServices, setProfessionalServices] = useState([]);
   const [selectedServices, setSelectedServices] = useState([]);
   
-  // State for new service addition
+  // New service form state
   const [newService, setNewService] = useState({
     serviceId: '',
     customPrice: '',
@@ -28,20 +41,22 @@ export default function ProfessionalServicesManagement() {
     additionalNotes: ''
   });
 
-  // Loading and error states
+  // UI state indicators
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [addingService, setAddingService] = useState(false);
   const [removingService, setRemovingService] = useState(null);
-
-  // UI states
   const [showAddForm, setShowAddForm] = useState(false);
   const [viewMode, setViewMode] = useState('grid');
 
-  // Supabase client
+  // Initialize Supabase client
   const supabase = createClient();
 
-  // Fetch professional ID first
+  //============================================================================
+  // DATA FETCHING
+  //============================================================================
+  
+  // Fetch professional ID from authenticated user
   useEffect(() => {
     const fetchProfessionalId = async () => {
       try {
@@ -76,7 +91,7 @@ export default function ProfessionalServicesManagement() {
     fetchProfessionalId();
   }, []);
 
-  // Fetch categories, services, and current professional services
+  // Fetch categories, services, and professional's current services
   useEffect(() => {
     // Only run if professional ID is available
     if (!professionalId) return;
@@ -85,7 +100,7 @@ export default function ProfessionalServicesManagement() {
       try {
         setLoading(true);
         
-        // Fetch active service categories
+        // 1. Fetch active service categories
         const { data: categoryData, error: categoryError } = await supabase
           .from('service_category')
           .select('*')
@@ -94,7 +109,7 @@ export default function ProfessionalServicesManagement() {
 
         if (categoryError) throw categoryError;
 
-        // Fetch active services with subcategory details
+        // 2. Fetch active services with subcategory details
         const { data: serviceData, error: serviceError } = await supabase
           .from('service')
           .select(`
@@ -111,7 +126,7 @@ export default function ProfessionalServicesManagement() {
 
         if (serviceError) throw serviceError;
 
-        // Fetch current professional's services
+        // 3. Fetch current professional's services
         const { data: professionalServiceData, error: professionalServiceError } = await supabase
           .from('professional_service')
           .select(`
@@ -134,6 +149,7 @@ export default function ProfessionalServicesManagement() {
 
         if (professionalServiceError) throw professionalServiceError;
 
+        // Update state with fetched data
         setCategories(categoryData || []);
         setServices(serviceData || []);
         setProfessionalServices(professionalServiceData || []);
@@ -161,7 +177,11 @@ export default function ProfessionalServicesManagement() {
     }
   }, [selectedCategory, services]);
 
-  // Handle service selection
+  //============================================================================
+  // EVENT HANDLERS
+  //============================================================================
+  
+  // Handle service selection in dropdown
   const handleServiceSelect = (serviceId) => {
     setNewService({
       ...newService,
@@ -169,7 +189,7 @@ export default function ProfessionalServicesManagement() {
     });
   };
 
-  // Handle custom details change
+  // Handle form input changes
   const handleCustomDetailsChange = (e) => {
     const { name, value } = e.target;
     setNewService({
@@ -178,7 +198,16 @@ export default function ProfessionalServicesManagement() {
     });
   };
 
-  // Add new service to professional's services
+  //============================================================================
+  // SERVICE MANAGEMENT FUNCTIONS
+  //============================================================================
+  
+  /**
+   * Add new service to professional's services
+   * - First checks if service exists but is inactive
+   * - If it exists, reactivates it with updated details
+   * - If it doesn't exist, creates a new service record
+   */
   const addNewService = async () => {
     try {
       // Validate input
@@ -323,7 +352,12 @@ export default function ProfessionalServicesManagement() {
     }
   };
 
-  // Remove a service from professional's services
+  /**
+   * Remove a service from professional's services
+   * - Sets the service as inactive in the database
+   * - Removes it from the displayed services
+   * - Provides an option to undo the removal
+   */
   const removeService = async (professionalServiceId, serviceName) => {
     try {
       if (!confirm('Are you sure you want to remove this service?')) {
@@ -344,7 +378,7 @@ export default function ProfessionalServicesManagement() {
         prev.filter(ps => ps.professional_service_id !== professionalServiceId)
       );
       
-      // Use Sonner toast
+      // Use Sonner toast with undo option
       toast.success('Service removed', {
         description: `${serviceName} has been removed from your services.`,
         action: {
@@ -395,7 +429,11 @@ export default function ProfessionalServicesManagement() {
     }
   };
 
-  // Bulk remove selected services
+  /**
+   * Bulk remove multiple selected services
+   * - Sets all selected services as inactive
+   * - Removes them from the displayed services
+   */
   const bulkRemoveServices = async () => {
     if (selectedServices.length === 0) {
       toast.error('No services selected');
@@ -425,7 +463,7 @@ export default function ProfessionalServicesManagement() {
       // Reset selection
       setSelectedServices([]);
       
-      // Use Sonner toast
+      // Show success notification
       toast.success(`Services removed`, {
         description: `${selectedServices.length} services have been removed.`
       });
@@ -439,6 +477,10 @@ export default function ProfessionalServicesManagement() {
     }
   };
 
+  //============================================================================
+  // UTILITY FUNCTIONS
+  //============================================================================
+  
   // Toggle service selection for bulk actions
   const toggleServiceSelection = (id) => {
     setSelectedServices(prev => {
@@ -460,7 +502,11 @@ export default function ProfessionalServicesManagement() {
     );
   };
 
-  // Skeleton loader for services
+  //============================================================================
+  // RENDER COMPONENTS
+  //============================================================================
+  
+  // Skeleton loader for services during loading state
   const renderSkeletonLoader = () => (
     <div className="row">
       {[1, 2, 3].map(i => (
@@ -475,7 +521,7 @@ export default function ProfessionalServicesManagement() {
     </div>
   );
 
-  // Render empty state
+  // Empty state when no services are added
   const renderEmptyState = () => (
     <div className="text-center p30 bg-light bdrs4">
       <div className="mb15">
@@ -492,6 +538,7 @@ export default function ProfessionalServicesManagement() {
     </div>
   );
 
+  // Loading state display
   if (loading && !professionalId) return (
     <div className="ps-widget bgc-white bdrs4 p30 mb30">
       <div className="d-flex justify-content-center align-items-center" style={{ minHeight: '200px' }}>
@@ -502,6 +549,7 @@ export default function ProfessionalServicesManagement() {
     </div>
   );
 
+  // Error state display
   if (error) return (
     <div className="ps-widget bgc-white bdrs4 p30 mb30">
       <div className="alert alert-danger">
@@ -517,10 +565,15 @@ export default function ProfessionalServicesManagement() {
     </div>
   );
 
+  // Filter services based on search
   const filteredProfessionalServices = filterServicesBySearch();
 
+  //============================================================================
+  // MAIN COMPONENT RENDER
+  //============================================================================
   return (
     <div className="ps-widget bgc-white bdrs4 p30 mb30 overflow-hidden position-relative">
+      {/* Header with title and view toggle */}
       <div className="bdrb1 pb15 mb25 d-flex justify-content-between align-items-center">
         <h5 className="list-title mb0">Manage Your Services</h5>
         <div className="d-flex">
@@ -541,7 +594,7 @@ export default function ProfessionalServicesManagement() {
         </div>
       </div>
 
-      {/* Services Header with Search */}
+      {/* Services Header with Search and Actions */}
       <div className="mb20 d-flex justify-content-between align-items-center flex-wrap">
         <h6 className="mb0">
           Your Services
@@ -553,6 +606,7 @@ export default function ProfessionalServicesManagement() {
         <div className="d-flex mt-md-0 mt10">
           {professionalServices.length > 0 && (
             <>
+              {/* Search input */}
               <div className="position-relative mr10">
                 <input
                   type="text"
@@ -564,6 +618,7 @@ export default function ProfessionalServicesManagement() {
                 <i className="fa fa-search position-absolute" style={{ right: '10px', top: '50%', transform: 'translateY(-50%)' }}></i>
               </div>
               
+              {/* Bulk actions */}
               {selectedServices.length > 0 && (
                 <button 
                   className="btn btn-sm btn-danger mr10"
@@ -575,17 +630,18 @@ export default function ProfessionalServicesManagement() {
             </>
           )}
           
+          {/* Add service button */}
           <button 
-            className="btn btn-sm btn-primary"
+            className="btn btn-icon btn-sm btn-primary rounded-circle"
             onClick={() => setShowAddForm(!showAddForm)}
+            aria-label={showAddForm ? "Cancel adding" : "Add service"}
           >
-            <i className={`fa ${showAddForm ? 'fa-times' : 'fa-plus'} mr5`}></i>
-            {showAddForm ? 'Cancel' : 'Add Service'}
+            <i className={`fa ${showAddForm ? 'fa-times' : 'fa-plus'} thin-icon`}></i>
           </button>
         </div>
       </div>
 
-      {/* Current Services */}
+      {/* Services List Content */}
       <div className="mb30">
         {loading && professionalId ? (
           renderSkeletonLoader()
@@ -593,12 +649,14 @@ export default function ProfessionalServicesManagement() {
           renderEmptyState()
         ) : (
           <>
+            {/* No search results message */}
             {filteredProfessionalServices.length === 0 && searchTerm ? (
               <div className="alert alert-info">
                 No services match your search for "{searchTerm}"
               </div>
             ) : (
               <div className={viewMode === 'grid' ? 'row' : ''}>
+                {/* Service cards */}
                 {filteredProfessionalServices.map((ps) => (
                   <div 
                     key={ps.professional_service_id} 
@@ -606,6 +664,7 @@ export default function ProfessionalServicesManagement() {
                     className={viewMode === 'grid' ? "col-lg-4 col-md-6 mb15" : "mb15"}
                   >
                     <div className={`border p15 bdrs4 ${viewMode === 'list' ? 'd-flex justify-content-between align-items-center' : ''} ${selectedServices.includes(ps.professional_service_id) ? 'bg-light border-primary' : ''}`}>
+                      {/* Service information */}
                       <div className="position-relative">
                         {viewMode === 'grid' && (
                           <div className="form-check position-absolute" style={{ top: '0', right: '0' }}>
@@ -620,6 +679,7 @@ export default function ProfessionalServicesManagement() {
                         
                         <h5 className="mb5">{ps.service.name}</h5>
                         
+                        {/* Service details */}
                         <div className={viewMode === 'list' ? 'd-flex gap-3' : ''}>
                           {ps.custom_price && (
                             <p className="text-muted mb0 small">
@@ -633,6 +693,7 @@ export default function ProfessionalServicesManagement() {
                           )}
                         </div>
                         
+                        {/* Additional notes (only in grid view) */}
                         {ps.additional_notes && viewMode === 'grid' && (
                           <p className="text-muted small mb10 mt5">
                             <span className="fw-bold">Notes:</span> {ps.additional_notes}
@@ -640,6 +701,7 @@ export default function ProfessionalServicesManagement() {
                         )}
                       </div>
                       
+                      {/* Service actions */}
                       <div className={viewMode === 'list' ? 'd-flex align-items-center' : 'mt10'}>
                         {viewMode === 'list' && (
                           <div className="form-check mr15">
@@ -652,15 +714,17 @@ export default function ProfessionalServicesManagement() {
                           </div>
                         )}
                         
+                        {/* Remove button */}
                         <button 
-                          className="btn btn-sm btn-outline-danger"
+                          className="btn btn-icon btn-sm btn-outline-danger rounded-circle"
                           onClick={() => removeService(ps.professional_service_id, ps.service.name)}
                           disabled={removingService === ps.professional_service_id}
+                          aria-label="Remove service"
                         >
                           {removingService === ps.professional_service_id ? (
                             <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
                           ) : (
-                            <><i className="fa fa-trash mr5"></i> Remove</>
+                            <i className="fa fa-trash-alt thin-icon"></i>
                           )}
                         </button>
                       </div>
@@ -673,7 +737,7 @@ export default function ProfessionalServicesManagement() {
         )}
       </div>
 
-      {/* Add New Service */}
+      {/* Add New Service Form */}
       {showAddForm && (
         <div className="mb30 border p20 bdrs4 bg-light">
           <h6 className="mb20 d-flex justify-content-between">
@@ -684,6 +748,7 @@ export default function ProfessionalServicesManagement() {
           </h6>
           
           <div className="row">
+            {/* Category selection */}
             <div className="col-md-4 mb15">
               <label className="form-label">Select Category</label>
               <select
@@ -706,6 +771,7 @@ export default function ProfessionalServicesManagement() {
               </select>
             </div>
 
+            {/* Service selection */}
             {selectedCategory && (
               <div className="col-md-4 mb15">
                 <label className="form-label">Select Service</label>
@@ -727,8 +793,10 @@ export default function ProfessionalServicesManagement() {
               </div>
             )}
 
+            {/* Service details fields */}
             {newService.serviceId && (
               <>
+                {/* Custom Price */}
                 <div className="col-md-4 mb15">
                   <label className="form-label">Custom Price ($)</label>
                   <div className="input-group">
@@ -743,6 +811,8 @@ export default function ProfessionalServicesManagement() {
                     />
                   </div>
                 </div>
+                
+                {/* Custom Duration */}
                 <div className="col-md-4 mb15">
                   <label className="form-label">Custom Duration (mins)</label>
                   <div className="input-group">
@@ -757,6 +827,8 @@ export default function ProfessionalServicesManagement() {
                     <span className="input-group-text">mins</span>
                   </div>
                 </div>
+                
+                {/* Additional Notes */}
                 <div className="col-md-8 mb15">
                   <label className="form-label">Additional Notes</label>
                   <textarea
@@ -768,22 +840,20 @@ export default function ProfessionalServicesManagement() {
                     rows="3"
                   />
                 </div>
+                
+                {/* Form actions */}
                 <div className="col-md-12">
                   <div className="d-flex gap-2">
                     <button
-                      className="btn btn-primary"
+                      className="btn btn-icon btn-sm btn-primary rounded-circle"
                       onClick={addNewService}
                       disabled={addingService}
+                      aria-label="Add service"
                     >
                       {addingService ? (
-                        <>
-                          <span className="spinner-border spinner-border-sm mr10" role="status" aria-hidden="true"></span>
-                          Adding...
-                        </>
+                        <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
                       ) : (
-                        <>
-                          <i className="fa fa-plus mr10"></i> Add Service
-                        </>
+                        <i className="fa fa-plus thin-icon"></i>
                       )}
                     </button>
                     <button
@@ -801,8 +871,9 @@ export default function ProfessionalServicesManagement() {
         </div>
       )}
 
-      {/* Add this CSS for skeleton loaders and animations */}
+      {/* Component Styles */}
       <style jsx>{`
+        /* Skeleton Loader Animation */
         .skeleton-loader {
           background: #e2e5e7;
           position: relative;
@@ -829,6 +900,7 @@ export default function ProfessionalServicesManagement() {
           100% { transform: translateX(100%); }
         }
 
+        /* Spacing Utilities */
         .mr5 { margin-right: 5px; }
         .mr10 { margin-right: 10px; }
         .mr15 { margin-right: 15px; }
@@ -843,7 +915,39 @@ export default function ProfessionalServicesManagement() {
         .p15 { padding: 15px; }
         .p20 { padding: 20px; }
         .p30 { padding: 30px; }
-      `}</style>
-    </div>
+
+        /* Icon Button Styles */
+.btn-icon {
+  width: 38px;
+  height: 38px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.btn-icon:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 3px 5px rgba(0,0,0,0.1);
+}
+
+.thin-icon {
+  font-weight: 300;
+  font-size: 14px;
+}
+
+.rounded-circle {
+  border-radius: 50% !important;
+}
+
+/* For better accessibility */
+.btn-icon:focus {
+  box-shadow: 0 0 0 3px rgba(0,123,255,0.25);
+  outline: none;
+`}
+
+</style>
+</div>
   );
 }
