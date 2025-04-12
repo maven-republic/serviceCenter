@@ -109,6 +109,25 @@ export async function signupProfessional(formData) {
   // Get the professional ID for relationships
   const professionalId = professionalData[0].professional_id
 
+  const { error: addressError } = await supabase
+  .from('address')
+  .insert([{
+    account_id: userId,
+    address_type: 'home', // Or choose appropriate type
+    street_address: formData.get('streetAddress'),
+    city: formData.get('city'),
+    parish: formData.get('parish'),
+    community: formData.get('community') || null,
+    landmark: formData.get('landmark') || null,
+    is_primary: true,
+    is_rural: formData.get('isRural') === 'true'
+  }])
+
+if (addressError) {
+  console.error('Failed to save address:', addressError)
+  redirect('/register/professional?error=' + encodeURIComponent('Failed to save address.'))
+}
+
   // Add professional services if any were selected
   if (services.length > 0) {
     const serviceRecords = services.map(serviceId => ({

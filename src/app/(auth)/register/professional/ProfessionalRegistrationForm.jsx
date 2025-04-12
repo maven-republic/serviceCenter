@@ -23,7 +23,13 @@ export default function ProfessionalRegistrationForm({ errorMessage }) {
     password: '',
     confirmPassword: '',
     services: [],
-    specializations: []
+    specializations: [],
+    streetAddress: '',
+    city: '',
+    parish: '',
+    community: '',
+    landmark: '',
+    isRural: false
   })
 
   // For services and categories data
@@ -131,24 +137,44 @@ const toggleCategoryExpansion = (categoryId) => {
   const handleSubmit = async (e) => {
     e.preventDefault()
     
-    const submitData = new FormData()
-    
-    // Add basic form fields
-    Object.entries(formData).forEach(([key, value]) => {
-      if (key !== 'services' && key !== 'specializations') {
-        submitData.append(key, value)
+    // Validation
+    if (formData.password !== formData.confirmPassword) {
+      alert("Passwords do not match");
+      return;
+    }
+  
+    try {
+      const submitData = new FormData()
+      
+      // Add basic form fields
+      Object.entries(formData).forEach(([key, value]) => {
+        const excludedFields = ['services', 'specializations', 'isRural'];
+        
+        if (!excludedFields.includes(key)) {
+          submitData.append(key, value);
+        }
+      })
+  
+      // Append additional fields
+      submitData.append('isRural', formData.isRural.toString())
+      submitData.append('services', JSON.stringify(formData.services))
+      submitData.append('specializations', JSON.stringify(formData.specializations))
+      
+      // Debug: Log all form data
+      for (let [key, value] of submitData.entries()) {
+        console.log(`${key}: ${value}`);
       }
-    })
-    
-    // Add services and specializations as JSON strings
-    submitData.append('services', JSON.stringify(formData.services))
-    submitData.append('specializations', JSON.stringify(formData.specializations))
-    
-    await signupProfessional(submitData)
+  
+      // Call signup action
+      await signupProfessional(submitData)
+    } catch (error) {
+      console.error('Signup error:', error);
+      alert('An error occurred during signup');
+    }
   }
   
   return (
-    <form onSubmit={currentStep === 5 ? handleSubmit : e => e.preventDefault()}>
+    <form onSubmit={currentStep === 6 ? handleSubmit : e => e.preventDefault()}>
       <div className="container">
         <div className="row">
           <div className="col-lg-6 m-auto wow fadeInUp" data-wow-delay="300ms">
@@ -159,14 +185,15 @@ const toggleCategoryExpansion = (categoryId) => {
         </div>
         
         {/* Progress indicator */}
-        <div className="row mb-4">
+        <div className="row mb-1 g-1">
           <div className="col-lg-8 mx-auto">
-            <div className="d-flex justify-content-between">
+            <div className="d-flex justify-content-between gap-1">
               <div className={`${styles.stepIndicator} ${currentStep >= 1 ? styles.active : ''}`}>Account</div>
               <div className={`${styles.stepIndicator} ${currentStep >= 2 ? styles.active : ''}`}>Identity</div>
-              <div className={`${styles.stepIndicator} ${currentStep >= 3 ? styles.active : ''}`}>Services</div>
-              <div className={`${styles.stepIndicator} ${currentStep >= 4 ? styles.active : ''}`}>Pricing</div>
-              <div className={`${styles.stepIndicator} ${currentStep >= 5 ? styles.active : ''}`}>Contact</div>
+              <div className={`${styles.stepIndicator} ${currentStep >= 3 ? styles.active: ''}`}>Address</div>
+              <div className={`${styles.stepIndicator} ${currentStep >= 4 ? styles.active : ''}`}>Services</div>
+              <div className={`${styles.stepIndicator} ${currentStep >= 5 ? styles.active : ''}`}>Pricing</div>
+              <div className={`${styles.stepIndicator} ${currentStep >= 6 ? styles.active : ''}`}>Contact</div>
             </div>
           </div>
         </div>
@@ -320,10 +347,133 @@ const toggleCategoryExpansion = (categoryId) => {
                 </>
               )}
               
-             
+              {currentStep === 3 && (
+
+                <>
+                  <div className="mb30">
+      <h4>Address Information</h4>
+      <p className="text-muted">Provide your primary address details</p>
+    </div>
+    
+    <div className="mb25">
+      <label className="form-label fw500 dark-color">Street Address</label>
+      <input
+        name="streetAddress"
+        type="text"
+        value={formData.streetAddress}
+        onChange={updateFormData}
+        className="form-control"
+        placeholder="123 Main Street"
+        required
+      />
+    </div>
+    
+    <div className="mb25">
+      <label className="form-label fw500 dark-color">Parish</label>
+      <select
+        name="parish"
+        value={formData.parish}
+        onChange={updateFormData}
+        className="form-control"
+        required
+      >
+        <option value="">Select Parish</option>
+        <option value="Kingston">Kingston</option>
+        <option value="St. Andrew">St. Andrew</option>
+        <option value="St. Catherine">St. Catherine</option>
+        <option value="Clarendon">Clarendon</option>
+        <option value="Manchester">Manchester</option>
+        <option value="St. Elizabeth">St. Elizabeth</option>
+        <option value="Westmoreland">Westmoreland</option>
+        <option value="Hanover">Hanover</option>
+        <option value="St. James">St. James</option>
+        <option value="Trelawny">Trelawny</option>
+        <option value="St. Ann">St. Ann</option>
+        <option value="St. Mary">St. Mary</option>
+        <option value="Portland">Portland</option>
+        <option value="St. Thomas">St. Thomas</option>
+      </select>
+    </div>
+    
+    <div className="mb25">
+      <label className="form-label fw500 dark-color">City/Town</label>
+      <input
+        name="city"
+        type="text"
+        value={formData.city}
+        onChange={updateFormData}
+        className="form-control"
+        placeholder="Enter city or town"
+        required
+      />
+    </div>
+    
+    <div className="mb25">
+      <label className="form-label fw500 dark-color">Community (Optional)</label>
+      <input
+        name="community"
+        type="text"
+        value={formData.community}
+        onChange={updateFormData}
+        className="form-control"
+        placeholder="Enter community name"
+      />
+    </div>
+    
+    <div className="mb25">
+      <label className="form-label fw500 dark-color">Landmark (Optional)</label>
+      <input
+        name="landmark"
+        type="text"
+        value={formData.landmark}
+        onChange={updateFormData}
+        className="form-control"
+        placeholder="Nearby landmark to help locate address"
+      />
+    </div>
+    
+    <div className="mb25">
+      <div className="form-check">
+        <input
+          type="checkbox"
+          className="form-check-input"
+          id="isRural"
+          name="isRural"
+          checked={formData.isRural}
+          onChange={(e) => setFormData(prev => ({
+            ...prev, 
+            isRural: e.target.checked
+          }))}
+        />
+        <label className="form-check-label" htmlFor="isRural">
+          This is a rural address
+        </label>
+      </div>
+    </div>
+    
+    <div className="d-flex justify-content-between">
+      <button
+        className="ud-btn btn-white"
+        type="button"
+        onClick={prevStep}
+      >
+        <i className="fal fa-arrow-left-long"></i> Back
+      </button>
+      <button
+        className="ud-btn btn-thm default-box-shadow2"
+        type="button"
+        onClick={nextStep}
+      >
+        Continue <i className="fal fa-arrow-right-long" />
+      </button>
+    </div>
+                </>
+
+              )}
+
               
               {/* // The services step */}
-{currentStep === 3 && (
+{currentStep === 4 && (
   <>
     <div className="mb30">
       <h4>Select Your Services</h4>
@@ -467,7 +617,7 @@ const toggleCategoryExpansion = (categoryId) => {
 )}
 
  {/* Step 3: Price */}
- {currentStep === 4 && (
+ {currentStep === 5 && (
                 <>
                   <div className="mb30">
                     <h4>How do you price your services?</h4>
@@ -557,7 +707,7 @@ const toggleCategoryExpansion = (categoryId) => {
 
               
               {/* Step 5: Contact */}
-              {currentStep === 5 && (
+              {currentStep === 6 && (
                 <>
                   <div className="mb30">
                     <h4>Contact Information</h4>
