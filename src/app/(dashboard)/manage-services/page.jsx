@@ -1,5 +1,5 @@
 import DashboardLayout from "@/components/dashboard/DashboardLayout";
-import ManageServiceInfo from "@/components/dashboard/section/ManageServiceInfo";
+import ManageService from "@/components/dashboard/section/ManageServices";
 
 import MobileNavigation2 from "@/components/header/MobileNavigation2";
 
@@ -14,7 +14,7 @@ export default function page() {
     
     <MobileNavigation2 />
       <DashboardLayout>
-        <ManageServiceInfo />
+        <ManageService />
       </DashboardLayout>
     </>
   );

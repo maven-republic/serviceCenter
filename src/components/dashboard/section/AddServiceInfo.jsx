@@ -30,9 +30,9 @@ export default function AddServiceInfo() {
         <div className="row">
           <div className="col-xl-12">
             <BasicInformation />
-            <ServicePackage />
+            {/* <ServicePackage />
             <ExtraService />
-            <ServiceGallery />
+            <ServiceGallery /> */}
           </div>
         </div>
       </div>
