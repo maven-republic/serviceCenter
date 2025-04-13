@@ -31,8 +31,8 @@ export default function page() {
                 <About1 />
                 <OurBlog1 />
                 <OurPartner1 />
-                <OurCta1 />
-                <Footer />
+                {/* <OurCta1 /> */}
+                {/* <Footer /> */}
             </div>
         </>
     );

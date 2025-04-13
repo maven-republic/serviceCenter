@@ -74,7 +74,7 @@ body {
 }
 
 body {
-  background-color: #ffffff;
+  /* background-color: #ffffff; */
   /* font-family: var(--body-font-family); */
   font-size: 15px;
   font-weight: 400;
@@ -1114,7 +1114,7 @@ li {
   color: #00a3ff;
 }
 .pending-style.style3 {
-  background-color: #fff5f8;
+  /* background-color: #fff5f8; */
   color: #f1416c;
 }
 .pending-style.style4 {

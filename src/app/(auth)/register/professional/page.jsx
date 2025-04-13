@@ -18,12 +18,13 @@ export default async function ProfessionalRegistrationPage({ searchParams }) {
   const errorMessage = searchParams?.error || null
 
   return (
-    <div className="bgc-thm4">
+   <div>
+    {/* <div className="bgc-thm4"> */}
       <Header />
       <section className="our-register">
         <ProfessionalRegistrationForm errorMessage={errorMessage} />
       </section>
-      <Footer />
+      {/* <Footer /> */}
     </div>
   )
 }

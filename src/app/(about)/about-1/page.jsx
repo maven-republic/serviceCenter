@@ -27,7 +27,7 @@ export default function page() {
             <PriceTable1 />
             <OurPartner1 />
             <OurCta1 />
-            <Footer />
+            {/* <Footer /> */}
         </>
     );
 }

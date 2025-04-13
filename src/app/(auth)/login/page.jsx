@@ -16,7 +16,7 @@ export default async function page({searchParams}) {
    const errorMessage = searchParams?.error || null
  
   return (
-    <div className="bgc-thm4">
+    <div className="">
       <Header20 />
       <section className="our-login">
         <LoginForm errorMessage={errorMessage}/>

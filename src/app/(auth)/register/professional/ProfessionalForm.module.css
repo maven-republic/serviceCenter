@@ -1,149 +1,258 @@
-/* app/(auth)/register/professional/ProfessionalForm.module.css */
-
 .stepIndicator {
-    width: 18%;
-    text-align: center;
-    padding: 8px 0;
-    border-radius: 4px;
-    background-color: #f0f0f0;
-    color: #666;
-    font-size: 14px;
-    position: relative;
-  }
-  
-  .stepIndicator.active {
-    background-color: #3377ff;
-    color: white;
-  }
-  
-  .stepIndicator:not(:last-child):after {
-    content: '';
-    position: absolute;
-    top: 50%;
-    right: -10%;
-    width: 20%;
-    height: 2px;
-    background-color: #ddd;
-    z-index: -1;
-  }
-  
-  .stepIndicator.active:not(:last-child):after {
-    background-color: #3377ff;
-  }
-  
-  /* Card selection styling */
-  .card {
-    transition: all 0.2s ease-in-out;
-    border: 1px solid #dee2e6;
-  }
-  
-  .card:hover {
-    box-shadow: 0 5px 15px rgba(0,0,0,0.08);
-    transform: translateY(-2px);
-  }
-  
-  .cardSelected {
-    border-color: #3377ff !important;
-    border-width: 2px;
-    background-color: rgba(51, 119, 255, 0.05);
-  }
+  padding: 10px 15px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 500;
+  text-align: center;
+  flex: 1;
+  margin: 0 4px;
+  background-color: #f8f9fa;
+  border: 1px solid #e7e9ec;
+  color: #6c757d;
+  transition: all 0.3s ease;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.03);
+}
 
-  .progress-container {
-    width: 100%;
-    padding: 20px 0;
-  }
+.stepIndicator.active {
+  background-color: #1d29e0;
+  color: white;
+  border-color: #1d29e0;
+  box-shadow: 0 4px 8px rgba(29, 41, 224, 0.15);
+}
 
-  .progress-steps {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    position: relative;
-  }
+.stepIndicator:hover:not(.active) {
+  background-color: #e8e8e8;
+  transform: translateY(-1px);
+}
 
-  .progress-steps::before {
-    content: '';
-    position: absolute;
-    top: 20px;
-    left: 0;
-    right: 0;
-    height: 4px;
-    background-color: #e0e0e0;
-    z-index: 1;
-  }
+.stepIndicator:not(:last-child):after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  right: -10%;
+  width: 20%;
+  height: 3px;  /* Slightly thicker line */
+  background-color: #e0e0e0;
+  z-index: -1;
+  transition: background-color 0.3s ease;  /* Smooth transition for line color change */
+}
 
-  .progress-steps::after {
-    content: '';
-    position: absolute;
-    top: 20px;
-    left: 0;
-    height: 4px;
-    background-color: #4CAF50;
-    z-index: 2;
-    /* width: ${(currentStep - 1) / 5 * 100}%; */
-    transition: width 0.3s ease;
-  }
+.stepIndicator.active:not(:last-child):after {
+  background-color: #3377ff;
+}
 
-  .progress-step {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    position: relative;
-    z-index: 3;
-  }
+.stepIndicator.completed {
+  background-color: #e6f0ff;  /* Light blue for completed steps */
+  color: #3377ff;
+  border: 1px solid rgba(51, 119, 255, 0.3);
+}
 
-  .step-icon {
-    width: 50px;
-    height: 50px;
-    border-radius: 50%;
-    background-color: #e0e0e0;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    margin-bottom: 10px;
-    transition: all 0.3s ease;
-    position: relative;
-  }
+.stepIndicator.completed:not(:last-child):after {
+  background-color: #3377ff;
+}
 
-  .step-icon i {
-    color: #888;
-    font-size: 20px;
-    transition: color 0.3s ease;
-  }
+/* Card Selection Styling - Enhanced */
+.card {
+  transition: all 0.2s ease-in-out;
+  border-radius: 10px;  /* Rounded corners */
+  border: 1px solid #e7e9ec;  /* Lighter border */
+  overflow: hidden;  /* Ensure content respects border radius */
+  margin-bottom: 16px;
+  background-color: #fff;
+}
 
-  .step-number {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    color: #666;
-    font-weight: bold;
-  }
+.card:hover {
+  box-shadow: 0 8px 15px rgba(0,0,0,0.08);
+  transform: translateY(-3px);
+  border-color: #d0d0d0;
+}
 
-  .progress-step.active .step-icon {
-    background-color: #4CAF50;
-  }
+.card:active {
+  transform: translateY(-1px);  /* Subtle press effect */
+}
 
-  .progress-step.active .step-icon i {
-    color: white;
-  }
+.cardSelected {
+  border-color: #3377ff !important;
+  border-width: 2px;
+  background-color: rgba(51, 119, 255, 0.05);
+  box-shadow: 0 3px 10px rgba(51, 119, 255, 0.1);  /* Colored shadow */
+}
 
-  .progress-step.active .step-number {
-    color: white;
-  }
+/* Fancy Progress Steps */
+.progress-container {
+  width: 100%;
+  padding: 30px 0;  /* Increased padding */
+  margin-bottom: 20px;
+}
 
-  .progress-step.current .step-icon {
-    transform: scale(1.1);
-    box-shadow: 0 0 0 4px rgba(76, 175, 80, 0.2);
-  }
+.progress-steps {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  position: relative;
+  max-width: 800px;  /* Prevent excessive width on large screens */
+  margin: 0 auto;  /* Center the progress bar */
+}
 
-  .step-label {
-    color: #666;
-    font-size: 0.8rem;
-    margin-top: 5px;
-    text-align: center;
-  }
+.progress-steps::before {
+  content: '';
+  position: absolute;
+  top: 20px;
+  left: 30px;  /* Adjusted for better alignment */
+  right: 30px;
+  height: 4px;
+  background-color: #e0e0e0;
+  z-index: 1;
+  border-radius: 4px;  /* Rounded line */
+}
 
-  .progress-step.active .step-label {
-    color: #4CAF50;
-    font-weight: bold;
+.progress-steps::after {
+  content: '';
+  position: absolute;
+  top: 20px;
+  left: 30px;
+  height: 4px;
+  background-color: #4CAF50;
+  z-index: 2;
+  border-radius: 4px;  /* Rounded line */
+  /* Dynamic width based on current step */
+  /* width: calc((var(--current-step) - 1) / (var(--total-steps) - 1) * (100% - 60px)); */
+  transition: width 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);  /* Smooth easing */
+}
+
+.progress-step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+  z-index: 3;
+  transition: transform 0.3s ease;
+}
+
+.progress-step:hover {
+  transform: translateY(-2px);
+}
+
+.step-icon {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  background-color: #e0e0e0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 10px;
+  transition: all 0.3s ease;
+  position: relative;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);  /* Subtle shadow for all steps */
+}
+
+.step-icon i {
+  color: #888;
+  font-size: 20px;
+  transition: all 0.3s ease;
+}
+
+.step-number {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: #666;
+  font-weight: bold;
+  transition: all 0.3s ease;
+}
+
+.progress-step.active .step-icon {
+  background-color: #4CAF50;
+  box-shadow: 0 3px 10px rgba(76, 175, 80, 0.3);  /* Enhanced shadow for active */
+}
+
+.progress-step.active .step-icon i,
+.progress-step.active .step-number {
+  color: white;
+}
+
+.progress-step.completed .step-icon {
+  background-color: #81C784;  /* Lighter green for completed */
+}
+
+.progress-step.completed .step-icon i,
+.progress-step.completed .step-number {
+  color: white;
+}
+
+.progress-step.completed .step-icon::after {
+  content: '✓';  /* Checkmark */
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: white;
+  font-size: 18px;
+  font-weight: bold;
+}
+
+.progress-step.current .step-icon {
+  transform: scale(1.1);
+  box-shadow: 0 0 0 5px rgba(76, 175, 80, 0.25);  /* Glow effect */
+  animation: pulse 1.5s infinite;  /* Subtle pulsing animation */
+}
+
+@keyframes pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(76, 175, 80, 0.4);
   }
+  70% {
+    box-shadow: 0 0 0 6px rgba(76, 175, 80, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(76, 175, 80, 0);
+  }
+}
+
+.step-label {
+  color: #666;
+  font-size: 0.9rem;  /* Slightly larger */
+  margin-top: 8px;
+  text-align: center;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  white-space: nowrap;  /* Prevent wrapping */
+}
+
+.progress-step.active .step-label {
+  color: #4CAF50;
+  font-weight: 600;
+}
+
+/* Media query for smaller screens */
+@media (max-width: 768px) {
+  .stepIndicator {
+    padding: 8px 10px;
+    font-size: 12px;
+  }
+}
+
+/* Media query for very small screens */
+@media (max-width: 576px) {
+  .stepIndicator {
+    padding: 6px 8px;
+    font-size: 11px;
+    margin: 0 2px;
+  }
+}
+
+/* .progress-wrapper {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 0 1rem;
+  background: white;
+  box-shadow: 0 -2px 6px rgba(0, 0, 0, 0.05);
+  z-index: 1000;
+} */

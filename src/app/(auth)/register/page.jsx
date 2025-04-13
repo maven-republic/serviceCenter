@@ -5,7 +5,7 @@ import Footer from "@/components/footer/Footer"
 
 export default function RegisterSelection() {
   return (
-    <div className="bgc-thm4">
+     <div className="bgc-thm4"> 
       <Header />
       <section className="our-register">
         <div className="container">
@@ -44,7 +44,7 @@ export default function RegisterSelection() {
           </div>
         </div>
       </section>
-      <Footer />
+      {/* <Footer /> */}
     </div>
   )
 }

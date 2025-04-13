@@ -39,15 +39,15 @@ export default function ProfessionalRegistrationForm({ errorMessage }) {
   const [filteredServices, setFilteredServices] = useState([])
   const [loading, setLoading] = useState(false)
   const [expandedCategories, setExpandedCategories] = useState([]);
-const [searchTerm, setSearchTerm] = useState('');
+  const [searchTerm, setSearchTerm] = useState('');
 
-const toggleCategoryExpansion = (categoryId) => {
-  if (expandedCategories.includes(categoryId)) {
-    setExpandedCategories(expandedCategories.filter(id => id !== categoryId));
-  } else {
-    setExpandedCategories([...expandedCategories, categoryId]);
-  }
-};
+  const toggleCategoryExpansion = (categoryId) => {
+    if (expandedCategories.includes(categoryId)) {
+      setExpandedCategories(expandedCategories.filter(id => id !== categoryId));
+    } else {
+      setExpandedCategories([...expandedCategories, categoryId]);
+    }
+  };
 
   // Fetch categories and services
   useEffect(() => {
@@ -177,45 +177,50 @@ const toggleCategoryExpansion = (categoryId) => {
     <form onSubmit={currentStep === 6 ? handleSubmit : e => e.preventDefault()}>
       <div className="container">
         <div className="row">
-          <div className="col-lg-6 m-auto wow fadeInUp" data-wow-delay="300ms">
-            <div className="main-title text-center">
-              <h2 className="title">Create an Account</h2>
+          <div className="col-lg-8 m-auto wow fadeInUp" data-wow-delay="300ms">
+            <div className="main-title text-center mb-4">
+              <h2 className="title">Create a Professional Account</h2>
+              <p className="subtitle mt-2">Join our platform and start offering your services</p>
             </div>
           </div>
         </div>
         
         {/* Progress indicator */}
-        <div className="row mb-1 g-1">
+        <div className="row mb-4">
           <div className="col-lg-8 mx-auto">
-            <div className="d-flex justify-content-between gap-1">
-              <div className={`${styles.stepIndicator} ${currentStep >= 1 ? styles.active : ''}`}>Account</div>
-              <div className={`${styles.stepIndicator} ${currentStep >= 2 ? styles.active : ''}`}>Identity</div>
-              <div className={`${styles.stepIndicator} ${currentStep >= 3 ? styles.active: ''}`}>Address</div>
-              <div className={`${styles.stepIndicator} ${currentStep >= 4 ? styles.active : ''}`}>Services</div>
-              <div className={`${styles.stepIndicator} ${currentStep >= 5 ? styles.active : ''}`}>Pricing</div>
-              <div className={`${styles.stepIndicator} ${currentStep >= 6 ? styles.active : ''}`}>Contact</div>
+            <div className="d-flex justify-content-between">
+              {['Account', 'Identity', 'Address', 'Services', 'Pricing', 'Contact'].map((step, index) => (
+                <div 
+                  key={index}
+                  className={`${styles.stepIndicator} ${currentStep >= index + 1 ? styles.active : ''}`}
+                  style={{cursor: 'pointer'}}
+                  onClick={() => currentStep > index + 1 && setCurrentStep(index + 1)}
+                >
+                  {step}
+                </div>
+              ))}
             </div>
           </div>
         </div>
         
-        <div className="row wow fadeInRight" data-wow-delay="300ms">
+        <div className="row">
           <div className="col-xl-6 mx-auto">
-            <div className="log-reg-form search-modal form-style1 bgc-white p50 p30-sm default-box-shadow1 bdrs12">
+            <div className="log-reg-form search-modal form-style1 bgc-white p-4 p-md-5 border-radius-12 default-box-shadow1">
               {/* Step 1: Account */}
               {currentStep === 1 && (
                 <>
-                  <div className="mb30">
-                    <h4>Create your professional account</h4>
-                    <p className="text mt20">
+                  <div className="mb-4">
+                    <h4 className="mb-3">Create your professional account</h4>
+                    <p className="text-muted">
                       Already have an account?{" "}
-                      <Link href="/login" className="text-thm">
+                      <Link href="/login" className="text-primary fw-bold">
                         Log In!
                       </Link>
                     </p>
                   </div>
                   
-                  <div className="mb25">
-                    <label className="form-label fw500 dark-color">Email</label>
+                  <div className="mb-4">
+                    <label className="form-label fw-semibold">Email Address</label>
                     <input
                       name="email"
                       type="email"
@@ -227,53 +232,54 @@ const toggleCategoryExpansion = (categoryId) => {
                     />
                   </div>
                   
-                  <div className="mb15">
-                    <label className="form-label fw500 dark-color">Password</label>
+                  <div className="mb-4">
+                    <label className="form-label fw-semibold">Password</label>
                     <input
                       name="password"
                       type="password"
                       value={formData.password}
                       onChange={updateFormData}
                       className="form-control"
-                      placeholder="*******"
+                      placeholder="•••••••••••"
                       required
                     />
                   </div>
                   
-                  <div className="mb25">
-                    <label className="form-label fw500 dark-color">Confirm Password</label>
+                  <div className="mb-4">
+                    <label className="form-label fw-semibold">Confirm Password</label>
                     <input
                       name="confirmPassword"
                       type="password"
                       value={formData.confirmPassword}
                       onChange={updateFormData}
                       className="form-control"
-                      placeholder="*******"
+                      placeholder="•••••••••••"
                       required
                     />
                   </div>
                   
-                  <div className="d-grid">
+                  {/* <div className="d-grid mb-3">
                     <button
                       className="ud-btn btn-thm default-box-shadow2"
                       type="button"
                       onClick={nextStep}
                     >
-                      Continue <i className="fal fa-arrow-right-long" />
+                      Continue <i className="fal fa-arrow-right-long ms-2" />
                     </button>
-                  </div>
+                  </div> */}
                 </>
               )}
               
               {/* Step 2: Profile */}
               {currentStep === 2 && (
                 <>
-                  <div className="mb30">
-                    <h4>Personal Information</h4>
+                  <div className="mb-4">
+                    <h4 className="mb-3">Personal Information</h4>
+                    <p className="text-muted">Tell us about yourself</p>
                   </div>
                   
-                  <div className="mb25">
-                    <label className="form-label fw500 dark-color">First Name</label>
+                  <div className="mb-4">
+                    <label className="form-label fw-semibold">First Name</label>
                     <input
                       name="firstName"
                       type="text"
@@ -285,8 +291,8 @@ const toggleCategoryExpansion = (categoryId) => {
                     />
                   </div>
                   
-                  <div className="mb25">
-                    <label className="form-label fw500 dark-color">Last Name</label>
+                  <div className="mb-4">
+                    <label className="form-label fw-semibold">Last Name</label>
                     <input
                       name="lastName"
                       type="text"
@@ -298,372 +304,379 @@ const toggleCategoryExpansion = (categoryId) => {
                     />
                   </div>
                   
-                  <div className="mb25">
-                    <label className="form-label fw500 dark-color">Years of Experience</label>
+                  <div className="mb-4">
+                    <label className="form-label fw-semibold">Years of Experience</label>
                     <select
                       name="experience"
                       value={formData.experience}
                       onChange={updateFormData}
-                      className="form-control"
+                      className="form-select"
                       required
                     >
                       <option value="">Select years of experience</option>
                       <option value="0">Less than 1 year</option>
-                      <option value="1">1 year</option>
-                      <option value="2">2 years</option>
-                      <option value="3">3 years</option>
-                      <option value="4">4 years</option>
-                      <option value="5">5 years</option>
-                      <option value="6">6 years</option>
-                      <option value="7">7 years</option>
-                      <option value="8">8 years</option>
-                      <option value="9">9 years</option>
-                      <option value="10">10 years</option>
-                      <option value="11">11 years</option>
-                      <option value="12">12 years</option>
-                      <option value="13">13 years</option>
-                      <option value="14">14 years</option>
-                      <option value="15">15 years</option>
+                      {[...Array(15)].map((_, i) => (
+                        <option key={i+1} value={i+1}>{i+1} year{i !== 0 ? 's' : ''}</option>
+                      ))}
                       <option value="15+">More than 15 years</option>
                     </select>
                   </div>
                   
-                  <div className="d-flex justify-content-between">
+                  {/* <div className="d-flex justify-content-between">
                     <button
                       className="ud-btn btn-white"
                       type="button"
                       onClick={prevStep}
                     >
-                      <i className="fal fa-arrow-left-long"></i> Back
+                      <i className="fal fa-arrow-left-long me-2"></i> Back
                     </button>
                     <button
                       className="ud-btn btn-thm default-box-shadow2"
                       type="button"
                       onClick={nextStep}
                     >
-                      Continue <i className="fal fa-arrow-right-long" />
+                      Continue <i className="fal fa-arrow-right-long ms-2" />
                     </button>
-                  </div>
+                  </div> */}
                 </>
               )}
               
               {currentStep === 3 && (
-
                 <>
-                  <div className="mb30">
-      <h4>Address Information</h4>
-      <p className="text-muted">Provide your primary address details</p>
-    </div>
-    
-    <div className="mb25">
-      <label className="form-label fw500 dark-color">Street Address</label>
-      <input
-        name="streetAddress"
-        type="text"
-        value={formData.streetAddress}
-        onChange={updateFormData}
-        className="form-control"
-        placeholder="123 Main Street"
-        required
-      />
-    </div>
-    
-    <div className="mb25">
-      <label className="form-label fw500 dark-color">Parish</label>
-      <select
-        name="parish"
-        value={formData.parish}
-        onChange={updateFormData}
-        className="form-control"
-        required
-      >
-        <option value="">Select Parish</option>
-        <option value="Kingston">Kingston</option>
-        <option value="St. Andrew">St. Andrew</option>
-        <option value="St. Catherine">St. Catherine</option>
-        <option value="Clarendon">Clarendon</option>
-        <option value="Manchester">Manchester</option>
-        <option value="St. Elizabeth">St. Elizabeth</option>
-        <option value="Westmoreland">Westmoreland</option>
-        <option value="Hanover">Hanover</option>
-        <option value="St. James">St. James</option>
-        <option value="Trelawny">Trelawny</option>
-        <option value="St. Ann">St. Ann</option>
-        <option value="St. Mary">St. Mary</option>
-        <option value="Portland">Portland</option>
-        <option value="St. Thomas">St. Thomas</option>
-      </select>
-    </div>
-    
-    <div className="mb25">
-      <label className="form-label fw500 dark-color">City/Town</label>
-      <input
-        name="city"
-        type="text"
-        value={formData.city}
-        onChange={updateFormData}
-        className="form-control"
-        placeholder="Enter city or town"
-        required
-      />
-    </div>
-    
-    <div className="mb25">
-      <label className="form-label fw500 dark-color">Community (Optional)</label>
-      <input
-        name="community"
-        type="text"
-        value={formData.community}
-        onChange={updateFormData}
-        className="form-control"
-        placeholder="Enter community name"
-      />
-    </div>
-    
-    <div className="mb25">
-      <label className="form-label fw500 dark-color">Landmark (Optional)</label>
-      <input
-        name="landmark"
-        type="text"
-        value={formData.landmark}
-        onChange={updateFormData}
-        className="form-control"
-        placeholder="Nearby landmark to help locate address"
-      />
-    </div>
-    
-    <div className="mb25">
-      <div className="form-check">
-        <input
-          type="checkbox"
-          className="form-check-input"
-          id="isRural"
-          name="isRural"
-          checked={formData.isRural}
-          onChange={(e) => setFormData(prev => ({
-            ...prev, 
-            isRural: e.target.checked
-          }))}
-        />
-        <label className="form-check-label" htmlFor="isRural">
-          This is a rural address
-        </label>
-      </div>
-    </div>
-    
-    <div className="d-flex justify-content-between">
-      <button
-        className="ud-btn btn-white"
-        type="button"
-        onClick={prevStep}
-      >
-        <i className="fal fa-arrow-left-long"></i> Back
-      </button>
-      <button
-        className="ud-btn btn-thm default-box-shadow2"
-        type="button"
-        onClick={nextStep}
-      >
-        Continue <i className="fal fa-arrow-right-long" />
-      </button>
-    </div>
+                  <div className="mb-4">
+                    <h4 className="mb-3">Address Information</h4>
+                    <p className="text-muted">Provide your primary address details</p>
+                  </div>
+                  
+                  <div className="mb-4">
+                    <label className="form-label fw-semibold">Street Address</label>
+                    <input
+                      name="streetAddress"
+                      type="text"
+                      value={formData.streetAddress}
+                      onChange={updateFormData}
+                      className="form-control"
+                      placeholder="123 Main Street"
+                      required
+                    />
+                  </div>
+                  
+                  <div className="mb-4">
+                    <label className="form-label fw-semibold">Parish</label>
+                    <select
+                      name="parish"
+                      value={formData.parish}
+                      onChange={updateFormData}
+                      className="form-select"
+                      required
+                    >
+                      <option value="">Select Parish</option>
+                      <option value="Kingston">Kingston</option>
+                      <option value="St. Andrew">St. Andrew</option>
+                      <option value="St. Catherine">St. Catherine</option>
+                      <option value="Clarendon">Clarendon</option>
+                      <option value="Manchester">Manchester</option>
+                      <option value="St. Elizabeth">St. Elizabeth</option>
+                      <option value="Westmoreland">Westmoreland</option>
+                      <option value="Hanover">Hanover</option>
+                      <option value="St. James">St. James</option>
+                      <option value="Trelawny">Trelawny</option>
+                      <option value="St. Ann">St. Ann</option>
+                      <option value="St. Mary">St. Mary</option>
+                      <option value="Portland">Portland</option>
+                      <option value="St. Thomas">St. Thomas</option>
+                    </select>
+                  </div>
+                  
+                  <div className="mb-4">
+                    <label className="form-label fw-semibold">City/Town</label>
+                    <input
+                      name="city"
+                      type="text"
+                      value={formData.city}
+                      onChange={updateFormData}
+                      className="form-control"
+                      placeholder="Enter city or town"
+                      required
+                    />
+                  </div>
+                  
+                  <div className="row g-3 mb-4">
+                    <div className="col-md-6">
+                      <label className="form-label fw-semibold">Community (Optional)</label>
+                      <input
+                        name="community"
+                        type="text"
+                        value={formData.community}
+                        onChange={updateFormData}
+                        className="form-control"
+                        placeholder="Enter community name"
+                      />
+                    </div>
+                    
+                    <div className="col-md-6">
+                      <label className="form-label fw-semibold">Landmark (Optional)</label>
+                      <input
+                        name="landmark"
+                        type="text"
+                        value={formData.landmark}
+                        onChange={updateFormData}
+                        className="form-control"
+                        placeholder="Nearby landmark"
+                      />
+                    </div>
+                  </div>
+                  
+                  <div className="mb-4">
+                    <div className="form-check">
+                      <input
+                        type="checkbox"
+                        className="form-check-input"
+                        id="isRural"
+                        name="isRural"
+                        checked={formData.isRural}
+                        onChange={(e) => setFormData(prev => ({
+                          ...prev, 
+                          isRural: e.target.checked
+                        }))}
+                      />
+                      <label className="form-check-label" htmlFor="isRural">
+                        This is a rural address
+                      </label>
+                    </div>
+                  </div>
+                  
+                  {/* <div className="d-flex justify-content-between">
+                    <button
+                      className="ud-btn btn-white"
+                      type="button"
+                      onClick={prevStep}
+                    >
+                      <i className="fal fa-arrow-left-long me-2"></i> Back
+                    </button>
+                    <button
+                      className="ud-btn btn-thm default-box-shadow2"
+                      type="button"
+                      onClick={nextStep}
+                    >
+                      Continue <i className="fal fa-arrow-right-long ms-2" />
+                    </button>
+                  </div> */}
                 </>
-
               )}
 
-              
-              {/* // The services step */}
-{currentStep === 4 && (
-  <>
-    <div className="mb30">
-      <h4>Select Your Services</h4>
-      <p className="text-muted">Choose the services you offer to customers</p>
-    </div>
-    
-    {/* Search box */}
-    <div className="mb25">
-      <input
-        type="text"
-        className="form-control"
-        placeholder="Search for services..."
-        value={searchTerm}
-        onChange={(e) => setSearchTerm(e.target.value)}
-      />
-    </div>
-    
-    {loading ? (
-      <div className="text-center py-4">
-        <div className="spinner-border text-primary" role="status">
-          <span className="visually-hidden">Loading...</span>
-        </div>
-      </div>
-    ) : (
-      <div className="accordion" id="serviceAccordion">
-        {categories.map(category => {
-          // Get services for this category
-          const categoryServices = services.filter(
-            service => service.service_subcategory?.category_id === category.category_id
-          );
-          
-          // Filter by search term if any
-          const filteredCategoryServices = searchTerm
-            ? categoryServices.filter(service => 
-                service.name.toLowerCase().includes(searchTerm.toLowerCase())
-              )
-            : categoryServices;
-          
-          // Skip if no matching services in this category and we have a search term
-          if (searchTerm && filteredCategoryServices.length === 0) return null;
-          
-          return (
-            <div className="accordion-item mb-3" key={category.category_id}>
-              <h2 className="accordion-header">
-                <button 
-                  className={`accordion-button ${expandedCategories.includes(category.category_id) ? '' : 'collapsed'}`}
-                  type="button"
-                  onClick={() => toggleCategoryExpansion(category.category_id)}
-                >
-                  <i className={category.icon}></i> 
-                  <span className="ms-2">{category.name}</span>
-                  <span className="badge bg-primary ms-auto">{filteredCategoryServices.length}</span>
-                </button>
-              </h2>
-              
-              <div className={`accordion-collapse collapse ${expandedCategories.includes(category.category_id) ? 'show' : ''}`}>
-                <div className="accordion-body">
-                  <div className="row">
-                    {filteredCategoryServices.map(service => (
-                      <div className="col-md-6 mb-2" key={service.service_id}>
-                        <div 
-                          className={`form-check-card p-3 rounded border ${formData.services.includes(service.service_id) ? 'border-primary bg-light' : ''}`}
-                          onClick={() => toggleService(service.service_id)}
-                        >
-                          <div className="form-check">
-                            <input
-                              type="checkbox"
-                              className="form-check-input"
-                              id={`service-${service.service_id}`}
-                              checked={formData.services.includes(service.service_id)}
-                              onChange={() => {}} // Handled by card click
-                              onClick={(e) => e.stopPropagation()}
-                            />
-                            <label className="form-check-label fw-bold" htmlFor={`service-${service.service_id}`}>
-                              {service.name}
-                            </label>
-                          </div>
-                          {service.description && (
-                            <p className="small text-muted mb-0 mt-1">{service.description}</p>
-                          )}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </div>
-          );
-        })}
-      </div>
-    )}
-    
-    {/* Selected services summary */}
-    {formData.services.length > 0 && (
-      <div className="mt-4 p-3 border rounded bg-light">
-        <h5>Selected Services ({formData.services.length})</h5>
-        <div className="row">
-          {formData.services.map(serviceId => {
-            const service = services.find(s => s.service_id === serviceId);
-            if (!service) return null;
-            
-            return (
-              <div className="col-md-6 mb-2" key={serviceId}>
-                <div className="d-flex align-items-center">
-                  <span className="badge bg-primary me-2">
-                    <i className="fas fa-check"></i>
-                  </span>
-                  <span className="text-truncate">{service.name}</span>
-                  <button 
-                    type="button" 
-                    className="btn btn-sm btn-link text-danger ms-auto"
-                    onClick={() => toggleService(serviceId)}
-                  >
-                    <i className="fas fa-times"></i>
-                  </button>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-    )}
-    
-    <div className="d-flex justify-content-between mt-4">
-      <button
-        className="ud-btn btn-white"
-        type="button"
-        onClick={prevStep}
-      >
-        <i className="fal fa-arrow-left-long"></i> Back
-      </button>
-      <button
-        className="ud-btn btn-thm default-box-shadow2"
-        type="button"
-        onClick={nextStep}
-      >
-        Continue <i className="fal fa-arrow-right-long" />
-      </button>
-    </div>
-  </>
-)}
-
- {/* Step 3: Price */}
- {currentStep === 5 && (
+              {/* The services step */}
+              {currentStep === 4 && (
                 <>
-                  <div className="mb30">
-                    <h4>How do you price your services?</h4>
+                  <div className="mb-4">
+                    <h4 className="mb-3">Select Your Services</h4>
+                    <p className="text-muted">Choose the services you offer to customers</p>
                   </div>
                   
-                  <div className="mb25">
-                    <label className="form-label fw500 dark-color">Price per hour ($J)</label>
-                    <input
-                      name="hourlyRate"
-                      type="number"
-                      value={formData.hourlyRate}
-                      onChange={updateFormData}
-                      className="form-control"
-                      placeholder="e.g., 5000"
-                      min="0"
-                    />
+                  {/* Search box */}
+                  <div className="mb-4">
+                    <div className="input-group">
+                      <span className="input-group-text bg-transparent border-end-0">
+                        <i className="fa fa-search"></i>
+                      </span>
+                      <input
+                        type="text"
+                        className="form-control border-start-0"
+                        placeholder="Search for services..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                      />
+                    </div>
                   </div>
                   
-                  <div className="mb25">
-                    <label className="form-label fw500 dark-color">Price per day ($J)</label>
-                    <input
-                      name="dailyRate"
-                      type="number"
-                      value={formData.dailyRate}
-                      onChange={updateFormData}
-                      className="form-control"
-                      placeholder="e.g., 30000"
-                      min="0"
-                    />
+                  {loading ? (
+                    <div className="text-center py-5">
+                      <div className="spinner-border text-primary" role="status">
+                        <span className="visually-hidden">Loading...</span>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="accordion mb-4" id="serviceAccordion">
+                      {categories.map(category => {
+                        // Get services for this category
+                        const categoryServices = services.filter(
+                          service => service.service_subcategory?.category_id === category.category_id
+                        );
+                        
+                        // Filter by search term if any
+                        const filteredCategoryServices = searchTerm
+                          ? categoryServices.filter(service => 
+                              service.name.toLowerCase().includes(searchTerm.toLowerCase())
+                            )
+                          : categoryServices;
+                        
+                        // Skip if no matching services in this category and we have a search term
+                        if (searchTerm && filteredCategoryServices.length === 0) return null;
+                        
+                        return (
+                          <div className="accordion-item mb-3" key={category.category_id}>
+                            <h2 className="accordion-header">
+                              <button 
+                                className={`accordion-button ${expandedCategories.includes(category.category_id) ? '' : 'collapsed'}`}
+                                type="button"
+                                onClick={() => toggleCategoryExpansion(category.category_id)}
+                              >
+                                <i className={category.icon}></i> 
+                                <span className="ms-2">{category.name}</span>
+                                <span className="badge bg-primary rounded-pill ms-auto">{filteredCategoryServices.length}</span>
+                              </button>
+                            </h2>
+                            
+                            <div className={`accordion-collapse collapse ${expandedCategories.includes(category.category_id) ? 'show' : ''}`}>
+                              <div className="accordion-body">
+                                <div className="row g-3">
+                                  {filteredCategoryServices.map(service => (
+                                    <div className="col-md-6" key={service.service_id}>
+                                      <div 
+                                        className={`form-check-card p-3 ${formData.services.includes(service.service_id) ? 'border-primary bg-light' : ''}`}
+                                        onClick={() => toggleService(service.service_id)}
+                                      >
+                                        <div className="form-check">
+                                          {/* <input
+                                            type="checkbox"
+                                            className="form-check-input"
+                                            id={`service-${service.service_id}`}
+                                            checked={formData.services.includes(service.service_id)}
+                                            onChange={() => {}} // Handled by card click
+                                            onClick={(e) => e.stopPropagation()}
+                                          /> */}
+                                          <label className="form-check-label fw-bold" htmlFor={`service-${service.service_id}`}>
+                                            {service.name}
+                                          </label>
+                                        </div>
+                                        {service.description && (
+                                          <p className="small text-muted mb-0 mt-1">{service.description}</p>
+                                        )}
+                                      </div>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                  
+                  {/* Selected services summary */}
+                  {formData.services.length > 0 && (
+                    <div className="mt-4 p-3 border rounded-3 bg-light mb-4">
+                      <h5 className="mb-3">Selected Services ({formData.services.length})</h5>
+                      <div className="row g-2">
+                        {formData.services.map(serviceId => {
+                          const service = services.find(s => s.service_id === serviceId);
+                          if (!service) return null;
+                          
+                          return (
+                            <div className="col-md-6 mb-2" key={serviceId}>
+                              <div className="d-flex align-items-center p-2 border rounded bg-white">
+                                <span className="badge bg-primary rounded-circle me-2">
+                                  <i className="fas fa-check"></i>
+                                </span>
+                                <span className="text-truncate flex-grow-1">{service.name}</span>
+                                <button 
+                                  type="button" 
+                                  className="btn btn-sm btn-link text-danger ms-auto p-0"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    toggleService(serviceId);
+                                  }}
+                                >
+                                  <i className="fas fa-times"></i>
+                                </button>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+                  
+                  {/* <div className="d-flex justify-content-between">
+                    <button
+                      className="ud-btn btn-white"
+                      type="button"
+                      onClick={prevStep}
+                    >
+                      <i className="fal fa-arrow-left-long me-2"></i> Back
+                    </button>
+                    <button
+                      className="ud-btn btn-thm default-box-shadow2"
+                      type="button"
+                      onClick={nextStep}
+                    >
+                      Continue <i className="fal fa-arrow-right-long ms-2" />
+                    </button>
+                  </div> */}
+                </>
+              )}
+
+              {/* Step 5: Price */}
+              {currentStep === 5 && (
+                <>
+                  <div className="mb-4">
+                    <h4 className="mb-3">How do you price your services?</h4>
+                    <p className="text-muted">Set your preferred rates and service area</p>
                   </div>
                   
-                  <div className="mb25">
-                    <label className="form-label fw500 dark-color">How far can you work from you primary location? (km)</label>
-                    <input
-                      name="serviceRadius"
-                      type="number"
-                      value={formData.serviceRadius}
-                      onChange={updateFormData}
-                      className="form-control"
-                      placeholder="e.g., 25"
-                      min="0"
-                    />
+                  <div className="row g-3 mb-4">
+                    <div className="col-md-6">
+                      <label className="form-label fw-semibold">Price per hour ($J)</label>
+                      <div className="input-group">
+                        <span className="input-group-text">$</span>
+                        <input
+                          name="hourlyRate"
+                          type="number"
+                          value={formData.hourlyRate}
+                          onChange={updateFormData}
+                          className="form-control"
+                          placeholder="e.g., 5000"
+                          min="0"
+                        />
+                      </div>
+                    </div>
+                    
+                    <div className="col-md-6">
+                      <label className="form-label fw-semibold">Price per day ($J)</label>
+                      <div className="input-group">
+                        <span className="input-group-text">$</span>
+                        <input
+                          name="dailyRate"
+                          type="number"
+                          value={formData.dailyRate}
+                          onChange={updateFormData}
+                          className="form-control"
+                          placeholder="e.g., 30000"
+                          min="0"
+                        />
+                      </div>
+                    </div>
                   </div>
                   
-                  <div className="mb25">
-                    <label className="form-label fw500 dark-color">Website URL (Optional)</label>
+                  <div className="mb-4">
+                    <label className="form-label fw-semibold">How far can you work from your primary location? (km)</label>
+                    <div className="input-group">
+                      <input
+                        name="serviceRadius"
+                        type="number"
+                        value={formData.serviceRadius}
+                        onChange={updateFormData}
+                        className="form-control"
+                        placeholder="e.g., 25"
+                        min="0"
+                      />
+                      <span className="input-group-text">km</span>
+                    </div>
+                  </div>
+                  
+                  <div className="mb-4">
+                    <label className="form-label fw-semibold">Website URL (Optional)</label>
                     <input
                       name="websiteUrl"
                       type="url"
@@ -674,8 +687,8 @@ const toggleCategoryExpansion = (categoryId) => {
                     />
                   </div>
                   
-                  <div className="mb25">
-                    <label className="form-label fw500 dark-color"> Link to your Portfolio (Optional)</label>
+                  <div className="mb-4">
+                    <label className="form-label fw-semibold">Link to your Portfolio (Optional)</label>
                     <input
                       name="portfolioUrl"
                       type="url"
@@ -686,35 +699,35 @@ const toggleCategoryExpansion = (categoryId) => {
                     />
                   </div>
                   
-                  <div className="d-flex justify-content-between">
+                  {/* <div className="d-flex justify-content-between">
                     <button
                       className="ud-btn btn-white"
                       type="button"
                       onClick={prevStep}
                     >
-                      <i className="fal fa-arrow-left-long"></i> Back
+                      <i className="fal fa-arrow-left-long me-2"></i> Back
                     </button>
                     <button
                       className="ud-btn btn-thm default-box-shadow2"
                       type="button"
                       onClick={nextStep}
                     >
-                      Continue <i className="fal fa-arrow-right-long" />
+                      Continue <i className="fal fa-arrow-right-long ms-2" />
                     </button>
-                  </div>
+                  </div> */}
                 </>
               )}
 
-              
-              {/* Step 5: Contact */}
+              {/* Step 6: Contact */}
               {currentStep === 6 && (
                 <>
-                  <div className="mb30">
-                    <h4>Contact Information</h4>
+                  <div className="mb-4">
+                    <h4 className="mb-3">Contact Information</h4>
+                    <p className="text-muted">How clients will reach you</p>
                   </div>
                   
-                  <div className="mb25">
-                    <label className="form-label fw500 dark-color">Phone Number</label>
+                  <div className="mb-4">
+                    <label className="form-label fw-semibold">Phone Number</label>
                     <input
                       name="phone"
                       type="tel"
@@ -728,33 +741,105 @@ const toggleCategoryExpansion = (categoryId) => {
                     <small className="form-text text-muted">Enter a valid phone number (e.g., 8761234567)</small>
                   </div>
                   
-                  <div className="d-flex justify-content-between">
+                  <div className="mb-4">
+                    <div className="form-check">
+                      <input
+                        type="checkbox"
+                        className="form-check-input"
+                        id="agreeTerms"
+                        required
+                      />
+                      <label className="form-check-label" htmlFor="agreeTerms">
+                        I agree to the <a href="/terms" className="text-primary">Terms of Service</a> and <a href="/privacy" className="text-primary">Privacy Policy</a>
+                      </label>
+                    </div>
+                  </div>
+                  
+                  {/* <div className="d-flex justify-content-between">
                     <button
                       className="ud-btn btn-white"
                       type="button"
                       onClick={prevStep}
                     >
-                      <i className="fal fa-arrow-left-long"></i> Back
+                      <i className="fal fa-arrow-left-long me-2"></i> Back
                     </button>
                     <button
                       className="ud-btn btn-thm default-box-shadow2"
                       type="submit"
                     >
-                      Create Account <i className="fal fa-arrow-right-long" />
+                      Create Account <i className="fal fa-arrow-right-long ms-2" />
                     </button>
-                  </div>
+                  </div> */}
                 </>
               )}
               
               {errorMessage && (
-                <p style={{ color: 'red', marginTop: '10px' }}>
+                <div className="alert alert-danger mt-4 rounded-3" role="alert">
+                  <i className="fas fa-exclamation-circle me-2"></i>
                   {errorMessage}
-                </p>
+                </div>
               )}
             </div>
           </div>
         </div>
       </div>
+
+{/* Fixed Bottom Progress Bar with Navigation Buttons */}
+<div className="position-fixed bottom-0 start-0 end-0 bg-white px-3 py-3 border-top zindex-sticky">
+  <div className="container">
+    <div className="row align-items-center">
+      <div className="col-4 text-start">
+        {currentStep > 1 && (
+          <button
+            className="ud-btn btn-white btn-sm"
+            type="button"
+            onClick={prevStep}
+          >
+            <i className="fal fa-arrow-left-long me-2"></i> Back
+          </button>
+        )}
+      </div>
+      
+      <div className="col-4">
+        <div className="progress rounded-pill" style={{ height: '4px', backgroundColor: '#e9ecef' }}>
+          <div
+            className="progress-bar rounded-pill"
+            role="progressbar"
+            style={{
+              width: `${(currentStep / 6) * 100}%`,
+              backgroundColor: '#0d6efd',
+              transition: 'width 0.3s ease'
+            }}
+          />
+        </div>
+        <div className="text-center mt-1">
+          <small className="text-muted">Step {currentStep} of 6</small>
+        </div>
+      </div>
+      
+      <div className="col-4 text-end">
+        {currentStep < 6 ? (
+          <button
+            className="ud-btn btn-thm btn-sm"
+            type="button"
+            onClick={nextStep}
+          >
+            Continue <i className="fal fa-arrow-right-long ms-2"></i>
+          </button>
+        ) : (
+          <button
+            className="ud-btn btn-thm btn-sm"
+            type="submit"
+          >
+            Create Account <i className="fal fa-arrow-right-long ms-2"></i>
+          </button>
+        )}
+      </div>
+    </div>
+  </div>
+</div>
+
     </form>
+    
   )
 }
