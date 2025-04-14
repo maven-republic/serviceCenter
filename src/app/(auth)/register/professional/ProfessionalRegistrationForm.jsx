@@ -175,18 +175,18 @@ export default function ProfessionalRegistrationForm({ errorMessage }) {
   
   return (
     <form onSubmit={currentStep === 6 ? handleSubmit : e => e.preventDefault()}>
-      <div className="container">
-        <div className="row">
+      <div className="container-fluid px-4">
+        {/* <div className="row">
           <div className="col-lg-8 m-auto wow fadeInUp" data-wow-delay="300ms">
             <div className="main-title text-center mb-4">
               <h2 className="title">Create a Professional Account</h2>
               <p className="subtitle mt-2">Join our platform and start offering your services</p>
             </div>
           </div>
-        </div>
+        </div> */}
         
         {/* Progress indicator */}
-        <div className="row mb-4">
+        {/* <div className="row mb-4">
           <div className="col-lg-8 mx-auto">
             <div className="d-flex justify-content-between">
               {['Account', 'Identity', 'Address', 'Services', 'Pricing', 'Contact'].map((step, index) => (
@@ -201,77 +201,145 @@ export default function ProfessionalRegistrationForm({ errorMessage }) {
               ))}
             </div>
           </div>
-        </div>
+        </div> */}
         
         <div className="row">
-          <div className="col-xl-6 mx-auto">
+          <div className="col-12">
             <div className="log-reg-form search-modal form-style1 bgc-white p-4 p-md-5 border-radius-12 default-box-shadow1">
               {/* Step 1: Account */}
+              
               {currentStep === 1 && (
-                <>
-                  <div className="mb-4">
-                    <h4 className="mb-3">Create your professional account</h4>
-                    <p className="text-muted">
-                      Already have an account?{" "}
-                      <Link href="/login" className="text-primary fw-bold">
-                        Log In!
-                      </Link>
-                    </p>
-                  </div>
-                  
-                  <div className="mb-4">
-                    <label className="form-label fw-semibold">Email Address</label>
-                    <input
-                      name="email"
-                      type="email"
-                      value={formData.email}
-                      onChange={updateFormData}
-                      className="form-control"
-                      placeholder="professional@email.com"
-                      required
-                    />
-                  </div>
-                  
-                  <div className="mb-4">
-                    <label className="form-label fw-semibold">Password</label>
-                    <input
-                      name="password"
-                      type="password"
-                      value={formData.password}
-                      onChange={updateFormData}
-                      className="form-control"
-                      placeholder="•••••••••••"
-                      required
-                    />
-                  </div>
-                  
-                  <div className="mb-4">
-                    <label className="form-label fw-semibold">Confirm Password</label>
-                    <input
-                      name="confirmPassword"
-                      type="password"
-                      value={formData.confirmPassword}
-                      onChange={updateFormData}
-                      className="form-control"
-                      placeholder="•••••••••••"
-                      required
-                    />
-                  </div>
-                  
-                  {/* <div className="d-grid mb-3">
-                    <button
-                      className="ud-btn btn-thm default-box-shadow2"
-                      type="button"
-                      onClick={nextStep}
-                    >
-                      Continue <i className="fal fa-arrow-right-long ms-2" />
-                    </button>
-                  </div> */}
-                </>
-              )}
+                  <div className="row">
+                    {/* Left column for text content */}
+                    <div className="col-md-5">
+                      <div className="pe-md-4">
+                        <h4 className="mb-3">Create your professional account</h4>
+                        <p className="text-muted mb-4">
+                          Join our platform to connect with clients looking for your professional services. Setting up your account gives you a presence on our marketplace where customers can discover and hire you.
+                        </p>
+                        <p className="text-muted">
+                          Already have an account?{" "}
+                          <Link href="/login" className="text-primary fw-bold">
+                            Log In!
+                          </Link>
+                        </p>
+                      </div>
+                    </div>
+    
+    {/* Right column for form elements */}
+    <div className="col-md-7">
+      <div className="mb-4">
+        <label className="form-label fw-semibold">Email Address</label>
+        <input
+          name="email"
+          type="email"
+          value={formData.email}
+          onChange={updateFormData}
+          className="form-control"
+          placeholder="professional@email.com"
+          required
+        />
+      </div>
+      
+      <div className="mb-4">
+        <label className="form-label fw-semibold">Password</label>
+        <input
+          name="password"
+          type="password"
+          value={formData.password}
+          onChange={updateFormData}
+          className="form-control"
+          placeholder="•••••••••••"
+          required
+        />
+      </div>
+      
+      <div className="mb-4">
+        <label className="form-label fw-semibold">Confirm Password</label>
+        <input
+          name="confirmPassword"
+          type="password"
+          value={formData.confirmPassword}
+          onChange={updateFormData}
+          className="form-control"
+          placeholder="•••••••••••"
+          required
+        />
+      </div>
+    </div>
+  </div>
+)}
+
+{/* Example of Step 2 with two-column layout */}
+{currentStep === 2 && (
+  <div className="row">
+    {/* Left column for text content */}
+    <div className="col-md-5">
+      <div className="pe-md-4">
+        <h2 className="mb-3">Personal Information</h2>
+        <p className="text-muted mb-3">
+          Tell clients about yourself. 
+          Your personal information helps establish your identity on the platform and builds trust with potential clients.
+        </p>
+        <p className="text-muted mb-3">
+          Your experience level is important as 
+          clients often look for professionals with 
+          specific levels of expertise for their projects.
+        </p>
+      </div>
+    </div>
+    
+    {/* Right column for form elements */}
+    <div className="col-md-7">
+      <div className="mb-4">
+        <label className="form-label fw-semibold">First Name</label>
+        <input
+          name="firstName"
+          type="text"
+          value={formData.firstName}
+          onChange={updateFormData}
+          className="form-control"
+          placeholder="John"
+          required
+        />
+      </div>
+      
+      <div className="mb-4">
+        <label className="form-label fw-semibold">Last Name</label>
+        <input
+          name="lastName"
+          type="text"
+          value={formData.lastName}
+          onChange={updateFormData}
+          className="form-control"
+          placeholder="Smith"
+          required
+        />
+      </div>
+      
+      <div className="mb-4">
+        <label className="form-label fw-semibold">Years of Experience</label>
+        <select
+          name="experience"
+          value={formData.experience}
+          onChange={updateFormData}
+          className="form-select"
+          required
+        >
+          <option value="">Select years of experience</option>
+          <option value="0">Less than 1 year</option>
+          {[...Array(15)].map((_, i) => (
+            <option key={i+1} value={i+1}>{i+1} year{i !== 0 ? 's' : ''}</option>
+          ))}
+          <option value="15+">More than 15 years</option>
+        </select>
+      </div>
+    </div>
+  </div>
+)}
               
               {/* Step 2: Profile */}
-              {currentStep === 2 && (
+              {/* {currentStep === 2 && (
                 <>
                   <div className="mb-4">
                     <h4 className="mb-3">Personal Information</h4>
@@ -302,8 +370,8 @@ export default function ProfessionalRegistrationForm({ errorMessage }) {
                       placeholder="Smith"
                       required
                     />
-                  </div>
-                  
+                  </div> */}
+{/*                   
                   <div className="mb-4">
                     <label className="form-label fw-semibold">Years of Experience</label>
                     <select
@@ -321,7 +389,7 @@ export default function ProfessionalRegistrationForm({ errorMessage }) {
                       <option value="15+">More than 15 years</option>
                     </select>
                   </div>
-                  
+                   */}
                   {/* <div className="d-flex justify-content-between">
                     <button
                       className="ud-btn btn-white"
@@ -338,16 +406,22 @@ export default function ProfessionalRegistrationForm({ errorMessage }) {
                       Continue <i className="fal fa-arrow-right-long ms-2" />
                     </button>
                   </div> */}
-                </>
-              )}
+                {/* </> */}
+              {/* // )} */}
               
               {currentStep === 3 && (
                 <>
+            <div className="row">
+                <div className="col-md-5">
+
                   <div className="mb-4">
                     <h4 className="mb-3">Address Information</h4>
                     <p className="text-muted">Provide your primary address details</p>
                   </div>
-                  
+                </div>
+
+                  <div className="col-md-7">
+
                   <div className="mb-4">
                     <label className="form-label fw-semibold">Street Address</label>
                     <input
@@ -445,6 +519,9 @@ export default function ProfessionalRegistrationForm({ errorMessage }) {
                       </label>
                     </div>
                   </div>
+                  </div>
+
+                  </div>
                   
                   {/* <div className="d-flex justify-content-between">
                     <button
@@ -468,12 +545,28 @@ export default function ProfessionalRegistrationForm({ errorMessage }) {
               {/* The services step */}
               {currentStep === 4 && (
                 <>
-                  <div className="mb-4">
-                    <h4 className="mb-3">Select Your Services</h4>
-                    <p className="text-muted">Choose the services you offer to customers</p>
+
+                <div className='row'>
+
+                  <div className='col-md-5'>
+
+            
+                  <div className="pe-mb-4">
+                    <h2 className="mb-3">Select Your Services</h2>
+                    <p className="text-muted mb-3">Choose the services you offer to customers</p>
+                    <p className="text-muted mb-3">
+          Your service selections will determine which job opportunities are shown to you and help clients find you when searching for specific services.
+        </p>
+
                   </div>
                   
+                  </div>
                   {/* Search box */}
+
+                  <div className='col-md-7'>
+
+                    
+              
                   <div className="mb-4">
                     <div className="input-group">
                       <span className="input-group-text bg-transparent border-end-0">
@@ -488,7 +581,40 @@ export default function ProfessionalRegistrationForm({ errorMessage }) {
                       />
                     </div>
                   </div>
-                  
+                   {/* Selected services summary */}
+                   {formData.services.length > 0 && (
+                    <div className="mt-4 p-3 border rounded-3 bg-light mb-4">
+                      <h5 className="mb-3">Selected Services ({formData.services.length})</h5>
+                      <div className="row g-2">
+                        {formData.services.map(serviceId => {
+                          const service = services.find(s => s.service_id === serviceId);
+                          if (!service) return null;
+                          
+                          return (
+                            <div className="col-md-6 mb-2" key={serviceId}>
+                              <div className="d-flex align-items-center p-2 border rounded bg-white">
+                                <span className="badge bg-primary rounded-circle me-2">
+                                  <i className="fas fa-check"></i>
+                                </span>
+                                <span className="text-truncate flex-grow-1">{service.name}</span>
+                                <button 
+                                  type="button" 
+                                  className="btn btn-sm btn-link text-danger ms-auto p-0"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    toggleService(serviceId);
+                                  }}
+                                >
+                                  <i className="fas fa-times"></i>
+                                </button>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+
                   {loading ? (
                     <div className="text-center py-5">
                       <div className="spinner-border text-primary" role="status">
@@ -559,44 +685,17 @@ export default function ProfessionalRegistrationForm({ errorMessage }) {
                               </div>
                             </div>
                           </div>
+                          
+      
                         );
+                        
                       })}
+                      
                     </div>
+                    
                   )}
                   
-                  {/* Selected services summary */}
-                  {formData.services.length > 0 && (
-                    <div className="mt-4 p-3 border rounded-3 bg-light mb-4">
-                      <h5 className="mb-3">Selected Services ({formData.services.length})</h5>
-                      <div className="row g-2">
-                        {formData.services.map(serviceId => {
-                          const service = services.find(s => s.service_id === serviceId);
-                          if (!service) return null;
-                          
-                          return (
-                            <div className="col-md-6 mb-2" key={serviceId}>
-                              <div className="d-flex align-items-center p-2 border rounded bg-white">
-                                <span className="badge bg-primary rounded-circle me-2">
-                                  <i className="fas fa-check"></i>
-                                </span>
-                                <span className="text-truncate flex-grow-1">{service.name}</span>
-                                <button 
-                                  type="button" 
-                                  className="btn btn-sm btn-link text-danger ms-auto p-0"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    toggleService(serviceId);
-                                  }}
-                                >
-                                  <i className="fas fa-times"></i>
-                                </button>
-                              </div>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  )}
+                 
                   
                   {/* <div className="d-flex justify-content-between">
                     <button
@@ -614,17 +713,35 @@ export default function ProfessionalRegistrationForm({ errorMessage }) {
                       Continue <i className="fal fa-arrow-right-long ms-2" />
                     </button>
                   </div> */}
+                                          </div>
+
+                        </div>
                 </>
+                
               )}
 
               {/* Step 5: Price */}
               {currentStep === 5 && (
                 <>
+                <div className='row'>
+
+                  <div className='col-md-5'>
+
+                 
                   <div className="mb-4">
                     <h4 className="mb-3">How do you price your services?</h4>
                     <p className="text-muted">Set your preferred rates and service area</p>
                   </div>
+                  </div>
                   
+
+
+                  <div className='col-md-7'>
+
+
+
+
+
                   <div className="row g-3 mb-4">
                     <div className="col-md-6">
                       <label className="form-label fw-semibold">Price per hour ($J)</label>
@@ -674,6 +791,9 @@ export default function ProfessionalRegistrationForm({ errorMessage }) {
                       <span className="input-group-text">km</span>
                     </div>
                   </div>
+
+                  </div>
+
                   
                   {/* <div className="mb-4">
                     <label className="form-label fw-semibold">Website URL (Optional)</label>
@@ -715,17 +835,32 @@ export default function ProfessionalRegistrationForm({ errorMessage }) {
                       Continue <i className="fal fa-arrow-right-long ms-2" />
                     </button>
                   </div> */}
+
+</div>
                 </>
+                
               )}
 
               {/* Step 6: Contact */}
               {currentStep === 6 && (
+
                 <>
+<div className='row'>
+                <div className='col-md-5'>
+
+
+             
                   <div className="mb-4">
                     <h4 className="mb-3">Contact Information</h4>
                     <p className="text-muted">How clients will reach you</p>
                   </div>
-                  
+
+                  </div>
+
+                  <div className='col-md-7'>
+
+
+               
                   <div className="mb-4">
                     <label className="form-label fw-semibold">Phone Number</label>
                     <input
@@ -740,6 +875,7 @@ export default function ProfessionalRegistrationForm({ errorMessage }) {
                     />
                     <small className="form-text text-muted">Enter a valid phone number (e.g., 8761234567)</small>
                   </div>
+
                   
                   <div className="mb-4">
                     <div className="form-check">
@@ -753,6 +889,8 @@ export default function ProfessionalRegistrationForm({ errorMessage }) {
                         I agree to the <a href="/terms" className="text-primary">Terms of Service</a> and <a href="/privacy" className="text-primary">Privacy Policy</a>
                       </label>
                     </div>
+                  </div>
+
                   </div>
                   
                   {/* <div className="d-flex justify-content-between">
@@ -770,6 +908,7 @@ export default function ProfessionalRegistrationForm({ errorMessage }) {
                       Create Account <i className="fal fa-arrow-right-long ms-2" />
                     </button>
                   </div> */}
+                  </div>
                 </>
               )}
               
