@@ -31,6 +31,11 @@ export default function ProfessionalRegistrationForm({ errorMessage }) {
     landmark: '',
     isRural: false
   })
+  const [errors, setErrors] = useState({
+    email: '',
+    password: '',
+    confirmPassword: ''
+  });
 
   // For services and categories data
   const [categories, setCategories] = useState([])
@@ -101,7 +106,43 @@ export default function ProfessionalRegistrationForm({ errorMessage }) {
   const updateFormData = (e) => {
     const { name, value } = e.target
     setFormData(prev => ({ ...prev, [name]: value }))
+    // Add validation logic
+  if (name === 'email') {
+    setErrors(prev => ({ ...prev, email: validateEmail(value) }));
+  } 
+  else if (name === 'password') {
+    setErrors(prev => ({ 
+      ...prev, 
+      password: validatePassword(value),
+      ...(formData.confirmPassword && {
+        confirmPassword: validateConfirmPassword(value, formData.confirmPassword)
+      })
+    }));
   }
+  else if (name === 'confirmPassword') {
+    setErrors(prev => ({ 
+      ...prev, 
+      confirmPassword: validateConfirmPassword(formData.password, value) 
+    }));
+  }
+  }
+
+  const handleBlur = (e) => {
+    const { name, value } = e.target;
+    
+    if (name === 'email') {
+      setErrors(prev => ({ ...prev, email: validateEmail(value) }));
+    } 
+    else if (name === 'password') {
+      setErrors(prev => ({ ...prev, password: validatePassword(value) }));
+    }
+    else if (name === 'confirmPassword') {
+      setErrors(prev => ({ 
+        ...prev, 
+        confirmPassword: validateConfirmPassword(formData.password, value) 
+      }));
+    }
+  };
 
   // Handle service selection
   const toggleService = (serviceId) => {
@@ -131,7 +172,94 @@ export default function ProfessionalRegistrationForm({ errorMessage }) {
     })
   }
 
-  const nextStep = () => setCurrentStep(prev => prev + 1)
+  const validateEmail = (email) => {
+    const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!email) return 'Please enter an email';
+    if (!regex.test(email)) return 'Please enter a valid email address';
+    return '';
+  };
+  
+  // const validatePassword = (password) => {
+  //   if (!password) return 'Password is required';
+  //   if (password.length < 8) return 'Password must be at least 8 characters long';
+  //   return '';
+  // };
+
+  const validatePassword = (password) => {
+    if (!password) return 'Password is required';
+    
+    const errors = [];
+    
+    // Check length
+    if (password.length < 8) {
+      errors.push('Be at least 8 characters long');
+    }
+    
+    // Check for uppercase
+    if (!/[A-Z]/.test(password)) {
+      errors.push('Include at least one uppercase letter');
+    }
+    
+    // Check for lowercase
+    if (!/[a-z]/.test(password)) {
+      errors.push('Include at least one lowercase letter');
+    }
+    
+    // Check for numbers
+    if (!/[0-9]/.test(password)) {
+      errors.push('Include at least one number');
+    }
+    
+    // Check for special characters
+    if (!/[^A-Za-z0-9]/.test(password)) {
+      errors.push('Include at least one special character');
+    }
+    
+    // Check for common patterns
+    if (/^(?:abc|123|qwerty|password|admin|welcome|letmein)/i.test(password)) {
+      errors.push('Avoid commonly used password patterns');
+    }
+    
+    return errors.length > 0 
+      ? `Your password must: ${errors.join(', ')}`
+      : '';
+  };
+  
+  const validateConfirmPassword = (password, confirmPassword) => {
+    if (!confirmPassword) return 'Please confirm your password';
+    if (password !== confirmPassword) return 'Passwords do not match';
+    return '';
+  };
+
+  const nextStep = () => {
+
+    if(currentStep === 1) {
+       // Validate all step 1 fields
+    const emailError = validateEmail(formData.email);
+    const passwordError = validatePassword(formData.password);
+    const confirmPasswordError = validateConfirmPassword(
+      formData.password, 
+      formData.confirmPassword
+    );
+    
+    // Update all errors
+    setErrors({
+      ...errors,
+      email: emailError,
+      password: passwordError,
+      confirmPassword: confirmPasswordError
+    });
+    
+    // Only proceed if there are no errors
+    if (!emailError && !passwordError && !confirmPasswordError) {
+      setCurrentStep(prev => prev + 1);
+    }
+  } else {
+    // For other steps
+    setCurrentStep(prev => prev + 1);
+  }
+    
+  }
   const prevStep = () => setCurrentStep(prev => prev - 1)
 
   const handleSubmit = async (e) => {
@@ -231,41 +359,61 @@ export default function ProfessionalRegistrationForm({ errorMessage }) {
       <div className="mb-4">
         <label className="form-label fw-semibold">Email Address</label>
         <input
-          name="email"
-          type="email"
-          value={formData.email}
-          onChange={updateFormData}
-          className="form-control"
-          placeholder="professional@email.com"
-          required
-        />
+    name="email"
+    type="email"
+    value={formData.email}
+    onChange={updateFormData}
+    onBlur={handleBlur}
+    className={`form-control ${errors.email ? 'is-invalid' : formData.email ? 'is-valid' : ''}`}
+    placeholder="professional@email.com"
+    required
+    aria-describedby="emailFeedback"
+  />
+  {errors.email && (
+    <div id="emailFeedback" className="invalid-feedback">
+      {errors.email}
+    </div>
+  )}
       </div>
       
       <div className="mb-4">
-        <label className="form-label fw-semibold">Password</label>
-        <input
-          name="password"
-          type="password"
-          value={formData.password}
-          onChange={updateFormData}
-          className="form-control"
-          placeholder="•••••••••••"
-          required
-        />
-      </div>
-      
-      <div className="mb-4">
-        <label className="form-label fw-semibold">Confirm Password</label>
-        <input
-          name="confirmPassword"
-          type="password"
-          value={formData.confirmPassword}
-          onChange={updateFormData}
-          className="form-control"
-          placeholder="•••••••••••"
-          required
-        />
-      </div>
+  <label className="form-label fw-semibold">Password</label>
+  <input
+    name="password"
+    type="password"
+    value={formData.password}
+    onChange={updateFormData}
+    onBlur={handleBlur}
+    className={`form-control ${errors.password ? 'is-invalid' : formData.password ? 'is-valid' : ''}`}
+    placeholder="•••••••••••"
+    required
+    aria-describedby="passwordFeedback"
+  />
+  {errors.password && (
+    <div id="passwordFeedback" className="invalid-feedback">
+      {errors.password}
+    </div>
+  )}
+</div>
+<div className="mb-4">
+  <label className="form-label fw-semibold">Confirm Password</label>
+  <input
+    name="confirmPassword"
+    type="password"
+    value={formData.confirmPassword}
+    onChange={updateFormData}
+    onBlur={handleBlur}
+    className={`form-control ${errors.confirmPassword ? 'is-invalid' : formData.confirmPassword ? 'is-valid' : ''}`}
+    placeholder="•••••••••••"
+    required
+    aria-describedby="confirmPasswordFeedback"
+  />
+  {errors.confirmPassword && (
+    <div id="confirmPasswordFeedback" className="invalid-feedback">
+      {errors.confirmPassword}
+    </div>
+  )}
+</div>
     </div>
   </div>
 )}
