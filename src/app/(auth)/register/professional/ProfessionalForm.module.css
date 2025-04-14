@@ -29,16 +29,15 @@
 }
 
 .stepIndicator:not(:last-child):after {
-  content: '';
+  /* content: '';
   position: absolute;
   top: 50%;
   right: -10%;
   width: 20%;
-  height: 3px;  /* Slightly thicker line */
+  height: 3px;  
   background-color: #e0e0e0;
-  z-index: -1;
-  transition: background-color 0.3s ease;  /* Smooth transition for line color change */
-}
+  z-index: -1; */
+  transition: background-color 0.3s ease;  }
 
 .stepIndicator.active:not(:last-child):after {
   background-color: #3377ff;
@@ -47,7 +46,7 @@
 .stepIndicator.completed {
   background-color: #e6f0ff;  /* Light blue for completed steps */
   color: #3377ff;
-  border: 1px solid rgba(51, 119, 255, 0.3);
+  /* border: 1px solid rgba(51, 119, 255, 0.3); */
 }
 
 .stepIndicator.completed:not(:last-child):after {
@@ -58,7 +57,7 @@
 .card {
   transition: all 0.2s ease-in-out;
   border-radius: 10px;  /* Rounded corners */
-  border: 1px solid #e7e9ec;  /* Lighter border */
+  /* border: 1px solid #e7e9ec;  Lighter border */
   overflow: hidden;  /* Ensure content respects border radius */
   margin-bottom: 16px;
   background-color: #fff;

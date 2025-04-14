@@ -2,7 +2,7 @@
 import { DM_Sans } from "next/font/google";
 import "./globals.css";
 import { useEffect } from "react";
-import BottomToTop from "@/components/button/BottomToTop";
+// import BottomToTop from "@/components/button/BottomToTop";
 import SearchModal1 from "@/components/modal/SearchModal1";
 import { usePathname } from "next/navigation";
 import toggleStore from "@/store/toggleStore";
@@ -41,7 +41,7 @@ export default function RootLayout({ children }) {
         {children}
 
         {/* bottom to top */}
-        <BottomToTop />
+        {/* <BottomToTop /> */}
 
         {/* sidebar mobile navigation */}
         <NavSidebar />

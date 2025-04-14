@@ -36,15 +36,15 @@ export default function Header20() {
                             </div>
                             <div className="col-auto">
                                 <div className="d-flex align-items-center">
-                                    <Navigation />
-                                    <a
+                                    {/* <Navigation /> */}
+                                    {/* <a
                                         className="login-info bdrl1 pl15-lg pl30"
                                         data-bs-toggle="modal"
                                         href="#exampleModalToggle"
                                     >
                                         <span className="flaticon-loupe" />
-                                    </a>
-                                    <Link
+                                    </a> */}
+                                    {/* <Link
                                         className={`login-info mx15-lg mx30 ${
                                             path === "/become-seller"
                                                 ? "ui-active"
@@ -56,7 +56,7 @@ export default function Header20() {
                                             Become a
                                         </span>{" "}
                                         Seller
-                                    </Link>
+                                    </Link> */}
                                     <Link
                                         className={`login-info mr15-lg mr30 ${
                                             path === "/login" ? "ui-active" : ""
@@ -65,12 +65,12 @@ export default function Header20() {
                                     >
                                         Sign in
                                     </Link>
-                                    <Link
+                                    {/* <Link
                                         className="ud-btn btn-thm add-joining"
                                         href="/register"
                                     >
                                         Join
-                                    </Link>
+                                    </Link> */}
                                 </div>
                             </div>
                         </div>

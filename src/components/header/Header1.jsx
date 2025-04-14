@@ -77,9 +77,9 @@ export default function Header1() {
                                     </Link>
                                     <Link
                                         className="ud-btn btn-white add-joining"
-                                        href="/register"
+                                        href="/register/professional"
                                     >
-                                        Join
+                                        Become a Professional
                                     </Link>
                                 </div>
                             </div>

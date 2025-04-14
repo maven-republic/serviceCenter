@@ -675,7 +675,7 @@ export default function ProfessionalRegistrationForm({ errorMessage }) {
                     </div>
                   </div>
                   
-                  <div className="mb-4">
+                  {/* <div className="mb-4">
                     <label className="form-label fw-semibold">Website URL (Optional)</label>
                     <input
                       name="websiteUrl"
@@ -697,7 +697,7 @@ export default function ProfessionalRegistrationForm({ errorMessage }) {
                       className="form-control"
                       placeholder="https://portfolio.com"
                     />
-                  </div>
+                  </div> */}
                   
                   {/* <div className="d-flex justify-content-between">
                     <button
@@ -813,7 +813,7 @@ export default function ProfessionalRegistrationForm({ errorMessage }) {
           />
         </div>
         <div className="text-center mt-1">
-          <small className="text-muted">Step {currentStep} of 6</small>
+          <small className="text-muted"> {currentStep} of 6</small>
         </div>
       </div>
       
