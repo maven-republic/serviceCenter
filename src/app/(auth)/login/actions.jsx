@@ -1,47 +1,36 @@
 'use server'
 
-//import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { useLoaderStore } from '@/store/loaderStore'
-// import { useUserStore } from '@/store/userStore'
 import { createClient } from '../../../../utils/supabase/server'
 
 export async function login(formData) {
   const supabase = await createClient()
-  // const { fetchUser } = useUserStore()
 
   const { startLoading, stopLoading } = useLoaderStore.getState()
 
   startLoading();
-  //Extract email and password from form data
+  
+  // Extract email and password from form data
   const userEmail = formData.get('email')
   const userPassword = formData.get('password')
 
-
   // Validate email and password
   if (!userEmail || !userPassword) {
-   // redirect('/error')
-    redirect ('/login?error=' +encodeURIComponent ('Email and password are required.' ))
+    stopLoading();
+    redirect('/login?error=' + encodeURIComponent('Email and password are required.'))
   }
 
-
-  //Sign in user with email and password
+  // Sign in user with email and password
   const { data, error } = await supabase.auth.signInWithPassword({
     email: userEmail,
     password: userPassword,
   })
-  // console.log("data: ", data);
-  // useEffect(() => {
-  //   fetchUser(userId)
-  // }, [userId])
   
-  //debug purposes
-  console.log('Supabase signIn error:', error)
-
- //Handle Error
+  // Handle Error
   if (error) {
-    console.log(error.message);
-    //Displaying Superbass error message
+    console.log('Supabase signIn error:', error.message);
+    stopLoading();
     redirect('/login?error=' + encodeURIComponent(error.message))
   }
 
@@ -59,10 +48,32 @@ export async function login(formData) {
     }
   }
 
-  //revalidate path and redirect to homepage
+  // Fetch the user's primary role
+  const { data: roleData, error: roleError } = await supabase
+    .from('account_role')
+    .select('role_type')
+    .eq('account_id', user.id)
+    .eq('is_primary', true)
+    .single()
+  
+  if (roleError) {
+    console.error('Failed to fetch user role:', roleError)
+    stopLoading();
+    redirect('/login?error=' + encodeURIComponent('Failed to retrieve user role'))
+  }
+
+  // Redirect based on role
   stopLoading();
-  redirect('/dashboard')
+  
+  const role = roleData.role_type
+  switch (role) {
+    case 'customer':
+      redirect('/customer/workspace')
+    case 'professional':
+      redirect('/professional/workspace') 
+    case 'management':
+      redirect('/management/workpace')
+    default:
+      redirect('/not-found') // Fallback for unknown roles
+  }
 }
-
-
- 

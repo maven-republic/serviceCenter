@@ -45,7 +45,7 @@ export default function CustomerRegistrationForm({ errorMessage }) {
         <div className="row">
           <div className="col-lg-6 m-auto wow fadeInUp" data-wow-delay="300ms">
             <div className="main-title text-center">
-              <h2 className="title">Register as a Customer</h2>
+              <h2 className="title">Create an Account</h2>
             </div>
           </div>
         </div>
