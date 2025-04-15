@@ -25,9 +25,9 @@ export async function signupProfessional(formData) {
   const specializations = JSON.parse(formData.get('specializations') || '[]')
   
   // Validation
-  if (password !== confirmPassword) {
-    redirect('/register/professional?error=' + encodeURIComponent('Passwords do not match.'))
-  }
+  // if (password !== confirmPassword) {
+  //   redirect('/register/professional?error=' + encodeURIComponent('Passwords do not match.'))
+  // }
   
   // Sign up the user in Supabase Auth
   const { data, error } = await supabase.auth.signUp({

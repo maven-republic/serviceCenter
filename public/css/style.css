@@ -62,7 +62,7 @@ Tag:  bidding, fiverr, freelance marketplace, freelancers, freelancing, gigs, hi
   /* --icon-font-family: "Font Awesome 6 Pro";
   --icon-font-family2: "Flaticon"; */
   --container-width: 1460px;
-  --divder-space: 200px;
+  --divider-space: 200px;
   --headings-color: #222222;
   --body-text-color: #6b7177;
 }
@@ -7098,14 +7098,14 @@ textarea {
   color: var(--headings-color);
   font-family: var(--title-font-family);
   font-size: 16px;
-  height: 40px;
+  /* height: 40px; */
   left: 0;
   letter-spacing: 0em;
   line-height: 40px;
   margin: 0 auto;
   right: 0;
   text-align: center;
-  top: -5px;
+  /* top: -5px; */
   width: 40px;
   position: absolute;
 }
