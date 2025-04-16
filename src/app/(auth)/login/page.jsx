@@ -25,7 +25,6 @@ export default async function page({searchParams}) {
       switch (roleData.role_type) {
         case 'customer':
           redirect('/customer/workspace')
-        case 'service_provider':
         case 'professional':
           redirect('/professional/workspace')
         case 'admin':
