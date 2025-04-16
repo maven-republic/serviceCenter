@@ -61,7 +61,7 @@ export async function signupCustomer(formData) {
 
   // Create phone record
   const { error: phoneError } = await supabase
-    .from('contact_number')
+    .from('phone')
     .insert([{
       account_id: userId,
       phone_type: 'mobile',

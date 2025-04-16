@@ -1,10 +1,10 @@
 "use client";
 import { logout } from "@/app/(auth)/logout/actions";
-import { customerNavigation } from "@/data/dashboard";
+import { professionalNavigation } from "@/data/dashboard";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-export default function CustomerSideNavigation() {
+export default function DashboardSidebar() {
   const path = usePathname();
 
   return (
@@ -12,8 +12,24 @@ export default function CustomerSideNavigation() {
       <div className="dashboard__sidebar d-none d-lg-block">
         <div className="dashboard_sidebar_list">
           <p className="fz15 fw400 ff-heading pl30">Start</p>
-          {customerNavigation.slice(0, 1).map((item, i) => (
-            <div key={i} className="sidebar_list_item mb-1">
+          {professionalNavigation.slice(0, 8).map((item,i) => (
+            <div key={ i } className="sidebar_list_item mb-1">
+              <Link
+                href={item.path}
+                className={`items-center ${
+                  path === item.path ? "-is-active" : ""
+                }`}
+              >
+                <i className={`${item.icon} mr15`} />
+                {item.name}
+              </Link>
+            </div>
+          ))}
+
+          <p className="fz15 fw400 ff-heading pl30 mt30">Organize and Manage</p>
+
+          {professionalNavigation.slice(8, 13).map((item,i) => (
+            <div key={ i } className="sidebar_list_item mb-1">
               <Link
                 href={item.path}
                 className={`items-center ${
@@ -27,26 +43,12 @@ export default function CustomerSideNavigation() {
           ))}
 
           <p className="fz15 fw400 ff-heading pl30 mt30">Account</p>
-          {customerNavigation.slice(1, 2).map((item, i) => (
-            <div key={i} className="sidebar_list_item mb-1">
-              <Link
-                href={item.path}
-                className={`items-center ${
-                  path === item.path ? "-is-active" : ""
-                }`}
-              >
-                <i className={`${item.icon} mr15`} />
-                {item.name}
-              </Link>
-            </div>
-          ))}
-          
-          <p className="fz15 fw400 ff-heading pl30 mt30">Settings</p>
-          {customerNavigation.slice(2, 3).map((item, i) => (
-            <div key={i} className="sidebar_list_item mb-1">
-              {item.name === "Logout" ? (
+          {professionalNavigation.slice(13, 15).map((item,i) => (
+            <div key={ i } className="sidebar_list_item mb-1">
+              {
+                item.name === "Logout" ? 
                 <form className="sidebar_list_item mb-1">
-                  <button
+                  <button 
                     className={`items-center ${
                       path === item.path ? "-is-active" : ""
                     }`}
@@ -56,17 +58,19 @@ export default function CustomerSideNavigation() {
                     {item.name}
                   </button>
                 </form>
-              ) : (
+                :
                 <Link
                   href={item.path}
                   className={`items-center ${
                     path === item.path ? "-is-active" : ""
                   }`}
+                  formAction={logout}
                 >
                   <i className={`${item.icon} mr15`} />
                   {item.name}
                 </Link>
-              )}
+              }
+              
             </div>
           ))}
         </div>

@@ -1,5 +1,28 @@
 
+export const customerNavigation = [
 
+  {
+    id: 1,
+    name: "Analytics",
+    icon: "flaticon-home",
+    path: "/customer/workspace",
+  },
+
+  {
+    id: 2,
+    name: "Account Information",
+    icon: "flaticon-photo",
+    path: "/customer/account-information",
+  },
+  
+  {
+    id: 3,
+    name: "Logout",
+    icon: "flaticon-logout",
+    path: "/login",
+  },
+
+]
 
 export const professionalNavigation = [
   {

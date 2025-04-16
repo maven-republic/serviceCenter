@@ -6,7 +6,7 @@
 import React from 'react'
 
 // Make sure you have a default export that is a valid React component
-export default function WorkspacePage() {
+export default function WorkspaceInterface() {
   return (
     <div>
       <h1>Workspace</h1>
