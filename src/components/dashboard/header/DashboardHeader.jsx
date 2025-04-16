@@ -1,5 +1,5 @@
 "use client";
-import { dasboardNavigation } from "@/data/dashboard";
+import { professionalNavigation } from "@/data/dashboard";
 import toggleStore from "@/store/toggleStore";
 import Image from "next/image";
 import Link from "next/link";
@@ -285,7 +285,7 @@ export default function DashboardHeader() {
                             <p className="fz15 fw400 ff-heading mb10 pl30">
                               Start
                             </p>
-                            {dasboardNavigation.slice(0, 8).map((item,i) => (
+                            {professionalNavigation.slice(0, 8).map((item,i) => (
                               <Link
                                 key={i}
                                 className={`dropdown-item ${
@@ -300,7 +300,7 @@ export default function DashboardHeader() {
                             <p className="fz15 fw400 ff-heading mt30 pl30">
                               Organize and Manage
                             </p>
-                            {dasboardNavigation.slice(8, 13).map((item,i) => (
+                            {professionalNavigation.slice(8, 13).map((item,i) => (
                               <Link
                                 key={i}
                                 className={`dropdown-item ${
@@ -315,7 +315,7 @@ export default function DashboardHeader() {
                             <p className="fz15 fw400 ff-heading mt30 pl30">
                               Account
                             </p>
-                            {dasboardNavigation.slice(13, 15).map((item,i) => (
+                            {professionalNavigation.slice(13, 15).map((item,i) => (
                               <Link
                                 key={i}
                                 className={`dropdown-item ${
