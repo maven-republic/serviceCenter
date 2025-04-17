@@ -16,7 +16,7 @@ export default function DashboardInfo() {
           </div>
           <div className="col-lg-12">
             <div className="dashboard_title_area">
-              <h2>Dashboard</h2>
+              <h2>Analytics</h2>
               <p className="text">Lorem ipsum dolor sit amet, consectetur.</p>
             </div>
           </div>

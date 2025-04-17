@@ -83,7 +83,7 @@ export default function CustomerAccountInformation() {
                 width: "71px",
                 objectFit: "cover",
               }}
-              alt="profile"
+              alt="Headshot of Customer"
             />
           </div>
         </div>

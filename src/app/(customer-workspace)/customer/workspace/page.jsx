@@ -1,16 +1,25 @@
-// app/(customer-workspace)/customer/workspace/page.jsx
+import GlobalSearch from '@/components/customer-workspace/element/GlobalSearch';
+import CustomerWorkspaceStructure from '@/components/customer-workspace/CustomerWorkspaceStructure';
 
-// If you're using a client component
-'use client'
 
-import React from 'react'
-
-// Make sure you have a default export that is a valid React component
-export default function WorkspaceInterface() {
+export default function CustomerWorkspaceInterface() {
   return (
-    <div>
-      <h1>Workspace</h1>
-      {/* Your page content here */}
+    <div className="dashboard__content">
+      <div className="row">
+        <div className="col-xl-12">
+          <h2 className="mb-4">Find Services</h2>
+          
+          <div className="dashboard_card">
+            <div className="dashboard_card_body">
+              <div className="w-full max-w-xl mx-4">
+                <GlobalSearch />
+              </div>
+              
+              <CustomerWorkspaceStructure />
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
-  )
+  );
 }

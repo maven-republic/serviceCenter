@@ -5,7 +5,7 @@ import DashboardLayout from "@/components/professional-workspace/DashboardLayout
 import MobileNavigation2 from "@/components/header/MobileNavigation2"
 
 export const metadata = {
-  title: "Freeio - Professional Workspace",
+  title: "Professional Workspace",
 };
 
 export default async function WorkspaceLayout({ children }) {

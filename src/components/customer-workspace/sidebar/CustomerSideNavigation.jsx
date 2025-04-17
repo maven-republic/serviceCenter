@@ -11,7 +11,7 @@ export default function CustomerSideNavigation() {
     <>
       <div className="dashboard__sidebar d-none d-lg-block">
         <div className="dashboard_sidebar_list">
-          <p className="fz15 fw400 ff-heading pl30">Start</p>
+          <p className="fz15 fw400 ff-heading pl30">Workspace</p>
           {customerNavigation.slice(0, 1).map((item, i) => (
             <div key={i} className="sidebar_list_item mb-1">
               <Link
@@ -27,7 +27,7 @@ export default function CustomerSideNavigation() {
           ))}
 
           <p className="fz15 fw400 ff-heading pl30 mt30">Account</p>
-          {customerNavigation.slice(1, 2).map((item, i) => (
+          {/* {customerNavigation.slice(1, 2).map((item, i) => (
             <div key={i} className="sidebar_list_item mb-1">
               <Link
                 href={item.path}
@@ -39,10 +39,10 @@ export default function CustomerSideNavigation() {
                 {item.name}
               </Link>
             </div>
-          ))}
+          ))} */}
           
           <p className="fz15 fw400 ff-heading pl30 mt30">Settings</p>
-          {customerNavigation.slice(2, 3).map((item, i) => (
+          {customerNavigation.slice(3, 4).map((item, i) => (
             <div key={i} className="sidebar_list_item mb-1">
               {item.name === "Logout" ? (
                 <form className="sidebar_list_item mb-1">

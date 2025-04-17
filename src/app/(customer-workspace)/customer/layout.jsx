@@ -1,7 +1,7 @@
 // app/(professional-workspace)/professional/workspace/layout.jsx
 import { redirect } from 'next/navigation'
 import { createClient } from '../../../../utils/supabase/server'
-import CustomerWorkspaceLayout from "@/components/customer-workspace/CustomerWorkspaceLayout"
+import CustomerWorkspaceStructure from "@/components/customer-workspace/CustomerWorkspaceStructure"
 import MobileNavigation2 from "@/components/header/MobileNavigation2"
 
 export const metadata = {
@@ -31,9 +31,9 @@ export default async function WorkspaceLayout({ children }) {
   return (
     <>
       <MobileNavigation2 />
-      <CustomerWorkspaceLayout>
+      <CustomerWorkspaceStructure>
         {children}
-      </CustomerWorkspaceLayout>
+      </CustomerWorkspaceStructure>
     </>
   );
 }

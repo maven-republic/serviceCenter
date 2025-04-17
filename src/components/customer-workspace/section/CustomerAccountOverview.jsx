@@ -29,7 +29,7 @@ export default function CustomerAccountOverview() {
       <div className="dashboard__content hover-bgc-color">
         <div className="row pb40">
           <div className="col-lg-12">
-            <CustomerNavigation />
+            {/* <CustomerNavigation /> */}
           </div>
           <div className="col-lg-9">
             <div className="dashboard_title_area">
