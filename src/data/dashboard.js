@@ -1,39 +1,42 @@
-
-export const customerNavigation = [
-
-  {
-    id: 1,
-    name: 'Search',
-    icon: 'flaticon-document',
-    path: "/customer/workspace",
-
-  },
-
-  {
-    id: 2,
-    name: "Analytics",
-    icon: "flaticon-home",
-    path: "/customer/analytics",
-  },
-
-
-
-  {
-    id: 3,
-    name: "Account Information",
-    icon: "flaticon-photo",
-    path: "/customer/account-information",
-  },
-  
-  {
-    id: 4,
-    name: "Logout",
-    icon: "flaticon-logout",
-    path: "/login",
-  },
-
- 
-]
+// Updated navigation data structure with items grouped by section
+export const customerNavigation = {
+  workspace: [
+    {
+      id: 1,
+      name: 'Search',
+      icon: 'flaticon-document',
+      path: "/customer/workspace",
+    },
+    {
+      id: 4,
+      name: "Explore",
+      icon: "flaticon-photo",
+      path: "/customer/explore",
+    }
+  ],
+  account: [
+    {
+      id: 2,
+      name: "Analytics",
+      icon: "flaticon-home",
+      path: "/customer/analytics",
+    },
+    {
+      id: 3,
+      name: "Account Information",
+      icon: "flaticon-photo",
+      path: "/customer/account-information",
+    }
+  ],
+  settings: [
+    {
+      id: 5,
+      name: "Logout",
+      icon: "flaticon-logout",
+      path: "/login",
+    }
+  ]
+};
 
 export const professionalNavigation = [
   {

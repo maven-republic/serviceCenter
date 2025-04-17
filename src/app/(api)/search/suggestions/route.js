@@ -65,7 +65,7 @@ export async function GET(request) {
       term: term.search_term
     })),
     ...(professionals || []).map(pro => ({ 
-      type: 'provider', 
+      type: 'professional', 
       id: pro.professional_id, 
       name: `${pro.account.first_name} ${pro.account.last_name}` 
     }))
