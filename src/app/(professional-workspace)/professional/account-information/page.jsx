@@ -1,5 +1,5 @@
 // app/(professional-workspace)/professional/account-information/page.jsx
-import ProfessionalAccountOverview from "@/components/dashboard/section/ProfessionalAccountOverview";
+import ProfessionalAccountOverview from "@/components/professional-workspace/section/ProfessionalAccountOverview";
 
 export const metadata = {
   title: "Get paid for exceptional work",

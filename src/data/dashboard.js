@@ -4,13 +4,13 @@ export const customerNavigation = {
     {
       id: 1,
       name: 'Search',
-      icon: 'flaticon-document',
+      icon: 'flaticon-search',
       path: "/customer/workspace",
     },
     {
       id: 4,
       name: "Explore",
-      icon: "flaticon-photo",
+      icon: "flaticon-rocket",
       path: "/customer/explore",
     }
   ],
