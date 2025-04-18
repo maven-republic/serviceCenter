@@ -19,10 +19,10 @@ export default function page() {
     return (
         <>
             <Header20 />
-            <Breadcumb2
+            {/* <Breadcumb2
                 title="About"
                 brief="Give your visitor a smooth online experience with a solid UX design"
-            />
+            /> */}
 
             <About5 />
             <CounterInfo1 />

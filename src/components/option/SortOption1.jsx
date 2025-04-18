@@ -14,7 +14,7 @@ export default function SortOption1() {
 
   const getBestSellerSelected = bestSeller.find((item) =>
     item.value === getBestSeller ? item : false,
-  );
+  ) || bestSeller[0]; // Fallback to first item ("All")
 
   return (
     <>

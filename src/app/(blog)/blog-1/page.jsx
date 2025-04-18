@@ -12,7 +12,7 @@ export default function page() {
     return (
         <>
             <Header20 />
-            <Breadcumb3 />
+            {/* <Breadcumb3 /> */}
             <BlogArea1 />
             <Footer />
         </>

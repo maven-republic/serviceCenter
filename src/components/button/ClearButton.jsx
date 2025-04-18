@@ -34,49 +34,48 @@ export default function ClearButton() {
   const getJobType = listingStore((state) => state.getJobType);
   const getNoOfEmployee = listingStore((state) => state.getNoOfEmployee);
 
-  // clear handler
-  const clearHandler = () => {
-    setDeliveryTime("");
-    setLevel([]);
-    setLocation([]);
-    setBestSeller("best-seller");
-    setDesginTool([]);
-    setSpeak([]);
-    setPriceRange(0, 100000);
-    setSearch("");
-    setCategory([]);
-    setProjectType([]);
-    setEnglishLevel([]);
-    setJobType([]);
-    setNoOfEmployee([]);
-  };
-
+ // clear handler
+const clearHandler = () => {
+  setDeliveryTime("");
+  setLevel([]);
+  setLocation([]);
+  setBestSeller(""); // Change to empty string for "All"
+  setDesginTool([]);
+  setSpeak([]);
+  setPriceRange(0, 100000);
+  setSearch("");
+  setCategory([]);
+  setProjectType([]);
+  setEnglishLevel([]);
+  setJobType([]);
+  setNoOfEmployee([]);
+};
   return (
     <>
-      {getDeliveryTime !== "" ||
-      getLevel?.length !== 0 ||
-      getLocation?.length !== 0 ||
-      getSearch !== "" ||
-      getBestSeller !== "best-seller" ||
-      getDesginTool?.length !== 0 ||
-      getSpeak?.length !== 0 ||
-      getPriceRange.min !== 0 ||
-      getPriceRange.max !== 100000 ||
-      getCategory?.length !== 0 ||
-      getProjectType?.length !== 0 ||
-      getEnglishLevel?.length !== 0 ||
-      getJobType?.length !== 0 ||
-      getNoOfEmployee?.length !== 0 ? (
-        <button
-          onClick={clearHandler}
-          className="ud-btn btn-thm ui-clear-btn w-100"
-        >
-          Clear
-          <i className="fal fa-arrow-right-long"></i>
-        </button>
-      ) : (
-        ""
-      )}
+     {getDeliveryTime !== "" ||
+ getLevel?.length !== 0 ||
+ getLocation?.length !== 0 ||
+ getSearch !== "" ||
+ getBestSeller !== "" ||  // Changed from "best-seller" to ""
+ getDesginTool?.length !== 0 ||
+ getSpeak?.length !== 0 ||
+ getPriceRange.min !== 0 ||
+ getPriceRange.max !== 100000 ||
+ getCategory?.length !== 0 ||
+ getProjectType?.length !== 0 ||
+ getEnglishLevel?.length !== 0 ||
+ getJobType?.length !== 0 ||
+ getNoOfEmployee?.length !== 0 ? (
+   <button
+     onClick={clearHandler}
+     className="ud-btn btn-thm ui-clear-btn w-100"
+   >
+     Clear
+     <i className="fal fa-arrow-right-long"></i>
+   </button>
+ ) : (
+   ""
+ )}
     </>
   );
 }

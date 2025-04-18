@@ -4,7 +4,7 @@ const listingStore = create((set) => ({
   getDeliveryTime: "",
   getLevel: [],
   getLocation: [],
-  getBestSeller: "best-seller",
+  getBestSeller: "",  // Changed from "best-seller" to empty string
   getDesginTool: [],
   getSpeak: [],
   getSearch: "",
@@ -13,6 +13,23 @@ const listingStore = create((set) => ({
   getEnglishLevel: [],
   getJobType: [],
   getNoOfEmployee: [],
+  
+  // Add this new reset function
+  resetAllFilters: () => set(() => ({
+    getDeliveryTime: "",
+    getLevel: [],
+    getLocation: [],
+    getBestSeller: "",
+    getDesginTool: [],
+    getSpeak: [],
+    getSearch: "",
+    getCategory: [],
+    getProjectType: [],
+    getEnglishLevel: [],
+    getJobType: [],
+    getNoOfEmployee: [],
+  })),
+  
   setDeliveryTime: (payload) => set(() => ({ getDeliveryTime: payload })),
   setLevel: (payload) =>
     set((state) => {

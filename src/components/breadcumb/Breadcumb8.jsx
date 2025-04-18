@@ -1,12 +1,12 @@
 "use client";
-import { product1 } from "@/data/product";
+import { service } from "@/data/product";
 import Image from "next/image";
 import { useParams } from "next/navigation";
 
 export default function Breadcumb8() {
   const { id } = useParams();
 
-  const data = product1.find((item) => item.id == id);
+  const data = service.find((item) => item.id == id);
 
   return (
     <>
@@ -37,11 +37,11 @@ export default function Breadcumb8() {
             <div className="row wow fadeInUp">
               <div className="col-xl-7">
                 <div className="position-relative">
-                  {data ? (
+                  {/* {data ? (
                     <h2>{data.title}</h2>
                   ) : (
                     <h2>I will design website UI UX in adobe xd or figma</h2>
-                  )}
+                  )} */}
                   <div className="list-meta mt30">
                     {data ? (
                       <a className="list-inline-item mb5-sm">

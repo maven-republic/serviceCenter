@@ -7,7 +7,7 @@ import {
   InfoWindow,
 } from "@react-google-maps/api";
 import { useMemo, useState } from "react";
-import { product1 } from "@/data/product";
+import { service } from "@/data/product";
 import TrendingServiceCard1 from "../card/TrendingServiceCard1";
 
 const option = {
@@ -217,7 +217,7 @@ export default function ListingMap1() {
         >
           <MarkerClusterer>
             {(clusterer) =>
-              product1.slice(0, 6).map((marker) => (
+              service.slice(0, 6).map((marker) => (
                 <Marker
                   key={marker.id}
                   position={{

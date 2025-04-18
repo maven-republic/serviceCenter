@@ -21,9 +21,10 @@ export const location = [
 ];
 
 export const bestSeller = [
-  { id: 1, title: "Best Seller", value: "best-seller" },
-  { id: 2, title: "Recommended", value: "recommended" },
-  { id: 3, title: "New Arrivals", value: "new-arrivals" },
+  { id: 1, title: "All", value: "", },
+  { id: 2, title: "Best Seller", value: "best-seller" },
+  { id: 3, title: "Recommended", value: "recommended" },
+  { id: 4, title: "New Arrivals", value: "new-arrivals" },
 ];
 
 export const designTools = [
