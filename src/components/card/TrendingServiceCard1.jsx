@@ -35,9 +35,9 @@ export default function TrendingServiceCard1({ data }) {
       >
         <div className="list-thumb">
           <Image
-            height={190}
+            height={320}
             width={255}
-            className="w-100 h-100 object-fit-cover"
+            className="w-100 h-80 object-fit-cover"
             src={data.img}
             alt="thumbnail"
           />
@@ -48,6 +48,30 @@ export default function TrendingServiceCard1({ data }) {
             <span className="far fa-heart" />
           </a>
         </div>
+        <div className="list-meta d-flex justify-content-between align-items-center mt15">
+            <a className="d-flex" href="#">
+              <span className="position-relative mr10">
+                <Image
+                  height={24}
+                  width={24}
+                  className="rounded-circle wa"
+                  src={data.author.img}
+                  alt="Freelancer Photo"
+                />
+                <span className="online-badges" />
+              </span>
+              <span className="fz14">{data.author.name}</span>
+            </a>
+            <div className="budget">
+              {/* <p className="mb-0 body-color"> */}
+                {/* Starting at */}
+                {/* <span className="fz17 fw500 dark-color ms-1"> */}
+                <h4 className="price-display mb-1 fw-bold">${data.price.toLocaleString()}</h4>
+                {/* </span> */}
+              {/* </p> */}
+            </div>
+          </div>
+          
         <div className={`list-content ${path === "/home-8" ? "px-0" : ""}`}>
           <p className="list-text body-color fz14 mb-1">{data.category}</p>
           <h5 className="list-title">
@@ -63,29 +87,7 @@ export default function TrendingServiceCard1({ data }) {
             </p>
           </div>
           <hr className="my-2" />
-          <div className="list-meta d-flex justify-content-between align-items-center mt15">
-            <a className="d-flex" href="#">
-              <span className="position-relative mr10">
-                <Image
-                  height={24}
-                  width={24}
-                  className="rounded-circle wa"
-                  src={data.author.img}
-                  alt="Freelancer Photo"
-                />
-                <span className="online-badges" />
-              </span>
-              <span className="fz14">{data.author.name}</span>
-            </a>
-            <div className="budget">
-              <p className="mb-0 body-color">
-                Starting at
-                <span className="fz17 fw500 dark-color ms-1">
-                  ${data.price}
-                </span>
-              </p>
-            </div>
-          </div>
+          
         </div>
       </div>
     </>

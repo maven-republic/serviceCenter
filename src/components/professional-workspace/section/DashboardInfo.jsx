@@ -1,4 +1,4 @@
-import { product1 } from "@/data/product";
+import { service } from "@/data/product";
 import MostViewServiceCard1 from "../card/MostViewServiceCard1";
 import DoughnutChart from "../chart/DoughnutChart";
 import LineChart from "../chart/LineChart";
@@ -95,10 +95,10 @@ export default function DashboardInfo() {
                 <a className="text-decoration-underline text-thm6">View All</a>
               </div>
               <div className="dashboard-img-service">
-                {product1.slice(0, 3).map((item, i) => (
+                {service.slice(0, 3).map((item, i) => (
                   <div key={i}>
                     <MostViewServiceCard1 data={item} />
-                    {product1.slice(0, 3).length !== i + 1 && (
+                    {service.slice(0, 3).length !== i + 1 && (
                       <hr className="opacity-100 mt-0" />
                     )}
                   </div>
@@ -116,7 +116,7 @@ export default function DashboardInfo() {
                 {job1.slice(0, 3).map((item, i) => (
                   <div key={i}>
                     <RecentServiceCard1 data={item} />
-                    {product1.slice(0, 3).length !== i + 1 && (
+                    {service.slice(0, 3).length !== i + 1 && (
                       <hr className="opacity-100 mt-0" />
                     )}
                   </div>

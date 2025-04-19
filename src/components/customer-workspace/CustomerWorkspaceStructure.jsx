@@ -8,6 +8,7 @@ import { useEffect } from "react";
 import GlobalSearch from "@/components/customer-workspace/element/GlobalSearch";
 import Link from 'next/link';
 import { Bell, User } from 'lucide-react';
+import Axis from "./header/Axis";
 
 export default function CustomerWorkspaceLayout({ children }) {
   const isActive = toggleStore((state) => state.isDasboardSidebarActive); 
@@ -28,6 +29,7 @@ export default function CustomerWorkspaceLayout({ children }) {
 
   return (
     <>
+    <Axis/>
       {/* Dashboard Header with Search */}
       <header className="bg-white border-b border-gray-200 sticky top-0 z-30">
         <div className="container mx-auto px-4 py-3 flex items-center justify-between">
