@@ -7,7 +7,7 @@ import SpeakOption1 from "../option/SpeakOption1";
 import CategoryOption1 from "../option/Classification";
 import ProjectTypeOption1 from "../option/ProjectTypeOption1";
 import EnglishLevelOption1 from "../option/EnglishLevelOption1";
-import ClearButton from "../button/ClearButton";
+import Undo from "../button/Undo";
 
 export default function ListingSidebarModal2() {
   const listingToggle = toggleStore((state) => state.listingToggleHandler);
@@ -212,7 +212,7 @@ export default function ListingSidebarModal2() {
                   </div>
                 </div>
               </div>
-              <ClearButton />
+              <Undo />
             </div>
           </div>
         </div>

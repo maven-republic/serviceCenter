@@ -6,7 +6,7 @@ import listingStore from "@/store/listingStore";
 import { useEffect, useState } from "react";
 import priceStore from "@/store/priceStore";
 import ReactSlider from "react-slider";
-import ClearButton from "../button/ClearButton";
+import Undo from "../button/Undo";
 import SortOption1 from "../option/SortOption1";
 import Classification from "../option/Classification";
 
@@ -211,7 +211,7 @@ export default function Sift() {
 
 
                 <li className="list-inline-item position-relative d-none d-xl-inline-block">
-                  <ClearButton />
+                  <Undo />
                 </li>
               </ul>
             </div>

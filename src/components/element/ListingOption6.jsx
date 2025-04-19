@@ -6,7 +6,7 @@ import PriceDropdown1 from "../dropdown/PriceDropdown1";
 import LocationDropdown1 from "../dropdown/LocationDropdown1";
 import LevelDropdown1 from "../dropdown/LevelDropdown1";
 import LanguageDropdown1 from "../dropdown/LanguageDropdown1";
-import ClearButton from "../button/ClearButton";
+import Undo from "../button/Undo";
 import toggleStore from "@/store/toggleStore";
 
 export default function ListingOption6() {
@@ -106,7 +106,7 @@ export default function ListingOption6() {
                   </div>
                 </li>
                 <li className="list-inline-item position-relative d-none d-xl-inline-block">
-                  <ClearButton />
+                  <Undo />
                 </li>
               </ul>
             </div>

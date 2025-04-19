@@ -1,4 +1,4 @@
-import ClearButton from "../button/ClearButton";
+import Undo from "../button/Undo";
 import BudgetOption2 from "../option/BudgetOption2";
 import CategoryOption1 from "../option/Classification";
 import JobTypeOption1 from "../option/JobTypeOption1";
@@ -116,7 +116,7 @@ export default function ListingSidebar3() {
             </div>
           </div>
         </div>
-        <ClearButton />
+        <Undo />
       </div>
     </>
   );

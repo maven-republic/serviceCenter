@@ -12746,3 +12746,225 @@ hr {
   font-weight: bold;
   font-family: "Alata", Helvetica, sans-serif;
 }
+/* app/(auth)/register/customer/form-styles.css */
+
+/* Step Animation Transitions */
+.step-content {
+  transition: all 0.3s ease-in-out;
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.step-content.fade-out {
+  opacity: 0;
+  transform: translateX(-20px);
+}
+
+.step-content.fade-in {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+/* Progress Bar Styling */
+.progress-container {
+  margin-bottom: 2rem;
+}
+
+.progress-bar {
+  height: 8px;
+  background-color: #e9ecef;
+  border-radius: 4px;
+  margin-bottom: 10px;
+  position: relative;
+}
+
+.progress-fill {
+  height: 100%;
+  background-color: #3C65F5;
+  border-radius: 4px;
+  transition: width 0.3s ease-in-out;
+}
+
+.progress-steps {
+  display: flex;
+  justify-content: space-between;
+  position: relative;
+}
+
+.progress-step {
+  text-align: center;
+  position: relative;
+  transition: all 0.3s ease;
+}
+
+.progress-step.active .step-circle {
+  background-color: #3C65F5;
+  color: white;
+  border-color: #3C65F5;
+}
+
+.progress-step.active .step-label {
+  color: #3C65F5;
+  font-weight: 600;
+}
+
+.step-circle {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background-color: white;
+  border: 2px solid #dee2e6;
+  color: #6c757d;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 8px;
+  transition: all 0.3s ease;
+}
+
+.step-label {
+  font-size: 14px;
+  color: #6c757d;
+  transition: all 0.3s ease;
+}
+
+/* Floating Label Styling */
+.form-floating {
+  position: relative;
+}
+
+.form-floating > .form-control {
+  padding: 1.5rem 0.75rem 0.5rem;
+  height: calc(3.5rem + 2px);
+}
+
+.form-floating > label {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  padding: 1rem 0.75rem;
+  pointer-events: none;
+  border: 1px solid transparent;
+  transform-origin: 0 0;
+  transition: opacity 0.1s ease-in-out, transform 0.1s ease-in-out;
+}
+
+/* When the field is focused or has content */
+.form-floating > .form-control:focus,
+.form-floating > .form-control.has-value {
+  padding-top: 1.625rem;
+  padding-bottom: 0.625rem;
+}
+
+.form-floating > .form-control:focus ~ label,
+.form-floating > .form-control.has-value ~ label {
+  transform: scale(0.85) translateY(-0.5rem) translateX(0.15rem);
+  opacity: 0.8;
+  color: #3C65F5;
+}
+
+/* For select elements - they behave differently */
+.form-floating > select.form-control {
+  padding-top: 1.625rem;
+  padding-bottom: 0.625rem;
+}
+
+.form-floating > select.form-control ~ label {
+  transform: scale(0.85) translateY(-0.5rem) translateX(0.15rem);
+  opacity: 0.8;
+}
+
+/* Custom styling for the password strength meter */
+.strength-meter {
+  display: flex;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.strength-text {
+  margin-left: 10px;
+  font-size: 14px;
+  transition: color 0.3s ease;
+}
+
+/* Button animation */
+.ud-btn {
+  transition: all 0.3s ease-in-out;
+}
+
+.ud-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1);
+}
+
+.ud-btn:active {
+  transform: translateY(0);
+}
+
+/* Error message fade-in animation */
+.invalid-feedback {
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Make the focus outline more prominent and animated */
+.form-control:focus {
+  box-shadow: 0 0 0 0.25rem rgba(60, 101, 245, 0.25);
+  border-color: #3C65F5;
+  transition: all 0.3s ease;
+}
+
+/* Add subtle hover effect on form fields */
+.form-control:hover:not(:focus) {
+  border-color: #adb5bd;
+  transition: all 0.3s ease;
+}
+
+/* Password toggle styling */
+.password-field {
+  position: relative;
+}
+
+.password-toggle {
+  position: absolute;
+  right: 10px;
+  top: 18px; /* Fixed position from top instead of using transform */
+  background: none;
+  border: none;
+  color: #6c757d;
+  cursor: pointer;
+  z-index: 5;
+  padding: 0.25rem 0.5rem;
+  transition: color 0.2s ease;
+  height: 24px; /* Fixed height */
+  width: 24px; /* Fixed width */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.password-toggle:hover, 
+.password-toggle:focus {
+  color: #3C65F5;
+  outline: none;
+}
+
+.password-toggle:active {
+  transform: scale(0.95); /* Removed the translateY to avoid positioning issues */
+}
+
+/* Adjust padding for password inputs to make room for the toggle button */
+.password-field .form-control {
+  padding-right: 45px !important; /* Added !important to ensure this rule takes precedence */
+}

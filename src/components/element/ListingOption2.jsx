@@ -1,7 +1,7 @@
 "use client";
 import toggleStore from "@/store/toggleStore";
 import SortOption1 from "../option/SortOption1";
-import ClearButton from "../button/ClearButton";
+import Undo from "../button/Undo";
 import Image from "next/image";
 
 export default function ListingOption2({ itemLength }) {

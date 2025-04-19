@@ -6,7 +6,7 @@ import listingStore from "@/store/listingStore";
 import { useEffect, useState } from "react";
 import priceStore from "@/store/priceStore";
 import ReactSlider from "react-slider";
-import ClearButton from "../button/ClearButton";
+import Undo from "../button/Undo";
 import SortOption1 from "../option/SortOption1";
 import PriceDropdown1 from "../dropdown/PriceDropdown1";
 import LevelDropdown1 from "../dropdown/LevelDropdown1";
@@ -189,7 +189,7 @@ export default function ListingOption1() {
                   </div>
                 </li>
                 <li className="list-inline-item position-relative d-none d-xl-inline-block">
-                  <ClearButton />
+                  <Undo />
                 </li>
               </ul>
             </div>

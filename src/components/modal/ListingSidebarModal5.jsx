@@ -1,7 +1,7 @@
 "use client";
 import toggleStore from "@/store/toggleStore";
 import CategoryOption1 from "../option/Classification";
-import ClearButton from "../button/ClearButton";
+import Undo from "../button/Undo";
 import BudgetOption1 from "../option/BudgetOption1";
 import LocationOption1 from "../option/LocationOption1";
 import SpeakOption1 from "../option/SpeakOption1";
@@ -150,7 +150,7 @@ export default function ListingSidebarModal5() {
               </div>
             </div>
           </div>
-          <ClearButton />
+          <Undo />
         </div>
       </div>
       <div onClick={listingToggle} className="hiddenbar-body-ovelay" />

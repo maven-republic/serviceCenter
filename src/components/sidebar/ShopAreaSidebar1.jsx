@@ -2,7 +2,7 @@
 import Search1 from "../element/Search1";
 import CategoryOption1 from "../option/Classification";
 import BudgetOption1 from "../option/BudgetOption1";
-import ClearButton from "../button/ClearButton";
+import Undo from "../button/Undo";
 import CategoryOption2 from "../option/CategoryOption2";
 
 export default function ShopAreaSidebar1() {
@@ -65,7 +65,7 @@ export default function ShopAreaSidebar1() {
               </div>
             </div>
           </div>
-          <ClearButton />
+          <Undo />
         </div>
       </div>
     </>

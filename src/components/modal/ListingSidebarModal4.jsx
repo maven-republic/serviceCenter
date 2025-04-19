@@ -2,7 +2,7 @@
 
 import toggleStore from "@/store/toggleStore";
 import CategoryOption1 from "../option/Classification";
-import ClearButton from "../button/ClearButton";
+import Undo from "../button/Undo";
 import NoOfEmployeeOption1 from "../option/NoOfEmployeeOption1";
 
 export default function ListingSidebarModal4() {
@@ -74,7 +74,7 @@ export default function ListingSidebarModal4() {
                   </div>
                 </div>
               </div>
-              <ClearButton />
+              <Undo />
             </div>
           </div>
         </div>

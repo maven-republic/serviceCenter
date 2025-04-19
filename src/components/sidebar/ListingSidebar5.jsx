@@ -1,4 +1,4 @@
-import ClearButton from "../button/ClearButton";
+import Undo from "../button/Undo";
 import BudgetOption2 from "../option/BudgetOption2";
 import CategoryOption1 from "../option/Classification";
 import LevelOption1 from "../option/LevelOption1";
@@ -135,7 +135,7 @@ export default function ListingSidebar5() {
             </div>
           </div>
         </div>
-        <ClearButton />
+        <Undo />
       </div>
     </>
   );

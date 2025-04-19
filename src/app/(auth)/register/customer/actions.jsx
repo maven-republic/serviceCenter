@@ -4,6 +4,40 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '../../../../../utils/supabase/server'
 
+// Add the email check server action
+export async function checkEmailExists(formData) {
+  const supabase = await createClient()
+  
+  // Add safeguard to handle both FormData and plain objects
+  let email
+  if (formData instanceof FormData) {
+    email = formData.get('email')
+  } else if (typeof formData === 'object') {
+    email = formData.email
+  } else {
+    email = formData
+  }  
+  try {
+    // Check the account table for existing email
+    const { data, error } = await supabase
+      .from('account')
+      .select('email')
+      .eq('email', email)
+      .maybeSingle()
+    
+    if (error) {
+      console.error('Error checking email:', error)
+      return { exists: false, error: error.message }
+    }
+    
+    // If data exists, the email is already registered
+    return { exists: !!data, error: null }
+  } catch (err) {
+    console.error('Error in checkEmailExists:', err)
+    return { exists: false, error: 'Failed to check email' }
+  }
+}
+
 export async function signupCustomer(formData) {
   const supabase = await createClient()
 
@@ -15,7 +49,18 @@ export async function signupCustomer(formData) {
   const password = formData.get('password')
   const confirmPassword = formData.get('confirmPassword')
   
-  // Add validation and user existence check
+  // Check if email already exists before signup
+  const { exists, error: checkError } = await checkEmailExists(
+    new FormData().append('email', userEmail)
+  )
+  
+  if (checkError) {
+    redirect('/register/customer?error=' + encodeURIComponent('Error checking email. Please try again.'))
+  }
+  
+  if (exists) {
+    redirect('/register/customer?error=' + encodeURIComponent('This email is already registered. Please use a different email or login.'))
+  }
   
   // Sign up the user in Supabase Auth
   const { data, error } = await supabase.auth.signUp({

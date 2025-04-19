@@ -6,7 +6,7 @@ import DesignToolOption1 from "../option/DesignToolOption1";
 import LocationOption1 from "../option/LocationOption1";
 import SpeakOption1 from "../option/SpeakOption1";
 import LevelOption1 from "../option/LevelOption1";
-import ClearButton from "../button/ClearButton";
+import Undo from "../button/Undo";
 import Classification from "../option/Classification";
 
 export default function ListingSidebarModal1() {
@@ -203,7 +203,7 @@ export default function ListingSidebarModal1() {
                   </div>
                 </div>
               </div>
-              <ClearButton />
+              <Undo />
             </div>
           </div>
         </div>

@@ -4,7 +4,7 @@ import SortOption1 from "../option/SortOption1";
 import CategoryDropdown2 from "../dropdown/CategoryDropdown2";
 import NotOfEmployee1 from "../dropdown/NotOfEmployee1";
 import toggleStore from "@/store/toggleStore";
-import ClearButton from "../button/ClearButton";
+import Undo from "../button/Undo";
 
 export default function ListingOption5() {
   const listingToggle = toggleStore((state) => state.listingToggleHandler);
@@ -61,7 +61,7 @@ export default function ListingOption5() {
                   </div>
                 </li>
                 <li className="list-inline-item position-relative d-none d-xl-inline-block">
-                  <ClearButton />
+                  <Undo />
                 </li>
               </ul>
             </div>

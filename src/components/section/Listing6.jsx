@@ -6,7 +6,7 @@ import ListingSidebar1 from "../sidebar/ListingSidebar1";
 import Pagination1 from "./Pagination1";
 import listingStore from "@/store/listingStore";
 import priceStore from "@/store/priceStore";
-import ClearButton from "../button/ClearButton";
+import Undo from "../button/Undo";
 import PopularServiceSlideCard1 from "../card/PopularServiceSlideCard1";
 import Manifest from "../card/Manifest";
 import BestService2 from "./BestService2";

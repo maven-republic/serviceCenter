@@ -7,7 +7,7 @@ import Pagination1 from "./Pagination1";
 import Manifest from "../card/Manifest";
 import listingStore from "@/store/listingStore";
 import priceStore from "@/store/priceStore";
-import ClearButton from "../button/ClearButton";
+import Undo from "../button/Undo";
 import PopularServiceSlideCard1 from "../card/PopularServiceSlideCard1";
 
 export default function Listing3() {

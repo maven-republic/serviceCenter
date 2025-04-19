@@ -2,7 +2,7 @@
 import toggleStore from "@/store/toggleStore";
 import CategoryOption1 from "../option/Classification";
 import BudgetOption1 from "../option/BudgetOption1";
-import ClearButton from "../button/ClearButton";
+import Undo from "../button/Undo";
 import JobTypeOption1 from "../option/JobTypeOption1";
 import LevelOption1 from "../option/LevelOption1";
 
@@ -131,7 +131,7 @@ export default function ListingSidebarModal3() {
               </div>
             </div>
           </div>
-          <ClearButton />
+          <Undo />
         </div>
       </div>
 

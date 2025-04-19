@@ -1,7 +1,7 @@
 "use client";
 import Image from "next/image";
 import SortOption1 from "../option/SortOption1";
-import ClearButton from "../button/ClearButton";
+import Undo from "../button/Undo";
 import CategoryDropdown1 from "../dropdown/CategoryDropdown1";
 import PriceDropdown1 from "../dropdown/PriceDropdown1";
 import JobTypeDropdown1 from "../dropdown/JobTypeDropdown1";
@@ -91,7 +91,7 @@ export default function ListingOption4() {
                   </div>
                 </li>
                 <li className="list-inline-item position-relative d-none d-xl-inline-block">
-                  <ClearButton />
+                  <Undo />
                 </li>
               </ul>
             </div>
