@@ -1,13 +1,65 @@
 "use client";
 import { professionalNavigation } from "@/data/dashboard";
 import toggleStore from "@/store/toggleStore";
+import listingStore from "@/store/listingStore";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useState, useEffect, useRef } from "react";
 
 export default function Axis() {
   const toggle = toggleStore((state) => state.dashboardSlidebarToggleHandler);
   const path = usePathname();
+  
+  // Get search function from listingStore
+  const setSearch = listingStore((state) => state.setSearch);
+  const getSearch = listingStore((state) => state.getSearch);
+  
+  // Local state for search input
+  const [searchInput, setSearchInput] = useState(getSearch || "");
+  
+  // Debounce timer reference
+  const timerRef = useRef(null);
+  
+  // Only sync from global to local if local isn't being edited
+  const isEditingRef = useRef(false);
+  
+  // Sync from global to local only when global changes externally
+  useEffect(() => {
+    if (!isEditingRef.current && getSearch !== searchInput) {
+      setSearchInput(getSearch);
+    }
+  }, [getSearch]);
+  
+  // Handle search input change - real-time filtering with better sync
+  const handleSearchChange = (e) => {
+    const newValue = e.target.value;
+    setSearchInput(newValue);
+    
+    // Mark as editing to prevent sync conflicts
+    isEditingRef.current = true;
+    
+    // Clear any existing timer
+    if (timerRef.current) {
+      clearTimeout(timerRef.current);
+    }
+    
+    // Set new timer for debounce
+    timerRef.current = setTimeout(() => {
+      setSearch(newValue);
+      // Allow syncing again after update is complete
+      isEditingRef.current = false;
+    }, 300);
+  };
+  
+  // Clean up timer on unmount
+  useEffect(() => {
+    return () => {
+      if (timerRef.current) {
+        clearTimeout(timerRef.current);
+      }
+    };
+  }, []);
 
   return (
     <>
@@ -22,13 +74,14 @@ export default function Axis() {
                       <Image
                         height={40}
                         width={133}
-                        src="/images/header-logo-dark.svg"
+                        // src="/images/header-logo-dark.svg"
                         alt="logo"
+                        // label="maven republic"
                       />
                     </Link>
                   </div>
                   <div className="fz20 ml90">
-                    <a
+                  <a
                       onClick={toggle}
                       className="dashboard_sidebar_toggle_icon vam"
                     >
@@ -48,11 +101,14 @@ export default function Axis() {
                     <span className="flaticon-loupe" />
                   </a>
                   <div className="ml40 d-none d-xl-block">
+                    {/* Updated search form with improved real-time functionality */}
                     <div className="search_area dashboard-style">
                       <input
                         type="text"
                         className="form-control border-0"
-                        // placeholder="What service are you looking for today?"
+                        placeholder="Search for services..."
+                        value={searchInput}
+                        onChange={handleSearchChange}
                       />
                       <label>
                         <span className="flaticon-loupe" />
@@ -65,7 +121,7 @@ export default function Axis() {
                 <div className="text-center text-lg-end header_right_widgets">
                   <ul className="dashboard_dd_menu_list d-flex align-items-center justify-content-center justify-content-sm-end mb-0 p-0">
                     <li className="d-none d-sm-block">
-                      <a
+                    <a
                         className="text-center mr5 text-thm2 dropdown-toggle fz20"
                         type="button"
                         data-bs-toggle="dropdown"
@@ -140,7 +196,7 @@ export default function Axis() {
                       </div>
                     </li>
                     <li className="d-none d-sm-block">
-                      <a
+                    <a
                         className="text-center mr5 text-thm2 dropdown-toggle fz20"
                         type="button"
                         data-bs-toggle="dropdown"
@@ -326,18 +382,18 @@ export default function Axis() {
                                 <i className={`${item.icon} mr10`} />
                                 {item.name}
                               </Link>
-                            ))}
-                          </div>
-                        </div>
-                      </div>
-                    </li>
-                  </ul>
-                </div>
-              </div>
-            </div>
-          </div>
-        </nav>
-      </header>
-    </>
-  );
-}
+                           ))}
+                           </div>
+                         </div>
+                       </div>
+                     </li>
+                   </ul>
+                 </div>
+               </div>
+             </div>
+           </div>
+         </nav>
+       </header>
+     </>
+   );
+ }

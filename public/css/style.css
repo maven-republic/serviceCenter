@@ -12719,3 +12719,30 @@ hr {
 .mobile-dasboard-menu-active > * {
   color: #fff !important;
 }
+
+.category-chip {
+  font-size: 1rem;
+  /* letter-spacing: 1px; */
+  opacity: 0.7;
+}
+
+.category-pill {
+  display: inline-block;
+  background-color: rgba(0, 123, 255, 0.1);
+  color: #007bff;
+  /* padding: 4px 8px; */
+  border-radius: 16px;
+  font-size: 0.75rem;
+}
+
+.category-tag {
+  display: inline-block;
+  font-size: 0.7rem;
+}
+
+/* In your CSS file */
+.service-title {
+  font-size: 0.58rem;
+  font-weight: bold;
+  font-family: "Alata", Helvetica, sans-serif;
+}

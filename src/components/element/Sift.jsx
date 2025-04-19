@@ -67,7 +67,7 @@ export default function Sift() {
                     All Filter
                   </button>
                 </li>
-                <li className="list-inline-item position-relative d-none d-xl-inline-block">
+<li className="list-inline-item position-relative d-none d-xl-inline-block">
   <button
     className="open-btn mb10 dropdown-toggle"
     type="button"
@@ -84,7 +84,6 @@ export default function Sift() {
       </div>
     </div>
     <button
-      onClick={() => {/* Apply category filter here */}}
       className="done-btn ud-btn btn-thm drop_btn"
     >
       Apply
@@ -92,7 +91,6 @@ export default function Sift() {
     </button>
   </div>
 </li>
-
                 {/* <li className="list-inline-item position-relative d-none d-xl-inline-block">
                   <button
                     className="open-btn mb10 dropdown-toggle"

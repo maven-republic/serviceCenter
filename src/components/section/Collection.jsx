@@ -93,8 +93,10 @@ export default function Collection() {
       ? item
       : item.deliveryTime === getDeliveryTime;
 
-  const categoryFilter = (item) =>
-    getCategory?.length !== 0 ? getCategory.includes(item.category) : item;
+const categoryFilter = (item) =>
+  getCategory?.length !== 0 
+    ? getCategory.includes(item.category) 
+    : item;
 
   const priceFilter = (item) =>
     getPriceRange.min <= item.price && getPriceRange.max >= item.price;
