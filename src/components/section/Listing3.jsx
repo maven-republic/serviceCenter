@@ -4,7 +4,7 @@ import ListingOption2 from "../element/ListingOption2";
 import ListingSidebarModal1 from "../modal/ListingSidebarModal1";
 import ListingSidebar1 from "../sidebar/ListingSidebar1";
 import Pagination1 from "./Pagination1";
-import TrendingServiceCard1 from "../card/TrendingServiceCard1";
+import Manifest from "../card/Manifest";
 import listingStore from "@/store/listingStore";
 import priceStore from "@/store/priceStore";
 import ClearButton from "../button/ClearButton";
@@ -70,7 +70,7 @@ export default function Listing3() {
         {item?.gallery ? (
           <PopularServiceSlideCard1 data={item} />
         ) : (
-          <TrendingServiceCard1 data={item} />
+          <Manifest data={item} />
         )}
       </div>
     ));

@@ -1,5 +1,5 @@
-import DashboardLayout from "@/components/dashboard/DashboardLayout";
-import DashboardInfo from "@/components/dashboard/section/DashboardInfo";
+// import DashboardLayout from "@/components/dashboard/DashboardLayout";
+// import DashboardInfo from "@/components/dashboard/section/DashboardInfo";
 import { redirect } from 'next/navigation'
 import { createClient } from '../../../../utils/supabase/server'
 import MobileNavigation2 from "@/components/header/MobileNavigation2";
@@ -23,10 +23,10 @@ export default async function page() {
   return (
     <>
     
-    <MobileNavigation2 />
-      <DashboardLayout>
-        <DashboardInfo />
-      </DashboardLayout>
+    {/* <MobileNavigation2 /> */}
+      {/* <DashboardLayout> */}
+        {/* <DashboardInfo /> */}
+      {/* </DashboardLayout> */}
     </>
   );
 }

@@ -8,7 +8,7 @@ import {
 } from "@react-google-maps/api";
 import { useMemo, useState } from "react";
 import { service } from "@/data/product";
-import TrendingServiceCard1 from "../card/TrendingServiceCard1";
+import Manifest from "../card/Manifest";
 
 const option = {
   zoomControl: true,
@@ -238,7 +238,7 @@ export default function ListingMap1() {
               }}
               onCloseClick={closeCardHandler}
             >
-              <TrendingServiceCard1 data={getLocation} />
+              <Manifest data={getLocation} />
             </InfoWindow>
           )}
         </GoogleMap>

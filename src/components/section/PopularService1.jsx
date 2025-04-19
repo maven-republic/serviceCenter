@@ -1,5 +1,5 @@
 "use client";
-import { product1 } from "@/data/product";
+import { service } from "@/data/product";
 import PopularServiceCard1 from "../card/PopularServiceCard1";
 import PopularServiceSlideCard1 from "../card/PopularServiceSlideCard1";
 import { useState } from "react";
@@ -63,7 +63,7 @@ export default function PopularService1() {
           <div className="row">
             <div className="col-lg-12">
               <div className="row">
-                {product1
+                {service
                   .slice(0, 8)
                   .filter((item) =>
                     getCurrentCategory === "All"

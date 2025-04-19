@@ -4,7 +4,7 @@ import BudgetOption1 from "../option/BudgetOption1";
 import DesignToolOption1 from "../option/DesignToolOption1";
 import LocationOption1 from "../option/LocationOption1";
 import SpeakOption1 from "../option/SpeakOption1";
-import CategoryOption1 from "../option/CategoryOption1";
+import CategoryOption1 from "../option/Classification";
 import ProjectTypeOption1 from "../option/ProjectTypeOption1";
 import EnglishLevelOption1 from "../option/EnglishLevelOption1";
 import ClearButton from "../button/ClearButton";

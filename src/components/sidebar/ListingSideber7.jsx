@@ -1,6 +1,6 @@
 "use client";
 import React from "react";
-import CategoryOption1 from "../option/CategoryOption1";
+import CategoryOption1 from "../option/Classification";
 import ProjectTypeOption1 from "../option/ProjectTypeOption1";
 import BudgetOption2 from "../option/BudgetOption2";
 import DesignToolOption1 from "../option/DesignToolOption1";

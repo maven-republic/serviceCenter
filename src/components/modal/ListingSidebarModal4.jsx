@@ -1,7 +1,7 @@
 "use client";
 
 import toggleStore from "@/store/toggleStore";
-import CategoryOption1 from "../option/CategoryOption1";
+import CategoryOption1 from "../option/Classification";
 import ClearButton from "../button/ClearButton";
 import NoOfEmployeeOption1 from "../option/NoOfEmployeeOption1";
 

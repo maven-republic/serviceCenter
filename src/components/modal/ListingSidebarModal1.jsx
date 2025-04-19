@@ -7,6 +7,7 @@ import LocationOption1 from "../option/LocationOption1";
 import SpeakOption1 from "../option/SpeakOption1";
 import LevelOption1 from "../option/LevelOption1";
 import ClearButton from "../button/ClearButton";
+import Classification from "../option/Classification";
 
 export default function ListingSidebarModal1() {
   const listingToggle = toggleStore((state) => state.listingToggleHandler);
@@ -48,7 +49,40 @@ export default function ListingSidebarModal1() {
                     <DeliveryTimeOption1 />
                   </div>
                 </div>
+
+
+
+
+
+
                 <div className="card mb20 pb0 rounded-0">
+                  <div className="card-header" id="headingOnes">
+                    <h4>
+                      <button
+                        className="btn btn-link ps-0"
+                        type="button"
+                        data-bs-toggle="collapse"
+                        data-bs-target="#collapseOnes"
+                        aria-expanded="true"
+                        aria-controls="collapseOnes"
+                      >
+                        Category
+                      </button>
+                    </h4>
+                  </div>
+                  <div
+                    id="collapseOnes"
+                    className="collapse"
+                    aria-labelledby="headingOnes"
+                    data-parent="#accordionExample"
+                  >
+                    <Classification />
+                  </div>
+                </div>
+
+
+
+                {/* <div className="card mb20 pb0 rounded-0">
                   <div className="card-header" id="headingOnes">
                     <h4>
                       <button
@@ -71,7 +105,7 @@ export default function ListingSidebarModal1() {
                   >
                     <BudgetOption1 />
                   </div>
-                </div>
+                </div> */}
                 <div className="card mb20 pb5 rounded-0">
                   <div className="card-header" id="headingTwos">
                     <h4>

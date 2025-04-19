@@ -6,7 +6,7 @@ import "swiper/css/free-mode";
 
 import { Navigation, Pagination } from "swiper";
 
-import TrendingServiceCard1 from "../card/TrendingServiceCard1";
+import Manifest from "../card/Manifest";
 import { product1 } from "@/data/product";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -94,7 +94,7 @@ export default function TrendingService2({ bgColor }) {
                 >
                   {product1.slice(0, 8).map((item,i) => (
                     <SwiperSlide key={ i }>
-                      <TrendingServiceCard1 data={item} />
+                      <Manifest data={item} />
                     </SwiperSlide>
                   ))}
                 </Swiper>

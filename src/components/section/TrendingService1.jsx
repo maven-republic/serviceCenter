@@ -6,7 +6,7 @@ import "swiper/css/free-mode";
 
 import { Navigation } from "swiper";
 
-import TrendingServiceCard1 from "../card/TrendingServiceCard1";
+import Manifest from "../card/Manifest";
 import { service } from "@/data/product";
 import Link from "next/link";
 import { useEffect, useState } from "react";
@@ -71,7 +71,7 @@ export default function TrendingService1() {
                   >
                     {service.slice(0, 6).map((item,i) => (
                       <SwiperSlide key={ i }>
-                        <TrendingServiceCard1 data={item} />
+                        <Manifest data={item} />
                       </SwiperSlide>
                     ))}
                   </Swiper>

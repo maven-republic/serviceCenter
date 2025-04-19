@@ -1454,7 +1454,7 @@ li {
 
   /* background-color: #ffffff; */
   border-radius: 10px;
-  /* border: 1px solid #e9e9e9; */
+  border: 1px solid #e9e9e9;
   margin-bottom: 30px;
   overflow: hidden;
   position: relative;
@@ -1463,8 +1463,7 @@ li {
   -ms-transition: all 0.4s ease;
   -o-transition: all 0.4s ease;
   transition: all 0.4s ease;
-  /* height: 200px; Or whatever height you want */
-
+  height: 200px; 
   border: none; /* Explicitly remove any border */
   box-shadow: none; /* Remove any shadow */
 

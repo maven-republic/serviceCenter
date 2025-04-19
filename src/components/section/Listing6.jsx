@@ -8,7 +8,7 @@ import listingStore from "@/store/listingStore";
 import priceStore from "@/store/priceStore";
 import ClearButton from "../button/ClearButton";
 import PopularServiceSlideCard1 from "../card/PopularServiceSlideCard1";
-import TrendingServiceCard1 from "../card/TrendingServiceCard1";
+import Manifest from "../card/Manifest";
 import BestService2 from "./BestService2";
 
 export default function Listing6() {
@@ -71,7 +71,7 @@ export default function Listing6() {
         {item?.gallery ? (
           <PopularServiceSlideCard1 data={item} />
         ) : (
-          <TrendingServiceCard1 data={item} />
+          <Manifest data={item} />
         )}
       </div>
     ));

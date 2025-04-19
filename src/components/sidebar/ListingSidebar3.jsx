@@ -1,6 +1,6 @@
 import ClearButton from "../button/ClearButton";
 import BudgetOption2 from "../option/BudgetOption2";
-import CategoryOption1 from "../option/CategoryOption1";
+import CategoryOption1 from "../option/Classification";
 import JobTypeOption1 from "../option/JobTypeOption1";
 import LevelOption1 from "../option/LevelOption1";
 
