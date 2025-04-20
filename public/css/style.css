@@ -12003,7 +12003,7 @@ input:focus-visible {
 }
 
 .bgc-thm4 {
-  background-color: #ffede8;
+  /* background-color: #ffede8; */
 }
 
 .bgc-thm5 {
@@ -12907,6 +12907,16 @@ hr {
   animation: fadeIn 0.3s ease-in-out;
 }
 
+.invalid-feedback.d-block {
+  display: block !important;
+  color: #dc3545;
+  margin-top: 0.25rem;
+}
+
+.is-invalid {
+  border-color: #dc3545 !important;
+}
+
 @keyframes fadeIn {
   from {
     opacity: 0;
@@ -12967,4 +12977,125 @@ hr {
 /* Adjust padding for password inputs to make room for the toggle button */
 .password-field .form-control {
   padding-right: 45px !important; /* Added !important to ensure this rule takes precedence */
+}
+
+
+
+
+
+
+
+/* Additional styles for the two-column layout */
+
+/* Feature cards */
+.feature-card {
+  transition: all 0.3s ease;
+  border-left: 3px solid transparent;
+}
+
+.feature-card:hover {
+  transform: translateY(-5px);
+  border-left: 3px solid #2e3280;
+}
+
+.feature-icon {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background-color: rgba(46, 50, 128, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.feature-icon i {
+  font-size: 24px;
+  color: #2e3280;
+}
+
+/* Testimonials */
+.testimonial {
+  transition: all 0.3s ease;
+  border-left: 4px solid #2e3280;
+}
+
+.testimonial:hover {
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+}
+
+.avatar {
+  transition: all 0.3s ease;
+}
+
+.testimonial:hover .avatar {
+  transform: scale(1.1);
+}
+
+/* Left content container */
+.left-content {
+  height: 100%;
+}
+
+/* Progress steps */
+.progress-container {
+  padding: 0 20px;
+}
+
+.progress-bar {
+  height: 6px;
+  background-color: #f0f0f0;
+  border-radius: 3px;
+  margin-bottom: 10px;
+  position: relative;
+}
+
+.progress-fill {
+  height: 100%;
+  background-color: #2e3280;
+  border-radius: 3px;
+  transition: width 0.5s ease;
+}
+
+.progress-steps {
+  display: flex;
+  justify-content: space-between;
+}
+
+.progress-step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+  flex: 1;
+}
+
+.step-circle {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background-color: #f0f0f0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 8px;
+  font-weight: 600;
+  color: #777;
+  transition: all 0.3s ease;
+}
+
+.progress-step.active .step-circle {
+  background-color: #2e3280;
+  color: white;
+}
+
+.step-label {
+  font-size: 14px;
+  color: #777;
+  transition: all 0.3s ease;
+}
+
+.progress-step.active .step-label {
+  color: #2e3280;
+  font-weight: 600;
+
 }

@@ -222,6 +222,30 @@ export default function CustomerRegistrationForm({ errorMessage }) {
 
   const nextStep = async () => {
     setIsChecking(true)
+    
+    // Mark all fields for current step as touched to show validation errors
+    if (currentStep === 1) {
+      setTouchedFields(prev => ({
+        ...prev,
+        email: true,
+        password: true,
+        confirmPassword: true
+      }))
+    } else if (currentStep === 2) {
+      setTouchedFields(prev => ({
+        ...prev,
+        firstName: true,
+        lastName: true,
+        gender: true
+      }))
+    } else if (currentStep === 3) {
+      // Mark phone field as touched
+setTouchedFields(prev => ({
+  ...prev,
+  phone: true
+}))
+    }
+    
     const isValid = await validateStep(currentStep)
     setIsChecking(false)
     
@@ -235,6 +259,7 @@ export default function CustomerRegistrationForm({ errorMessage }) {
     }
   }
   
+  
   const prevStep = () => {
     // Add animation before changing step
     setIsAnimating(true)
@@ -246,6 +271,12 @@ export default function CustomerRegistrationForm({ errorMessage }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
+    
+    // Mark phone field as touched
+    setTouchedFields(prev => ({
+      ...prev,
+      phone: true
+    }))
     
     // Validate final step
     const phoneError = validateField('phone', formData.phone)
@@ -295,20 +326,64 @@ export default function CustomerRegistrationForm({ errorMessage }) {
   }
   
   return (
-    <form onSubmit={currentStep === 3 ? handleSubmit : e => e.preventDefault()}>
-      <div className="container">
-        <div className="row">
-          <div className="col-lg-6 m-auto wow fadeInUp" data-wow-delay="300ms">
-            <div className="main-title text-center">
-              <h2 className="title">Create an Account</h2>
+    <div className="container-fluid py-5">
+      <div className="row">
+        {/* Left Column - Content */}
+        <div className="col-lg-6 wow fadeInLeft" data-wow-delay="300ms">
+          <div className="left-content p-4 p-lg-5">
+            <h2 className="title mb-4">Workers you can trust</h2>
+            
+            <div className="mb-5">
+              <div className="row">
+                <div className="col-md-6 mb-4">
+                  <div className="feature-icon mb-3">
+                    <i className="fas fa-user-tie"></i>
+                  </div>
+                  <h5>Honest work</h5>
+                  <p className="mb-0 text-muted">Every professional is thoroughly vetted for quality and reliability.</p>
+                </div>
+                <div className="col-md-6 mb-4">
+                  <div className="feature-icon mb-3">
+                    <i className="fas fa-credit-card-front"></i>
+                  </div>
+                  <h5>Safe payment</h5>
+                  <p className="mb-0 text-muted">Book services within minutes, not days.</p>
+                </div>
+                <div className="col-md-6 mb-4">
+                  <div className="feature-icon mb-3">
+                    <i className="fas fa-window-frame"></i>
+                  </div>
+                  <h5>Clarity</h5>
+                  <p className="mb-0 text-muted">No sudden fees - clear pricing.</p>
+                </div>
+                <div className="col-md-6 mb-4">
+                  <div className="feature-icon mb-3">
+                    <i className="fas fa-list-radio"></i>
+                  </div>
+                  <h5>Selection </h5>
+                  <p className="mb-0 text-muted">Select from the 1% of professionals.</p>
+                </div>
+              </div>
             </div>
           </div>
         </div>
+
+
+        {/* right column */}
+
+        <div className="col-lg-6 wow fadeInRight" data-wow-delay="300ms">
+
+
+    <form onSubmit={currentStep === 3 ? handleSubmit : e => e.preventDefault()}>
+      <div className="container">
+        <div className="row">
+          <div className="main-title text-center mb-4">
+              <h2 className="title">Create an Account</h2>
+            </div>
+        </div>
         
-        {/* Progress indicator */}
-        <div className="row mb-4">
-          <div className="col-lg-6 mx-auto">
-            <div className="progress-container">
+       {/* Progress indicator */}
+       <div className="progress-container mb-4">
               <div className="progress-bar">
                 <div 
                   className="progress-fill" 
@@ -322,19 +397,15 @@ export default function CustomerRegistrationForm({ errorMessage }) {
                 </div>
                 <div className={`progress-step ${currentStep >= 2 ? 'active' : ''}`}>
                   <div className="step-circle">2</div>
-                  <span className="step-label">Profile</span>
+                  <span className="step-label">Identity</span>
                 </div>
                 <div className={`progress-step ${currentStep >= 3 ? 'active' : ''}`}>
                   <div className="step-circle">3</div>
                   <span className="step-label">Contact</span>
                 </div>
+          
               </div>
             </div>
-          </div>
-        </div>
-        
-        <div className="row wow fadeInRight" data-wow-delay="300ms">
-          <div className="col-xl-6 mx-auto">
             <div className="log-reg-form search-modal form-style1 bgc-white p50 p30-sm default-box-shadow1 bdrs12">
               {/* Step content with animation */}
               <div className={`step-content ${isAnimating ? 'fade-out' : 'fade-in'}`}>
@@ -362,7 +433,6 @@ export default function CustomerRegistrationForm({ errorMessage }) {
                         onBlur={handleBlur}
                         className={`form-control ${errors.email && touchedFields.email ? 'is-invalid' : ''} ${isActive('email') ? 'has-value' : ''}`}
                         placeholder=" "
-                        required
                       />
                       <label htmlFor="emailInput" className="form-label fw500 dark-color">Email</label>
                       {errors.email && touchedFields.email && (
@@ -382,7 +452,7 @@ export default function CustomerRegistrationForm({ errorMessage }) {
                         onBlur={handleBlur}
                         className={`form-control ${errors.password && touchedFields.password ? 'is-invalid' : ''} ${isActive('password') ? 'has-value' : ''}`}
                         placeholder=" "
-                        required
+                        
                       />
                       <button 
                         type="button" 
@@ -428,7 +498,6 @@ export default function CustomerRegistrationForm({ errorMessage }) {
                         onBlur={handleBlur}
                         className={`form-control ${errors.confirmPassword && touchedFields.confirmPassword ? 'is-invalid' : ''} ${isActive('confirmPassword') ? 'has-value' : ''}`}
                         placeholder=" "
-                        required
                       />
                       <button 
                         type="button" 
@@ -480,7 +549,6 @@ export default function CustomerRegistrationForm({ errorMessage }) {
                         onBlur={handleBlur}
                         className={`form-control ${errors.firstName && touchedFields.firstName ? 'is-invalid' : ''} ${isActive('firstName') ? 'has-value' : ''}`}
                         placeholder=" "
-                        required
                       />
                       <label htmlFor="firstNameInput" className="form-label fw500 dark-color">First Name</label>
                       {errors.firstName && touchedFields.firstName && (
@@ -499,7 +567,7 @@ export default function CustomerRegistrationForm({ errorMessage }) {
                         onBlur={handleBlur}
                         className={`form-control ${errors.lastName && touchedFields.lastName ? 'is-invalid' : ''} ${isActive('lastName') ? 'has-value' : ''}`}
                         placeholder=" "
-                        required
+                        
                       />
                       <label htmlFor="lastNameInput" className="form-label fw500 dark-color">Last Name</label>
                       {errors.lastName && touchedFields.lastName && (
@@ -516,7 +584,6 @@ export default function CustomerRegistrationForm({ errorMessage }) {
                         onFocus={handleFocus}
                         onBlur={handleBlur}
                         className={`form-control ${errors.gender && touchedFields.gender ? 'is-invalid' : ''} ${isActive('gender') ? 'has-value' : ''}`}
-                        required
                       >
                         <option value="">Select gender</option>
                         <option value="male">Male</option>
@@ -567,7 +634,6 @@ export default function CustomerRegistrationForm({ errorMessage }) {
                         onBlur={handleBlur}
                         className={`form-control ${errors.phone && touchedFields.phone ? 'is-invalid' : ''} ${isActive('phone') ? 'has-value' : ''}`}
                         placeholder=" "
-                        required
                       />
                       <label htmlFor="phoneInput" className="form-label fw500 dark-color">Phone Number</label>
                       {errors.phone && touchedFields.phone && (
@@ -600,14 +666,16 @@ export default function CustomerRegistrationForm({ errorMessage }) {
               </div>
               
               {errorMessage && (
-                <p style={{ color: 'red', marginTop: '10px' }}>
+                <div className="alert alert-danger mt-3" role="alert">
+                  <i className="fas fa-exclamation-circle me-2"></i>
                   {errorMessage}
-                </p>
+                </div>
               )}
             </div>
-          </div>
-        </div>
       </div>
     </form>
+    </div>
+    </div>
+    </div>
   )
 }
