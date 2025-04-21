@@ -1,11 +1,16 @@
-// app/(auth)/register/customer/CustomerRegistrationForm.jsx
+// app/(auth)/register/customer/CustomerAccountCreationForm.jsx
 'use client'
 
 import { useState, useEffect } from 'react'
 import Link from "next/link"
 import { signupCustomer, checkEmailExists } from './actions'
+import Address from './Address'
 
-export default function CustomerRegistrationForm({ errorMessage }) {
+
+export default function CustomerAccountCreationForm({ errorMessage }) {
+  // const searchParamsResolved = await searchParams;
+  // const errorMessage = searchParamsResolved?.error || null;
+
   const [currentStep, setCurrentStep] = useState(1)
   const [formData, setFormData] = useState({
     firstName: '',
@@ -14,7 +19,17 @@ export default function CustomerRegistrationForm({ errorMessage }) {
     phone: '',
     gender: '',
     password: '',
-    confirmPassword: ''
+    confirmPassword: '',
+
+    formattedAddress: '',
+    placeId: '',
+    latitude: '',
+    longitude: '',
+    street: '',
+    city: '',
+    parish: '',
+    country: '',
+    rawGoogleData: null
   })
   
   const [errors, setErrors] = useState({
@@ -289,8 +304,13 @@ setTouchedFields(prev => ({
     // Create FormData object to pass to server action
     const submitData = new FormData()
     Object.entries(formData).forEach(([key, value]) => {
-      submitData.append(key, value)
+      if (key === 'rawGoogleData') {
+        submitData.append(key, JSON.stringify(value || {}))
+      } else {
+        submitData.append(key, value)
+      }
     })
+    
     
     // Submit to server action
     await signupCustomer(submitData)
@@ -330,10 +350,10 @@ setTouchedFields(prev => ({
       <div className="row">
         {/* Left Column - Content */}
         <div className="col-lg-6 wow fadeInLeft" data-wow-delay="300ms">
-          <div className="left-content p-4 p-lg-5">
+           <div className="left-content p-4 p-lg-5">
             <h2 className="title mb-4">Workers you can trust</h2>
             
-            <div className="mb-5">
+           {/* <div className="mb-5">
               <div className="row">
                 <div className="col-md-6 mb-4">
                   <div className="feature-icon mb-3">
@@ -364,8 +384,43 @@ setTouchedFields(prev => ({
                   <p className="mb-0 text-muted">Select from the 1% of professionals.</p>
                 </div>
               </div>
-            </div>
-          </div>
+            </div> */}
+          
+
+          <div className="row">
+  {[
+    {
+      icon: 'fas fa-user-tie',
+      title: 'Honest work',
+      desc: 'Every professional is thoroughly vetted for quality and reliability.'
+    },
+    {
+      icon: 'fas fa-credit-card-front',
+      title: 'Safe payment',
+      desc: 'Book services within minutes, not days.'
+    },
+    {
+      icon: 'fas fa-window-frame',
+      title: 'Clarity',
+      desc: 'No sudden fees - clear pricing.'
+    },
+    {
+      icon: 'fas fa-list-radio',
+      title: 'Selection',
+      desc: 'Select from the 1% of professionals.'
+    }
+  ].map((feature, index) => (
+    <div key={index} className="col-md-6 mb-4">
+      <div className="feature-icon mb-3">
+        <i className={feature.icon}></i>
+      </div>
+      <h5>{feature.title}</h5>
+      <p className="mb-0 text-muted">{feature.desc}</p>
+    </div>
+  ))}
+</div>
+</div>
+
         </div>
 
 
@@ -374,7 +429,7 @@ setTouchedFields(prev => ({
         <div className="col-lg-6 wow fadeInRight" data-wow-delay="300ms">
 
 
-    <form onSubmit={currentStep === 3 ? handleSubmit : e => e.preventDefault()}>
+    <form onSubmit={currentStep === 4 ? handleSubmit : e => e.preventDefault()}>
       <div className="container">
         <div className="row">
           <div className="main-title text-center mb-4">
@@ -387,7 +442,7 @@ setTouchedFields(prev => ({
               <div className="progress-bar">
                 <div 
                   className="progress-fill" 
-                  style={{ width: `${((currentStep - 1) / 2) * 100}%` }}
+                  style={{ width: `${((currentStep - 1) / 3) * 100}%` }}
                 ></div>
               </div>
               <div className="progress-steps">
@@ -402,6 +457,11 @@ setTouchedFields(prev => ({
                 <div className={`progress-step ${currentStep >= 3 ? 'active' : ''}`}>
                   <div className="step-circle">3</div>
                   <span className="step-label">Contact</span>
+                </div>
+
+                <div className={`progress-step ${currentStep >= 4 ? 'active' : ''}`}>
+                  <div className="step-circle">4</div>
+                  <span className="step-label">Address</span>
                 </div>
           
               </div>
@@ -643,7 +703,6 @@ setTouchedFields(prev => ({
                         Format: 123-456-7890 or (123) 456-7890
                       </small>
                     </div>
-                    
                     <div className="d-flex justify-content-between">
                       <button
                         className="ud-btn btn-white"
@@ -655,14 +714,64 @@ setTouchedFields(prev => ({
                       </button>
                       <button
                         className="ud-btn btn-thm default-box-shadow2"
-                        type="submit"
+                        type="button"
+                        onClick={nextStep}
                         disabled={isAnimating}
                       >
-                        Create Account <i className="fal fa-arrow-right-long" />
+                        Continue <i className="fal fa-arrow-right-long" />
                       </button>
                     </div>
                   </>
                 )}
+
+{currentStep === 4 && (
+  <>
+    <div className="mb30">
+      <h4>Address Information</h4>
+    </div>
+
+    <Address onSelect={(place) => {
+      const getComponent = (type) =>
+        place.address_components?.find(c => c.types.includes(type))?.long_name || ''
+
+      const location = place.geometry.location
+
+      const updatedAddress = {
+        formattedAddress: place.formatted_address,
+        placeId: place.place_id,
+        latitude: location.lat(),
+        longitude: location.lng(),
+        street: getComponent('route'),
+        city: getComponent('locality') || getComponent('sublocality'),
+        parish: getComponent('administrative_area_level_1'),
+        country: getComponent('country'),
+        rawGoogleData: place
+      }
+
+      setFormData(prev => ({ ...prev, ...updatedAddress }))
+    }} />
+
+    <div className="d-flex justify-content-between">
+      <button
+        className="ud-btn btn-white"
+        type="button"
+        onClick={prevStep}
+        disabled={isAnimating}
+      >
+        <i className="fal fa-arrow-left-long"></i> Back
+      </button>
+      <button
+        className="ud-btn btn-thm default-box-shadow2"
+        type="submit"
+        disabled={isAnimating}
+      >
+        Create Account <i className="fal fa-arrow-right-long" />
+      </button>
+    </div>
+  </>
+)}
+
+
               </div>
               
               {errorMessage && (

@@ -24,13 +24,13 @@ export default function RootLayout({ children }) {
   const path = usePathname();
 
   // wow js
-  useEffect(() => {
-    const { WOW } = require("wowjs");
-    const wow = new WOW({
-      live: false,
-    });
-    wow.init();
-  }, [path]);
+  // useEffect(() => {
+  //   const { WOW } = require("wowjs");
+  //   const wow = new WOW({
+  //     live: false,
+  //   });
+  //   wow.init();
+  // }, [path]);
 
   return (
     <html lang="en">

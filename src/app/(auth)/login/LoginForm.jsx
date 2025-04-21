@@ -19,7 +19,7 @@ export default function LoginForm({errorMessage}) {
   // })
   
   return (
-    <form action={login} method="post">
+    <form action={login}>
       <div className="container">
         <div className="row">
           <div className="col-lg-6 m-auto wow fadeInUp" data-wow-delay="300ms">
