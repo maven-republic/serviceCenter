@@ -4,16 +4,16 @@ import ProfessionalManifest from "@/components/ProfessionalManifest";
 
 
 export default async function ProfessionalCollectionInterface({ params }) {
-  // Ensure params is properly awaited in Next.js 13+
-  const serviceId = await params.id; // Fix for the first error
+  
+  const parametersForAsync = await params;
+  const { id: serviceId } = parametersForAsync;
   
   try {
     const supabase = await createClient();
 
     console.log("Fetching with service ID:", serviceId);
     
-    // Skip the service check since that table doesn't exist
-    // Directly fetch professionals instead
+    // Directly fetch professionals
     const { data, error } = await supabase
       .from("professional_service")
       .select(`
@@ -36,7 +36,7 @@ export default async function ProfessionalCollectionInterface({ params }) {
 
     if (error) {
       console.error("Error fetching professionals:", error);
-      throw new Error("Failed to load professionals");
+      throw new Error(`Failed to load professionals: ${error.message}`);
     }
 
     if (!data || data.length === 0) {
@@ -46,14 +46,14 @@ export default async function ProfessionalCollectionInterface({ params }) {
           <div className="container">
             <div className="row mb-4">
               <div className="col">
-                <h3 className="fw-bold mb-0">Professionals for this Service</h3>
-                <p className="text-muted">0 professionals available</p>
+                {/* <h3 className="fw-bold mb-0">Professionals for this Service</h3> */}
+                <p className="text-muted">No professionals available at the moment.</p>
               </div>
             </div>
 
             <div className="alert alert-light text-center">
-              <p className="mb-2">No professionals currently offer this service.</p>
-              <a href="/services" className="btn btn-sm btn-primary mt-2">Browse other services</a>
+              {/* <p className="mb-2">No professionals currently offer this service.</p> */}
+              <a href="/customer/explore" className="btn btn-lg btn-primary mt-2">Explore more</a>
             </div>
           </div>
         </div>
@@ -62,20 +62,25 @@ export default async function ProfessionalCollectionInterface({ params }) {
 
     const professionals = data.map((item) => {
       const pro = item.individual_professional;
+      if (!pro) return null; // Handle missing professional data
+      
       return {
         ...pro,
-        full_name: `${pro.account.first_name} ${pro.account.last_name}`,
-        profile_picture_url: pro.account.profile_picture_url,
+        full_name: pro.account ? `${pro.account.first_name 
+          || ''} ${pro.account.last_name 
+            || ''}`.trim() : 'Unknown',
+        profile_picture_url: 
+        pro.account?.profile_picture_url || null,
       };
-    });
+    }).filter(Boolean); // Remove any null values from the array
 
     return (
       <div className="container-fluid bg-light py-4">
         <div className="container">
           <div className="row mb-4">
             <div className="col">
-              <h3 className="fw-bold mb-0">Professionals for this Service</h3>
-              <p className="text-muted">{professionals.length} professionals available</p>
+              {/* <h3 className="fw-bold mb-0">Professionals for this Service</h3> */}
+              {/* <p className="text-muted">{professionals.length} professionals available</p> */}
             </div>
           </div>
 
