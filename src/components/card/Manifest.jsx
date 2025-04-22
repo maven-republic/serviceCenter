@@ -81,8 +81,8 @@ export default function Manifest({ data }) {
       <div className="list-content border-0 p-0 mt-2" style={{ position: 'relative', zIndex: 2 }}>
         <div className="d-flex justify-content-between align-items-center mb-2">
           <h5 className="list-title m-0 service-title text-uppercase">
-            <Link href={`/service-single/${data.id}`}>
-              {truncatedTitle}
+          <Link href={`services/${data.id}`}>           
+             {truncatedTitle}
             </Link>
           </h5>
           <div className="category-tag border rounded-pill px-2 py-1">

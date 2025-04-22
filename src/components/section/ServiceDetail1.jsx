@@ -5,7 +5,7 @@ import ServiceDetailFaq1 from "../element/ServiceDetailFaq1";
 import ServiceDetailPrice1 from "../element/ServiceDetailPrice1";
 import ServiceDetailReviewInfo1 from "../element/ServiceDetailReviewInfo1";
 import ServiceDetailSlider1 from "../element/ServiceDetailSlider1";
-import { Sticky, StickyContainer } from "react-sticky";
+import StickyBox from "react-sticky-box";
 import useScreen from "@/hook/useScreen";
 import ServiceContactWidget1 from "../element/ServiceContactWidget1";
 
@@ -14,7 +14,7 @@ export default function ServiceDetail1() {
 
   return (
     <>
-      <StickyContainer>
+      {/* <StickyContainer> */}
         <section className="pt10 pb90 pb30-md">
           <div className="container">
             <div className="row wrap">
@@ -192,16 +192,16 @@ export default function ServiceDetail1() {
               <div className="col-lg-4">
                 <div className="column">
                   {isMatchedScreen ? (
-                    <Sticky>
-                      {({ style }) => (
-                        <div className="scrollbalance-inner" style={style}>
+                    <StickyBox offsetTop={20} offsetBottom={20}>
+                  
+                        <div className="scrollbalance-inner">
                           <div className="blog-sidebar ms-lg-auto">
                             <ServiceDetailPrice1 />
                             <ServiceContactWidget1 />
                           </div>
                         </div>
-                      )}
-                    </Sticky>
+                      
+                    </StickyBox>
                   ) : (
                     <div className="scrollbalance-inner">
                       <div className="blog-sidebar ms-lg-auto">
@@ -215,7 +215,7 @@ export default function ServiceDetail1() {
             </div>
           </div>
         </section>
-      </StickyContainer>
+      {/* </StickyContainer> */}
     </>
   );
 }
