@@ -53,7 +53,9 @@ export default function ProfessionalManifest({ data }) {
   <span className="badge bg-primary bg-opacity-10 text-primary
    rounded-pill px-3 py-1 mt-2 d-inline-block"
   >
-    {service_name}
+    {/* {service_name} */}
+    {service_name.split(' ')[0]}
+
   </span>
 )}
           {/* <p className="text-muted mb-0 mt-1">{jobTitle}</p> */}

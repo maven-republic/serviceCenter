@@ -7,6 +7,10 @@ import { signupProfessional } from './actions'
 import { createClient } from '../../../../../utils/supabase/client'
 import styles from './ProfessionalForm.module.css';
 import { useRouter } from 'next/navigation'
+import Address from './Address'
+import AddressMap from '@/components/Address/AddressMap'
+
+
 
 export default function ProfessionalRegistrationForm({ errorMessage }) {
 
@@ -33,6 +37,12 @@ export default function ProfessionalRegistrationForm({ errorMessage }) {
     parish: '',
     community: '',
     landmark: '',
+    latitude: '',
+longitude: '',
+formattedAddress: '',
+placeId: '',
+rawGoogleData: '',
+
     isRural: false
   })
 
@@ -127,6 +137,29 @@ const [itemsPerPage, setItemsPerPage] = useState(10);
   }, [])
   
 
+  const handleAddressSelect = (place) => {
+    const { formatted_address, geometry, place_id, address_components } = place
+    const lat = geometry.location.lat()
+    const lng = geometry.location.lng()
+  
+    const getComponent = (type) =>
+      address_components.find(comp => comp.types.includes(type))?.long_name || ''
+  
+    const updatedFields = {
+      streetAddress: getComponent('route') + ' ' + getComponent('street_number'),
+      city: getComponent('locality') || getComponent('sublocality') || '',
+      parish: getComponent('administrative_area_level_1') || '',
+      formattedAddress: formatted_address,
+      placeId: place_id,
+      latitude: lat,
+      longitude: lng,
+      rawGoogleData: JSON.stringify(place)
+    }
+  
+    setFormData(prev => ({ ...prev, ...updatedFields }))
+  }
+
+  
 
   const loadServicesForCategory = async (categoryId) => {
     setLoading(true);
@@ -903,7 +936,7 @@ const validatePhone = (phone) => {
                   <div className="col-md-7">
 
                 {/* Street Address Field */}
-<div className="mb-4">
+{/* <div className="mb-4">
   <label className="form-label fw-semibold">Street Address</label>
   <input
     name="streetAddress"
@@ -923,7 +956,6 @@ const validatePhone = (phone) => {
   )}
 </div>
 
-{/* Parish Field */}
 <div className="mb-4">
   <label className="form-label fw-semibold">Parish</label>
   <select
@@ -958,7 +990,6 @@ const validatePhone = (phone) => {
   )}
 </div>
 
-{/* City Field */}
 <div className="mb-4">
   <label className="form-label fw-semibold">City/Town</label>
   <input
@@ -977,7 +1008,10 @@ const validatePhone = (phone) => {
       {errors.city}
     </div>
   )}
-</div>
+</div> */}
+
+<Address onSelect={handleAddressSelect} />
+
                   
                   <div className="row g-3 mb-4">
                     <div className="col-md-6">
@@ -1336,20 +1370,30 @@ const validatePhone = (phone) => {
                   </div>
                   
                   <div className="mb-4">
-                    <label className="form-label fw-semibold">How far can you work from your primary location? (km)</label>
-                    <div className="input-group">
-                      <input
-                        name="serviceRadius"
-                        type="number"
-                        value={formData.serviceRadius}
-                        onChange={updateFormData}
-                        className="form-control"
-                        placeholder="e.g., 25"
-                        min="0"
-                      />
-                      <span className="input-group-text">km</span>
-                    </div>
-                  </div>
+  <label className="form-label fw-semibold">Service Radius: {formData.serviceRadius} km</label>
+  <input
+    type="range"
+    name="serviceRadius"
+    min="1"
+    max="50"
+    step="1"
+    value={formData.serviceRadius}
+    onChange={updateFormData}
+    className="form-range"
+  />
+  <small className="text-muted">Use the slider to set how far you're willing to travel from your primary location.</small>
+</div>
+
+
+                  <div className="mb-4">
+  <label className="form-label fw-semibold">Map of your service area</label>
+  <AddressMap 
+    lat={formData.latitude}
+    lng={formData.longitude}
+    radius={formData.serviceRadius || 0}
+  />
+</div>
+
 
                   </div>
 

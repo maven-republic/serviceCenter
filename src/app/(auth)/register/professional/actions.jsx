@@ -113,15 +113,22 @@ export async function signupProfessional(formData) {
   .from('address')
   .insert([{
     account_id: userId,
-    address_type: 'home', // Or choose appropriate type
+    address_type: 'home',
     street_address: formData.get('streetAddress'),
     city: formData.get('city'),
     parish: formData.get('parish'),
     community: formData.get('community') || null,
     landmark: formData.get('landmark') || null,
+    formatted_address: formData.get('formattedAddress') || null,
+    place_id: formData.get('placeId') || null,
+    latitude: parseFloat(formData.get('latitude')),
+    longitude: parseFloat(formData.get('longitude')),
+    google_place_data: JSON.parse(formData.get('rawGoogleData') || '{}'),
     is_primary: true,
-    is_rural: formData.get('isRural') === 'true'
+    is_rural: formData.get('isRural') === 'true',
+    location: `SRID=4326;POINT(${formData.get('longitude')} ${formData.get('latitude')})`
   }])
+
 
 if (addressError) {
   console.error('Failed to save address:', addressError)
