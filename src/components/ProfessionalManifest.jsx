@@ -8,6 +8,7 @@ export default function ProfessionalManifest({ data }) {
     profile_picture_url,
     bio,
     verification_status,
+    service_name,
     specialties = [],
   } = data;
 
@@ -15,7 +16,21 @@ export default function ProfessionalManifest({ data }) {
   const jobTitle = specialties[0] || bio?.split('.')[0]?.substring(0, 30) || "Professional";
   
   // Determine badge display
-  const badgeText = verification_status === "verified" ? "Admin" : "";
+
+  const badgeText = 
+  verification_status === "verified" ? "Verified" :
+  verification_status === "rejected" ? "Rejected" :
+  verification_status === "suspended" ? "Suspended" :
+  "";
+
+  const badgeColor = 
+  verification_status === "verified" ? "bg-success" :
+  verification_status === "rejected" ? "bg-danger" :
+  verification_status === "suspended" ? "bg-warning" :
+  "bg-secondary";
+
+
+  // const badgeText = verification_status === "verified" ? "Admin" : "";
   const showBadge = badgeText !== "";
 
   return (
@@ -24,10 +39,23 @@ export default function ProfessionalManifest({ data }) {
         <div>
           <div className="d-flex align-items-center gap-2">
             <h5 className="mb-0 fw-bold">{full_name}</h5>
-            {showBadge && (
-              <span className="badge bg-success rounded-1 fw-normal px-2 py-1">{badgeText}</span>
-            )}
+            {verification_status === "verified" && (
+  <span className="badge bg-primary rounded-circle d-flex align-items-center justify-content-center" style={{ width: "24px", height: "24px" }}>
+    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="white" viewBox="0 0 16 16">
+      <path d="M13.485 1.929a1 1 0 0 1 1.415 1.414l-8 8a1 1 0 0 1-1.414 0l-4-4A1 1 0 1 1 2.93 5.93L6.5 9.5l7-7z"/>
+    </svg>
+  </span>
+)}
+
+
           </div>
+          {service_name && (
+  <span className="badge bg-primary bg-opacity-10 text-primary
+   rounded-pill px-3 py-1 mt-2 d-inline-block"
+  >
+    {service_name}
+  </span>
+)}
           {/* <p className="text-muted mb-0 mt-1">{jobTitle}</p> */}
         </div>
         

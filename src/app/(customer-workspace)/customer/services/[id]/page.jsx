@@ -13,24 +13,27 @@ export default async function ProfessionalCollectionInterface({ params }) {
 
     console.log("Fetching with service ID:", serviceId);
     
-    // Directly fetch professionals
     const { data, error } = await supabase
-      .from("professional_service")
-      .select(`
-        professional_id,
-        individual_professional (
-          professional_id,
-          bio,
-          hourly_rate,
-          rate_currency,
-          verification_status,
-          account (
-            first_name,
-            last_name,
-            profile_picture_url
-          )
-        )
-      `)
+  .from("professional_service")
+  .select(`
+    professional_id,
+    service:service_id (
+      name
+    ),
+    individual_professional (
+      professional_id,
+      bio,
+      hourly_rate,
+      rate_currency,
+      verification_status,
+      account (
+        first_name,
+        last_name,
+        profile_picture_url
+      )
+    )
+  `)
+
       .eq("service_id", serviceId)
       .eq("is_active", true);
 
@@ -62,17 +65,18 @@ export default async function ProfessionalCollectionInterface({ params }) {
 
     const professionals = data.map((item) => {
       const pro = item.individual_professional;
-      if (!pro) return null; // Handle missing professional data
-      
+      if (!pro) return null;
+    
       return {
         ...pro,
-        full_name: pro.account ? `${pro.account.first_name 
-          || ''} ${pro.account.last_name 
-            || ''}`.trim() : 'Unknown',
-        profile_picture_url: 
-        pro.account?.profile_picture_url || null,
+        full_name: pro.account
+          ? `${pro.account.first_name || ''} ${pro.account.last_name || ''}`.trim()
+          : 'Unknown',
+        profile_picture_url: pro.account?.profile_picture_url || null,
+        service_name: item.service?.name || null,
       };
-    }).filter(Boolean); // Remove any null values from the array
+    }).filter(Boolean);
+    
 
     return (
       <div className="container-fluid bg-light py-4">
