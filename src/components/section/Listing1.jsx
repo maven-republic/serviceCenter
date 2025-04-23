@@ -7,7 +7,7 @@ import TrendingServiceCard1 from "../card/TrendingServiceCard1";
 import listingStore from "@/store/listingStore";
 import priceStore from "@/store/priceStore";
 import PopularServiceSlideCard1 from "../card/PopularServiceSlideCard1";
-
+import { useEffect, useState } from "react";
 export default function Listing1() {
   const getDeliveryTime = listingStore((state) => state.getDeliveryTime);
   const getPriceRange = priceStore((state) => state.priceRange);
@@ -24,6 +24,48 @@ export default function Listing1() {
       ? item
       : item.deliveryTime === getDeliveryTime;
 
+      const [professionals, setProfessionals] = useState(["s"]);
+      const [loading, setLoading] = useState(false);
+      const [error, setError] = useState(null);
+    
+      const fetchProfessionals = async (params) => {
+        setLoading(true);
+        setError(null);
+    
+        try { 
+          const queryString = new URLSearchParams(params).toString(); 
+          const res = await fetch(`/api/searchProfessionals?${queryString}`);
+         
+          if (!res.ok) {
+            throw new Error(`Failed to fetch: ${res.statusText}`);
+          }
+          
+          const data = await res.json(); // ✅ Do this immediately after the fetch
+          
+          console.log(data); // Now you’ll see the actual JSON
+          setProfessionals(data);
+        } catch (err) {
+          console.log("err: ", err);
+          setError('Failed to fetch professionals');
+        } finally {
+          console.log(professionals);
+          setLoading(false);
+        }
+      };
+    
+      useEffect(() => {
+        // Example parameters for search
+        const params = {
+          service_name: 'Sewer Cleaning',
+        };
+    
+        fetchProfessionals(params);
+      }, []);
+
+      useEffect(() => {
+        console.log("1: ", professionals);
+      }, [professionals]);
+      
   // price filter
   const priceFilter = (item) =>
     getPriceRange.min <= item.price && getPriceRange.max >= item.price;

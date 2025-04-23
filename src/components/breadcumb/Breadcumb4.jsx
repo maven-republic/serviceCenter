@@ -1,14 +1,14 @@
 "use client";
 import Image from "next/image";
-import FsLightbox from "fslightbox-react";
-import { useState } from "react";
+import FsLightbox from "fslightbox-react"; 
 import { usePathname } from "next/navigation";
+import { useEffect, useState } from "react";
 
 export default function Breadcumb4() {
   const [toggler, setToggler] = useState(false);
 
   const path = usePathname();
-
+ 
   return (
     <>
       <section className="breadcumb-section pt-0">
