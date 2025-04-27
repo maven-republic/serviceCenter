@@ -1,117 +1,81 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import Address from '@/components/Address/Address'
+import { createClient } from '../../../utils/supabase/client'
 
 export default function AddressConfirmation({ accountId, onConfirm }) {
-  const [error, setError] = useState(null)
-  const [loading, setLoading] = useState(false)
+  const [initialAddress, setInitialAddress] = useState(null)
+  const [loadingAddress, setLoadingAddress] = useState(true)
+  const [addressError, setAddressError] = useState(null)
 
-  const getAddressComponent = (components, type) =>
-    components.find((c) => c.types.includes(type))?.long_name || ''
+  const supabase = createClient()
 
-  const handleSelect = async (place) => {
-    setError(null)
+  useEffect(() => {
+    async function fetchPrimaryAddress() {
+      if (!accountId) return
 
-    if (!place.geometry || !place.geometry.location) {
-      console.error('Invalid place geometry:', place)
-      setError('Please select a valid location from the dropdown.')
-      return
-    }
+      setLoadingAddress(true)
+      const { data, error } = await supabase
+        .from('address')
+        .select('*')
+        .eq('account_id', accountId)
+        .eq('is_primary', true)
+        .single()
 
-    const lat = place.geometry.location.lat()
-    const lng = place.geometry.location.lng()
-
-    // Extract address components
-    const street_number = getAddressComponent(place.address_components, 'street_number')
-    const route = getAddressComponent(place.address_components, 'route')
-    const city = getAddressComponent(place.address_components, 'locality')
-    const parish = getAddressComponent(place.address_components, 'administrative_area_level_1')
-    const street_address = `${street_number} ${route}`.trim()
-
-    // 🧠 Check if the address is specific enough
-    const hasStreet = street_number || route
-    if (!hasStreet) {
-      setError('Please select a more specific address (e.g., with street name or number).')
-      return
-    }
-
-    if (!city || !parish) {
-      setError('Missing address details. Please select a full address from the dropdown.')
-      return
-    }
-
-    const payload = {
-      account_id: accountId,
-      address_type: 'service',
-      is_primary: false,
-      formatted_address: place.formatted_address,
-      street_address,
-      city,
-      parish,
-      lat,
-      lng,
-      google_place_data: {
-        place_id: place.place_id,
-        formatted_address: place.formatted_address,
-        name: place.name || '',
-        utc_offset_minutes: place.utc_offset_minutes || null,
-        types: place.types || [],
-        geometry: { lat, lng },
-      },
-    }
-
-    try {
-      setLoading(true)
-
-      const res = await fetch('/api/address', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Accept: 'application/json',
-        },
-        body: JSON.stringify(payload),
-      })
-
-      const text = await res.text()
-      console.log('📡 Raw response from /api/address:', text)
-
-      let data
-      try {
-        data = JSON.parse(text)
-      } catch (jsonErr) {
-        console.error('🚫 Failed to parse JSON from /api/address:', jsonErr)
-        setError('Something went wrong while saving the address.')
-        return
+      if (error) {
+        console.error('Failed to fetch primary address:', error)
+        setAddressError('Failed to load your address. Please enter it manually.')
+      } else if (data) {
+        console.log('✅ Primary address loaded:', data)
+        setInitialAddress(data.formatted_address)
+      } else {
+        console.log('⚠️ No primary address found.')
+        setAddressError('No saved address found. Please enter your address.')
       }
 
-      if (!res.ok) {
-        console.error('❌ Server error response:', data)
-        setError(data?.error || 'Failed to save address')
-        return
-      }
+      setLoadingAddress(false)
+    }
 
-      if (onConfirm) {
-        onConfirm({ lat, lng });
-      }
-      
-    } catch (err) {
-      console.error('🔥 Network or server error:', err)
-      setError('An unexpected error occurred.')
-    } finally {
-      setLoading(false)
+    fetchPrimaryAddress()
+  }, [accountId])
+
+  const handleSelect = (addressData) => {
+    // Extract numeric latitude and longitude from Google PlaceResult
+    const lat = addressData.geometry?.location?.lat?.()
+    const lng = addressData.geometry?.location?.lng?.()
+    if (typeof lat === 'number' && typeof lng === 'number') {
+      onConfirm({ lat, lng })
+    } else {
+      console.error('Invalid location data:', addressData)
+      setAddressError('Unable to determine latitude and longitude for this address.')
     }
   }
 
   return (
-    <div className="mb-4">
-      <h5>Where do you need the service?</h5>
-      <p className="text-muted mb-3">Confirm or change the address where this service will be performed.</p>
+    <div className="container py-5">
+      <h2 className="h4 mb-4 text-center">Confirm Your Service Address</h2>
 
-      <Address onSelect={handleSelect} />
+      {loadingAddress ? (
+        <div className="text-center my-4">
+          <div className="spinner-border text-primary" role="status" />
+          <p className="mt-3">Loading your address...</p>
+        </div>
+      ) : (
+        <>
+          {addressError && (
+            <div className="alert alert-warning text-center" role="alert">
+              {addressError}
+            </div>
+          )}
 
-      {loading && <p className="text-sm text-muted mt-2">Saving address...</p>}
-      {error && <p className="text-sm text-danger mt-2">{error}</p>}
+          <div className="row justify-content-center">
+            <div className="col-md-8">
+              <Address onSelect={handleSelect} defaultValue={initialAddress} />
+            </div>
+          </div>
+        </>
+      )}
     </div>
   )
 }
