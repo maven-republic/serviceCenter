@@ -4,13 +4,19 @@ import Image from "next/image";
 export default function ProfessionalManifest({ data }) {
   const {
     professional_id,
-    full_name,
+    first_name, 
+    last_name,
     profile_picture_url,
+    
     bio,
     verification_status,
     service_name,
     specialties = [],
   } = data;
+
+  console.log('Professional Data:', data);
+  const full_name = `${first_name ?? ''} ${last_name ?? ''}`.trim();
+
 
   // Extract job title/role from bio or use first specialty
   const jobTitle = specialties[0] || bio?.split('.')[0]?.substring(0, 30) || "Professional";
@@ -34,7 +40,8 @@ export default function ProfessionalManifest({ data }) {
   const showBadge = badgeText !== "";
 
   return (
-    <div className="bg-white rounded shadow-sm p-4">
+    // shadow-sm p-4
+    <div className="bg-white rounded ">
       <div className="d-flex justify-content-between align-items-start">
         <div>
           <div className="d-flex align-items-center gap-2">
@@ -62,7 +69,9 @@ export default function ProfessionalManifest({ data }) {
         </div>
         
         {/* Profile image - right aligned as in the image */}
-        <div className="rounded-circle overflow-hidden" style={{width: "46px", height: "46px"}}>
+        <div className="rounded-circle overflow-hidden" 
+        style={{width: "46px", 
+        height: "46px"}}>
           {profile_picture_url ? (
             <Image
               src={profile_picture_url}

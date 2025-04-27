@@ -1,117 +1,112 @@
-import { createClient } from "../../../../../../utils/supabase/server";
+'use client'
 
-import ProfessionalManifest from "@/components/ProfessionalManifest";
+import { useState, useEffect, useCallback } from 'react'
+import { useParams, useSearchParams, useRouter } from 'next/navigation'
+import { useAccount } from '@/app/layout'
+import { useSession, useSupabaseClient } from '@supabase/auth-helpers-react'
+
+import AddressConfirmation from '@/components/AddressConfirmation/AddressConfirmation'
+import ProfessionalManifest from '@/components/ProfessionalManifest'
+import NoProfessionalsFound from '@/components/NoProfessionalFound/NoProfessionalsFound'
 
 
-export default async function ProfessionalCollectionInterface({ params }) {
-  
-  const parametersForAsync = await params;
-  const { id: serviceId } = parametersForAsync;
-  
-  try {
-    const supabase = await createClient();
+export default function ProfessionalCollectionInterface() {
+  const { id: serviceId } = useParams()
+  const router = useRouter()
+  const searchParams = useSearchParams()
+  const session = useSession()
+  const supabase = useSupabaseClient()
+  const account = useAccount()
 
-    console.log("Fetching with service ID:", serviceId);
-    
-    const { data, error } = await supabase
-  .from("professional_service")
-  .select(`
-    professional_id,
-    service:service_id (
-      name
-    ),
-    individual_professional (
-      professional_id,
-      bio,
-      hourly_rate,
-      rate_currency,
-      verification_status,
-      account (
-        first_name,
-        last_name,
-        profile_picture_url
-      )
-    )
-  `)
+  const [professionals, setProfessionals] = useState([])
+  const [loading, setLoading] = useState(false)
 
-      .eq("service_id", serviceId)
-      .eq("is_active", true);
+  const lat = searchParams.get('lat')
+  const lng = searchParams.get('lng')
 
-    if (error) {
-      console.error("Error fetching professionals:", error);
-      throw new Error(`Failed to load professionals: ${error.message}`);
+  const locationFromQuery = lat && lng
+    ? { lat: parseFloat(lat), lng: parseFloat(lng) }
+    : null
+
+  const fetchNearbyProfessionals = useCallback(async (location) => {
+    if (!location) return
+    if (!location.lat || !location.lng) return
+    if (!serviceId) return
+
+    try {
+      setLoading(true)
+
+      console.log('📡 Fetching nearby professionals for location:', location)
+
+      const res = await fetch('/api/professionals/nearby', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ service_id: serviceId, location }),
+      })
+
+      const data = await res.json()
+      console.log('📦 Professionals fetched:', data)
+
+      setProfessionals(data)
+    } catch (err) {
+      console.error('Error fetching professionals:', err)
+    } finally {
+      setLoading(false)
     }
+  }, [serviceId])
 
-    if (!data || data.length === 0) {
-      // No error but empty data
-      return (
-        <div className="container-fluid bg-light py-4">
-          <div className="container">
-            <div className="row mb-4">
-              <div className="col">
-                {/* <h3 className="fw-bold mb-0">Professionals for this Service</h3> */}
-                <p className="text-muted">No professionals available at the moment.</p>
-              </div>
-            </div>
-
-            <div className="alert alert-light text-center">
-              {/* <p className="mb-2">No professionals currently offer this service.</p> */}
-              <a href="/customer/explore" className="btn btn-lg btn-primary mt-2">Explore more</a>
-            </div>
-          </div>
-        </div>
-      );
+  // Fetch professionals once location is fully ready
+  useEffect(() => {
+    if (
+      locationFromQuery &&
+      typeof locationFromQuery.lat === 'number' &&
+      typeof locationFromQuery.lng === 'number'
+    ) {
+      console.log('🔍 Valid location detected:', locationFromQuery)
+      fetchNearbyProfessionals(locationFromQuery)
     }
+  }, [locationFromQuery?.lat, locationFromQuery?.lng, fetchNearbyProfessionals])
 
-    const professionals = data.map((item) => {
-      const pro = item.individual_professional;
-      if (!pro) return null;
-    
-      return {
-        ...pro,
-        full_name: pro.account
-          ? `${pro.account.first_name || ''} ${pro.account.last_name || ''}`.trim()
-          : 'Unknown',
-        profile_picture_url: pro.account?.profile_picture_url || null,
-        service_name: item.service?.name || null,
-      };
-    }).filter(Boolean);
-    
+  const handleAddressConfirmed = (address) => {
+    console.log('📍 Confirmed address lat/lng:', address)
 
-    return (
-      <div className="container-fluid bg-light py-4">
-        <div className="container">
-          <div className="row mb-4">
-            <div className="col">
-              {/* <h3 className="fw-bold mb-0">Professionals for this Service</h3> */}
-              {/* <p className="text-muted">{professionals.length} professionals available</p> */}
-            </div>
-          </div>
+    const query = new URLSearchParams({
+      lat: address.lat,
+      lng: address.lng,
+    }).toString()
 
-          <div className="row g-4">
-            {professionals.map((pro) => (
-              <div className="col-md-6 col-lg-4" key={pro.professional_id}>
-                <ProfessionalManifest data={pro} />
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-    );
-  } catch (err) {
-    console.error("Error in professional listing:", err);
-    
-    return (
-      <div className="container py-5">
-        <div className="alert alert-danger">
-          <h4 className="alert-heading">Error loading professionals</h4>
-          <p>We encountered a problem while trying to load the professionals for this service.</p>
-          <hr />
-          <p className="mb-0">Please try again later or contact support if the problem persists.</p>
-          <p className="text-muted mt-2 small">Error details: {err.message}</p>
-        </div>
-        <a href="/services" className="btn btn-primary mt-3">Return to Services</a>
-      </div>
-    );
+    router.push(`/customer/services/${serviceId}?${query}`)
   }
+  return (
+    <div className="container py-5">
+      {!account ? (
+        <div className="text-center my-5">
+          <div className="spinner-border text-primary" role="status">
+            <span className="visually-hidden">Loading your account info...</span>
+          </div>
+          <p className="mt-3">Loading your account info...</p>
+        </div>
+      ) : !locationFromQuery ? (
+        <AddressConfirmation accountId={account.account_id} onConfirm={handleAddressConfirmed} />
+      ) : loading ? (
+        <div className="text-center my-5">
+          <div className="spinner-border text-primary" role="status">
+            <span className="visually-hidden">Loading professionals...</span>
+          </div>
+          <p className="mt-3">Loading professionals...</p>
+        </div>
+      ) : professionals.length === 0 ? (
+        <NoProfessionalsFound serviceId={serviceId} /> // ✅ USE YOUR COMPONENT HERE
+      ) : (
+        <div className="row g-4">
+          {professionals.map((pro) => (
+            <div className="col-md-6 col-lg-4" key={pro.professional_id}>
+              <ProfessionalManifest data={pro} />
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+  
 }

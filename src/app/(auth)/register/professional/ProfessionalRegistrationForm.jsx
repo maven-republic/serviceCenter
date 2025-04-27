@@ -7,10 +7,8 @@ import { signupProfessional } from './actions'
 import { createClient } from '../../../../../utils/supabase/client'
 import styles from './ProfessionalForm.module.css';
 import { useRouter } from 'next/navigation'
-import Address from './Address'
+import Address from '@/components/Address/Address'
 import AddressMap from '@/components/Address/AddressMap'
-
-
 
 export default function ProfessionalRegistrationForm({ errorMessage }) {
 
@@ -138,12 +136,25 @@ const [itemsPerPage, setItemsPerPage] = useState(10);
   
 
   const handleAddressSelect = (place) => {
-    const { formatted_address, geometry, place_id, address_components } = place
-    const lat = geometry.location.lat()
-    const lng = geometry.location.lng()
+    const { formatted_address, geometry, place_id, address_components } = place;
+    const lat = geometry.location.lat();
+    const lng = geometry.location.lng();
   
     const getComponent = (type) =>
-      address_components.find(comp => comp.types.includes(type))?.long_name || ''
+      address_components.find(comp => comp.types.includes(type))?.long_name || '';
+  
+    const cleanedPlace = {
+      address_components,
+      formatted_address,
+      geometry: {
+        location: {
+          lat,
+          lng
+        }
+      },
+      place_id,
+      utc_offset_minutes: place.utc_offset_minutes ?? null // optionally keep this new recommended field
+    };
   
     const updatedFields = {
       streetAddress: getComponent('route') + ' ' + getComponent('street_number'),
@@ -153,11 +164,12 @@ const [itemsPerPage, setItemsPerPage] = useState(10);
       placeId: place_id,
       latitude: lat,
       longitude: lng,
-      rawGoogleData: JSON.stringify(place)
-    }
+      rawGoogleData: JSON.stringify(cleanedPlace) // sanitized object only
+    };
   
-    setFormData(prev => ({ ...prev, ...updatedFields }))
-  }
+    setFormData(prev => ({ ...prev, ...updatedFields }));
+  };
+  
 
   
 

@@ -185,7 +185,7 @@ const categoryFilter = (item) =>
             <div className="col-xl-7">
               <div className="half_map_area_content mt30">
                 <div className="text-center text-sm-start">
-                  <h4 className="fw700 mb20">Services &amp; Solutions</h4>
+                  <h4 className="fw700 mb20">Services</h4>
                 </div>
                 <Sift />
                 <div className="row">{content}</div>
