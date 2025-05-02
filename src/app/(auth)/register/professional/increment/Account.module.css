@@ -1,0 +1,41 @@
+/* increment/Account.module.css */
+.container {
+    display: flex;
+    flex-wrap: wrap;
+    margin-bottom: 2rem;
+  }
+  .intro {
+    flex: 1 1 40%;
+    padding-right: 1.5rem;
+  }
+  .fieldGroup {
+    margin-bottom: 1rem;
+  }
+  .label {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+  }
+  .input {
+    width: 100%;
+    padding: 0.5rem;
+    border: 1px solid #ced4da;
+    border-radius: 0.25rem;
+    transition: border-color 0.2s ease;
+  }
+  .inputValid {
+    border-color: #28a745;
+  }
+  .inputInvalid {
+    border-color: #dc3545;
+  }
+  .errorText {
+    color: #dc3545;
+    font-size: 0.875rem;
+    margin-top: 0.25rem;
+  }
+  .spinner {
+    margin-left: 0.5rem;
+    vertical-align: middle;
+  }
+  

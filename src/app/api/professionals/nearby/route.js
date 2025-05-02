@@ -24,6 +24,8 @@ export async function POST(req) {
       input_service_id: service_id
     })
 
+    console.log('🔍 RPC data outlined:', data, 'RPC error:', error)
+
     if (error) {
       console.error('Supabase RPC error:', error)
       return new Response(JSON.stringify({ error: error.message }), { status: 500 })

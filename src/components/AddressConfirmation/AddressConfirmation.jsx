@@ -1,15 +1,18 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import Address from '@/components/Address/Address'
 import { createClient } from '../../../utils/supabase/client'
+import { Edit2 } from 'lucide-react'
 
 export default function AddressConfirmation({ accountId, onConfirm }) {
   const [initialAddress, setInitialAddress] = useState(null)
   const [loadingAddress, setLoadingAddress] = useState(true)
   const [addressError, setAddressError] = useState(null)
+  const [isEditing, setIsEditing] = useState(false)
 
   const supabase = createClient()
+  const addressRef = useRef(null)
 
   useEffect(() => {
     async function fetchPrimaryAddress() {
@@ -41,7 +44,6 @@ export default function AddressConfirmation({ accountId, onConfirm }) {
   }, [accountId])
 
   const handleSelect = (addressData) => {
-    // Extract numeric latitude and longitude from Google PlaceResult
     const lat = addressData.geometry?.location?.lat?.()
     const lng = addressData.geometry?.location?.lng?.()
     if (typeof lat === 'number' && typeof lng === 'number') {
@@ -52,9 +54,17 @@ export default function AddressConfirmation({ accountId, onConfirm }) {
     }
   }
 
+  const handleEditClick = () => {
+    setIsEditing(true)
+    // focus the address input if possible
+    addressRef.current?.focus()
+  }
+
   return (
     <div className="container py-5">
-      <h2 className="h4 mb-4 text-center">Confirm Your Service Address</h2>
+<h2 className="h4 mb-4 text-center">
+  Confirm or Edit Your Service Address
+</h2>
 
       {loadingAddress ? (
         <div className="text-center my-4">
@@ -70,8 +80,23 @@ export default function AddressConfirmation({ accountId, onConfirm }) {
           )}
 
           <div className="row justify-content-center">
-            <div className="col-md-8">
-              <Address onSelect={handleSelect} defaultValue={initialAddress} />
+            <div className="col-md-8 position-relative">
+              <Address
+                ref={addressRef}
+                onSelect={handleSelect}
+                defaultValue={initialAddress}
+                disabled={!isEditing}
+              />
+              {!isEditing && (
+                <button
+                  type="button"
+                  className="position-absolute top-50 end-0 translate-middle-y me-3 bg-white border-0"
+                  onClick={handleEditClick}
+                  aria-label="Edit address"
+                >
+                  <Edit2 size={20} />
+                </button>
+              )}
             </div>
           </div>
         </>

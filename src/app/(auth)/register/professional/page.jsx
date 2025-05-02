@@ -11,13 +11,15 @@ export default async function ProfessionalRegistrationPage({ searchParams }) {
 
   // If a user is already logged in, redirect to the dashboard
   if (data?.user) {
-    redirect('/dashboard')
+    redirect('/professional/workspace')
   }
 
   // Read error message from query parameters, if any
   const errorMessage = searchParams?.error || null
 
   return (
+
+    
    <div>
     {/* <div className="bgc-thm4"> */}
       <Header />

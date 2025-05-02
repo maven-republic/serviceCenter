@@ -1,0 +1,40 @@
+/* ProgressionIndicator.module.css */
+.wrapper {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+    position: relative;
+  }
+  .line {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 5%;
+    right: 5%;
+    height: 2px;
+    background: #e9ecef;
+    z-index: 1;
+  }
+  .step {
+    position: relative;
+    z-index: 2;
+    width: 2rem;
+    height: 2rem;
+    border-radius: 50%;
+    background: #f8f9fa;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+  .stepActive {
+    background: #0d6efd;
+    color: #fff;
+  }
+  .stepCompleted {
+    background: #28a745;
+    color: #fff;
+  }
+  

@@ -363,3 +363,8 @@ a {
 .ui-social-media a:hover i {
   color: var(--primary-color) !important;
 }
+
+.our-register {
+  padding: 40px 0;     /* Top & bottom spacing */
+  margin-top: 10px;    /* Space above the form */
+}
