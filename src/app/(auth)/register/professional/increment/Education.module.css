@@ -1,0 +1,42 @@
+.container {
+    display: flex;
+    gap: 2rem;
+    margin-bottom: 2rem;
+}
+
+.intro {
+    flex: 1 1 35%;
+    padding-right: 1.5rem;
+}
+
+.form {
+    flex: 1 1 65%;
+}
+
+.fieldGroup {
+    margin-bottom: 1.5rem;
+}
+
+.label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+}
+
+.input,
+.select {
+    width: 100%;
+    padding: 0.5rem 0.75rem;
+    border: 1px solid #ced4da;
+    border-radius: 0.25rem;
+}
+
+.invalid {
+    border-color: #dc3545;
+}
+
+.errorText {
+    margin-top: 0.25rem;
+    color: #dc3545;
+    font-size: 0.875rem;
+}

@@ -6,6 +6,7 @@ import styles from './ProfessionalForm.module.css'
 const PROGRESSION_LABELS = [
   'Account',
   'Identity',
+  'Education',
   'Address',
   'Services',
   'Pricing',

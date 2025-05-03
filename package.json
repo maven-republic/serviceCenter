@@ -33,6 +33,7 @@
     "react-dom": "^18.2.0",
     "react-icons": "^5.5.0",
     "react-pro-sidebar": "^1.1.0-alpha.1",
+    "react-select": "^5.10.1",
     "react-slider": "^2.0.6",
     "react-sticky": "^6.0.3",
     "react-sticky-box": "^2.0.5",

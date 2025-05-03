@@ -16,6 +16,7 @@ import GeneralAddress   from './increment/GeneralAddress'
 import Services         from './increment/Services'
 import Pricing          from './increment/Pricing'
 import Contact          from './increment/Contact'
+import Education        from './increment/Education'
 
 import {
   validateEmail,
@@ -192,6 +193,7 @@ export default function ProfessionalRegistrationForm({ errorMessage }) {
 
   const nextStep = async () => {
     if (currentStep === 1) {
+      // Account validation
       const eErr = validateEmail(formData.email)
       const pErr = validatePassword(formData.password)
       const cErr = validateConfirmPassword(formData.password, formData.confirmPassword)
@@ -205,32 +207,71 @@ export default function ProfessionalRegistrationForm({ errorMessage }) {
         return
       }
       setCurrentStep(2)
+  
     } else if (currentStep === 2) {
-      const fn = validateFirstName(formData.firstName)
-      const ln = validateLastName(formData.lastName)
-      const ex = validateExperience(formData.experience)
-      setErrors(err => ({ ...err, firstName: fn, lastName: ln, experience: ex }))
-      if (fn || ln || ex) return
+      // Personal validation
+      const fnErr = validateFirstName(formData.firstName)
+      const lnErr = validateLastName(formData.lastName)
+      const exErr = validateExperience(formData.experience)
+      setErrors(err => ({ ...err, firstName: fnErr, lastName: lnErr, experience: exErr }))
+      if (fnErr || lnErr || exErr) return
       setCurrentStep(3)
+  
     } else if (currentStep === 3) {
-      const sa = validateStreetAddress(formData.streetAddress)
-      const ct = validateCity(formData.city)
-      const pa = validateParish(formData.parish)
-      setErrors(err => ({ ...err, streetAddress: sa, city: ct, parish: pa }))
-      if (sa || ct || pa) return
+      // Education validation
+      const instErr = validateInstitutionId(formData.institutionId)
+      const newInstErr = formData.institutionId === '__new'
+        ? validateInstitutionName(formData.institutionName)
+        : ''
+      const degErr       = validateDegree(formData.degree)
+      const fieldErr     = validateFieldOfStudy(formData.fieldOfStudy)
+      const gradErr      = validateGraduationDate(formData.graduationDate)
+  
+      setErrors(err => ({
+        ...err,
+        institutionId:   instErr,
+        institutionName: newInstErr,
+        degree:          degErr,
+        fieldOfStudy:    fieldErr,
+        graduationDate:  gradErr
+      }))
+  
+      if (instErr || newInstErr || degErr || fieldErr || gradErr) return
       setCurrentStep(4)
+  
     } else if (currentStep === 4) {
+      // Address validation
+      const saErr = validateStreetAddress(formData.streetAddress)
+      const ctErr = validateCity(formData.city)
+      const paErr = validateParish(formData.parish)
+      setErrors(err => ({ ...err, streetAddress: saErr, city: ctErr, parish: paErr }))
+      if (saErr || ctErr || paErr) return
+      setCurrentStep(5)
+  
+    } else if (currentStep === 5) {
+      // Services validation
       if (formData.services.length === 0) {
         setErrors(err => ({ ...err, services: 'Please select at least one service.' }))
         return
       }
-      setCurrentStep(5)
+      setCurrentStep(6)
+  
+    } else if (currentStep === 6) {
+      // Pricing step (no required validation)
+      setCurrentStep(7)
+  
     } else {
+      // Final Contact step or beyond
       setCurrentStep(s => s + 1)
     }
   }
-
-  const prevStep = () => setCurrentStep(s => s - 1)
+  
+  const prevStep = () => {
+    if (currentStep > 1) {
+      setCurrentStep(s => s - 1)
+    }
+  }
+  
 
   const handleSubmit = async e => {
     e.preventDefault()
@@ -253,10 +294,10 @@ export default function ProfessionalRegistrationForm({ errorMessage }) {
         <div className="alert alert-danger mb-4">{errorMessage}</div>
       )}
 
-      <ProgressionIndicator
+      {/* <ProgressionIndicator
         currentStep={currentStep}
         onStepClick={step => step < currentStep && setCurrentStep(step)}
-      />
+      /> */}
 
       {currentStep === 1 && (
         <Account
@@ -276,6 +317,14 @@ export default function ProfessionalRegistrationForm({ errorMessage }) {
         />
       )}
       {currentStep === 3 && (
+        <Education
+          formData={formData}
+          errors={errors}
+          updateFormData={updateFormData}
+          handleBlur={handleBlur}
+        />
+      )}
+      {currentStep === 4 && (
         <GeneralAddress
           formData={formData}
           errors={errors}
@@ -283,7 +332,7 @@ export default function ProfessionalRegistrationForm({ errorMessage }) {
           updateFormData={updateFormData}
         />
       )}
-      {currentStep === 4 && (
+      {currentStep === 5 && (
         <Services
           categories={categories}
           services={servicesList}
@@ -297,13 +346,13 @@ export default function ProfessionalRegistrationForm({ errorMessage }) {
           errors={errors.services}
         />
       )}
-      {currentStep === 5 && (
+      {currentStep === 6 && (
         <Pricing
           formData={formData}
           updateFormData={updateFormData}
         />
       )}
-      {currentStep === 6 && (
+      {currentStep === 7 && (
         <Contact
           formData={formData}
           errors={errors}
@@ -316,7 +365,7 @@ export default function ProfessionalRegistrationForm({ errorMessage }) {
         currentStep={currentStep}
         nextStep={nextStep}
         prevStep={prevStep}
-        totalSteps={6}
+        totalSteps={7}
       />
     </form>
   )

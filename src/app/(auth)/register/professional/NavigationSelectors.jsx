@@ -5,7 +5,7 @@ export default function NavigationSelectors({
   currentStep,
   nextStep,
   prevStep,
-  totalSteps = 6
+  totalSteps = 7
 }) {
   const progressPercent = (currentStep / totalSteps) * 100
 
