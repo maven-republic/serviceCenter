@@ -360,7 +360,7 @@ export default function ProfessionalRegistrationForm({ errorMessage }) {
           handleBlur={handleBlur}
         />
       )}
-
+<div style={{ height: '80px' }} />
       <NavigationSelectors
         currentStep={currentStep}
         nextStep={nextStep}

@@ -1,11 +1,11 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import styles from './Education.module.css'
 import { createClient } from '../../../../../../utils/supabase/client'
 import Select from 'react-select'
+import SelectedServices from './SelectedServices'
 
-export default function Education({ formData, updateFormData }) {
+export default function Education({ formData, updateFormData, allServices }) {
   const [institutions, setInstitutions] = useState([])
   const education = formData.education || []
 
@@ -29,13 +29,25 @@ export default function Education({ formData, updateFormData }) {
     updateFormData({ target: { name: 'education', value: updated } })
   }
 
+  const toggleEducationService = (index, serviceId) => {
+    const updated = [...education]
+    const currentServices = updated[index].serviceIds || []
+    const exists = currentServices.includes(serviceId)
+    updated[index].serviceIds = exists
+      ? currentServices.filter(id => id !== serviceId)
+      : [...currentServices, serviceId]
+    updateFormData({ target: { name: 'education', value: updated } })
+  }
+
   const addEntry = () => {
     const newEntry = {
       institutionId: '',
       institutionName: '',
       degree: '',
       fieldOfStudy: '',
-      graduationDate: ''
+      startDate: '',
+      endDate: '',
+      serviceIds: []
     }
     updateFormData({
       target: {
@@ -137,14 +149,58 @@ export default function Education({ formData, updateFormData }) {
             />
           </div>
 
-          <div className="mb-3">
-            <label className="form-label">Graduation Date</label>
+          <div className="row mb-3">
+            <div className="col-md-6">
+              <label className="form-label">Start Date</label>
+              <input
+                type="date"
+                className="form-control"
+                value={entry.startDate}
+                onChange={e => handleChange(index, 'startDate', e.target.value)}
+              />
+            </div>
+            <div className="col-md-6">
+              <label className="form-label">End Date</label>
+              <input
+                type="date"
+                className="form-control"
+                value={entry.endDate}
+                onChange={e => handleChange(index, 'endDate', e.target.value)}
+              />
+            </div>
+          </div>
+
+          <div className="form-check mb-3">
             <input
-              type="date"
-              className="form-control"
-              value={entry.graduationDate}
-              onChange={e => handleChange(index, 'graduationDate', e.target.value)}
+              className="form-check-input"
+              type="checkbox"
+              id={`current-${index}`}
+              checked={!entry.endDate}
+              onChange={e =>
+                handleChange(
+                  index,
+                  'endDate',
+                  e.target.checked ? '' : new Date().toISOString().split('T')[0]
+                )
+              }
             />
+            <label className="form-check-label" htmlFor={`current-${index}`}>
+              I'm currently attending
+            </label>
+          </div>
+
+          <div className="mb-3">
+            <label className="form-label">Competence</label>
+            <p>We recommend adding your top 5 competences that can add value to our customers
+
+</p>
+            {Array.isArray(allServices) && (
+  <SelectedServices
+    selected={entry.serviceIds || []}
+    toggleService={(id) => toggleEducationService(index, id)}
+    services={allServices}
+  />
+)}
           </div>
 
           <div className="text-end">

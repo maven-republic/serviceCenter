@@ -9,9 +9,9 @@ export default function SelectedServices({
   onRemove,
   error
 }) {
-  const selectedServices = allServices.filter(s =>
-    selectedIds.includes(s.service_id)
-  )
+  const selectedServices = (services || []).filter(service =>
+    (selected || []).includes(service.service_id)
+  );
 
   return (
     <div className="card border mb-4">
