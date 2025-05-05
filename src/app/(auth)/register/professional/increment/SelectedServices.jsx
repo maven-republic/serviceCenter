@@ -4,28 +4,28 @@
 import styles from '../ProfessionalForm.module.css'
 
 export default function SelectedServices({
-  selectedIds,
-  allServices,
-  onRemove,
-  error
+  selected,
+  toggleService,
+  services
 }) {
-  const selectedServices = (services || []).filter(service =>
-    (selected || []).includes(service.service_id)
-  );
+  const selectedServices = services.filter(service =>
+    selected.includes(service.service_id)
+  )  
+
 
   return (
     <div className="card border mb-4">
       <div className="card-header bg-white d-flex justify-content-between align-items-center py-3">
         <h5 className="mb-0">Your Selected Services</h5>
-        <span className="badge bg-primary">{selectedIds.length}</span>
-      </div>
+        <span className="badge bg-primary">{selected.length}</span>
+        </div>
 
-      {error && (
+      {/* {error && (
         <div className="alert alert-danger m-3" role="alert">
           <i className="fas fa-exclamation-circle me-2"></i>
           {error}
         </div>
-      )}
+      )} */}
 
       <div className="card-body">
         {selectedServices.length ? (

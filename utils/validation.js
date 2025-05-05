@@ -132,7 +132,14 @@ export function validateFieldOfStudy(val) {
     if (!val) return 'Please enter your field of study'
     return ''
 }
-export function validateGraduationDate(val) {
-    if (!val) return 'Please pick your graduation date'
+
+export function validateEndDate(startDate, endDate) {
+    if (!startDate) return 'Start date is required.'
+  
+    if (endDate && new Date(endDate) < new Date(startDate)) {
+      return 'End date must be after start date.'
+    }
+  
     return ''
-}
+  }
+  
