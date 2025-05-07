@@ -1,6 +1,6 @@
 'use client'
 
-import WorkExperienceEntry from './WorkExperience'
+import WorkExperience from './WorkExperience'
 
 export default function WorkExperienceCollection({ experienceList, onUpdate }) {
   const handleChange = (index, field, value) => {

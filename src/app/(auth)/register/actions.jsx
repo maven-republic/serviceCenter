@@ -1,96 +1,68 @@
 'use server'
 
 import { redirect } from 'next/navigation'
-import { createClient } from '../../../../utils/supabase/server'
-import { useLoaderStore } from '@/store/loaderStore'
-export async function signup(formData) {
-  const supabase = await createClient();
-  const { startLoading, stopLoading } = useLoaderStore.getState()
+import { createClient } from '../../../../../utils/supabase/server'
 
-  const firstName = formData.get('firstName');
-  const lastName = formData.get('lastName'); 
-  const userEmail = formData.get('email');
-  const phoneNumber = formData.get('phone');
-  const gender = formData.get('gender');
-  const role = formData.get('role');
-  const password = formData.get('password');
-  const confirmPassword = formData.get('confirmPassword');
+export async function signupProfessional(formData) {
+  const supabase = await createClient()
 
-  startLoading()
-  // Validate required fields
-  if (!userEmail || !password) {
-    redirect('/register?error=' + encodeURIComponent('Email and password are required.'));
-  }
+  const firstName = formData.get('firstName')
+  const lastName = formData.get('lastName')
+  const userEmail = formData.get('email')
+  const phoneNumber = formData.get('phone')
+  const experience = formData.get('experience')
+  const hourlyRate = formData.get('hourlyRate')
+  const dailyRate = formData.get('dailyRate')
+  const serviceRadius = formData.get('serviceRadius')
+  const websiteUrl = formData.get('websiteUrl')
+  const portfolioUrl = formData.get('portfolioUrl')
+  const password = formData.get('password')
+  const confirmPassword = formData.get('confirmPassword')
+  const calcomUsername = formData.get('calcomUsername') || null
 
-  // Check if passwords match
-  if (password !== confirmPassword) {
-    redirect('/register?error=' + encodeURIComponent('Passwords do not match.'));
-  }
+  const services = JSON.parse(formData.get('services') || '[]')
+  const specializations = JSON.parse(formData.get('specializations') || '[]')
 
-  // Check if user already exists
-  const { data: existingUsers, error: userCheckError } = await supabase.auth.admin.listUsers()
- 
-  const existingUser = existingUsers.users.find((user) => {
-        console.log(user.email, userEmail);
-        return userEmail === user.email
-    })
-    console.log(existingUser);
-  if (userCheckError && userCheckError.code !== 'PGRST116') { 
-    // Ignore 'PGRST116' (no records found), but handle any other errors
-    redirect('/register?error=' + encodeURIComponent('Error checking user existence.'));
-  }
-// console.log(existingUser);
-  if (existingUser) {
-    redirect('/register?error=' + encodeURIComponent('Email is already registered. Please log in.'));
-  }
- 
- 
-  // Sign up the user in Supabase Auth
   const { data, error } = await supabase.auth.signUp({
     email: userEmail,
     password: password
-  });
+  })
 
   if (error) {
-    redirect('/register?error=' + encodeURIComponent(error.message || 'Signup failed.'));
+    redirect('/register/professional?error=' + encodeURIComponent(error.message || 'Signup failed.'))
   }
 
-  // Get the user's ID from the response
-  const userId = data?.user?.id;
+  const userId = data?.user?.id
 
-  
-
-  // Begin transaction to create related records
   const { error: accountError } = await supabase
     .from('account')
     .insert([{
-      account_id: userId, // Use auth user ID as account ID
+      account_id: userId,
       email: userEmail,
-      password_hash: 'MANAGED_BY_SUPABASE', // Password is managed by Supabase Auth
+      password_hash: 'MANAGED_BY_SUPABASE',
       first_name: firstName,
       last_name: lastName,
       account_status: 'pending',
       email_verified: false
-    }]);
+    }])
 
   if (accountError) {
-    redirect('/register?error=' + encodeURIComponent('Failed to create account.'));
+    redirect('/register/professional?error=' + encodeURIComponent('Failed to create account.'))
   }
 
-  // Create account role
   const { error: roleError } = await supabase
     .from('account_role')
     .insert([{
       account_id: userId,
-      role_type: role, // Will directly be either 'professional' or 'customer'    ,
+      role_type: 'professional',
+      role_status: 'pending',
       is_primary: true
-    }]);
+    }])
 
   if (roleError) {
-    redirect('/register?error=' + encodeURIComponent('Failed to assign role.'));
+    redirect('/register/professional?error=' + encodeURIComponent('Failed to assign role.'))
   }
 
-  // Create phone number record
   const { error: phoneError } = await supabase
     .from('phone')
     .insert([{
@@ -98,37 +70,94 @@ export async function signup(formData) {
       phone_type: 'mobile',
       phone_number: phoneNumber,
       is_primary: true
-    }]);
+    }])
 
   if (phoneError) {
-    redirect('/register?error=' + encodeURIComponent('Failed to save phone number.'));
+    console.error('Failed to save phone number:', phoneError)
   }
 
-  // Create profile based on role
-  if (role === 'customer') {
-    const { error: customerError } = await supabase
-      .from('individual_customer')
-      .insert([{
-        account_id: userId,
-        gender: gender
-      }]);
-    
-    if (customerError) {
-      redirect('/register?error=' + encodeURIComponent('Failed to create customer profile.'));
-    }
-  } else if (role === 'service_provider') {
-    const { error: professionalError } = await supabase
-      .from('individual_professional')
-      .insert([{
-        account_id: userId,
-        verification_status: 'pending'
-      }]);
-    
-    if (professionalError) {
-      redirect('/register?error=' + encodeURIComponent('Failed to create professional profile.'));
+  const { data: professionalData, error: professionalError } = await supabase
+    .from('individual_professional')
+    .insert([{
+      account_id: userId,
+      experience: experience,
+      hourly_rate: hourlyRate || null,
+      daily_rate: dailyRate || null,
+      website_url: websiteUrl || null,
+      portfolio_url: portfolioUrl || null,
+      service_radius: serviceRadius || null,
+      verification_status: 'pending',
+      calcom_username: calcomUsername
+    }])
+    .select()
+
+  if (professionalError) {
+    redirect('/register/professional?error=' + encodeURIComponent('Failed to create professional profile.'))
+  }
+
+  const professionalId = professionalData[0].professional_id
+
+  const { error: addressError } = await supabase
+    .from('address')
+    .insert([{
+      account_id: userId,
+      address_type: 'home',
+      street_address: formData.get('streetAddress'),
+      city: formData.get('city'),
+      parish: formData.get('parish'),
+      community: formData.get('community') || null,
+      landmark: formData.get('landmark') || null,
+      formatted_address: formData.get('formattedAddress') || null,
+      place_id: formData.get('placeId') || null,
+      latitude: parseFloat(formData.get('latitude')),
+      longitude: parseFloat(formData.get('longitude')),
+      google_place_data: JSON.parse(formData.get('rawGoogleData') || '{}'),
+      is_primary: true,
+      is_rural: formData.get('isRural') === 'true',
+      location: `SRID=4326;POINT(${formData.get('longitude')} ${formData.get('latitude')})`
+    }])
+
+  if (addressError) {
+    console.error('Failed to save address:', addressError)
+    redirect('/register/professional?error=' + encodeURIComponent('Failed to save address.'))
+  }
+
+  if (services.length > 0) {
+    const serviceRecords = services.map(serviceId => ({
+      professional_id: professionalId,
+      service_id: serviceId,
+      is_active: true
+    }))
+
+    const { error: servicesError } = await supabase
+      .from('professional_service')
+      .insert(serviceRecords)
+
+    if (servicesError) {
+      console.error('Error adding services:', servicesError)
     }
   }
 
-  stopLoading()
-  redirect('/login');
+  if (specializations.length > 0) {
+    const specializationRecords = specializations.map(categoryId => ({
+      professional_id: professionalId,
+      category_id: categoryId,
+      experience_years: experience || '1',
+      is_primary: false
+    }))
+
+    if (specializationRecords.length > 0) {
+      specializationRecords[0].is_primary = true
+    }
+
+    const { error: specializationsError } = await supabase
+      .from('professional_specialization')
+      .insert(specializationRecords)
+
+    if (specializationsError) {
+      console.error('Error adding specializations:', specializationsError)
+    }
+  }
+
+  redirect('/login?message=' + encodeURIComponent('Registration successful! Please check your email to verify your account.'))
 }
