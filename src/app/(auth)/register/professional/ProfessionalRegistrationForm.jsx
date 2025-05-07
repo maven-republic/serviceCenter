@@ -18,6 +18,8 @@ import Pricing          from './increment/Pricing'
 import Contact          from './increment/Contact'
 import Education        from './increment/Education'
 import CertificationInterface from './increment/professional-certification/CertificationInterface'
+import WorkExperienceInterface from './increment/professional-work-experience/WorkExperienceInterface'
+
 
 
 import {
@@ -34,7 +36,8 @@ import {
   validateDegree,
   validateInstitutionId,
   validateFieldOfStudy,
-  validateEndDate
+  validateEndDate,
+  validateWorkExperienceEntry
 } from '../../../../../utils/validation'
 
 import designs from './ProfessionalForm.module.css'
@@ -67,7 +70,8 @@ export default function ProfessionalRegistrationForm({ errorMessage }) {
     serviceRadius: '',
     phone: '',
     education: [],
-    certifications: []
+    certifications: [],
+    workExperience: []
 
 
   })
@@ -234,16 +238,12 @@ export default function ProfessionalRegistrationForm({ errorMessage }) {
   
     } else if (currentStep === 3) {
       // Step 3: Education validation
-      console.log('📚 Step 3 - Education Validation')
-      console.log('→ Raw education data:', formData.education)
-  
       if (!formData.education || formData.education.length === 0) {
         console.log('❌ No education entries found')
         return
       }
   
       const entry = formData.education[0]
-      console.log('→ First education entry:', entry)
   
       const instErr = validateInstitutionId(entry.institutionId)
       const newInstErr = entry.institutionId === '__new'
@@ -252,13 +252,6 @@ export default function ProfessionalRegistrationForm({ errorMessage }) {
       const degErr   = validateDegree(entry.degreeId)
       const fieldErr = validateFieldOfStudy(entry.fieldOfStudyId)
       const dateErr  = validateEndDate(entry.startDate, entry.endDate)
-  
-      console.log('Validation Results:')
-      console.log('  Institution ID Error:', instErr)
-      console.log('  Institution Name Error:', newInstErr)
-      console.log('  Degree ID Error:', degErr)
-      console.log('  Field of Study Error:', fieldErr)
-      console.log('  Date Range Error:', dateErr)
   
       setErrors(err => ({
         ...err,
@@ -269,16 +262,27 @@ export default function ProfessionalRegistrationForm({ errorMessage }) {
         endDate:         dateErr
       }))
   
-      if (instErr || newInstErr || degErr || fieldErr || dateErr) {
-        console.log('❌ Validation failed — stopping progression')
-        return
-      }
+      if (instErr || newInstErr || degErr || fieldErr || dateErr) return
   
-      console.log('✅ Step 3 passed — advancing to step 4')
       setCurrentStep(4)
   
     } else if (currentStep === 4) {
-      // Step 4: Address validation
+      // Step 4: Work Experience validation
+      if (!formData.workExperience || formData.workExperience.length === 0) {
+        console.log('❌ No work experience entries found')
+        return
+      }
+  
+      const invalidExperience = formData.workExperience.find(e => validateWorkExperienceEntry(e))
+      if (invalidExperience) {
+        console.log('❌ Invalid work experience entry:', invalidExperience)
+        return
+      }
+  
+      setCurrentStep(5)
+  
+    } else if (currentStep === 5) {
+      // Step 5: Address validation
       const saErr = validateStreetAddress(formData.streetAddress)
       const ctErr = validateCity(formData.city)
       const paErr = validateParish(formData.parish)
@@ -286,27 +290,26 @@ export default function ProfessionalRegistrationForm({ errorMessage }) {
       setErrors(err => ({ ...err, streetAddress: saErr, city: ctErr, parish: paErr }))
       if (saErr || ctErr || paErr) return
   
-      setCurrentStep(5)
+      setCurrentStep(6)
   
-    } else if (currentStep === 5) {
-      // Step 5: Services validation
+    } else if (currentStep === 6) {
+      // Step 6: Services validation
       if (formData.services.length === 0) {
         setErrors(err => ({ ...err, services: 'Please select at least one service.' }))
         return
       }
   
-      setCurrentStep(6)
-  
-    } else if (currentStep === 6) {
-      // Step 6: Pricing — no required validation
       setCurrentStep(7)
   
+    } else if (currentStep === 7) {
+      // Step 7: Pricing — no required validation
+      setCurrentStep(8)
+  
     } else {
-      // Step 7: Final step (Contact), or advance from final
+      // Step 8: Final step (Contact)
       setCurrentStep(s => s + 1)
     }
   }
-  
   
   
   const prevStep = () => {
@@ -376,7 +379,15 @@ export default function ProfessionalRegistrationForm({ errorMessage }) {
   />
 )}
 
-      {currentStep === 5 && (
+{currentStep === 5 && (
+  <WorkExperienceInterface
+    formData={formData}
+    updateFormData={updateFormData}
+  />
+)}
+
+
+      {currentStep === 6 && (
         <GeneralAddress
           formData={formData}
           errors={errors}
@@ -384,7 +395,7 @@ export default function ProfessionalRegistrationForm({ errorMessage }) {
           updateFormData={updateFormData}
         />
       )}
-      {currentStep === 6 && (
+      {currentStep === 7 && (
         <Services
           categories={categories}
           services={servicesList}
@@ -398,13 +409,13 @@ export default function ProfessionalRegistrationForm({ errorMessage }) {
           errors={errors.services}
         />
       )}
-      {currentStep === 7 && (
+      {currentStep === 8 && (
         <Pricing
           formData={formData}
           updateFormData={updateFormData}
         />
       )}
-      {currentStep === 8 && (
+      {currentStep === 9 && (
         <Contact
           formData={formData}
           errors={errors}
@@ -417,7 +428,7 @@ export default function ProfessionalRegistrationForm({ errorMessage }) {
         currentStep={currentStep}
         nextStep={nextStep}
         prevStep={prevStep}
-        totalSteps={8}
+        totalSteps={9}
       />
     </form>
   )

@@ -143,3 +143,24 @@ export function validateEndDate(startDate, endDate) {
     return ''
   }
   
+
+  export function validateWorkExperienceEntry(entry) {
+    if (!entry.position || entry.position.trim().length < 2) {
+      return 'Job title is required and must be at least 2 characters.'
+    }
+  
+    if (!entry.start_date) {
+      return 'Start date is required.'
+    }
+  
+    if (entry.end_date && new Date(entry.end_date) < new Date(entry.start_date)) {
+      return 'End date must be after start date.'
+    }
+  
+    if (!entry.company_id && !entry.freeform_company_name) {
+      return 'Please select or enter a company name.'
+    }
+  
+    return ''
+  }
+  

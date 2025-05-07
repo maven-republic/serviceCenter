@@ -22,7 +22,7 @@ export default function Education({ formData, updateFormData }) {
 
     const fetchInstitutions = async () => {
       const { data, error } = await supabase
-        .from('education_institution')
+        .from('institution')
         .select('institution_id, name')
         .order('name')
       if (!error) setInstitutions(data)
@@ -235,13 +235,6 @@ export default function Education({ formData, updateFormData }) {
           <EducationMediaUploader
             onUploadDraft={(media) => handleAddMediaDraft(index, media)}
           />
-<div className="mt-4 mb-4">
-
-<AcademicExperienceOverview
-  value={entry.description}
-  onChange={(value) => handleChange(index, 'description', value)}
-/>
-</div>
 
 
           {entry.media?.length > 0 && (
@@ -274,6 +267,13 @@ export default function Education({ formData, updateFormData }) {
             </div>
           )}
 
+<div className="mt-4 mb-4">
+<AcademicExperienceOverview
+  value={entry.description}
+  onChange={(value) => handleChange(index, 'description', value)}
+/>
+
+</div>
           <div className="text-end mt-3">
             <button type="button" className="btn btn-outline-danger btn-sm" onClick={() => removeEntry(index)}>
               Remove
@@ -281,6 +281,8 @@ export default function Education({ formData, updateFormData }) {
           </div>
         </div>
       ))}
+
+
 
       <button type="button" className="btn btn-outline-primary" onClick={addEntry}>+ Add</button>
 
