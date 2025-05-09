@@ -18,10 +18,10 @@ export async function signupProfessional(formData) {
   const portfolioUrl = formData.get('portfolioUrl')
   const password = formData.get('password')
   const confirmPassword = formData.get('confirmPassword')
-  const calcomUsername = formData.get('calcomUsername') || null
 
   const services = JSON.parse(formData.get('services') || '[]')
   const specializations = JSON.parse(formData.get('specializations') || '[]')
+  const availability = JSON.parse(formData.get('availability') || '[]')
 
   const { data, error } = await supabase.auth.signUp({
     email: userEmail,
@@ -86,8 +86,7 @@ export async function signupProfessional(formData) {
       website_url: websiteUrl || null,
       portfolio_url: portfolioUrl || null,
       service_radius: serviceRadius || null,
-      verification_status: 'pending',
-      calcom_username: calcomUsername
+      verification_status: 'pending'
     }])
     .select()
 
@@ -96,6 +95,25 @@ export async function signupProfessional(formData) {
   }
 
   const professionalId = professionalData[0].professional_id
+
+  // ✅ Insert availability records
+  if (availability.length > 0) {
+    const availabilityRecords = availability.map(slot => ({
+      professional_id: professionalId,
+      day_of_week: slot.day_of_week,
+      start_time: slot.start_time,
+      end_time: slot.end_time
+    }))
+
+    const { error: availabilityError } = await supabase
+      .from('availability')
+      .insert(availabilityRecords)
+
+    if (availabilityError) {
+      console.error('Error saving availability:', availabilityError)
+      redirect('/register/professional?error=' + encodeURIComponent('Failed to save availability.'))
+    }
+  }
 
   const { error: addressError } = await supabase
     .from('address')

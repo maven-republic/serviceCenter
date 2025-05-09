@@ -18,6 +18,8 @@ import Education from './increment/Education'
 import CertificationInterface from './increment/professional-certification/CertificationInterface'
 import WorkExperienceInterface from './increment/professional-work-experience/WorkExperienceInterface'
 import AvailabilityInterface from './increment/professional-availability/AvailabilityInterface'
+import AvailabilityManagement from './increment/professional-availability/AvailabilityManagement'
+
 
 import {
   validateEmail,
@@ -68,7 +70,9 @@ export default function ProfessionalRegistrationForm({ errorMessage }) {
     education: [],
     certifications: [],
     workExperience: [],
-      calcomUsername: ''
+      calcomUsername: '',
+      availability: [] // an array of { day_of_week, start_time, end_time }
+
 
   })
 
@@ -302,38 +306,46 @@ export default function ProfessionalRegistrationForm({ errorMessage }) {
     />
   )}
 
-  {currentStep === 6 && (
-    <Education
-      formData={formData}
-      errors={errors}
-      updateFormData={updateFormData}
-      handleBlur={handleBlur}
-      allServices={servicesList}
-    />
-  )}
+{currentStep === 6 && (
+  <AvailabilityInterface
+    formData={formData}
+    updateFormData={updateFormData}
+  />
+)}
 
-  {currentStep === 7 && (
-    <CertificationInterface
-      formData={formData}
-      updateFormData={updateFormData}
-    />
-  )}
+{currentStep === 7 && (
+  <Education
+    formData={formData}
+    errors={errors}
+    updateFormData={updateFormData}
+    handleBlur={handleBlur}
+    allServices={servicesList}
+  />
+)}
 
-  {currentStep === 8 && (
-    <WorkExperienceInterface
-      formData={formData}
-      updateFormData={updateFormData}
-    />
-  )}
+{currentStep === 8 && (
+  <CertificationInterface
+    formData={formData}
+    updateFormData={updateFormData}
+  />
+)}
 
-  {currentStep === 9 && (
-    <Contact
-      formData={formData}
-      errors={errors}
-      updateFormData={updateFormData}
-      handleBlur={handleBlur}
-    />
-  )}
+{currentStep === 9 && (
+  <WorkExperienceInterface
+    formData={formData}
+    updateFormData={updateFormData}
+  />
+)}
+
+{currentStep === 10 && (
+  <Contact
+    formData={formData}
+    errors={errors}
+    updateFormData={updateFormData}
+    handleBlur={handleBlur}
+  />
+)}
+
 
   <div style={{ height: '80px' }} />
 
@@ -341,7 +353,7 @@ export default function ProfessionalRegistrationForm({ errorMessage }) {
     currentStep={currentStep}
     nextStep={nextStep}
     prevStep={prevStep}
-    totalSteps={9}
+    totalSteps={10}
   />
 </form>
 
