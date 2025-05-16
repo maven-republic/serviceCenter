@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { createClient } from '../../../../../utils/supabase/client'
+import { useSupabaseClient } from '@supabase/auth-helpers-react'
 import { signupProfessional } from './actions'
 
 import ProgressionIndicator from './ProgressionIndicator'
@@ -19,7 +19,6 @@ import CertificationInterface from './increment/professional-certification/Certi
 import WorkExperienceInterface from './increment/professional-work-experience/WorkExperienceInterface'
 import AvailabilityInterface from './increment/professional-availability/AvailabilityInterface'
 import AvailabilityManagement from './increment/professional-availability/AvailabilityManagement'
-
 
 import {
   validateEmail,
@@ -43,6 +42,8 @@ import designs from './ProfessionalForm.module.css'
 
 export default function ProfessionalRegistrationForm({ errorMessage }) {
   const router = useRouter()
+  const supabase = useSupabaseClient()
+
   const [currentStep, setCurrentStep] = useState(1)
   const [formData, setFormData] = useState({
     email: '',
@@ -70,10 +71,6 @@ export default function ProfessionalRegistrationForm({ errorMessage }) {
     education: [],
     certifications: [],
     workExperience: [],
-      calcomUsername: '',
-      availability: [] // an array of { day_of_week, start_time, end_time }
-
-
   })
 
   const [errors, setErrors] = useState({})
@@ -87,7 +84,6 @@ export default function ProfessionalRegistrationForm({ errorMessage }) {
   useEffect(() => {
     async function loadData() {
       setLoading(true)
-      const supabase = createClient()
       const { data: cats } = await supabase
         .from('service_category')
         .select('*')
@@ -102,14 +98,12 @@ export default function ProfessionalRegistrationForm({ errorMessage }) {
       setLoading(false)
     }
     loadData()
-  }, [])
+  }, [supabase])
 
-  const updateFormData = e => {
+  const updateFormData = (e) => {
     const { name, value, type, checked } = e.target
-    setFormData(fd => ({
-      ...fd,
-      [name]: type === 'checkbox' ? checked : value
-    }))
+    const resolvedValue = type === 'checkbox' ? checked : value
+    setFormData(fd => ({ ...fd, [name]: resolvedValue }))
   }
 
   const handleBlur = e => {
@@ -160,8 +154,11 @@ export default function ProfessionalRegistrationForm({ errorMessage }) {
 
   const checkEmailExists = async email => {
     setIsCheckingEmail(true)
-    const supabase = createClient()
-    const { data } = await supabase.from('account').select('email').eq('email', email).single()
+    const { data } = await supabase
+      .from('account')
+      .select('email')
+      .eq('email', email)
+      .single()
     setIsCheckingEmail(false)
     return !!data
   }
@@ -178,53 +175,6 @@ export default function ProfessionalRegistrationForm({ errorMessage }) {
         return
       }
       setCurrentStep(2)
-    } else if (currentStep === 2) {
-      const fnErr = validateFirstName(formData.firstName)
-      const lnErr = validateLastName(formData.lastName)
-      const exErr = validateExperience(formData.experience)
-      setErrors(err => ({ ...err, firstName: fnErr, lastName: lnErr, experience: exErr }))
-      if (fnErr || lnErr || exErr) return
-      setCurrentStep(3)
-    } else if (currentStep === 3) {
-      const saErr = validateStreetAddress(formData.streetAddress)
-      const ctErr = validateCity(formData.city)
-      const paErr = validateParish(formData.parish)
-      setErrors(err => ({ ...err, streetAddress: saErr, city: ctErr, parish: paErr }))
-      if (saErr || ctErr || paErr) return
-      setCurrentStep(4)
-    } else if (currentStep === 4) {
-      if (formData.services.length === 0) {
-        setErrors(err => ({ ...err, services: 'Please select at least one service.' }))
-        return
-      }
-      setCurrentStep(5)
-    } else if (currentStep === 5) {
-      setCurrentStep(6) // Pricing – no required validation
-    } else if (currentStep === 6) {
-      if (!formData.education || formData.education.length === 0) return
-      const entry = formData.education[0]
-      const instErr = validateInstitutionId(entry.institutionId)
-      const newInstErr = entry.institutionId === '__new' ? validateInstitutionName(entry.institutionName) : ''
-      const degErr = validateDegree(entry.degreeId)
-      const fieldErr = validateFieldOfStudy(entry.fieldOfStudyId)
-      const dateErr = validateEndDate(entry.startDate, entry.endDate)
-      setErrors(err => ({
-        ...err,
-        institutionId: instErr,
-        institutionName: newInstErr,
-        degree: degErr,
-        fieldOfStudy: fieldErr,
-        endDate: dateErr
-      }))
-      if (instErr || newInstErr || degErr || fieldErr || dateErr) return
-      setCurrentStep(7)
-    } else if (currentStep === 7) {
-      setCurrentStep(8) // Certifications — no validation
-    } else if (currentStep === 8) {
-      if (!formData.workExperience || formData.workExperience.length === 0) return
-      const invalidExperience = formData.workExperience.find(e => validateWorkExperienceEntry(e))
-      if (invalidExperience) return
-      setCurrentStep(9)
     } else {
       setCurrentStep(s => s + 1)
     }
@@ -236,10 +186,16 @@ export default function ProfessionalRegistrationForm({ errorMessage }) {
 
   const handleSubmit = async e => {
     e.preventDefault()
+
     const data = new FormData()
-    Object.entries(formData).forEach(([k, v]) =>
-      data.append(k, k === 'services' ? JSON.stringify(v) : v)
-    )
+    Object.entries(formData).forEach(([k, v]) => {
+      if (Array.isArray(v)) {
+        data.append(k, JSON.stringify(v))
+      } else {
+        data.append(k, v)
+      }
+    })
+
     try {
       await signupProfessional(data)
     } catch (err) {
@@ -248,114 +204,21 @@ export default function ProfessionalRegistrationForm({ errorMessage }) {
   }
 
   return (
-    <form
-  className={designs.outer}
-  onSubmit={currentStep === 9 ? handleSubmit : e => e.preventDefault()}
->
-  {errorMessage && (
-    <div className="alert alert-danger mb-4">{errorMessage}</div>
-  )}
+    <form className={designs.outer} onSubmit={currentStep === 9 ? handleSubmit : e => e.preventDefault()}>
+      {errorMessage && <div className="alert alert-danger mb-4">{errorMessage}</div>}
 
-  {currentStep === 1 && (
-    <Account
-      formData={formData}
-      errors={errors}
-      updateFormData={updateFormData}
-      handleBlur={handleBlur}
-      isCheckingEmail={isCheckingEmail}
-    />
-  )}
+      {currentStep === 1 && <Account formData={formData} errors={errors} updateFormData={updateFormData} handleBlur={handleBlur} isCheckingEmail={isCheckingEmail} />}
+      {currentStep === 2 && <Personal formData={formData} errors={errors} updateFormData={updateFormData} handleBlur={handleBlur} />}
+      {currentStep === 3 && <GeneralAddress formData={formData} errors={errors} handleAddressSelect={handleAddressSelect} updateFormData={updateFormData} />}
+      {currentStep === 4 && <Services categories={categories} services={servicesList} loading={loading} dropdownOpen={dropdownOpen} searchTerm={searchTerm} setSearchTerm={setSearchTerm} setDropdownOpen={setDropdownOpen} toggleService={toggleService} selectedServices={formData.services} errors={errors.services} />}
+      {currentStep === 5 && <Pricing formData={formData} updateFormData={updateFormData} />}
+      {currentStep === 6 && <Education formData={formData} errors={errors} updateFormData={updateFormData} handleBlur={handleBlur} allServices={servicesList} />}
+      {currentStep === 7 && <CertificationInterface formData={formData} updateFormData={updateFormData} />}
+      {currentStep === 8 && <WorkExperienceInterface formData={formData} updateFormData={updateFormData} />}
+      {currentStep === 9 && <Contact formData={formData} errors={errors} updateFormData={updateFormData} handleBlur={handleBlur} />}
 
-  {currentStep === 2 && (
-    <Personal
-      formData={formData}
-      errors={errors}
-      updateFormData={updateFormData}
-      handleBlur={handleBlur}
-    />
-  )}
-
-  {currentStep === 3 && (
-    <GeneralAddress
-      formData={formData}
-      errors={errors}
-      handleAddressSelect={handleAddressSelect}
-      updateFormData={updateFormData}
-    />
-  )}
-
-  {currentStep === 4 && (
-    <Services
-      categories={categories}
-      services={servicesList}
-      loading={loading}
-      dropdownOpen={dropdownOpen}
-      searchTerm={searchTerm}
-      setSearchTerm={setSearchTerm}
-      setDropdownOpen={setDropdownOpen}
-      toggleService={toggleService}
-      selectedServices={formData.services}
-      errors={errors.services}
-    />
-  )}
-
-  {currentStep === 5 && (
-    <Pricing
-      formData={formData}
-      updateFormData={updateFormData}
-    />
-  )}
-
-{currentStep === 6 && (
-  <AvailabilityInterface
-    formData={formData}
-    updateFormData={updateFormData}
-  />
-)}
-
-{currentStep === 7 && (
-  <Education
-    formData={formData}
-    errors={errors}
-    updateFormData={updateFormData}
-    handleBlur={handleBlur}
-    allServices={servicesList}
-  />
-)}
-
-{currentStep === 8 && (
-  <CertificationInterface
-    formData={formData}
-    updateFormData={updateFormData}
-  />
-)}
-
-{currentStep === 9 && (
-  <WorkExperienceInterface
-    formData={formData}
-    updateFormData={updateFormData}
-  />
-)}
-
-{currentStep === 10 && (
-  <Contact
-    formData={formData}
-    errors={errors}
-    updateFormData={updateFormData}
-    handleBlur={handleBlur}
-  />
-)}
-
-
-  <div style={{ height: '80px' }} />
-
-  <NavigationSelectors
-    currentStep={currentStep}
-    nextStep={nextStep}
-    prevStep={prevStep}
-    totalSteps={10}
-  />
-</form>
-
+      <div style={{ height: '80px' }} />
+      <NavigationSelectors currentStep={currentStep} nextStep={nextStep} prevStep={prevStep} totalSteps={9} />
+    </form>
   )
 }

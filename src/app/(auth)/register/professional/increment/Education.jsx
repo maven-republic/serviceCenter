@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { createClient } from '../../../../../../utils/supabase/client'
+import { useSupabaseClient } from '@supabase/auth-helpers-react'
 import Select from 'react-select'
 import EducationCompetenceSelector from './EducationCompetenceSelector'
 import EducationMediaUploader from './EducationMediaUploader'
@@ -18,7 +18,7 @@ export default function Education({ formData, updateFormData }) {
   const education = formData.education || []
 
   useEffect(() => {
-    const supabase = createClient()
+    const supabase = useSupabaseClient()
 
     const fetchInstitutions = async () => {
       const { data, error } = await supabase

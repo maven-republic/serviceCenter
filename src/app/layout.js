@@ -1,6 +1,6 @@
 'use client'
 
-import { createContext, useContext, useState, useEffect } from 'react'
+import { createContext, useContext, useState, useEffect, useRef } from 'react'
 import { useSession, useSupabaseClient } from '@supabase/auth-helpers-react'
 import { DM_Sans } from 'next/font/google'
 import './globals.css'
@@ -10,11 +10,9 @@ import SearchModal1 from '@/components/modal/SearchModal1'
 import NavSidebar from '@/components/sidebar/NavSidebar'
 import Loader from '@/components/loader/Loader'
 import toggleStore from '@/store/toggleStore'
-import 'react-tooltip/dist/react-tooltip.css'
+import { useUserStore } from '@/store/userStore'
 
-// Setup Account Context
 const AccountContext = createContext(null)
-
 export function useAccount() {
   return useContext(AccountContext)
 }
@@ -33,51 +31,32 @@ export default function RootLayout({ children }) {
   )
 }
 
-// Handles session, account fetching
 function InnerLayout({ children }) {
   const isListingActive = toggleStore((state) => state.isListingActive)
   const session = useSession()
   const supabase = useSupabaseClient()
-  const [account, setAccount] = useState(null)
+  const fetchUser = useUserStore((s) => s.fetchUser)
+  const hasFetchedUser = useRef(false)
 
   useEffect(() => {
-    if (!session || !session.user) {
-      console.warn('⚠️ Session not ready yet...')
+    if (!session?.user) {
+      if (!hasFetchedUser.current) console.log('⏳ Waiting for session...')
       return
     }
 
-    const fetchAccount = async () => {
-      console.log('🔍 Session user ID:', session?.user?.id)
+    if (hasFetchedUser.current) return
 
-      try {
-        const { data, error } = await supabase
-          .from('account')
-          .select('*')
-          .eq('account_id', session.user.id)
-          .maybeSingle()
-
-        if (error) {
-          console.error('❌ Error fetching account:', error)
-        } else if (!data) {
-          console.warn('⚠️ No account found for user ID:', session.user.id)
-        } else {
-          console.log('✅ Successfully fetched account:', data)
-          setAccount(data)
-        }
-      } catch (err) {
-        console.error('🚨 Unexpected error fetching account:', err)
-      }
-    }
-
-    fetchAccount()
-  }, [session, supabase])
+    console.log('✅ session.user:', session.user)
+    fetchUser(session.user, supabase)
+    hasFetchedUser.current = true
+  }, [session?.user])
 
   return (
     <html lang="en">
       <body className={`${dmSans.className}`}>
         <Loader />
         <SearchModal1 />
-        <AccountContext.Provider value={account}>
+        <AccountContext.Provider value={null}>
           {children}
         </AccountContext.Provider>
         <NavSidebar />

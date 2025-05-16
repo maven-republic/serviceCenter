@@ -1,42 +1,16 @@
-// Login page component
+'use client'
+
 import Footer from "@/components/footer/Footer"
 import Header20 from "@/components/header/Header20"
-import { redirect } from 'next/navigation'
-import { createClient } from '../../../../utils/supabase/server'
 import LoginForm from './LoginForm'
+import { useSearchParams } from 'next/navigation'
 
 
-export default async function page({ searchParams }) {
-  const supabase = await createClient()
+export default function LoginPage() {
 
-  const { data } = await supabase.auth.getUser()
+  const searchParams = useSearchParams()
+  const errorMessage = searchParams.get('error')
 
-  if (data?.user) {
-    const { data: roleData, error: roleError } = await supabase
-      .from('account_role')
-      .select('role_type')
-      .eq('account_id', data.user.id)
-      .eq('is_primary', true)
-      .single()
-
-    if (!roleError) {
-      switch (roleData.role_type) {
-        case 'customer':
-          redirect('/customer/workspace')
-        case 'professional':
-          redirect('/professional/workspace')
-        case 'admin':
-          redirect('/admin/dashboard')
-        default:
-          redirect('/not-found')
-      }
-    } else {
-      redirect('/not-found')
-    }
-  }
-
-  // ✅ Await searchParams properly here
-  const { error: errorMessage } = await searchParams
 
   return (
     <div>

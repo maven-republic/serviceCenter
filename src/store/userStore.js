@@ -1,36 +1,33 @@
 import { create } from 'zustand'
-import { createClient } from '../../utils/supabase/client'
 
 export const useUserStore = create((set) => ({
   user: null,
 
-  fetchUser: async (user) => {
-    const supabase = createClient()
-    
+  fetchUser: async (user, supabase) => {
+    if (!user || !supabase) {
+      console.warn('⚠️ fetchUser called without valid user or supabase client')
+      return
+    }
+
     try {
-      // Fetch basic account information
       const { data: accountData, error: accountError } = await supabase
         .from('account')
         .select('*')
         .eq('account_id', user.id)
         .single()
-      
       if (accountError) throw accountError
 
-      // Fetch user roles
       const { data: roleData, error: roleError } = await supabase
         .from('account_role')
         .select('*')
         .eq('account_id', user.id)
-      
       if (roleError) throw roleError
 
-      // Determine primary role
-      const roles = roleData || []
-      const primaryRole = roles.find(role => role.is_primary)?.role_type || 
-                         (roles.length > 0 ? roles[0].role_type : null)
-      
-      // Fetch profile based on role
+      const primaryRole = roleData.find(r => r.is_primary)?.role_type || roleData[0]?.role_type || null
+
+      console.log('📦 account roles:', roleData)
+      console.log('⭐ primaryRole selected:', primaryRole)
+
       let profileData = null
       if (primaryRole === 'customer') {
         const { data } = await supabase
@@ -48,70 +45,48 @@ export const useUserStore = create((set) => ({
         profileData = data
       }
 
-      // Set user with combined data
-      set({ 
+      set({
         user: {
           ...user,
           account: accountData,
-          roles: roles,
+          roles: roleData,
           profile: profileData,
-          primaryRole: primaryRole
-        } 
+          primaryRole,
+        },
       })
     } catch (error) {
-      console.error('Error fetching user:', error)
+      console.error('❌ Error fetching user:', error)
     }
   },
 
-  updateUser: async (userId, updates, profileType = null) => {
-    const supabase = createClient()
-    
+  updateUser: async (userId, updates, profileType = null, supabase) => {
     try {
-      // Determine which table to update based on the type of data
-      if (updates.first_name || updates.last_name || updates.email) {
-        // Update account table
-        const { error } = await supabase
-          .from('account')
-          .update({
-            first_name: updates.first_name,
-            last_name: updates.last_name,
-            email: updates.email
-          })
-          .eq('account_id', userId)
-          
-        if (error) throw error
-      }
-      
-      // Update profile-specific data
-      if (profileType) {
-        const profileTable = profileType === 'customer' 
-          ? 'individual_customer' 
-          : 'individual_professional'
-          
-        const { error } = await supabase
-          .from(profileTable)
+      await supabase
+        .from('account')
+        .update(updates)
+        .eq('account_id', userId)
+
+      if (profileType === 'professional') {
+        await supabase
+          .from('individual_professional')
           .update(updates)
           .eq('account_id', userId)
-          
-        if (error) throw error
+      } else if (profileType === 'customer') {
+        await supabase
+          .from('individual_customer')
+          .update(updates)
+          .eq('account_id', userId)
       }
-      
-      // Update state
-      set((state) => ({ 
-        user: { 
-          ...state.user, 
-          account: { ...state.user.account, ...updates },
-          profile: profileType ? { ...state.user.profile, ...updates } : state.user.profile
-        } 
-      }))
+
+      const fetchUser = useUserStore.getState().fetchUser
+      await fetchUser({ id: userId }, supabase)
     } catch (error) {
-      console.error('Update failed:', error)
+      console.error('❌ Error updating user:', error)
     }
   },
 
-  logout: async () => {
-    const supabase = createClient()
-    await supabase.auth.signOut() 
-    set({ user: null }) 
+  logout: async (supabase) => {
+    if (supabase) await supabase.auth.signOut()
+    set({ user: null })
   },
 }))

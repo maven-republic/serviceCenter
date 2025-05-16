@@ -1,16 +1,16 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { createClient } from '../../../../../../../utils/supabase/client'
+import { useSupabaseClient } from '@supabase/auth-helpers-react'
 
 export default function CertificationServiceSelector({ selected, onSelect, onRemove }) {
+  const supabase = useSupabaseClient()
   const [allServices, setAllServices] = useState([])
   const [input, setInput] = useState('')
   const [showInput, setShowInput] = useState(false)
 
   useEffect(() => {
     const fetchServices = async () => {
-      const supabase = createClient()
       const { data, error } = await supabase
         .from('service')
         .select('service_id, name')
@@ -20,7 +20,7 @@ export default function CertificationServiceSelector({ selected, onSelect, onRem
     }
 
     fetchServices()
-  }, [])
+  }, [supabase])
 
   const suggestions = allServices
     .filter(service =>

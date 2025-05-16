@@ -1,71 +1,47 @@
-"use client";
-import React, { useState, useEffect } from "react";
-import Link from "next/link";
-import Image from "next/image";
-import { useUserStore } from "@/store/userStore";
-import { createClient } from '@supabase/supabase-js';
+'use client'
 
-// Supabase client setup (typically in a separate utility file)
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL, 
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-);
+import React, { useState, useEffect } from 'react'
+import Link from 'next/link'
+import Image from 'next/image'
+import { useUserStore } from '@/store/userStore'
+import { useSupabaseClient } from '@supabase/auth-helpers-react'
 
 export default function ProfileDetails() {
-  const { user, fetchUser, updateUser } = useUserStore();
-  const [selectedImage, setSelectedImage] = useState(null);
-  const [phoneNumber, setPhoneNumber] = useState('');
-  const [phoneLoading, setPhoneLoading] = useState(true);
+  const { user } = useUserStore()
+  const [selectedImage, setSelectedImage] = useState(null)
+  const [phoneNumber, setPhoneNumber] = useState('')
+  const [phoneLoading, setPhoneLoading] = useState(true)
+  const supabase = useSupabaseClient()
 
-  // Fetch phone number when user changes
   useEffect(() => {
     const fetchPhoneNumber = async () => {
-      // Ensure we have an account ID to fetch phone numbers
-      if (!user?.account?.account_id) {
-        setPhoneNumber('');
-        setPhoneLoading(false);
-        return;
-      }
+      if (!user?.account?.account_id) return setPhoneLoading(false)
 
       try {
-        setPhoneLoading(true);
-        
-        // Fetch phone numbers for the specific account
         const { data, error } = await supabase
           .from('phone')
           .select('*')
           .eq('account_id', user.account.account_id)
-          .order('is_primary', { ascending: false }) // Primary phones first
-          .limit(1); // Limit to first phone number
+          .order('is_primary', { ascending: false })
+          .limit(1)
 
-        if (error) throw error;
+        if (error) throw error
 
-        // Set the phone number (primary or first available)
-        if (data && data.length > 0) {
-          setPhoneNumber(data[0].phone_number);
-        } else {
-          setPhoneNumber('');
+        if (data?.length) {
+          setPhoneNumber(data[0].phone_number)
         }
       } catch (err) {
-        console.error('Error fetching phone number:', err);
-        setPhoneNumber('');
+        console.error('Error fetching phone number:', err)
+        setPhoneNumber('')
       } finally {
-        setPhoneLoading(false);
+        setPhoneLoading(false)
       }
-    };
-
-    fetchPhoneNumber();
-  }, [user?.account?.account_id]);
-
-  const handleImageChange = (event) => {
-    const file = event.target.files[0];
-    if (file) {
-      setSelectedImage(URL.createObjectURL(file));
     }
-  };
+
+    fetchPhoneNumber()
+  }, [user?.account?.account_id, supabase])
 
   return (
-    <>
     <div className="ps-widget bgc-white bdrs4 p30 mb30 overflow-hidden position-relative">
       <div className="bdrb1 pb15 mb25">
         <h5 className="list-title">Account Information</h5>
@@ -77,11 +53,11 @@ export default function ProfileDetails() {
               height={71}
               width={71}
               className="rounded-circle wa-xs"
-              src={selectedImage || "/images/team/fl-1.png"}
+              src={selectedImage || '/images/team/fl-1.png'}
               style={{
-                height: "71px",
-                width: "71px",
-                objectFit: "cover",
+                height: '71px',
+                width: '71px',
+                objectFit: 'cover',
               }}
               alt="profile"
             />
@@ -98,7 +74,7 @@ export default function ProfileDetails() {
                 </label>
                 <input
                   type="text"
-                  className="form-control" 
+                  className="form-control"
                   value={`${user?.account?.first_name || ''} ${user?.account?.last_name || ''}`}
                   disabled
                 />
@@ -107,11 +83,14 @@ export default function ProfileDetails() {
             <div className="col-sm-6">
               <div className="mb20">
                 <label className="heading-color ff-heading fw500 mb10">
-                  Email Address {user?.email_confirmed_at && <span style={{color: "green"}}>(Verified)</span>}
+                  Email Address{' '}
+                  {user?.email_confirmed_at && (
+                    <span style={{ color: 'green' }}>(Verified)</span>
+                  )}
                 </label>
                 <input
                   type="email"
-                  className="form-control" 
+                  className="form-control"
                   value={user?.email || user?.account?.email}
                   disabled
                 />
@@ -124,8 +103,8 @@ export default function ProfileDetails() {
                 </label>
                 <input
                   type="text"
-                  className="form-control" 
-                  value={phoneLoading ? 'Loading...' : (phoneNumber || 'No phone number exists')}
+                  className="form-control"
+                  value={phoneLoading ? 'Loading...' : phoneNumber || 'No phone number exists'}
                   disabled
                 />
               </div>
@@ -133,29 +112,16 @@ export default function ProfileDetails() {
             <div className="col-sm-6">
               <div className="mb20">
                 <label className="heading-color ff-heading fw500 mb10">
-                Membership                
+                  Membership
                 </label>
                 <input
                   type="text"
                   className="form-control"
-                  value={user?.primaryRole === "professional" ? "Professional" : "Customer"}
+                  value={user?.primaryRole === 'professional' ? 'Professional' : 'Customer'}
                   disabled
                 />
               </div>
-            </div> 
-            {/* <div className="col-sm-6">
-              <div className="mb20">
-                <label className="heading-color ff-heading fw500 mb10">
-                  Gender
-                </label>
-                <input
-                  type="text"
-                  className="form-control" 
-                  value={user?.profile?.gender || ''}
-                  disabled
-                />
-              </div>
-            </div> */}
+            </div>
             <div className="col-md-12">
               <div className="text-start">
                 <Link className="ud-btn btn-thm" href="/dashboard/edit-profile">
@@ -168,6 +134,5 @@ export default function ProfileDetails() {
         </form>
       </div>
     </div>
-    </>
-  );
+  )
 }

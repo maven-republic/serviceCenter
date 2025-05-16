@@ -1,9 +1,11 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { createClient } from '../../../../../../../utils/supabase/client'
+import { useSupabaseClient } from '@supabase/auth-helpers-react'
 
 export default function Certification({ data, onChange, onRemove }) {
+  const supabase = useSupabaseClient()
+
   const [certOptions, setCertOptions] = useState([])
   const [certQuery, setCertQuery] = useState('')
   const [filteredCerts, setFilteredCerts] = useState([])
@@ -16,7 +18,6 @@ export default function Certification({ data, onChange, onRemove }) {
 
   useEffect(() => {
     const fetchCertifications = async () => {
-      const supabase = createClient()
       const { data, error } = await supabase
         .from('certification')
         .select('certification_id, name')
@@ -25,7 +26,6 @@ export default function Certification({ data, onChange, onRemove }) {
     }
 
     const fetchInstitutions = async () => {
-      const supabase = createClient()
       const { data, error } = await supabase
         .from('institution')
         .select('institution_id, name')
@@ -35,7 +35,7 @@ export default function Certification({ data, onChange, onRemove }) {
 
     fetchCertifications()
     fetchInstitutions()
-  }, [])
+  }, [supabase])
 
   useEffect(() => {
     if (certQuery.trim()) {
@@ -81,13 +81,7 @@ export default function Certification({ data, onChange, onRemove }) {
           onBlur={() => setTimeout(() => setShowCertList(false), 150)}
         />
         {showCertList && filteredCerts.length > 0 && (
-          <ul className="list-group position-absolute
-           w-100 shadow-sm" 
-          style={{
-             maxHeight: '200px', 
-          overflowY: 'auto' ,
-          zIndex: 1050
-          }}>
+          <ul className="list-group position-absolute w-100 shadow-sm" style={{ maxHeight: '200px', overflowY: 'auto', zIndex: 1050 }}>
             {filteredCerts.map(opt => (
               <li
                 key={opt.certification_id}

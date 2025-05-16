@@ -1,4 +1,4 @@
-import DashboardLayout from "@/components/dashboard/DashboardLayout";
+import DashboardLayout from "@/components/professional-workspace/DashboardLayout";
 import ManageService from "@/components/dashboard/section/ManageServices";
 
 import MobileNavigation2 from "@/components/header/MobileNavigation2";

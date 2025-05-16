@@ -1,45 +1,30 @@
-"use client";
-import React, { useState, useEffect } from "react";
-import Link from "next/link";
-import { createClient } from '@supabase/supabase-js';
-import { useUserStore } from "@/store/userStore";
+'use client'
 
-// Supabase client setup (typically in a separate utility file)
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL, 
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-);
+import React, { useState, useEffect } from 'react'
+import Link from 'next/link'
+import { useUserStore } from '@/store/userStore'
+import { useSupabaseClient } from '@supabase/auth-helpers-react'
 
 export default function ProfessionalServices() {
-  const { user } = useUserStore();
-  const [services, setServices] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const { user } = useUserStore()
+  const [services, setServices] = useState([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState(null)
+  const supabase = useSupabaseClient()
 
   useEffect(() => {
-    const fetchProfessionalServices = async () => {
-      // Ensure we have a professional ID
-      if (!user?.account?.account_id) {
-        setIsLoading(false);
-        return;
-      }
+    const fetchServices = async () => {
+      if (!user?.account?.account_id) return setIsLoading(false)
 
       try {
-        // First, fetch the professional ID using the account ID
-        const { data: professionalData, error: professionalError } = await supabase
+        const { data: profData, error: profError } = await supabase
           .from('individual_professional')
           .select('professional_id')
           .eq('account_id', user.account.account_id)
-          .single();
+          .single()
 
-        if (professionalError) throw professionalError;
-        if (!professionalData) {
-          setServices([]);
-          setIsLoading(false);
-          return;
-        }
+        if (profError || !profData) throw profError
 
-        // Then fetch the services for this professional
         const { data: servicesData, error: servicesError } = await supabase
           .from('professional_service')
           .select(`
@@ -59,32 +44,31 @@ export default function ProfessionalServices() {
               )
             )
           `)
-          .eq('professional_id', professionalData.professional_id)
-          .eq('is_active', true);
+          .eq('professional_id', profData.professional_id)
+          .eq('is_active', true)
 
-        if (servicesError) throw servicesError;
+        if (servicesError) throw servicesError
 
-        // Transform the data to a more usable format
-        const formattedServices = servicesData.map(service => ({
-          name: service.service.name,
-          description: service.service.description,
-          category: service.service.subcategory.category.name,
-          subcategory: service.service.subcategory.name,
-          customPrice: service.custom_price,
-          customDuration: service.custom_duration_minutes
-        }));
+        const formatted = servicesData.map(s => ({
+          name: s.service.name,
+          description: s.service.description,
+          category: s.service.subcategory.category.name,
+          subcategory: s.service.subcategory.name,
+          customPrice: s.custom_price,
+          customDuration: s.custom_duration_minutes
+        }))
 
-        setServices(formattedServices);
+        setServices(formatted)
       } catch (err) {
-        console.error('Error fetching professional services:', err);
-        setError(err.message);
+        setError(err.message)
+        console.error('Error fetching services:', err)
       } finally {
-        setIsLoading(false);
+        setIsLoading(false)
       }
-    };
+    }
 
-    fetchProfessionalServices();
-  }, [user?.account?.account_id]);
+    fetchServices()
+  }, [user?.account?.account_id, supabase])
 
   if (isLoading) {
     return (
@@ -94,7 +78,7 @@ export default function ProfessionalServices() {
         </div>
         <p>Loading services...</p>
       </div>
-    );
+    )
   }
 
   if (error) {
@@ -105,7 +89,7 @@ export default function ProfessionalServices() {
         </div>
         <p>Error loading services: {error}</p>
       </div>
-    );
+    )
   }
 
   return (
@@ -118,23 +102,15 @@ export default function ProfessionalServices() {
           <p>No services have been added yet.</p>
         ) : (
           <div className="row">
-            {services.map((service, index) => (
-              <div key={index} className="col-md-6 mb20">
+            {services.map((service, i) => (
+              <div key={i} className="col-md-6 mb20">
                 <div className="border p15 bdrs4">
                   <h5 className="mb10">{service.name}</h5>
                   <p className="text-muted mb10">{service.description}</p>
-                  {/* <div className="d-flex justify-content-between">
-                    <span className="fw500">Category:</span>
-                    <span>{service.category}</span>
-                  </div>
-                  <div className="d-flex justify-content-between">
-                    <span className="fw500">Subcategory:</span>
-                    <span>{service.subcategory}</span>
-                  </div> */}
                   {service.customPrice && (
                     <div className="d-flex justify-content-between">
                       <span className="fw500">Custom Price:</span>
-                      <span>$${service.customPrice.toFixed(2)}</span>
+                      <span>${service.customPrice.toFixed(2)}</span>
                     </div>
                   )}
                   {service.customDuration && (
@@ -156,5 +132,5 @@ export default function ProfessionalServices() {
         </div>
       </div>
     </div>
-  );
+  )
 }

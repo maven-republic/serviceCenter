@@ -1,25 +1,70 @@
-
-
 'use client'
 
-import { login } from './actions'
-import { useEffect } from 'react'
-import { useUserStore } from '@/store/userStore';
-// import { createClient } from '../../../../utils/supabase/server'
+import { useState } from 'react'
+import { useRouter } from 'next/navigation'
+import { useSupabaseClient } from '@supabase/auth-helpers-react'
 
-export default function LoginForm({errorMessage}) {
-  // const supabase = await createClient()
-  // const { data, error } = await supabase.auth.getUser()
-  // const { user, fetchUser } = useUserStore()
+export default function LoginForm({ errorMessage }) {
+  const [loading, setLoading] = useState(false)
+  const supabase = useSupabaseClient()
+  const router = useRouter()
 
-  // useEffect(()=>{
-  //   return () => {
-  //     fetchUser(data?.user.id);
-  //   }
-  // })
-  
+  const handleLogin = async (e) => {
+    e.preventDefault()
+    setLoading(true)
+
+    const email = e.target.email.value
+    const password = e.target.password.value
+
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    })
+
+    if (error) {
+      router.push(`/login?error=${encodeURIComponent(error.message)}`)
+      setLoading(false)
+      return
+    }
+
+    // 🔥 redirect based on role
+    const {
+      data: roleData,
+      error: roleError,
+    } = await supabase
+      .from('account_role')
+      .select('role_type')
+      .eq('account_id', data.user.id)
+      .eq('is_primary', true)
+      .single()
+
+    if (roleError || !roleData?.role_type) {
+      router.push('/login?error=Role lookup failed')
+      setLoading(false)
+      return
+    }
+
+    const role = roleData.role_type
+
+    switch (role) {
+      case 'customer':
+        router.replace('/customer/workspace')
+        break
+      case 'professional':
+        router.replace('/professional/workspace')
+        break
+      case 'admin':
+        router.replace('/admin/dashboard')
+        break
+      default:
+        router.replace('/not-found')
+    }
+
+    setLoading(false)
+  }
+
   return (
-    <form action={login}>
+    <form onSubmit={handleLogin}>
       <div className="container">
         <div className="row">
           <div className="col-lg-6 m-auto wow fadeInUp" data-wow-delay="300ms">
@@ -34,7 +79,7 @@ export default function LoginForm({errorMessage}) {
               <div className="mb30">
                 <h4>We're glad to see you again!</h4>
                 <p className="text">
-                  Don't have an account?{" "}
+                  Don't have an account?{' '}
                   <a href="/register" className="text-thm">
                     Sign Up!
                   </a>
@@ -49,7 +94,7 @@ export default function LoginForm({errorMessage}) {
                   name="email"
                   type="email"
                   className="form-control"
-                  placeholder="alitfn58@gmail.com"
+                  placeholder="you@example.com"
                   required
                 />
               </div>
@@ -69,20 +114,18 @@ export default function LoginForm({errorMessage}) {
               <div className="checkbox-style1 d-block d-sm-flex align-items-center justify-content-between mb20">
                 <label className="custom_checkbox fz14 ff-heading">
                   Remember me
-                  <input type="checkbox" defaultChecked="checked" />
+                  <input type="checkbox" defaultChecked />
                   <span className="checkmark" />
                 </label>
                 <a className="fz14 ff-heading">Forgot Password?</a>
               </div>
               <div className="d-grid mb20">
-                <button className="ud-btn btn-thm" type="submit">
-                  Log In <i className="fal fa-arrow-right-long" />
+                <button className="ud-btn btn-thm" type="submit" disabled={loading}>
+                  {loading ? 'Logging in...' : 'Log In'} <i className="fal fa-arrow-right-long" />
                 </button>
               </div>
               {errorMessage && (
-                <p style={{ color: 'red', marginTop: '10px' }}>
-                  {errorMessage}
-                </p>
+                <p style={{ color: 'red', marginTop: '10px' }}>{errorMessage}</p>
               )}
             </div>
           </div>
@@ -91,6 +134,3 @@ export default function LoginForm({errorMessage}) {
     </form>
   )
 }
-
-
-//testing branch 
