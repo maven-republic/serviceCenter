@@ -1,3 +1,5 @@
+'use client'
+
 import { useState, useEffect } from 'react'
 import { useSupabaseClient } from '@supabase/auth-helpers-react'
 import Select from 'react-select'
@@ -14,12 +16,12 @@ export default function Education({ formData, updateFormData }) {
   const [fieldsOfStudy, setFieldsOfStudy] = useState([])
   const [competences, setCompetences] = useState([])
 
+    const supabase = useSupabaseClient() // ✅ MUST go here
+
   const [editModal, setEditModal] = useState({ show: false, index: null, mediaIndex: null, title: '', description: '' })
   const education = formData.education || []
 
   useEffect(() => {
-    const supabase = useSupabaseClient()
-
     const fetchInstitutions = async () => {
       const { data, error } = await supabase
         .from('institution')
@@ -56,7 +58,7 @@ export default function Education({ formData, updateFormData }) {
     fetchDegrees()
     fetchFields()
     fetchCompetences()
-  }, [])
+  }, []) // 👈 leave supabase out of the dependency array
 
   const buildDegreeOptions = () =>
     degrees.map(degree => ({ value: degree.degree_id, label: degree.name }))

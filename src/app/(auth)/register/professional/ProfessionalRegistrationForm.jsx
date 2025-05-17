@@ -18,7 +18,9 @@ import Education from './increment/Education'
 import CertificationInterface from './increment/professional-certification/CertificationInterface'
 import WorkExperienceInterface from './increment/professional-work-experience/WorkExperienceInterface'
 import AvailabilityInterface from './increment/professional-availability/AvailabilityInterface'
-import AvailabilityManagement from './increment/professional-availability/AvailabilityManagement'
+import AvailabilityProtocol from './increment/professional-availability/AvailabilityProtocol'
+
+// import AvailabilityManagement from './increment/professional-availability/AvailabilityManagement'
 
 import {
   validateEmail,
@@ -71,6 +73,16 @@ export default function ProfessionalRegistrationForm({ errorMessage }) {
     education: [],
     certifications: [],
     workExperience: [],
+      availability: [],
+        availabilityOverrides: [], // add this for date-specific overrides
+
+       availabilityProtocol: {
+    default_event_duration: null,
+    min_notice_hours: null,
+    buffer_minutes: null,
+    max_bookings_per_day: null
+  }// 👈 ADD THIS
+
   })
 
   const [errors, setErrors] = useState({})
@@ -216,9 +228,27 @@ export default function ProfessionalRegistrationForm({ errorMessage }) {
       {currentStep === 7 && <CertificationInterface formData={formData} updateFormData={updateFormData} />}
       {currentStep === 8 && <WorkExperienceInterface formData={formData} updateFormData={updateFormData} />}
       {currentStep === 9 && <Contact formData={formData} errors={errors} updateFormData={updateFormData} handleBlur={handleBlur} />}
+      {currentStep === 10 && (
+  <AvailabilityInterface
+      formData={formData}
+      updateFormData={updateFormData}
+    />
+)}
+
+{currentStep === 11 && (
+  <AvailabilityProtocol
+    rules={formData.availabilityProtocol}
+    setRules={(rules) =>
+      setFormData(fd => ({ ...fd, availabilityProtocol: rules }))
+    }
+  />
+)}
+
+
 
       <div style={{ height: '80px' }} />
-      <NavigationSelectors currentStep={currentStep} nextStep={nextStep} prevStep={prevStep} totalSteps={9} />
+<NavigationSelectors currentStep={currentStep} nextStep={nextStep} prevStep={prevStep}   totalSteps={11}
+ />
     </form>
   )
 }
