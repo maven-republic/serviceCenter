@@ -6,8 +6,8 @@ export default function Account({ formData, updateFormData, errors, handleBlur }
   return (
     <div className="container py-4">
       <div className="row">
-        {/* Left column: intro and login link */}
-        <div className="col-md-6 mb-4">
+        {/* Left column: intro text */}
+        <div className="col-12 col-md-6 mb-4 d-none d-md-block">
           <div className="pe-md-4">
             <h4 className="fw-bold mb-3">Create your professional account</h4>
             <p className="text-muted mb-4">
@@ -23,11 +23,11 @@ export default function Account({ formData, updateFormData, errors, handleBlur }
           </div>
         </div>
 
-        {/* Right column: form */}
-        <div className="col-md-6">
+        {/* Right column: form fields */}
+        <div className="col-12 col-md-6">
           {/* Email */}
           <div className="mb-3">
-            <label htmlFor="email" className="form-label fw-medium">Email</label>
+            <label htmlFor="email" className="form-label fw-semibold">Email</label>
             <input
               type="email"
               id="email"
@@ -43,7 +43,7 @@ export default function Account({ formData, updateFormData, errors, handleBlur }
 
           {/* Password */}
           <div className="mb-3">
-            <label htmlFor="password" className="form-label fw-medium">Password</label>
+            <label htmlFor="password" className="form-label fw-semibold">Password</label>
             <input
               type="password"
               id="password"
@@ -59,7 +59,7 @@ export default function Account({ formData, updateFormData, errors, handleBlur }
 
           {/* Confirm Password */}
           <div className="mb-3">
-            <label htmlFor="confirmPassword" className="form-label fw-medium">Confirm Password</label>
+            <label htmlFor="confirmPassword" className="form-label fw-semibold">Confirm Password</label>
             <input
               type="password"
               id="confirmPassword"

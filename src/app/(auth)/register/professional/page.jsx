@@ -1,30 +1,29 @@
-// app/(auth)/register/professional/page.jsx
-import { redirect } from 'next/navigation'
-import { createClient } from '../../../../../utils/supabase/server'
-import Header from "@/components/header/Header20"
-import Footer from "@/components/footer/Footer"
+"use client"
+
+import { useState } from 'react'
+import Header from '@/components/header/Header20'
+import Footer from '@/components/footer/Footer'
 import ProfessionalRegistrationForm from './ProfessionalRegistrationForm'
 
-export default async function ProfessionalRegistrationPage({ searchParams }) {
-  const supabase = await createClient()
-  const { data } = await supabase.auth.getUser()
+export default function ProfessionalRegistrationPage({ searchParams }) {
+  const [currentStep, setCurrentStep] = useState(1)
 
-  // If a user is already logged in, redirect to the dashboard
-  if (data?.user) {
-    redirect('/professional/workspace')
-  }
+  const nextStep = () => setCurrentStep(prev => Math.min(prev + 1, 10))
+  const prevStep = () => setCurrentStep(prev => Math.max(prev - 1, 1))
 
-  // Read error message from query parameters, if any
   const errorMessage = searchParams?.error || null
 
   return (
-
-    
-   <div>
-    {/* <div className="bgc-thm4"> */}
+    <div>
       <Header />
       <section className="our-register">
-        <ProfessionalRegistrationForm errorMessage={errorMessage} />
+        <ProfessionalRegistrationForm
+          errorMessage={errorMessage}
+          currentStep={currentStep}
+          setCurrentStep={setCurrentStep}
+          nextStep={nextStep}
+          prevStep={prevStep}
+        />
       </section>
       {/* <Footer /> */}
     </div>

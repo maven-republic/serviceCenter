@@ -1,11 +1,19 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import AvailabilityBuilder from './AvailabilityBuilder'
 import AvailabilityCalendarView from './AvailabilityCalendarView'
 
 export default function AvailabilityInterface({ formData, updateFormData }) {
   const [calendarView, setCalendarView] = useState(false)
+
+  // ✅ Add local state for override tracking
+  const [overrides, setOverrides] = useState(formData.availabilityOverrides || [])
+
+  // ✅ Sync state if formData updates externally
+  useEffect(() => {
+    setOverrides(formData.availabilityOverrides || [])
+  }, [formData.availabilityOverrides])
 
   const toggleView = () => setCalendarView(prev => !prev)
 
@@ -14,6 +22,42 @@ export default function AvailabilityInterface({ formData, updateFormData }) {
       target: {
         name: 'availability',
         value: newAvailability
+      }
+    })
+  }
+
+  // ✅ Add override update handlers
+  const handleUpdateOverride = (dateKey, blocks) => {
+    const updated = [
+      ...overrides.filter(o => o.override_date !== dateKey),
+      ...blocks
+    ]
+    setOverrides(updated)
+    updateFormData({
+      target: {
+        name: 'availabilityOverrides',
+        value: updated
+      }
+    })
+  }
+
+  const handleUpdateRecurring = (newAvailability) => {
+  updateFormData({
+    target: {
+      name: 'availability',
+      value: newAvailability
+    }
+  })
+}
+
+
+  const handleDeleteOverride = (dateKey) => {
+    const updated = overrides.filter(o => o.override_date !== dateKey)
+    setOverrides(updated)
+    updateFormData({
+      target: {
+        name: 'availabilityOverrides',
+        value: updated
       }
     })
   }
@@ -33,9 +77,14 @@ export default function AvailabilityInterface({ formData, updateFormData }) {
 
       {calendarView ? (
         <AvailabilityCalendarView
-          availability={formData.availability || []}
-          overrides={formData.availabilityOverrides || []}
-        />
+  availability={formData.availability || []}
+  overrides={overrides}
+  onUpdateOverride={handleUpdateOverride}
+  onDeleteOverride={handleDeleteOverride}
+  onUpdateRecurring={handleUpdateRecurring}
+/>
+        
+        
       ) : (
         <AvailabilityBuilder
           availability={formData.availability || []}

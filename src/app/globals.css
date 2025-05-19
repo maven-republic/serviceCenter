@@ -365,6 +365,15 @@ a {
 }
 
 .our-register {
-  padding: 40px 0;     /* Top & bottom spacing */
-  margin-top: 10px;    /* Space above the form */
+  /* padding: 40px 0;     Top & bottom spacing */
+  /* margin-top: 10px;    Space above the form */
 }
+
+
+/* In globals.css or ProfessionalForm.module.css */
+.our-register {
+  min-height: 100vh;
+  position: relative;
+  padding-bottom: 120px; /* enough room for the fixed nav */
+}
+

@@ -1,12 +1,8 @@
 'use client'
 
-import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useSupabaseClient } from '@supabase/auth-helpers-react'
 import { signupProfessional } from './actions'
-
-import ProgressionIndicator from './ProgressionIndicator'
-import NavigationSelectors from './NavigationSelectors'
 
 import Account from './increment/Account'
 import Personal from './increment/Personal'
@@ -18,9 +14,8 @@ import Education from './increment/Education'
 import CertificationInterface from './increment/professional-certification/CertificationInterface'
 import WorkExperienceInterface from './increment/professional-work-experience/WorkExperienceInterface'
 import AvailabilityInterface from './increment/professional-availability/AvailabilityInterface'
-import AvailabilityProtocol from './increment/professional-availability/AvailabilityProtocol'
-
-// import AvailabilityManagement from './increment/professional-availability/AvailabilityManagement'
+// import AvailabilityProtocol from './increment/professional-availability/AvailabilityProtocol'
+import NavigationSelectors from './NavigationSelectors'
 
 import {
   validateEmail,
@@ -41,12 +36,12 @@ import {
 } from '../../../../../utils/validation'
 
 import designs from './ProfessionalForm.module.css'
+import { useState, useEffect } from 'react'
 
-export default function ProfessionalRegistrationForm({ errorMessage }) {
+export default function ProfessionalRegistrationForm({ errorMessage, currentStep, setCurrentStep, nextStep, prevStep }) {
   const router = useRouter()
   const supabase = useSupabaseClient()
 
-  const [currentStep, setCurrentStep] = useState(1)
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -73,16 +68,14 @@ export default function ProfessionalRegistrationForm({ errorMessage }) {
     education: [],
     certifications: [],
     workExperience: [],
-      availability: [],
-        availabilityOverrides: [], // add this for date-specific overrides
-
-       availabilityProtocol: {
-    default_event_duration: null,
-    min_notice_hours: null,
-    buffer_minutes: null,
-    max_bookings_per_day: null
-  }// 👈 ADD THIS
-
+    availability: [],
+    availabilityOverrides: [],
+    availabilityProtocol: {
+      default_event_duration: null,
+      min_notice_hours: null,
+      buffer_minutes: null,
+      max_bookings_per_day: null
+    }
   })
 
   const [errors, setErrors] = useState({})
@@ -175,7 +168,7 @@ export default function ProfessionalRegistrationForm({ errorMessage }) {
     return !!data
   }
 
-  const nextStep = async () => {
+const handleNextStep = async () => {
     if (currentStep === 1) {
       const eErr = validateEmail(formData.email)
       const pErr = validatePassword(formData.password)
@@ -192,31 +185,60 @@ export default function ProfessionalRegistrationForm({ errorMessage }) {
     }
   }
 
-  const prevStep = () => {
+  const handlePrevStep = () => {
     if (currentStep > 1) setCurrentStep(s => s - 1)
   }
 
-  const handleSubmit = async e => {
-    e.preventDefault()
+  const handleSubmit = async (e) => {
+  e.preventDefault()
 
-    const data = new FormData()
-    Object.entries(formData).forEach(([k, v]) => {
-      if (Array.isArray(v)) {
-        data.append(k, JSON.stringify(v))
-      } else {
-        data.append(k, v)
-      }
-    })
+  console.log('🟢 handleSubmit() triggered')
+  // console.log('➡️ currentStep =', currentStep)
 
-    try {
-      await signupProfessional(data)
-    } catch (err) {
-      router.push(`/register/professional?error=${encodeURIComponent(err.message)}`)
-    }
+  if (currentStep !== 10) {
+    console.warn('⛔ Submission blocked — currentStep is not 10')
+    return
   }
+  
+  const form = document.querySelector('form')
+if (!form) {
+  console.error('🚨 Form element not found')
+  return
+}
+const data = new FormData(form)
 
+
+
+  // Manually serialize all non-form native values
+  Object.entries(formData).forEach(([k, v]) => {
+    if (Array.isArray(v) || typeof v === 'object') {
+      data.set(k, JSON.stringify(v))
+    } else {
+      data.set(k, v)
+    }
+  })
+
+  console.groupCollapsed('📦 FormData Contents')
+  for (const [key, value] of data.entries()) {
+    console.log(`${key}:`, value)
+  }
+  console.groupEnd()
+
+  try {
+    await signupProfessional(data)
+    console.log('✅ signupProfessional completed')
+
+    // ✅ PRESERVED: any redirects or route logic
+    router.push('/login?message=' + encodeURIComponent('Registration successful! Please check your email.'))
+  } catch (error) {
+    console.error('❌ signupProfessional failed:', error)
+    // Optionally show feedback in UI
+  }
+}
   return (
-    <form className={designs.outer} onSubmit={currentStep === 9 ? handleSubmit : e => e.preventDefault()}>
+<form
+  className={designs.outer}
+>
       {errorMessage && <div className="alert alert-danger mb-4">{errorMessage}</div>}
 
       {currentStep === 1 && <Account formData={formData} errors={errors} updateFormData={updateFormData} handleBlur={handleBlur} isCheckingEmail={isCheckingEmail} />}
@@ -228,27 +250,24 @@ export default function ProfessionalRegistrationForm({ errorMessage }) {
       {currentStep === 7 && <CertificationInterface formData={formData} updateFormData={updateFormData} />}
       {currentStep === 8 && <WorkExperienceInterface formData={formData} updateFormData={updateFormData} />}
       {currentStep === 9 && <Contact formData={formData} errors={errors} updateFormData={updateFormData} handleBlur={handleBlur} />}
-      {currentStep === 10 && (
-  <AvailabilityInterface
-      formData={formData}
-      updateFormData={updateFormData}
-    />
-)}
+      {currentStep === 10 && <AvailabilityInterface formData={formData} updateFormData={updateFormData} />}
 
-{currentStep === 11 && (
-  <AvailabilityProtocol
-    rules={formData.availabilityProtocol}
-    setRules={(rules) =>
-      setFormData(fd => ({ ...fd, availabilityProtocol: rules }))
-    }
-  />
-)}
+
+
+
 
 
 
       <div style={{ height: '80px' }} />
-<NavigationSelectors currentStep={currentStep} nextStep={nextStep} prevStep={prevStep}   totalSteps={11}
- />
+
+      <NavigationSelectors
+  currentStep={currentStep}
+  nextStep={handleNextStep}
+  prevStep={handlePrevStep}
+  onSubmit={handleSubmit}
+
+  totalSteps={10}
+/>
     </form>
   )
 }
