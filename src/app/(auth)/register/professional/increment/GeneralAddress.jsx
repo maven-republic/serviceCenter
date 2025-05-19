@@ -33,7 +33,7 @@ export default function GeneralAddress({
           )}
         </div>
 
-        <div className="row g-3 mb-4">
+       { /* <div className="row g-3 mb-4">
           <div className="col-md-6">
             <label className="form-label fw-semibold">Community (Optional)</label>
             <input
@@ -56,7 +56,7 @@ export default function GeneralAddress({
               placeholder="Nearby landmark"
             />
           </div>
-        </div>
+        </div> */} 
 
         <div className="mb-4">
           <div className="form-check">

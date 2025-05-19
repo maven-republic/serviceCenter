@@ -1,4 +1,3 @@
-// increment/SelectedServices.jsx
 'use client'
 
 import styles from '../ProfessionalForm.module.css'
@@ -6,45 +5,106 @@ import styles from '../ProfessionalForm.module.css'
 export default function SelectedServices({
   selected,
   toggleService,
-  services
+  services,
+  formData,
+  updateFormData
 }) {
   const selectedServices = services.filter(service =>
     selected.includes(service.service_id)
-  )  
-
+  )
 
   return (
     <div className="card border mb-4">
       <div className="card-header bg-white d-flex justify-content-between align-items-center py-3">
         <h5 className="mb-0">Your Selected Services</h5>
         <span className="badge bg-primary">{selected.length}</span>
-        </div>
-
-      {/* {error && (
-        <div className="alert alert-danger m-3" role="alert">
-          <i className="fas fa-exclamation-circle me-2"></i>
-          {error}
-        </div>
-      )} */}
+      </div>
 
       <div className="card-body">
         {selectedServices.length ? (
-          <div className="d-flex flex-wrap gap-2">
+          <div className="d-flex flex-wrap gap-3">
             {selectedServices.map(service => (
-              <button
-                key={service.service_id}
-                type="button"
-                className={`
-                  ${styles.serviceTag}
-                  badge rounded-pill bg-primary-subtle text-primary
-                  py-2 px-3 d-flex align-items-center
-                `}
-                onClick={() => onRemove(service.service_id)}
-                title={service.name}
-              >
-                <span>{service.name}</span>
-                <i className="fas fa-times-circle ms-2" />
-              </button>
+    
+    
+    
+  <div
+  key={service.service_id}
+  className=" border rounded-3 p-2 d-flex flex-column justify-content-between"
+  style={{ width: '300px', flexShrink: 0 }}
+>
+  <div className="d-flex justify-content-between align-items-center mb-3">
+    <span className="badge  text-primary px-2 py-1 fw-medium rounded-pill">
+      {service.name}
+    </span>
+    <button
+      type="button"
+      className="btn btn-sm"
+      onClick={() => toggleService(service.service_id)}
+      title="Remove"
+    >
+      <i className="fas fa-times" />
+    </button>
+  </div>
+
+  <label className="form-label text-muted small fw-semibold mb-1">
+    When did you start offering this service?
+  </label>
+  <input
+    type="date"
+    className="form-control form-control-sm"
+    value={formData.serviceStartDates?.[service.service_id] || ''}
+    onChange={(e) =>
+      updateFormData({
+        target: {
+          name: 'serviceStartDates',
+          value: {
+            ...formData.serviceStartDates,
+            [service.service_id]: e.target.value
+          }
+        }
+      })
+    }
+  />
+</div>
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
             ))}
           </div>
         ) : (

@@ -19,6 +19,7 @@ export async function signupProfessional(formData) {
   const password = formData.get('password')
 
   const services = JSON.parse(formData.get('services') || '[]')
+  const serviceStartDates = JSON.parse(formData.get('serviceStartDates') || '{}')
   const availability = JSON.parse(formData.get('availability') || '[]')
   const availabilityOverrides = JSON.parse(formData.get('availabilityOverrides') || '[]')
   const availabilityProtocol = JSON.parse(formData.get('availabilityProtocol') || '{}')
@@ -28,11 +29,14 @@ export async function signupProfessional(formData) {
 
   const { data, error } = await supabase.auth.signUp({ email: userEmail, password })
 
-  if (error) redirect('/register/professional?error=' + encodeURIComponent(error.message || 'Signup failed'))
+  if (error || !data?.user?.id) {
+    redirect('/register/professional?error=' + encodeURIComponent(error?.message || 'Signup failed'))
+  }
 
-  const userId = data?.user?.id
+  const userId = data.user.id
 
-  await supabase.from('account').insert({
+  // Insert into account
+  const { error: accErr } = await supabase.from('account').insert({
     account_id: userId,
     email: userEmail,
     password_hash: 'MANAGED_BY_SUPABASE',
@@ -41,26 +45,32 @@ export async function signupProfessional(formData) {
     account_status: 'pending',
     email_verified: false
   })
+  if (accErr) throw new Error('Failed to insert into account: ' + accErr.message)
 
-  await supabase.from('account_role').insert({
+  // Insert into account_role
+  const { error: roleErr } = await supabase.from('account_role').insert({
     account_id: userId,
     role_type: 'professional',
     role_status: 'pending',
     is_primary: true
   })
+  if (roleErr) throw new Error('Failed to insert into account_role: ' + roleErr.message)
 
-  await supabase.from('phone').insert({
+  // Insert phone
+  const { error: phoneErr } = await supabase.from('phone').insert({
     account_id: userId,
     phone_type: 'mobile',
     phone_number: phoneNumber,
     is_primary: true
   })
+  if (phoneErr) throw new Error('Failed to insert into phone: ' + phoneErr.message)
 
-  const { data: professionalData } = await supabase
+  // Insert professional
+  const { data: professionalData, error: profErr } = await supabase
     .from('individual_professional')
     .insert({
       account_id: userId,
-      experience,
+      experience: experience || null,
       hourly_rate: hourlyRate || null,
       daily_rate: dailyRate || null,
       website_url: websiteUrl || null,
@@ -75,10 +85,15 @@ export async function signupProfessional(formData) {
     .select()
     .single()
 
+  if (profErr || !professionalData) {
+    throw new Error('Failed to insert individual_professional: ' + (profErr?.message || 'No data returned'))
+  }
+
   const professionalId = professionalData.professional_id
 
+  // Insert availability
   if (availability.length > 0) {
-    await supabase.from('availability').insert(
+    const { error: availErr } = await supabase.from('availability').insert(
       availability.map(a => ({
         professional_id: professionalId,
         day_of_week: a.day_of_week,
@@ -86,10 +101,12 @@ export async function signupProfessional(formData) {
         end_time: a.end_time
       }))
     )
+    if (availErr) throw new Error('Failed to insert availability: ' + availErr.message)
   }
 
+  // Insert availability overrides
   if (availabilityOverrides.length > 0) {
-    await supabase.from('availability_override').insert(
+    const { error: overrideErr } = await supabase.from('availability_override').insert(
       availabilityOverrides.map(o => ({
         professional_id: professionalId,
         override_date: o.override_date,
@@ -98,9 +115,21 @@ export async function signupProfessional(formData) {
         is_available: o.is_available !== false
       }))
     )
+    if (overrideErr) throw new Error('Failed to insert availability overrides: ' + overrideErr.message)
   }
 
-  // EDUCATION
+  // Insert services
+  if (services.length > 0) {
+    const rows = services.map(service_id => ({
+      professional_id: professionalId,
+      service_id,
+      service_start_date: serviceStartDates[service_id] || null
+    }))
+    const { error: svcErr } = await supabase.from('professional_service').insert(rows)
+    if (svcErr) throw new Error('Failed to insert professional_service: ' + svcErr.message)
+  }
+
+  // Insert education
   for (const entry of education) {
     const { data: eduResult, error: eduError } = await supabase
       .from('professional_education')
@@ -116,9 +145,10 @@ export async function signupProfessional(formData) {
       .select()
       .single()
 
-    const educationId = eduResult?.education_id
+    if (eduError || !eduResult) throw new Error('Failed to insert education: ' + (eduError?.message || ''))
 
-    // Add competences
+    const educationId = eduResult.education_id
+
     if (entry.competenceIds?.length) {
       const competenceRows = entry.competenceIds.map(cid => ({
         education_id: educationId,
@@ -127,7 +157,6 @@ export async function signupProfessional(formData) {
       await supabase.from('education_competence').insert(competenceRows)
     }
 
-    // Add media
     if (entry.media?.length) {
       const mediaRows = entry.media.map(m => ({
         education_id: educationId,
@@ -140,7 +169,7 @@ export async function signupProfessional(formData) {
     }
   }
 
-  // CERTIFICATIONS
+  // Insert certifications
   for (const cert of certifications) {
     const { data: ref } = await supabase
       .from('certification')
@@ -148,7 +177,7 @@ export async function signupProfessional(formData) {
       .eq('name', cert.certificationName)
       .maybeSingle()
 
-    const { data: certResult } = await supabase
+    const { data: certResult, error: certError } = await supabase
       .from('professional_certification')
       .insert({
         professional_id: professionalId,
@@ -160,7 +189,9 @@ export async function signupProfessional(formData) {
       .select()
       .single()
 
-    const certificationId = certResult?.certification_id
+    if (certError || !certResult) throw new Error('Failed to insert certification: ' + (certError?.message || ''))
+
+    const certificationId = certResult.certification_id
 
     if (cert.serviceIds?.length) {
       const linkRows = cert.serviceIds.map(cid => ({
@@ -171,7 +202,7 @@ export async function signupProfessional(formData) {
     }
   }
 
-  // WORK EXPERIENCE
+  // Insert work experience
   if (workExperience.length > 0) {
     const workRows = workExperience.map(exp => ({
       professional_id: professionalId,

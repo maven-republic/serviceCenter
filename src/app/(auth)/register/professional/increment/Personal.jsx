@@ -62,33 +62,7 @@ export default function Personal({
             </div>
           )}
         </div>
-
-        <div className="mb-4">
-          <label className="form-label fw-semibold">Years of Experience</label>
-          <select
-            name="experience"
-            value={formData.experience}
-            onChange={updateFormData}
-            onBlur={handleBlur}
-            className={`form-select ${errors.experience ? 'is-invalid' : formData.experience ? 'is-valid' : ''}`}
-            required
-            aria-describedby="experienceFeedback"
-          >
-            <option value="">Select years of experience</option>
-            <option value="0">Less than 1 year</option>
-            {[...Array(15)].map((_, i) => (
-              <option key={i + 1} value={i + 1}>
-                {i + 1} year{i !== 0 ? 's' : ''}
-              </option>
-            ))}
-            <option value="15+">More than 15 years</option>
-          </select>
-          {errors.experience && (
-            <div id="experienceFeedback" className="invalid-feedback">
-              {errors.experience}
-            </div>
-          )}
-        </div>
+        
       </div>
     </div>
   )

@@ -8,6 +8,7 @@ import Account from './increment/Account'
 import Personal from './increment/Personal'
 import GeneralAddress from './increment/GeneralAddress'
 import Services from './increment/Services'
+import SelectedServices from './increment/SelectedServices'
 import Pricing from './increment/Pricing'
 import Contact from './increment/Contact'
 import Education from './increment/Education'
@@ -75,7 +76,9 @@ export default function ProfessionalRegistrationForm({ errorMessage, currentStep
       min_notice_hours: null,
       buffer_minutes: null,
       max_bookings_per_day: null
-    }
+    },
+    selectedServices: [],
+  serviceStartDates: {}, // ✅ ensure this exists
   })
 
   const [errors, setErrors] = useState({})
@@ -244,7 +247,46 @@ const data = new FormData(form)
       {currentStep === 1 && <Account formData={formData} errors={errors} updateFormData={updateFormData} handleBlur={handleBlur} isCheckingEmail={isCheckingEmail} />}
       {currentStep === 2 && <Personal formData={formData} errors={errors} updateFormData={updateFormData} handleBlur={handleBlur} />}
       {currentStep === 3 && <GeneralAddress formData={formData} errors={errors} handleAddressSelect={handleAddressSelect} updateFormData={updateFormData} />}
-      {currentStep === 4 && <Services categories={categories} services={servicesList} loading={loading} dropdownOpen={dropdownOpen} searchTerm={searchTerm} setSearchTerm={setSearchTerm} setDropdownOpen={setDropdownOpen} toggleService={toggleService} selectedServices={formData.services} errors={errors.services} />}
+
+
+ 
+ 
+ 
+ 
+ 
+ 
+ <div className="row">
+  {/* Left column: Search + Dropdown */}
+  <div className="col-md-5">
+    <Services
+      categories={categories}
+      services={servicesList}
+      loading={loading}
+      dropdownOpen={dropdownOpen}
+      searchTerm={searchTerm}
+      setSearchTerm={setSearchTerm}
+      setDropdownOpen={setDropdownOpen}
+      toggleService={toggleService}
+      selectedServices={formData.services}
+      formData={formData}
+      updateFormData={updateFormData}
+      errors={errors.services}
+    />
+  </div>
+
+  {/* Right column: Selected Services */}
+  <div className="col-md-7">
+    <SelectedServices
+      selected={formData.services}
+      toggleService={toggleService}
+      services={servicesList}
+      formData={formData}
+      updateFormData={updateFormData}
+    />
+  </div>
+</div>
+
+
       {currentStep === 5 && <Pricing formData={formData} updateFormData={updateFormData} />}
       {currentStep === 6 && <Education formData={formData} errors={errors} updateFormData={updateFormData} handleBlur={handleBlur} allServices={servicesList} />}
       {currentStep === 7 && <CertificationInterface formData={formData} updateFormData={updateFormData} />}
