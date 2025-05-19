@@ -250,7 +250,8 @@ const data = new FormData(form)
 
 
  
- 
+ {currentStep === 4 && (
+
  
  
  
@@ -286,6 +287,8 @@ const data = new FormData(form)
   </div>
 </div>
 
+
+ )}
 
       {currentStep === 5 && <Pricing formData={formData} updateFormData={updateFormData} />}
       {currentStep === 6 && <Education formData={formData} errors={errors} updateFormData={updateFormData} handleBlur={handleBlur} allServices={servicesList} />}
