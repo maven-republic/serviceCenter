@@ -377,3 +377,26 @@ a {
   padding-bottom: 120px; /* enough room for the fixed nav */
 }
 
+
+input.form-control:hover {
+  border-width: 1px !important; /* thinner border on hover */
+  outline: none;
+}
+
+
+input.form-control:focus {
+  box-shadow: none !important;
+  border-color: #5bbb7b; /* Optional: keep a clean custom focus color */
+  outline: none;
+}
+
+.no-shadow-modal {
+  box-shadow: none !important;
+  border: 1px solid #dee2e6;
+}
+
+
+
+/* input.form-control:hover { */
+  /* border-color: #5bbb7b !important; your primary color */
+/* } */

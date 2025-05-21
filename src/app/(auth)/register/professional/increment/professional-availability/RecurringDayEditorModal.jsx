@@ -2,27 +2,7 @@
 
 import { Modal, Button } from 'react-bootstrap'
 import { useState } from 'react'
-
-function generateNextTimeBlock(existingBlocks, increment = 60) {
-  const toMinutes = (t) => {
-    const [h, m] = t.split(':').map(Number)
-    return h * 60 + m
-  }
-  const toTime = (m) => {
-    const h = Math.floor(m / 60)
-    const mins = m % 60
-    return `${h.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}`
-  }
-  if (!existingBlocks.length) return { start_time: '09:00', end_time: '10:00' }
-
-  const sorted = [...existingBlocks].sort((a, b) => toMinutes(a.end_time) - toMinutes(b.end_time))
-  const lastEnd = toMinutes(sorted[sorted.length - 1].end_time)
-  const start = lastEnd
-  const end = Math.min(start + increment, 1440)
-  if (end <= start || end > 1440) return null
-
-  return { start_time: toTime(start), end_time: toTime(end) }
-}
+import { AVAILABILITY_RULES } from '@/config/availabilityRules'
 
 function hasDuplicateBlock(blocks) {
   const seen = new Set()
@@ -34,7 +14,33 @@ function hasDuplicateBlock(blocks) {
   return false
 }
 
-export default function RecurringDayEditorModal({ dayIndex, dayLabel, availability, setAvailability, onClose }) {
+function generateNextTimeBlock(existingBlocks, increment = 60) {
+  const toMinutes = (t) => {
+    const [h, m] = t.split(':').map(Number)
+    return h * 60 + m
+  }
+  const toTime = (m) => {
+    const h = Math.floor(m / 60)
+    const mins = m % 60
+    return `${h.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}`
+  }
+  if (!existingBlocks.length) {
+    return {
+      start_time: AVAILABILITY_RULES.DEFAULT_BLOCK_START,
+      end_time: AVAILABILITY_RULES.DEFAULT_BLOCK_END
+    }
+  }
+
+  const sorted = [...existingBlocks].sort((a, b) => toMinutes(a.end_time) - toMinutes(b.end_time))
+  const lastEnd = toMinutes(sorted[sorted.length - 1].end_time)
+  const start = lastEnd
+  const end = Math.min(start + increment, 1440)
+  if (end <= start || end > 1440) return null
+
+  return { start_time: toTime(start), end_time: toTime(end) }
+}
+
+export default function RecurringDayEditorModal({ dayIndex, dayLabel, availability, setAvailability, onClose, noShadow }) {
   const [blocks, setBlocks] = useState(
     availability.filter(a => a.day_of_week === dayIndex)
   )
@@ -47,9 +53,8 @@ export default function RecurringDayEditorModal({ dayIndex, dayLabel, availabili
 
   const handleAdd = () => {
     const next = generateNextTimeBlock(blocks)
-    if (next && !hasDuplicateBlock([...blocks, next])) {
-      setBlocks(prev => [...prev, next])
-    }
+    if (!next || hasDuplicateBlock([...blocks, next])) return
+    setBlocks(prev => [...prev, next])
   }
 
   const handleRemove = (index) => {
@@ -71,7 +76,7 @@ export default function RecurringDayEditorModal({ dayIndex, dayLabel, availabili
   }
 
   return (
-    <Modal show onHide={onClose} centered>
+    <Modal show onHide={onClose} centered contentClassName={noShadow ? 'no-shadow-modal' : ''}>
       <Modal.Header closeButton>
         <Modal.Title className="h6 fw-bold">
           Edit Weekly Hours for {dayLabel}

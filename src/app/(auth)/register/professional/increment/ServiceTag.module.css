@@ -1,0 +1,27 @@
+.tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.4rem 0.75rem;
+  font-size: 0.875rem;
+  border-radius: 9999px; /* fully rounded */
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+  border: 1px solid transparent;
+  background-color: #f3f4f6; /* gray-100 */
+  color: #1f2937;            /* gray-800 */
+}
+
+.tag:hover {
+  background-color: #e5e7eb; /* gray-200 */
+}
+
+.tagSelected {
+  background-color: #2563eb; /* blue-600 */
+  color: white;
+  border-color: #2563eb;
+}
+
+.tagSelected:hover {
+  background-color: #1d4ed8; /* blue-700 */
+}

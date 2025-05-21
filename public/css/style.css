@@ -13099,3 +13099,22 @@ hr {
   font-weight: 600;
 
 }
+
+
+input.form-control:hover {
+  border-width: 1px !important; /* thinner border on hover */
+  outline: none;
+}
+
+
+input.form-control:focus {
+  box-shadow: none !important;
+  border-color: #5bbb7b; /* Optional: keep a clean custom focus color */
+  outline: none;
+}
+
+
+
+input.form-control:hover {
+  /* border-color: #5bbb7b !important; your primary color */
+}

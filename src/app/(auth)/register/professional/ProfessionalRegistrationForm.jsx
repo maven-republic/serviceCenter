@@ -37,6 +37,7 @@ import {
 } from '../../../../../utils/validation'
 
 import designs from './ProfessionalForm.module.css'
+
 import { useState, useEffect } from 'react'
 
 export default function ProfessionalRegistrationForm({ errorMessage, currentStep, setCurrentStep, nextStep, prevStep }) {

@@ -65,12 +65,12 @@ export default function Certification({ data, onChange, onRemove }) {
 
   return (
     <div>
-      <div className="mb-3 position-relative">
-        <label className="form-label">Certification</label>
+      <div className="mb-4 position-relative">
+        <label className="form-label small text-muted">Certification</label>
         <input
           type="text"
-          className="form-control"
-          placeholder="Start typing certification name..."
+          className="form-control rounded-3 px-3 py-2 "
+          placeholder="Search for certification."
           value={data.certificationName}
           onChange={(e) => {
             const value = e.target.value
@@ -81,7 +81,7 @@ export default function Certification({ data, onChange, onRemove }) {
           onBlur={() => setTimeout(() => setShowCertList(false), 150)}
         />
         {showCertList && filteredCerts.length > 0 && (
-          <ul className="list-group position-absolute w-100 shadow-sm" style={{ maxHeight: '200px', overflowY: 'auto', zIndex: 1050 }}>
+          <ul className="list-group position-absolute w-100 z-10" style={{ maxHeight: '200px', overflowY: 'auto' }}>
             {filteredCerts.map(opt => (
               <li
                 key={opt.certification_id}
@@ -100,12 +100,12 @@ export default function Certification({ data, onChange, onRemove }) {
         )}
       </div>
 
-      <div className="mb-3 position-relative">
-        <label className="form-label">Issuing Organization</label>
+      <div className="mb-4 position-relative">
+        <label className="form-label small text-muted">Issuing Organization</label>
         <input
           type="text"
-          className="form-control"
-          placeholder="Start typing organization name..."
+          className="form-control rounded-3 px-3 py-2"
+          placeholder="Search for the issuing organization "
           value={data.issuingOrganization}
           onChange={(e) => {
             const value = e.target.value
@@ -116,7 +116,7 @@ export default function Certification({ data, onChange, onRemove }) {
           onBlur={() => setTimeout(() => setShowInstitutionList(false), 150)}
         />
         {showInstitutionList && filteredInstitutions.length > 0 && (
-          <ul className="list-group position-absolute w-100 shadow-sm z-10" style={{ maxHeight: '200px', overflowY: 'auto' }}>
+          <ul className="list-group position-absolute w-100  z-10" style={{ maxHeight: '200px', overflowY: 'auto' }}>
             {filteredInstitutions.map(inst => (
               <li
                 key={inst.institution_id}
@@ -135,21 +135,21 @@ export default function Certification({ data, onChange, onRemove }) {
         )}
       </div>
 
-      <div className="row mb-3">
+      <div className="row mb-4">
         <div className="col-md-6">
-          <label className="form-label">Issue Date</label>
+          <label className="form-label small text-muted">Issue Date</label>
           <input
             type="date"
-            className="form-control"
+            className="form-control rounded-3 px-3 py-2 "
             value={data.issueDate}
             onChange={(e) => onChange('issueDate', e.target.value)}
           />
         </div>
         <div className="col-md-6">
-          <label className="form-label">Expiration Date</label>
+          <label className="form-label small text-muted">Expiration Date</label>
           <input
             type="date"
-            className="form-control"
+            className="form-control rounded-3 px-3 py-2 "
             value={data.expirationDate}
             onChange={(e) => onChange('expirationDate', e.target.value)}
           />

@@ -3,6 +3,17 @@
 import { format } from 'date-fns'
 import { useState } from 'react'
 import { Modal, Button } from 'react-bootstrap'
+import { AVAILABILITY_RULES } from '@/config/availabilityRules'
+
+function hasDuplicateBlock(blocks) {
+  const seen = new Set()
+  for (const block of blocks) {
+    const key = `${block.start_time}-${block.end_time}`
+    if (seen.has(key)) return true
+    seen.add(key)
+  }
+  return false
+}
 
 function generateNextTimeBlock(existingBlocks, increment = 60) {
   const toMinutes = (t) => {
@@ -14,7 +25,12 @@ function generateNextTimeBlock(existingBlocks, increment = 60) {
     const mins = m % 60
     return `${h.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}`
   }
-  if (!existingBlocks.length) return { start_time: '09:00', end_time: '10:00' }
+  if (!existingBlocks.length) {
+    return {
+      start_time: AVAILABILITY_RULES.DEFAULT_BLOCK_START,
+      end_time: AVAILABILITY_RULES.DEFAULT_BLOCK_END
+    }
+  }
 
   const sorted = [...existingBlocks].sort((a, b) => toMinutes(a.end_time) - toMinutes(b.end_time))
   const lastEnd = toMinutes(sorted[sorted.length - 1].end_time)
@@ -27,7 +43,10 @@ function generateNextTimeBlock(existingBlocks, increment = 60) {
 
 export default function SingleDateEditorModal({ date, existing = [], onSave, onReset, onClose }) {
   const [blocks, setBlocks] = useState(
-    existing.length > 0 ? existing.map(b => ({ ...b })) : [{ start_time: '09:00', end_time: '10:00' }]
+    existing.length > 0 ? existing.map(b => ({ ...b })) : [{
+      start_time: AVAILABILITY_RULES.DEFAULT_BLOCK_START,
+      end_time: AVAILABILITY_RULES.DEFAULT_BLOCK_END
+    }]
   )
 
   const handleChange = (index, field, value) => {
@@ -38,9 +57,8 @@ export default function SingleDateEditorModal({ date, existing = [], onSave, onR
 
   const handleAdd = () => {
     const next = generateNextTimeBlock(blocks)
-    if (next) {
-      setBlocks(prev => [...prev, next])
-    }
+    if (!next || hasDuplicateBlock([...blocks, next])) return
+    setBlocks(prev => [...prev, next])
   }
 
   const handleRemove = (index) => {
@@ -106,6 +124,12 @@ export default function SingleDateEditorModal({ date, existing = [], onSave, onR
               Reset to Weekly Hours
             </Button>
           )}
+
+          {hasDuplicateBlock(blocks) && (
+            <div className="text-danger small mt-2">
+              Duplicate time block detected.
+            </div>
+          )}
         </div>
       </Modal.Body>
 
@@ -113,7 +137,7 @@ export default function SingleDateEditorModal({ date, existing = [], onSave, onR
         <Button variant="secondary" onClick={onClose}>
           Cancel
         </Button>
-        <Button variant="primary" onClick={handleSave}>
+        <Button variant="primary" onClick={handleSave} disabled={hasDuplicateBlock(blocks)}>
           Apply
         </Button>
       </Modal.Footer>

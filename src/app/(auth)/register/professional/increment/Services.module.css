@@ -1,90 +1,134 @@
-/* increment/Services.module.css */
-.container {
-    display: flex;
-    flex-wrap: wrap;
-    margin-bottom: 2rem;
-  }
-  .intro {
-    flex: 1 1 40%;
-    padding-right: 1.5rem;
-  }
-  .searchBox {
-    position: relative;
-    margin-bottom: 1rem;
-  }
-  .searchBox input {
-    width: 100%;
-    padding: 0.5rem 2.5rem 0.5rem 2rem;
-    border: 1px solid #ced4da;
-    border-radius: 0.25rem;
-  }
-  .searchBox .fa-search {
-    position: absolute;
-    left: 0.75rem;
-    top: 50%;
-    transform: translateY(-50%);
-    color: #6c757d;
-  }
-  .dropdownPanel {
-    position: absolute;
-    top: 100%;
-    left: 0;
-    width: 100%;
-    background: #fff;
-    border: 1px solid #ced4da;
-    border-radius: 0.25rem;
-    max-height: 300px;
-    overflow-y: auto;
-    z-index: 10;
-  }
-  .resultsCount {
-    font-size: 0.875rem;
-    color: #6c757d;
-    margin-bottom: 0.5rem;
-  }
-  .badge {
-    display: inline-flex;
-    align-items: center;
-    padding: 0.4rem 0.75rem;
-    font-size: 0.875rem;
-    border-radius: 1rem;
-    cursor: pointer;
-    margin: 0 0.5rem 0.5rem 0;
-    /* transition: background 0.2s; */
-  }
-  .badgeSelected {
-    background-color: #0d6efd;
-    color: #fff;
-    border: none;
-  }
-  .badgeUnselected {
-    background-color: #f8f9fa;
-    color: #212529;
-    border: 1px solid #ced4da;
-  }
-  .emptyState {
-    text-align: center;
-    padding: 2rem 1rem;
-    color: #6c757d;
-  }
-  .infoCard {
-    background: #e9f7ff;
-    border: 1px solid #b8e2ff;
-    border-radius: 0.25rem;
-    padding: 1rem;
-    margin-top: 1rem;
-  }
-  .selectedList {
-    flex: 1 1 55%;
-    padding-left: 1.5rem;
-  }
-  .selectedBadge {
-    display: inline-flex;
-    align-items: center;
-    background: #f0f8ff;
-    color: #0d6efd;
-    border-radius: 1rem;
-    padding: 0.4rem 0.75rem;
-    margin: 0 0.5rem 0.5rem 0;
-  }
-  
+/* Tailwind-like styles for Services.jsx */
+
+.searchBox {
+  position: relative;
+  margin-bottom: 1rem;
+}
+
+.searchInput {
+  width: 100%;
+  padding: 0.5rem 2.75rem 0.5rem 2.5rem; /* left padding for icon */
+  border: 1px solid #d1d5db;
+  border-radius: 0.375rem; /* rounded-md */
+  font-size: 1rem;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.searchInput:focus {
+  border-color: #2563eb; /* blue-600 */
+  outline: none;
+  box-shadow: 0 0 0 1px #2563eb;
+}
+
+.searchIcon {
+  position: absolute;
+  left: 1rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #6b7280; /* gray-500 */
+  font-size: 1rem;
+  pointer-events: none;
+}
+
+/* ------------------ Dropdown Panel ------------------ */
+
+.dropdownPanel {
+    margin-top: 0.5rem; /* Tailwind mt-2 */
+
+  position: absolute;
+  top: 100%;
+  left: 0;
+  width: 100%;
+  background-color: #ffffff;
+  border: 1px solid #e5e7eb;         /* gray-200 */
+  border-radius: 0.5rem;             /* rounded-lg */
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1),
+              0 4px 6px -2px rgba(0, 0, 0, 0.05); /* shadow-xl */
+  z-index: 50;
+  overflow: hidden;
+}
+
+/* ------------------ Scrollable area ------------------ */
+
+.scrollContainer {
+  padding: 1rem;
+  max-height: 300px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+/* ------------------ Category styling ------------------ */
+
+.categoryBlock {
+  padding: 1rem;
+  background-color: #f9fafb; /* gray-50 */
+  border: 1px solid #e5e7eb;
+  border-radius: 0.375rem;   /* rounded-md */
+}
+
+
+.dropdownCategoryHeader {
+  font-size: 0.875rem; /* Tailwind text-sm */
+  font-weight: 600;
+  color: #374151; /* gray-700 */
+  margin-bottom: 0.5rem;
+}
+
+
+
+
+
+
+
+/* ------------------ Services Grid ------------------ */
+
+.dropdownServicesGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.5rem;
+}
+
+/* ------------------ Service Tag ------------------ */
+
+.serviceTag {
+  display: inline-block;
+  padding: 0.4rem 0.75rem;
+  font-size: 0.75rem; /* Tailwind text-xs */
+  font-weight: 500;
+  color: #1f2937;              /* gray-800 */
+  background-color: #f3f4f6;   /* gray-100 */
+  border-radius: 9999px;
+  border: 1px solid transparent;
+  transition: all 0.2s ease-in-out;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  max-width: 100%;
+  cursor: pointer;
+}
+
+.serviceTag:hover {
+  background-color: #e5e7eb; /* gray-200 */
+}
+
+.serviceTag.selected {
+  background-color: #2563eb; /* blue-600 */
+  color: #ffffff;
+  border-color: #2563eb;
+}
+
+.serviceTag.selected:hover {
+  background-color: #1d4ed8; /* blue-700 */
+}
+
+/* ------------------ Dropdown Footer ------------------ */
+
+.dropdownFooter {
+  padding: 1rem;
+  border-top: 1px solid #e5e7eb;
+  background-color: #ffffff;
+  display: flex;
+  justify-content: flex-end;
+}

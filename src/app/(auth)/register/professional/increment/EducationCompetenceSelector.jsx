@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import styles from './Education.module.css' // or './EducationCompetence.module.css'
 
 export default function EducationCompetenceSelector({ selected, allCompetences, onSelect, onRemove }) {
   const [input, setInput] = useState('')
@@ -16,13 +17,13 @@ export default function EducationCompetenceSelector({ selected, allCompetences, 
   return (
     <div className="mb-3">
       <p className="text-muted mb-2">
-What  soft skills do you have that would make you likeable to our customers?
- </p>
+        What soft skills do you have that would make you likeable to our customers?
+      </p>
 
       {!showInput ? (
         <button
           type="button"
-          className="btn btn-outline-secondary btn-sm"
+          className={styles.mediaButton}
           onClick={() => setShowInput(true)}
         >
           + Add Competence
@@ -31,23 +32,22 @@ What  soft skills do you have that would make you likeable to our customers?
         <>
           <input
             type="text"
-            className="form-control mb-2"
+            className={styles.input}
             placeholder="Type a competence..."
             value={input}
             onChange={(e) => setInput(e.target.value)}
           />
 
-          <ul className="list-group mb-2">
+          <ul className="mt-2">
             {suggestions.map(c => (
               <li
                 key={c.competence_id}
-                className="list-group-item list-group-item-action"
+                className={styles.suggestion}
                 onClick={() => {
                   onSelect(c.competence_id)
                   setInput('')
                   setShowInput(false)
                 }}
-                style={{ cursor: 'pointer' }}
               >
                 {c.name}
               </li>
@@ -65,7 +65,7 @@ What  soft skills do you have that would make you likeable to our customers?
               <button
                 key={id}
                 type="button"
-                className="d-inline-flex align-items-center gap-2 px-3 py-1 bg-light border rounded-pill text-primary small fw-medium shadow-sm"
+                className={styles.tag}
                 onClick={() => onRemove(id)}
               >
                 {comp.name}

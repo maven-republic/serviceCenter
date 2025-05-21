@@ -2,7 +2,7 @@
 'use client'
 
 import ServiceTag from './ServiceTag'
-import styles from '../ProfessionalForm.module.css'
+import tagDESIGN from '../ServiceTag.module.css'
 
 export default function ServiceCategoryGroup({
   category,
@@ -12,11 +12,15 @@ export default function ServiceCategoryGroup({
 }) {
   return (
     <div>
-      <div className={styles.dropdownCategoryHeader}>
+
+
+      <div className={tagDESIGN.dropdownCategoryHeader}>
         {category.name}
       </div>
-      <div className={styles.dropdownServicesGrid}>
+      <div className={tagDESIGN.dropdownServicesGrid}>
+
         {services.map(service => (
+
           <ServiceTag
             key={service.service_id}
             service={service}

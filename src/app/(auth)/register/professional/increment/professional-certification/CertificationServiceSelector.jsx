@@ -30,47 +30,51 @@ export default function CertificationServiceSelector({ selected, onSelect, onRem
     .slice(0, 5)
 
   return (
-    <div className="mb-3">
-      <p className="text-muted mb-2">
-        Tag services or work types this credential qualifies you for.
-      </p>
+    <div className="mb-4">
+      <div className="d-flex flex-column gap-2 align-items-start mb-3">
+        <label className="form-label small text-muted">
+          Tag services or work types this credential qualifies you for
+        </label>
 
-      {!showInput ? (
-        <button
-          type="button"
-          className="btn btn-outline-secondary btn-sm"
-          onClick={() => setShowInput(true)}
-        >
-          + Add Service
-        </button>
-      ) : (
-        <>
-          <input
-            type="text"
-            className="form-control mb-2"
-            placeholder="Search services..."
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-          />
+        {!showInput ? (
+          <button
+            type="button"
+            className="btn btn-outline-primary btn-sm rounded-pill px-3 py-2 shadow-sm"
+            onClick={() => setShowInput(true)}
+          >
+            + Add Service
+          </button>
+        ) : (
+          <>
+            <input
+              type="text"
+              className="form-control rounded-pill px-3 py-2 shadow-sm"
+              placeholder="Search services..."
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+            />
 
-          <ul className="list-group mb-2">
-            {suggestions.map(service => (
-              <li
-                key={service.service_id}
-                className="list-group-item list-group-item-action"
-                style={{ cursor: 'pointer' }}
-                onClick={() => {
-                  onSelect(service.service_id)
-                  setInput('')
-                  setShowInput(false)
-                }}
-              >
-                {service.name}
-              </li>
-            ))}
-          </ul>
-        </>
-      )}
+            {suggestions.length > 0 && (
+              <ul className="list-group w-100 shadow-sm mt-2">
+                {suggestions.map(service => (
+                  <li
+                    key={service.service_id}
+                    className="list-group-item list-group-item-action"
+                    style={{ cursor: 'pointer' }}
+                    onClick={() => {
+                      onSelect(service.service_id)
+                      setInput('')
+                      setShowInput(false)
+                    }}
+                  >
+                    {service.name}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </>
+        )}
+      </div>
 
       {selected.length > 0 && (
         <div className="d-flex flex-wrap gap-2 mt-2">
@@ -85,7 +89,7 @@ export default function CertificationServiceSelector({ selected, onSelect, onRem
                 onClick={() => onRemove(id)}
               >
                 {svc.name}
-                <i className="fas fa-times-circle ms-2" />
+                <i className="fas fa-times-circle ms-1" />
               </button>
             )
           })}

@@ -3,6 +3,7 @@
 import { useRef, useState } from 'react'
 import Modal from 'react-bootstrap/Modal'
 import Button from 'react-bootstrap/Button'
+import styles from './Education.module.css'
 
 export default function EducationMediaUploader({ onUploadDraft }) {
   const fileInputRef = useRef(null)
@@ -39,15 +40,14 @@ export default function EducationMediaUploader({ onUploadDraft }) {
 
   return (
     <div className="mt-4">
-      <label className="form-label">Add media like images, documents, or presentations.</label>
+      <label className={styles.label}>Add media like images, documents, or presentations.</label>
 
       <div className="d-flex align-items-center gap-3 flex-wrap">
         <button
           type="button"
-          className="btn btn-outline-primary d-inline-flex align-items-center gap-2 px-3 py-2 rounded-pill shadow-sm"
+          className={styles.mediaButton}
           onClick={() => fileInputRef.current?.click()}
         >
-          {/* <i className="fas fa-upload" /> */}
           <span>+ Add Media</span>
         </button>
 
@@ -84,19 +84,19 @@ export default function EducationMediaUploader({ onUploadDraft }) {
           )}
 
           <div className="mb-3">
-            <label className="form-label">Title</label>
+            <label className={styles.label}>Title</label>
             <input
               type="text"
-              className="form-control"
+              className={styles.input}
               value={title}
               onChange={e => setTitle(e.target.value)}
             />
           </div>
 
           <div className="mb-3">
-            <label className="form-label">Description</label>
+            <label className={styles.label}>Description</label>
             <textarea
-              className="form-control"
+              className={styles.input}
               rows={3}
               value={description}
               onChange={e => setDescription(e.target.value)}
