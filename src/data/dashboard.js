@@ -19,9 +19,9 @@ export const dasboardNavigation = [
   },
   {
     id: 4,
-    name: "Message",
+    name: "Chat",
     icon: "flaticon-chat",
-    path: "/message",
+    path: "/chat",
   },
   {
     id: 5,
