@@ -1,6 +1,5 @@
 'use server'
 
-import { redirect } from 'next/navigation'
 import { createClient } from '../../../../../utils/supabase/server'
 
 export async function signupProfessional(formData) {
@@ -26,16 +25,15 @@ export async function signupProfessional(formData) {
   const education = JSON.parse(formData.get('education') || '[]')
   const certifications = JSON.parse(formData.get('certifications') || '[]')
   const workExperience = JSON.parse(formData.get('workExperience') || '[]')
+  
 
   const { data, error } = await supabase.auth.signUp({ email: userEmail, password })
-
   if (error || !data?.user?.id) {
-    redirect('/register/professional?error=' + encodeURIComponent(error?.message || 'Signup failed'))
+    return { error: error?.message || 'Signup failed' }
   }
 
   const userId = data.user.id
 
-  // Insert into account
   const { error: accErr } = await supabase.from('account').insert({
     account_id: userId,
     email: userEmail,
@@ -47,7 +45,6 @@ export async function signupProfessional(formData) {
   })
   if (accErr) throw new Error('Failed to insert into account: ' + accErr.message)
 
-  // Insert into account_role
   const { error: roleErr } = await supabase.from('account_role').insert({
     account_id: userId,
     role_type: 'professional',
@@ -56,7 +53,6 @@ export async function signupProfessional(formData) {
   })
   if (roleErr) throw new Error('Failed to insert into account_role: ' + roleErr.message)
 
-  // Insert phone
   const { error: phoneErr } = await supabase.from('phone').insert({
     account_id: userId,
     phone_type: 'mobile',
@@ -65,7 +61,6 @@ export async function signupProfessional(formData) {
   })
   if (phoneErr) throw new Error('Failed to insert into phone: ' + phoneErr.message)
 
-  // Insert professional
   const { data: professionalData, error: profErr } = await supabase
     .from('individual_professional')
     .insert({
@@ -91,7 +86,6 @@ export async function signupProfessional(formData) {
 
   const professionalId = professionalData.professional_id
 
-  // Insert availability
   if (availability.length > 0) {
     const { error: availErr } = await supabase.from('availability').insert(
       availability.map(a => ({
@@ -104,7 +98,6 @@ export async function signupProfessional(formData) {
     if (availErr) throw new Error('Failed to insert availability: ' + availErr.message)
   }
 
-  // Insert availability overrides
   if (availabilityOverrides.length > 0) {
     const { error: overrideErr } = await supabase.from('availability_override').insert(
       availabilityOverrides.map(o => ({
@@ -118,7 +111,6 @@ export async function signupProfessional(formData) {
     if (overrideErr) throw new Error('Failed to insert availability overrides: ' + overrideErr.message)
   }
 
-  // Insert services
   if (services.length > 0) {
     const rows = services.map(service_id => ({
       professional_id: professionalId,
@@ -129,7 +121,6 @@ export async function signupProfessional(formData) {
     if (svcErr) throw new Error('Failed to insert professional_service: ' + svcErr.message)
   }
 
-  // Insert education
   for (const entry of education) {
     const { data: eduResult, error: eduError } = await supabase
       .from('professional_education')
@@ -140,7 +131,9 @@ export async function signupProfessional(formData) {
         field_of_study_id: entry.fieldOfStudyId || null,
         start_date: entry.startDate || null,
         end_date: entry.endDate || null,
-        description: entry.description || null
+        description: entry.description || null,
+        education_level: entry.educationLevel || null
+
       })
       .select()
       .single()
@@ -169,7 +162,6 @@ export async function signupProfessional(formData) {
     }
   }
 
-  // Insert certifications
   for (const cert of certifications) {
     const { data: ref } = await supabase
       .from('certification')
@@ -202,7 +194,6 @@ export async function signupProfessional(formData) {
     }
   }
 
-  // Insert work experience
   if (workExperience.length > 0) {
     const workRows = workExperience.map(exp => ({
       professional_id: professionalId,
@@ -215,5 +206,5 @@ export async function signupProfessional(formData) {
     await supabase.from('professional_work_experience').insert(workRows)
   }
 
-  redirect('/login?message=' + encodeURIComponent('Registration successful! Please check your email to verify your account.'))
+  return { success: true }
 }

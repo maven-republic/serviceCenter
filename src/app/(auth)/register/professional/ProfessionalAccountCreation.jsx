@@ -9,13 +9,10 @@ import Personal from './increment/Personal'
 import GeneralAddress from './increment/GeneralAddress'
 import Services from './increment/Services'
 import SelectedServices from './increment/SelectedServices'
-import Pricing from './increment/Pricing'
-import Contact from './increment/Contact'
 import Education from './increment/Education'
 import CertificationInterface from './increment/professional-certification/CertificationInterface'
 import WorkExperienceInterface from './increment/professional-work-experience/WorkExperienceInterface'
 import AvailabilityInterface from './increment/professional-availability/AvailabilityInterface'
-// import AvailabilityProtocol from './increment/professional-availability/AvailabilityProtocol'
 import NavigationSelectors from './NavigationSelectors'
 
 import {
@@ -37,10 +34,9 @@ import {
 } from '../../../../../utils/validation'
 
 import designs from './ProfessionalForm.module.css'
-
 import { useState, useEffect } from 'react'
 
-export default function ProfessionalRegistrationForm({ errorMessage, currentStep, setCurrentStep, nextStep, prevStep }) {
+export default function ProfessionalAccountCreation({ errorMessage, currentStep, setCurrentStep, nextStep, prevStep }) {
   const router = useRouter()
   const supabase = useSupabaseClient()
 
@@ -79,7 +75,7 @@ export default function ProfessionalRegistrationForm({ errorMessage, currentStep
       max_bookings_per_day: null
     },
     selectedServices: [],
-  serviceStartDates: {}, // ✅ ensure this exists
+    serviceStartDates: {},
   })
 
   const [errors, setErrors] = useState({})
@@ -98,14 +94,17 @@ export default function ProfessionalRegistrationForm({ errorMessage, currentStep
         .select('*')
         .eq('is_active', true)
         .order('display_order')
+
       const { data: svcs } = await supabase
         .from('service')
         .select('service_id, name, service_subcategory(*)')
         .eq('is_active', true)
+
       setCategories(cats || [])
       setServicesList(svcs || [])
       setLoading(false)
     }
+
     loadData()
   }, [supabase])
 
@@ -172,18 +171,30 @@ export default function ProfessionalRegistrationForm({ errorMessage, currentStep
     return !!data
   }
 
-const handleNextStep = async () => {
+  const handleNextStep = async () => {
     if (currentStep === 1) {
-      const eErr = validateEmail(formData.email)
       const pErr = validatePassword(formData.password)
       const cErr = validateConfirmPassword(formData.password, formData.confirmPassword)
-      setErrors(err => ({ ...err, email: eErr, password: pErr, confirmPassword: cErr }))
-      if (eErr || pErr || cErr) return
+      const phoneErr = validatePhone(formData.phone)
+      setErrors(err => ({
+        ...err,
+        password: pErr,
+        confirmPassword: cErr,
+        phone: phoneErr
+      }))
+      if (pErr || cErr || phoneErr) return
+      setCurrentStep(2)
+    } else if (currentStep === 2) {
+      const eErr = validateEmail(formData.email)
+      const fErr = validateFirstName(formData.firstName)
+      const lErr = validateLastName(formData.lastName)
+      setErrors(err => ({ ...err, email: eErr, firstName: fErr, lastName: lErr }))
+      if (eErr || fErr || lErr) return
       if (await checkEmailExists(formData.email)) {
         setErrors(err => ({ ...err, email: 'This email is already registered. Please login or use another.' }))
         return
       }
-      setCurrentStep(2)
+      setCurrentStep(3)
     } else {
       setCurrentStep(s => s + 1)
     }
@@ -194,125 +205,65 @@ const handleNextStep = async () => {
   }
 
   const handleSubmit = async (e) => {
-  e.preventDefault()
+    e.preventDefault()
 
-  console.log('🟢 handleSubmit() triggered')
-  // console.log('➡️ currentStep =', currentStep)
+    if (currentStep !== 8) return
 
-  if (currentStep !== 10) {
-    console.warn('⛔ Submission blocked — currentStep is not 10')
-    return
-  }
-  
-  const form = document.querySelector('form')
-if (!form) {
-  console.error('🚨 Form element not found')
-  return
-}
-const data = new FormData(form)
+    const form = document.querySelector('form')
+    if (!form) return
 
+    const data = new FormData(form)
 
+    Object.entries(formData).forEach(([k, v]) => {
+      if (Array.isArray(v) || typeof v === 'object') {
+        data.set(k, JSON.stringify(v))
+      } else {
+        data.set(k, v)
+      }
+    })
 
-  // Manually serialize all non-form native values
-  Object.entries(formData).forEach(([k, v]) => {
-    if (Array.isArray(v) || typeof v === 'object') {
-      data.set(k, JSON.stringify(v))
-    } else {
-      data.set(k, v)
+    try {
+      const result = await signupProfessional(data)
+      if (result?.success) {
+        router.push('/register/professional/success')
+      }
+    } catch (error) {
+      console.error('❌ signupProfessional failed:', error)
     }
-  })
-
-  console.groupCollapsed('📦 FormData Contents')
-  for (const [key, value] of data.entries()) {
-    console.log(`${key}:`, value)
   }
-  console.groupEnd()
 
-  try {
-    await signupProfessional(data)
-    console.log('✅ signupProfessional completed')
-
-    // ✅ PRESERVED: any redirects or route logic
-    router.push('/login?message=' + encodeURIComponent('Registration successful! Please check your email.'))
-  } catch (error) {
-    console.error('❌ signupProfessional failed:', error)
-    // Optionally show feedback in UI
-  }
-}
   return (
-<form
-  className={designs.outer}
->
+    <form className={designs.outer}>
       {errorMessage && <div className="alert alert-danger mb-4">{errorMessage}</div>}
 
       {currentStep === 1 && <Account formData={formData} errors={errors} updateFormData={updateFormData} handleBlur={handleBlur} isCheckingEmail={isCheckingEmail} />}
       {currentStep === 2 && <Personal formData={formData} errors={errors} updateFormData={updateFormData} handleBlur={handleBlur} />}
       {currentStep === 3 && <GeneralAddress formData={formData} errors={errors} handleAddressSelect={handleAddressSelect} updateFormData={updateFormData} />}
+      {currentStep === 4 && (
+        <div className="row">
+          <div className="col-md-5">
+            <Services categories={categories} services={servicesList} loading={loading} dropdownOpen={dropdownOpen} searchTerm={searchTerm} setSearchTerm={setSearchTerm} setDropdownOpen={setDropdownOpen} toggleService={toggleService} selectedServices={formData.services} formData={formData} updateFormData={updateFormData} errors={errors.services} />
+          </div>
+          <div className="col-md-7">
+            <SelectedServices selected={formData.services} toggleService={toggleService} services={servicesList} formData={formData} updateFormData={updateFormData} />
+          </div>
+        </div>
+      )}
 
-
- 
- {currentStep === 4 && (
-
- 
-
- 
- <div className="row">
-  {/* Left column: Search + Dropdown */}
-  <div className="col-md-5">
-    <Services
-      categories={categories}
-      services={servicesList}
-      loading={loading}
-      dropdownOpen={dropdownOpen}
-      searchTerm={searchTerm}
-      setSearchTerm={setSearchTerm}
-      setDropdownOpen={setDropdownOpen}
-      toggleService={toggleService}
-      selectedServices={formData.services}
-      formData={formData}
-      updateFormData={updateFormData}
-      errors={errors.services}
-    />
-  </div>
-
-  {/* Right column: Selected Services */}
-  <div className="col-md-7">
-    <SelectedServices
-      selected={formData.services}
-      toggleService={toggleService}
-      services={servicesList}
-      formData={formData}
-      updateFormData={updateFormData}
-    />
-  </div>
-</div>
-
-
- )}
-
-      {currentStep === 5 && <Pricing formData={formData} updateFormData={updateFormData} />}
-      {currentStep === 6 && <Education formData={formData} errors={errors} updateFormData={updateFormData} handleBlur={handleBlur} allServices={servicesList} />}
-      {currentStep === 7 && <CertificationInterface formData={formData} updateFormData={updateFormData} />}
-      {currentStep === 8 && <WorkExperienceInterface formData={formData} updateFormData={updateFormData} />}
-      {currentStep === 9 && <Contact formData={formData} errors={errors} updateFormData={updateFormData} handleBlur={handleBlur} />}
-      {currentStep === 10 && <AvailabilityInterface formData={formData} updateFormData={updateFormData} />}
-
-
-
-
-
-
+      {currentStep === 5 && <Education formData={formData} errors={errors} updateFormData={updateFormData} handleBlur={handleBlur} allServices={servicesList} />}
+      {currentStep === 6 && <CertificationInterface formData={formData} updateFormData={updateFormData} />}
+      {currentStep === 7 && <WorkExperienceInterface formData={formData} updateFormData={updateFormData} />}
+      {currentStep === 8 && <AvailabilityInterface formData={formData} updateFormData={updateFormData} />}
 
       <div style={{ height: '80px' }} />
 
       <NavigationSelectors
-  currentStep={currentStep}
-  nextStep={handleNextStep}
-  prevStep={handlePrevStep}
-  onSubmit={handleSubmit}
-
-  totalSteps={10}
-/>
+        currentStep={currentStep}
+        nextStep={handleNextStep}
+        prevStep={handlePrevStep}
+        onSubmit={handleSubmit}
+        totalSteps={8}
+      />
     </form>
   )
 }

@@ -15,16 +15,17 @@ export default function NavigationSelectors({
       style={{ zIndex: 9999 }}
     >
       <div className="container">
-        <div className="row align-items-center gy-2">
+        <div className="row align-items-center gx-3 gy-2">
+
           {/* Back Button */}
-          <div className="col-12 col-md-4 text-start">
+          <div className="col-12 col-md-4 text-md-start text-center">
             {currentStep > 1 && (
               <button
                 type="button"
-                className="btn btn-outline-secondary w-100 w-md-auto"
                 onClick={prevStep}
+                className="rounded-pill border border-secondary text-secondary px-4 py-2 w-100 w-md-auto bg-transparent hover:bg-secondary-subtle hover:text-dark transition"
               >
-                <i className="fal fa-arrow-left me-2" />
+                <i className="fas fa-arrow-left me-2" />
                 Back
               </button>
             )}
@@ -32,49 +33,45 @@ export default function NavigationSelectors({
 
           {/* Progress */}
           <div className="col-12 col-md-4 text-center">
-            <div
-              className="progress mx-auto rounded-pill"
-              style={{ height: '4px', backgroundColor: '#e9ecef', maxWidth: '240px' }}
-            >
-              <div
-                className="progress-bar rounded-pill"
-                role="progressbar"
-                style={{
-                  width: `${progressPercent}%`,
-                  backgroundColor: '#0d6efd',
-                  transition: 'width 0.3s ease'
-                }}
-              />
-            </div>
-            <div className="mt-1">
-              <small className="text-muted">
-                {currentStep} of {totalSteps}
-              </small>
+            <div className="mx-auto" style={{ maxWidth: '240px' }}>
+              <div className="bg-light rounded-pill" style={{ height: '6px', overflow: 'hidden' }}>
+                <div
+                  className="bg-primary rounded-pill"
+                  style={{
+                    width: `${progressPercent}%`,
+                    height: '100%',
+                    transition: 'width 0.3s ease'
+                  }}
+                />
+              </div>
+              <div className="mt-1 small text-muted">
+                Step {currentStep} of {totalSteps}
+              </div>
             </div>
           </div>
 
-          {/* Next/Submit Button */}
-          <div className="col-12 col-md-4 text-end">
+          {/* Next / Submit Button */}
+          <div className="col-12 col-md-4 text-md-end text-center">
             {currentStep < totalSteps ? (
               <button
                 type="button"
-                className="btn btn-primary w-100 w-md-auto"
                 onClick={nextStep}
+                className="rounded-pill bg-primary text-white px-4 py-2 w-100 w-md-auto border-0 hover:bg-primary-dark transition"
               >
                 Continue
-                <i className="fal fa-arrow-right ms-2" />
+                <i className="fas fa-arrow-right ms-2" />
               </button>
             ) : (
               <button
                 type="button"
-                className="btn btn-primary w-100 w-md-auto"
                 onClick={onSubmit}
-                
+                className="rounded-pill bg-success text-white px-4 py-2 w-100 w-md-auto border-0 hover:bg-success-dark transition"
               >
                 Create Account
               </button>
             )}
           </div>
+
         </div>
       </div>
     </div>

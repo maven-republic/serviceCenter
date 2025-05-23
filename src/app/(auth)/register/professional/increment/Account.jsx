@@ -1,6 +1,7 @@
 'use client'
 import React from 'react'
 import Link from 'next/link'
+import Contact from './Contact' // adjust path if needed
 
 export default function Account({ formData, updateFormData, errors, handleBlur }) {
   return (
@@ -25,20 +26,13 @@ export default function Account({ formData, updateFormData, errors, handleBlur }
 
         {/* Right column: form fields */}
         <div className="col-12 col-md-6">
-          {/* Email */}
-          <div className="mb-3">
-            <label htmlFor="email" className="form-label fw-semibold">Email</label>
-            <input
-              type="email"
-              id="email"
-              name="email"
-              className={`form-control ${errors.email ? 'is-invalid' : ''}`}
-              value={formData.email}
-              onChange={updateFormData}
-              onBlur={handleBlur}
-              placeholder="you@example.com"
+          <div className="mb-4">
+            <Contact
+              formData={formData}
+              errors={errors}
+              updateFormData={updateFormData}
+              handleBlur={handleBlur}
             />
-            {errors.email && <div className="invalid-feedback">{errors.email}</div>}
           </div>
 
           {/* Password */}

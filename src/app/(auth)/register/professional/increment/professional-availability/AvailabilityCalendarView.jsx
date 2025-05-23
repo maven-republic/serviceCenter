@@ -92,7 +92,7 @@ export default function AvailabilityCalendarView({
       <div className="d-flex justify-content-between align-items-center mb-4 px-3">
         <button type="button" className="btn btn-outline-secondary btn-sm" onClick={goToPreviousMonth}>←</button>
         <h5 className="fw-bold mb-0">{format(currentDate, 'MMMM yyyy')}</h5>
-        <button type="button" className="btn btn-outline-secondary btn-sm" onClick={goToNextMonth}>→</button>
+        <button  type="button" className="btn btn-outline-secondary btn-sm" onClick={goToNextMonth}>→</button>
       </div>
 
       {/* Weekdays Header */}
@@ -134,7 +134,7 @@ export default function AvailabilityCalendarView({
           return (
             <div
               key={idx}
-              className="border bg-white rounded p-3 d-flex flex-column gap-2 position-relative"
+              className="border bg-white rounded p-3 shadow-sm d-flex flex-column gap-2 position-relative"
               style={{
                 minHeight: '180px',
                 opacity: isPast ? 0.5 : 1,
@@ -195,7 +195,7 @@ export default function AvailabilityCalendarView({
         })}
       </div>
 
-      {/* Modals (pass no-shadow class) */}
+      {/* Modals */}
       {showModal && editTargetDate && (
         <SingleDateEditorModal
           date={editTargetDate}
@@ -203,7 +203,6 @@ export default function AvailabilityCalendarView({
           onSave={(blocks) => handleUpdateOverride(editTargetDate, blocks)}
           onReset={() => handleResetOverride(editTargetDate)}
           onClose={() => setShowModal(false)}
-          noShadow
         />
       )}
 
@@ -217,7 +216,6 @@ export default function AvailabilityCalendarView({
             setShowRecurringModal(false)
             setEditingWeekdayIndex(null)
           }}
-          noShadow
         />
       )}
     </div>

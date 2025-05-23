@@ -23,6 +23,23 @@ export default function Personal({
 
       {/* Right column: form fields */}
       <div className="col-md-7">
+        {/* Email */}
+        <div className="mb-4">
+          <label htmlFor="email" className="form-label fw-semibold">Email</label>
+          <input
+            type="email"
+            id="email"
+            name="email"
+            className={`form-control ${errors.email ? 'is-invalid' : ''}`}
+            value={formData.email}
+            onChange={updateFormData}
+            onBlur={handleBlur}
+            placeholder="you@example.com"
+          />
+          {errors.email && <div className="invalid-feedback">{errors.email}</div>}
+        </div>
+
+        {/* First Name */}
         <div className="mb-4">
           <label className="form-label fw-semibold">First Name</label>
           <input
@@ -43,6 +60,7 @@ export default function Personal({
           )}
         </div>
 
+        {/* Last Name */}
         <div className="mb-4">
           <label className="form-label fw-semibold">Last Name</label>
           <input
@@ -62,7 +80,6 @@ export default function Personal({
             </div>
           )}
         </div>
-        
       </div>
     </div>
   )

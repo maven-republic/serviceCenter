@@ -41,7 +41,7 @@ function generateNextTimeBlock(existingBlocks, increment = 60) {
   return { start_time: toTime(start), end_time: toTime(end) }
 }
 
-export default function SingleDateEditorModal({ date, existing = [], onSave, onReset, onClose }) {
+export default function SingleDateEditorModal({ date, existing = [], onSave, onReset, onClose, noShadow }) {
   const [blocks, setBlocks] = useState(
     existing.length > 0 ? existing.map(b => ({ ...b })) : [{
       start_time: AVAILABILITY_RULES.DEFAULT_BLOCK_START,
@@ -70,7 +70,7 @@ export default function SingleDateEditorModal({ date, existing = [], onSave, onR
   }
 
   return (
-    <Modal show onHide={onClose} centered>
+    <Modal show onHide={onClose} centered contentClassName={noShadow ? 'no-shadow-modal' : ''}>
       <Modal.Header closeButton>
         <Modal.Title className="h6 fw-bold">
           Edit Availability for {format(date, 'EEEE, MMM d, yyyy')}

@@ -20,22 +20,29 @@ export default function Education({ formData, updateFormData }) {
   const [editModal, setEditModal] = useState({ show: false, index: null, mediaIndex: null, title: '', description: '' })
   const education = formData.education || []
 
+  const educationLevelOptions = [
+    { value: 'high_school', label: "High School" },
+    { value: 'vocational_training', label: "Vocational Training" },
+    { value: 'professional_certification', label: "Professional Certification" },
+    { value: 'associate_degree', label: "Associate Degree" },
+    { value: 'bachelor_degree', label: "Bachelor's Degree" },
+    { value: 'master_degree', label: "Master's Degree" },
+    { value: 'doctorate_degree', label: "Doctorate Degree" }
+  ]
+
   useEffect(() => {
     const fetchInstitutions = async () => {
       const { data } = await supabase.from('institution').select('institution_id, name').order('name')
       if (data) setInstitutions(data)
     }
-
     const fetchDegrees = async () => {
       const { data } = await supabase.from('degree').select('degree_id, name').order('name')
       if (data) setDegrees(data)
     }
-
     const fetchFields = async () => {
       const { data } = await supabase.from('field_of_study').select('field_of_study_id, name, category').order('category, name')
       if (data) setFieldsOfStudy(data)
     }
-
     const fetchCompetences = async () => {
       const { data } = await supabase.from('competence').select('competence_id, name, category').order('category, name')
       if (data) setCompetences(data)
@@ -56,7 +63,6 @@ export default function Education({ formData, updateFormData }) {
     }
     return Object.entries(groups).map(([category, options]) => ({ label: category, options }))
   }
-
   const buildInstitutionOptions = () => [
     ...institutions.map(inst => ({ value: inst.institution_id, label: `🎓 ${inst.name}` })),
     { value: '__new', label: '+ Add a new institution' }
@@ -103,10 +109,12 @@ export default function Education({ formData, updateFormData }) {
       institutionName: '',
       degreeId: '',
       fieldOfStudyId: '',
+      educationLevel: '',
       startDate: '',
       endDate: '',
       competenceIds: [],
       media: [],
+      description: '',
       educationId: crypto.randomUUID()
     }
     updateFormData({ target: { name: 'education', value: [...education, newEntry] } })
@@ -124,6 +132,7 @@ export default function Education({ formData, updateFormData }) {
 
       {education.map((entry, index) => (
         <div className="border rounded p-3 mb-4" key={index}>
+          {/* Institution */}
           <div className={styles.fieldGroup}>
             <label className={styles.label}>Institution</label>
             <Select
@@ -149,6 +158,7 @@ export default function Education({ formData, updateFormData }) {
             </div>
           )}
 
+          {/* Degree */}
           <div className={styles.fieldGroup}>
             <label className={styles.label}>Degree</label>
             <Select
@@ -162,21 +172,35 @@ export default function Education({ formData, updateFormData }) {
             />
           </div>
 
+          {/* Field of Study */}
           <div className={styles.fieldGroup}>
             <label className={styles.label}>Field of Study</label>
             <Select
               className="react-select-container"
               classNamePrefix="react-select"
               options={buildGroupedFieldOptions()}
-              value={buildGroupedFieldOptions()
-                .flatMap(group => group.options)
-                .find(opt => opt.value === entry.fieldOfStudyId) || null}
+              value={buildGroupedFieldOptions().flatMap(group => group.options).find(opt => opt.value === entry.fieldOfStudyId) || null}
               onChange={selected => handleChange(index, 'fieldOfStudyId', selected.value)}
               placeholder="Select field of study"
               isSearchable
             />
           </div>
 
+          {/* Education Level */}
+          <div className={styles.fieldGroup}>
+            <label className={styles.label}>Education Level</label>
+            <Select
+              className="react-select-container"
+              classNamePrefix="react-select"
+              options={educationLevelOptions}
+              value={educationLevelOptions.find(opt => opt.value === entry.educationLevel) || null}
+              onChange={selected => handleChange(index, 'educationLevel', selected.value)}
+              placeholder="Select education level"
+              isSearchable
+            />
+          </div>
+
+          {/* Dates */}
           <div className="row mb-3">
             <div className="col-md-6">
               <label className={styles.label}>Start Date</label>
@@ -212,66 +236,56 @@ export default function Education({ formData, updateFormData }) {
           <EducationCompetenceSelector
             selected={entry.competenceIds || []}
             allCompetences={competences}
-            onSelect={(id) => toggleEducationCompetence(index, id)}
-            onRemove={(id) => toggleEducationCompetence(index, id)}
+            onSelect={id => toggleEducationCompetence(index, id)}
+            onRemove={id => toggleEducationCompetence(index, id)}
           />
 
-          <EducationMediaUploader onUploadDraft={(media) => handleAddMediaDraft(index, media)} />
+          <EducationMediaUploader onUploadDraft={media => handleAddMediaDraft(index, media)} />
 
-            {entry.media?.length > 0 && (
-  <div className="mt-3">
-    <label className={styles.label}>Uploaded Media</label>
-    <div className="d-flex flex-wrap gap-3">
-      {entry.media.map((item, i) => (
-        <div
-          key={i}
-          className="border rounded p-2 shadow-sm d-flex flex-column align-items-center"
-          style={{ width: '150px' }}
-        >
-          {item.media_type === 'image' ? (
-            <img
-              src={item.previewUrl}
-              alt={item.title}
-              className="img-fluid rounded mb-2"
-            />
-          ) : (
-            <div className="text-center mb-2 w-100" style={{ overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis' }} title={item.title}>
-              <i className="fas fa-file-alt fa-2x text-muted" />
-              <div className="small mt-1 mb-0">{item.title}</div>
+          {/* Uploaded Media */}
+          {entry.media?.length > 0 && (
+            <div className="mt-3">
+              <label className={styles.label}>Uploaded Media</label>
+              <div className="d-flex flex-wrap gap-3">
+                {entry.media.map((item, i) => (
+                  <div
+                    key={i}
+                    className="border rounded p-2 shadow-sm d-flex flex-column align-items-center"
+                    style={{ width: '150px' }}
+                  >
+                    {item.media_type === 'image' ? (
+                      <img src={item.previewUrl} alt={item.title} className="img-fluid rounded mb-2" />
+                    ) : (
+                      <div className="text-center mb-2 w-100 text-truncate" title={item.title}>
+                        <i className="fas fa-file-alt fa-2x text-muted" />
+                        <div className="small mt-1 mb-0">{item.title}</div>
+                      </div>
+                    )}
+
+                    <div className="d-flex gap-2">
+                      <button
+                        className="btn btn-outline-secondary btn-sm"
+                        onClick={() => setEditModal({ show: true, index, mediaIndex: i, title: item.title, description: item.description || '' })}
+                      >
+                        Edit
+                      </button>
+                      <button
+                        className="btn btn-outline-danger btn-sm"
+                        onClick={() => handleDeleteMedia(index, i)}
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           )}
-
-          <div className="d-flex gap-2">
-            <button
-              className="btn btn-outline-secondary btn-sm"
-              onClick={() => setEditModal({
-                show: true,
-                index,
-                mediaIndex: i,
-                title: item.title,
-                description: item.description || ''
-              })}
-            >
-              Edit
-            </button>
-            <button
-              className="btn btn-outline-danger btn-sm"
-              onClick={() => handleDeleteMedia(index, i)}
-            >
-              Delete
-            </button>
-          </div>
-        </div>
-      ))}
-    </div>
-  </div>
-)}
-
 
           <div className="mt-4 mb-4">
             <AcademicExperienceOverview
               value={entry.description}
-              onChange={(value) => handleChange(index, 'description', value)}
+              onChange={value => handleChange(index, 'description', value)}
             />
           </div>
 

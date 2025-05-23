@@ -9,7 +9,7 @@ import Award from "./Award";
 import ChangePassword from "./ChangePassword";
 import ConfirmPassword from "./ConfirmPassword";
 import Education from "./Education";
-import ProfileDetails from "./ProfileDetails";
+import AccountOverview from "./AccountOverview";
 import Competence from "./Competence";
 import WorkExperience from "./WorkExperience";
 
@@ -45,7 +45,7 @@ export default function MyProfileInfo() {
 
         <div className="row">
           <div className="col-xl-12">
-            <ProfileDetails />
+            <AccountOverview />
             <Competence />
             <Education />
             <WorkExperience />
