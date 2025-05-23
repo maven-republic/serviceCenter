@@ -1,7 +1,7 @@
 import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import DashboardInfo from "@/components/dashboard/section/DashboardInfo";
 import { redirect } from 'next/navigation'
-import { createClient } from '../../../../utils/supabase/server'
+import { createClient } from '@/utils/supabase/server'
 import MobileNavigation2 from "@/components/header/MobileNavigation2";
 
 

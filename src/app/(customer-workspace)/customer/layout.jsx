@@ -1,7 +1,7 @@
 // app/(customer)/customer/layout.jsx
 import { redirect } from 'next/navigation'
 
-import { createClient } from '../../../../utils/supabase/server'
+import { createClient } from '@/utils/supabase/server'
 
 export default async function WorkspaceLayout({ children }) {
   const supabase = await createClient()

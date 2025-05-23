@@ -1,6 +1,6 @@
 // app/(auth)/register/customer/page.jsx
 import { redirect } from 'next/navigation'
-import { createClient } from '../../../../../utils/supabase/server'
+import { createClient } from '@/utils/supabase/server'
 import Header from "@/components/header/Header20"
 import Footer from "@/components/footer/Footer"
 import CustomerRegistrationForm from './CustomerRegistrationForm'

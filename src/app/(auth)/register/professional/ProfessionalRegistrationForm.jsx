@@ -4,7 +4,7 @@
 import { useState, useEffect } from 'react'
 import Link from "next/link"
 import { signupProfessional } from './actions'
-import { createClient } from '../../../../../utils/supabase/client'
+import { createClient } from '../../../../utils/supabase/client'
 import styles from './ProfessionalForm.module.css';
 import { useRouter } from 'next/navigation'
 

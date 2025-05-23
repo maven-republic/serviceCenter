@@ -1,6 +1,6 @@
 "use client";
 import navigation from "@/data/navigation";
-import { isActiveNavigation } from "../../../utils/isActiveNavigation";
+import { isActiveNavigation } from "../../utils/isActiveNavigation";
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";

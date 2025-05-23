@@ -2,7 +2,7 @@
 import Footer from "@/components/footer/Footer"
 import Header20 from "@/components/header/Header20"
 import { redirect } from 'next/navigation'
-import { createClient } from '../../../../utils/supabase/server'
+import { createClient } from '@/utils/supabase/server'
 import LoginForm from './LoginForm'
 
 export default async function page({searchParams}) {

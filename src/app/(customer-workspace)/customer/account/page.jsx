@@ -1,6 +1,6 @@
 // account/page.jsx
-import AccountOverview from "@/components/customer/account/AccountOverview";
-import { createClient } from "~/utils/supabase/server";
+// import AccountOverview from "@/components/customer/account/AccountOverview";
+import { createClient } from "@/utils/supabase/server";
 
 export default async function AccountPage() {
   const supabase = await createClient();
@@ -18,5 +18,11 @@ export default async function AccountPage() {
     .eq('account_id', user.user.id)
     .single();
   
-  return <AccountOverview userData={accountData} />;
+  // return <AccountOverview userData={accountData} />;
+  return (
+    <div className="container">
+      <h1>Account Overview</h1>
+      <pre>{JSON.stringify(accountData, null, 2)}</pre>
+    </div>
+  );
 }

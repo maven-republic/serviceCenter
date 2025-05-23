@@ -2,7 +2,7 @@ import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import ChatProvider from "@/components/dashboard/section/ChatProvider";
 import { redirect } from 'next/navigation'
 import MobileNavigation2 from "@/components/header/MobileNavigation2";
-import { createClient } from '../../../../utils/supabase/server'
+import { createClient } from '@/utils/supabase/server'
 
 export const metadata = {
   title: "Freeio - Freelance Marketplace React/Next Js Template | Add Service",

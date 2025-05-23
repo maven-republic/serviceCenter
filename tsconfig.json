@@ -1,5 +1,14 @@
 {
   "compilerOptions": {
+    "baseUrl": ".", // Not "src"
+    "paths": {
+      "@/*": [
+        "src/*"
+      ],
+      "~/*": [
+        "./*"
+      ]
+    },
     "lib": [
       "dom",
       "dom.iterable",
@@ -23,11 +32,11 @@
     ]
   },
   "include": [
-    "next-env.d.ts",
-    ".next/types/**/*.ts",
-    "**/*.ts",
-    "**/*.tsx"
-  ],
+    "src",
+    "utils",
+    ".next/types/**/*.ts"
+  ] // Include your utils folder
+  ,
   "exclude": [
     "node_modules"
   ]

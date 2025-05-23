@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import { createClient } from '../../utils/supabase/client'
+import { createClient } from '../utils/supabase/client'
 
 export const useUserStore = create((set) => ({
   user: null,

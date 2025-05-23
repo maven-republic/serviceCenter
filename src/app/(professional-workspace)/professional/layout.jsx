@@ -1,6 +1,6 @@
 // app/(professional-workspace)/professional/workspace/layout.jsx
 import { redirect } from 'next/navigation'
-import { createClient } from '../../../../utils/supabase/server'
+import { createClient } from '@/utils/supabase/server'
 import DashboardLayout from "@/components/dashboard/DashboardLayout"
 import MobileNavigation2 from "@/components/header/MobileNavigation2"
 

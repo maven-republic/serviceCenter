@@ -5,7 +5,7 @@ import DashboardHeader from "./header/DashboardHeader";
 import DashboardSidebar from "./sidebar/DashboardSidebar";
 import DashboardFooter from "./footer/DashboardFooter"; 
 import { useUserStore } from "@/store/userStore";
-import { getSession } from '../../../utils/supabase/client'; // Helper function to get user session
+import { getSession } from '../../utils/supabase/client'; // Helper function to get user session
 import { useEffect } from "react"; 
 
 export default function DashboardLayout({ children }) {
