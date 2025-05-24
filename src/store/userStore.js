@@ -3,24 +3,28 @@ import { create } from 'zustand'
 export const useUserStore = create((set) => ({
   user: null,
 
-  fetchUser: async (user, supabase) => {
-    if (!user || !supabase) {
-      console.warn('⚠️ fetchUser called without valid user or supabase client')
+  fetchUser: async (sessionUser, supabase) => {
+    if (!sessionUser || !supabase) {
+      console.warn('⚠️ fetchUser called without valid session or supabase client')
       return
     }
 
     try {
+      // 1. Lookup account via email
       const { data: accountData, error: accountError } = await supabase
         .from('account')
         .select('*')
-        .eq('account_id', user.id)
+        .eq('email', sessionUser.email)
         .single()
-      if (accountError) throw accountError
+      if (accountError || !accountData) throw accountError
 
+      const accountId = accountData.account_id
+
+      // 2. Lookup roles
       const { data: roleData, error: roleError } = await supabase
         .from('account_role')
         .select('*')
-        .eq('account_id', user.id)
+        .eq('account_id', accountId)
       if (roleError) throw roleError
 
       const primaryRole = roleData.find(r => r.is_primary)?.role_type || roleData[0]?.role_type || null
@@ -28,26 +32,28 @@ export const useUserStore = create((set) => ({
       console.log('📦 account roles:', roleData)
       console.log('⭐ primaryRole selected:', primaryRole)
 
+      // 3. Lookup profile
       let profileData = null
       if (primaryRole === 'customer') {
         const { data } = await supabase
           .from('individual_customer')
           .select('*')
-          .eq('account_id', user.id)
+          .eq('account_id', accountId)
           .single()
         profileData = data
       } else if (primaryRole === 'professional') {
         const { data } = await supabase
           .from('individual_professional')
           .select('*')
-          .eq('account_id', user.id)
+          .eq('account_id', accountId)
           .single()
         profileData = data
       }
 
+      // 4. Save to store
       set({
         user: {
-          ...user,
+          ...sessionUser,
           account: accountData,
           roles: roleData,
           profile: profileData,
@@ -59,27 +65,27 @@ export const useUserStore = create((set) => ({
     }
   },
 
-  updateUser: async (userId, updates, profileType = null, supabase) => {
+  updateUser: async (accountId, updates, profileType = null, supabase) => {
     try {
       await supabase
         .from('account')
         .update(updates)
-        .eq('account_id', userId)
+        .eq('account_id', accountId)
 
       if (profileType === 'professional') {
         await supabase
           .from('individual_professional')
           .update(updates)
-          .eq('account_id', userId)
+          .eq('account_id', accountId)
       } else if (profileType === 'customer') {
         await supabase
           .from('individual_customer')
           .update(updates)
-          .eq('account_id', userId)
+          .eq('account_id', accountId)
       }
 
       const fetchUser = useUserStore.getState().fetchUser
-      await fetchUser({ id: userId }, supabase)
+      await fetchUser({ email: updates.email }, supabase)
     } catch (error) {
       console.error('❌ Error updating user:', error)
     }

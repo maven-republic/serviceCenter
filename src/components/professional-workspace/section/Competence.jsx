@@ -1,15 +1,25 @@
 'use client'
 
 import React, { useState, useEffect } from 'react'
-import Link from 'next/link'
 import { useUserStore } from '@/store/userStore'
 import { useSupabaseClient } from '@supabase/auth-helpers-react'
+import ServiceInformation from '../section/ServiceInformation'
+
+const serviceColors = [
+  'bg-info-subtle text-info',
+  'bg-success-subtle text-success',
+  'bg-warning-subtle text-warning',
+  'bg-danger-subtle text-danger',
+  'bg-primary-subtle text-primary',
+  'bg-secondary-subtle text-secondary'
+]
 
 export default function ProfessionalServices() {
   const { user } = useUserStore()
   const [services, setServices] = useState([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState(null)
+  const [showModal, setShowModal] = useState(false)
   const supabase = useSupabaseClient()
 
   useEffect(() => {
@@ -35,7 +45,7 @@ export default function ProfessionalServices() {
               name,
               description,
               subcategory_id,
-              subcategory:subcategory_id (
+              service_subcategory:subcategory_id (
                 name,
                 category_id,
                 category:category_id (
@@ -52,8 +62,8 @@ export default function ProfessionalServices() {
         const formatted = servicesData.map(s => ({
           name: s.service.name,
           description: s.service.description,
-          category: s.service.subcategory.category.name,
-          subcategory: s.service.subcategory.name,
+          category: s.service.service_subcategory.category.name,
+          subcategory: s.service.service_subcategory.name,
           customPrice: s.custom_price,
           customDuration: s.custom_duration_minutes
         }))
@@ -70,67 +80,71 @@ export default function ProfessionalServices() {
     fetchServices()
   }, [user?.account?.account_id, supabase])
 
-  if (isLoading) {
-    return (
-      <div className="ps-widget bgc-white bdrs4 p30 mb30 overflow-hidden position-relative">
-        <div className="bdrb1 pb15 mb25">
-          <h5 className="list-title">Professional Services</h5>
-        </div>
-        <p>Loading services...</p>
-      </div>
-    )
-  }
-
-  if (error) {
-    return (
-      <div className="ps-widget bgc-white bdrs4 p30 mb30 overflow-hidden position-relative">
-        <div className="bdrb1 pb15 mb25">
-          <h5 className="list-title">Professional Services</h5>
-        </div>
-        <p>Error loading services: {error}</p>
-      </div>
-    )
-  }
+  const Header = (
+    <div className="d-flex justify-content-between align-items-center bdrb1 pb15 mb25">
+      <h5 className="list-title mb-0">Professional Services</h5>
+      <button
+        className="btn btn-sm btn-outline-primary rounded-circle d-flex align-items-center justify-content-center"
+        style={{ width: '36px', height: '36px' }}
+        onClick={() => setShowModal(true)}
+        aria-label="Add or Manage Services"
+      >
+        <i className="fa fa-plus fs-5"></i>
+      </button>
+    </div>
+  )
 
   return (
-    <div className="ps-widget bgc-white bdrs4 p30 mb30 overflow-hidden position-relative">
-      <div className="bdrb1 pb15 mb25">
-        <h5 className="list-title">Professional Services</h5>
-      </div>
-      <div className="col-lg-12">
-        {services.length === 0 ? (
-          <p>No services have been added yet.</p>
+    <>
+      <div className="ps-widget bgc-white bdrs4 p30 mb30 overflow-hidden position-relative">
+        {Header}
+
+        {isLoading ? (
+          <p>Loading services...</p>
+        ) : error ? (
+          <p className="text-danger">Error loading services: {error}</p>
         ) : (
-          <div className="row">
+          <div className="row g-3">
             {services.map((service, i) => (
-              <div key={i} className="col-md-6 mb20">
-                <div className="border p15 bdrs4">
-                  <h5 className="mb10">{service.name}</h5>
-                  <p className="text-muted mb10">{service.description}</p>
+              <div key={i} className="col-6 col-md-4 col-lg-3">
+                <div className="d-flex flex-column align-items-start gap-1">
+                  <span className={`badge ${serviceColors[i % serviceColors.length]} rounded-pill px-3 py-2`}>
+                    {service.name}
+                  </span>
+                  <small>
+                    <span className="badge bg-light text-muted border rounded-pill px-2 py-1 fw-normal">
+                      {service.category}
+                    </span>
+                  </small>
                   {service.customPrice && (
-                    <div className="d-flex justify-content-between">
-                      <span className="fw500">Custom Price:</span>
-                      <span>${service.customPrice.toFixed(2)}</span>
-                    </div>
+                    <div className="small text-muted">J$ {service.customPrice.toFixed(2)}</div>
                   )}
                   {service.customDuration && (
-                    <div className="d-flex justify-content-between">
-                      <span className="fw500">Custom Duration:</span>
-                      <span>{service.customDuration} minutes</span>
-                    </div>
+                    <div className="small text-muted">{service.customDuration} min</div>
                   )}
                 </div>
               </div>
             ))}
           </div>
         )}
-        <div className="text-start mt20">
-          <Link className="ud-btn btn-thm" href="/dashboard/edit-services">
-            Edit Services
-            <i className="fal fa-arrow-right-long" />
-          </Link>
-        </div>
       </div>
-    </div>
+
+      {/* Service modal using ServiceInformation */}
+      {showModal && (
+        <div className="modal fade show d-block" style={{ backgroundColor: 'rgba(0,0,0,0.4)' }}>
+          <div className="modal-dialog modal-xl modal-dialog-centered">
+            <div className="modal-content p-3">
+              <div className="modal-header">
+                <h5 className="modal-title">Manage Services</h5>
+                <button type="button" className="btn-close" onClick={() => setShowModal(false)} />
+              </div>
+              <div className="modal-body">
+                <ServiceInformation />
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   )
 }

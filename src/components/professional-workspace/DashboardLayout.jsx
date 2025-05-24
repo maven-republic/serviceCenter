@@ -14,15 +14,27 @@ export default function DashboardLayout({ children }) {
   const session = useSession()
   const supabase = useSupabaseClient()
 
-  console.log('🧠 user from userStore:', user)
+  // 👇 Avoid log spam in production
+  if (process.env.NODE_ENV === 'development') {
+    console.log('🧠 user from userStore:', user)
+  }
 
+  // 👇 Fetch user only once session is available
   useEffect(() => {
     if (session?.user && user === null) {
-      console.log("✅ session.user from context:", session.user)
       fetchUser(session.user, supabase)
-      console.log(session.user)
     }
-  }, [session?.user])
+  }, [session?.user, user, fetchUser, supabase])
+
+  // 👇 Guard rendering until user is loaded
+  if (!user || !user.account?.account_id) {
+    return (
+      <div className="text-center p-5">
+        <div className="spinner-border text-primary" role="status" />
+        <p className="mt-2">Loading your dashboard...</p>
+      </div>
+    )
+  }
 
   return (
     <>

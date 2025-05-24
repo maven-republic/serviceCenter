@@ -1,8 +1,8 @@
-import DashboardLayout from "@/components/dashboard/DashboardLayout";
-import AddServiceInfo from "@/components/dashboard/section/AddServiceInfo";
+import DashboardLayout from "@/components/professional-workspace/DashboardLayout";
+import AddServiceInformation from "@/components/professional-workspace/section/AddServiceInformation";
 import { redirect } from 'next/navigation'
 import MobileNavigation2 from "@/components/header/MobileNavigation2";
-import { createClient } from '../../../../utils/supabase/server'
+import { createClient } from '../../../../../utils/supabase/server'
 
 export const metadata = {
   title: "Freeio - Freelance Marketplace React/Next Js Template | Add Service",
@@ -23,7 +23,7 @@ console.log("data: ",data)
     
     <MobileNavigation2 />
       <DashboardLayout>
-        <AddServiceInfo />
+        <AddServiceInformation />
       </DashboardLayout>
     </>
   );
