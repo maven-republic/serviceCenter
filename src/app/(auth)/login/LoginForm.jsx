@@ -19,6 +19,9 @@ export default function LoginForm({ errorMessage }) {
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password,
+      options: {
+        shouldPersistSession: true, // ✅ ensures session survives reloads
+      },
     })
 
     if (error) {
@@ -27,11 +30,7 @@ export default function LoginForm({ errorMessage }) {
       return
     }
 
-    // 🔥 redirect based on role
-    const {
-      data: roleData,
-      error: roleError,
-    } = await supabase
+    const { data: roleData, error: roleError } = await supabase
       .from('account_role')
       .select('role_type')
       .eq('account_id', data.user.id)
@@ -86,9 +85,7 @@ export default function LoginForm({ errorMessage }) {
                 </p>
               </div>
               <div className="mb20">
-                <label className="form-label fw600 dark-color">
-                  Email Address
-                </label>
+                <label className="form-label fw600 dark-color">Email Address</label>
                 <input
                   id="email"
                   name="email"
@@ -99,9 +96,7 @@ export default function LoginForm({ errorMessage }) {
                 />
               </div>
               <div className="mb15">
-                <label className="form-label fw600 dark-color">
-                  Password
-                </label>
+                <label className="form-label fw600 dark-color">Password</label>
                 <input
                   id="password"
                   name="password"
@@ -134,4 +129,3 @@ export default function LoginForm({ errorMessage }) {
     </form>
   )
 }
-

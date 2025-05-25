@@ -62,7 +62,13 @@ export async function signupCustomer(formData) {
   }
 
   // Signup in Supabase Auth
-  const { data, error } = await supabase.auth.signUp({ email: userEmail, password })
+const { data, error } = await supabase.auth.signUp({
+  email: userEmail,
+  password,
+  options: {
+    shouldPersistSession: true
+  }
+})
 
   if (error || !data?.user) {
     redirect('/register/customer?error=' + encodeURIComponent(error?.message || 'Signup failed.'))

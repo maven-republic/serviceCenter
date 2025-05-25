@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useState, useEffect, useRef } from 'react'
 import { useSession, useSupabaseClient } from '@supabase/auth-helpers-react'
+import { createClient } from '@/utils/supabase/client'
 import { DM_Sans } from 'next/font/google'
 import './globals.css'
 
@@ -38,7 +39,10 @@ function InnerLayout({ children }) {
   const fetchUser = useUserStore((s) => s.fetchUser)
   const hasFetchedUser = useRef(false)
 
+  // 🧠 Primary hydration: useSession()
   useEffect(() => {
+    if (typeof window === 'undefined') return
+
     if (!session?.user) {
       if (!hasFetchedUser.current) console.log('⏳ Waiting for session...')
       return
@@ -50,6 +54,27 @@ function InnerLayout({ children }) {
     fetchUser(session.user, supabase)
     hasFetchedUser.current = true
   }, [session?.user])
+
+  // 🔄 Optional fallback hydration
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+
+    const restoreSession = async () => {
+      const client = createClient()
+      const { data } = await client.auth.getSession()
+
+      console.log('🔥 Manual fallback session:', data.session)
+
+      if (data.session?.user && !hasFetchedUser.current) {
+        fetchUser(data.session.user, client)
+        hasFetchedUser.current = true
+      }
+    }
+
+    if (!session?.user && !hasFetchedUser.current) {
+      restoreSession()
+    }
+  }, [])
 
   return (
     <html lang="en">
@@ -64,4 +89,3 @@ function InnerLayout({ children }) {
     </html>
   )
 }
-

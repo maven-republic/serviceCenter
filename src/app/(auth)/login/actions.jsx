@@ -9,72 +9,62 @@ export async function login(formData) {
 
   const { startLoading, stopLoading } = useLoaderStore.getState()
 
-  startLoading();
-  
-  // Extract email and password from form data
-  const userEmail = formData.get('email')
-  const userPassword = formData.get('password')
+  startLoading()
 
-  // Validate email and password
-  if (!userEmail || !userPassword) {
-    stopLoading();
+  const email = formData.get('email')
+  const password = formData.get('password')
+
+  if (!email || !password) {
+    stopLoading()
     redirect('/login?error=' + encodeURIComponent('Email and password are required.'))
   }
 
-  // Sign in user with email and password
+  // ✅ Persist session explicitly
   const { data, error } = await supabase.auth.signInWithPassword({
-    email: userEmail,
-    password: userPassword,
+    email,
+    password,
+    options: {
+      shouldPersistSession: true
+    }
   })
-  
-  // Handle Error
-  if (error) {
-    console.log('Supabase signIn error:', error.message);
-    stopLoading();
-    redirect('/login?error=' + encodeURIComponent(error.message))
+
+  if (error || !data?.user) {
+    stopLoading()
+    redirect('/login?error=' + encodeURIComponent(error?.message || 'Login failed.'))
   }
 
-  // Add email verification synchronization here
-  const user = data.user
-  if (user.email_confirmed_at) {
-    // Update account table to match authentication status
-    const { error: syncError } = await supabase
+  // ✅ Sync email_verified if needed
+  if (data.user.email_confirmed_at) {
+    await supabase
       .from('account')
       .update({ email_verified: true })
-      .eq('account_id', user.id)
-    
-    if (syncError) {
-      console.error('Failed to sync email verification status:', syncError)
-    }
+      .eq('account_id', data.user.id)
   }
 
-  // Fetch the user's primary role
+  // ✅ Get user role
   const { data: roleData, error: roleError } = await supabase
     .from('account_role')
     .select('role_type')
-    .eq('account_id', user.id)
+    .eq('account_id', data.user.id)
     .eq('is_primary', true)
     .single()
-  
-  if (roleError) {
-    console.error('Failed to fetch user role:', roleError)
-    stopLoading();
-    redirect('/login?error=' + encodeURIComponent('Failed to retrieve user role'))
+
+  if (roleError || !roleData?.role_type) {
+    stopLoading()
+    redirect('/login?error=' + encodeURIComponent('Role lookup failed'))
   }
 
-  // Redirect based on role
-  stopLoading();
-  
+  stopLoading()
+
   const role = roleData.role_type
   switch (role) {
     case 'customer':
       redirect('/customer/workspace')
     case 'professional':
-      redirect('/professional/workspace') 
-    case 'management':
-      redirect('/management/workpace')
+      redirect('/professional/workspace')
+    case 'admin':
+      redirect('/admin/dashboard')
     default:
-      redirect('/not-found') // Fallback for unknown roles
+      redirect('/not-found')
   }
 }
-

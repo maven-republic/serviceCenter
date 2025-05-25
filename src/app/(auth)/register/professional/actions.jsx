@@ -27,7 +27,15 @@ export async function signupProfessional(formData) {
   const workExperience = JSON.parse(formData.get('workExperience') || '[]')
   
 
-  const { data, error } = await supabase.auth.signUp({ email: userEmail, password })
+const { data, error } = await supabase.auth.signUp({
+  email: userEmail,
+  password,
+  options: {
+    shouldPersistSession: true
+  }
+})
+
+
   if (error || !data?.user?.id) {
     return { error: error?.message || 'Signup failed' }
   }
