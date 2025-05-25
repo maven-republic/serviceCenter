@@ -2,7 +2,7 @@ import { Suspense } from 'react';
 import { createClient } from '@/utils/supabase/server';
 // In app/(customer-workspace)/customer/search/page.jsx
 import SearchResults from '@/components/customer-workspace/section/SearchResults';
-import SearchFilters from '@/components/customer-workspace/section/ServiceFilters';
+// import SearchFilters from '@/components/customer-workspace/section/ServiceFilters';
 // import LoadingResults from '@/components/section/LoadingResults';
 
 // This is a Server Component
@@ -67,7 +67,7 @@ export default async function SearchPage({ searchParams }) {
       </div>
       
       <div className="flex flex-col md:flex-row gap-8">
-        {/* Filters Sidebar */}
+        {/* Filters Sidebar 
         <div className="w-full md:w-1/4">
           <SearchFilters 
             currentFilters={searchParams}
@@ -75,7 +75,7 @@ export default async function SearchPage({ searchParams }) {
             parishes={filters?.parishes || []}
             isAuthenticated={isAuthenticated}
           />
-        </div>
+        </div> */}
         
         {/* Results Area 
         <div className="w-full md:w-3/4">
