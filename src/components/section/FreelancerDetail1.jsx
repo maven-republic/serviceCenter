@@ -1,4 +1,4 @@
-import { product1 } from "@/data/product";
+import { service as product1 } from "@/data/product";
 import FreelancerAbout1 from "../element/FreelancerAbout1";
 import FreelancerSkill1 from "../element/FreelancerSkill1";
 import ServiceDetailComment1 from "../element/ServiceDetailComment1";
@@ -181,3 +181,4 @@ export default function FreelancerDetail1() {
     </>
   );
 }
+

@@ -73,3 +73,4 @@ export default function HeighestRetedCard2({ data, itemClass }) {
     </>
   );
 }
+

@@ -1,4 +1,4 @@
-import { product1 } from "@/data/product";
+import { service as product1 } from "@/data/product";
 import React from "react";
 import PopularServiceSlideCard1 from "../card/PopularServiceSlideCard1";
 import PopularServiceCard1 from "../card/PopularServiceCard1";
@@ -52,3 +52,4 @@ export default function PopulerService11() {
     </section>
   );
 }
+

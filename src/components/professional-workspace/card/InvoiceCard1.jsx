@@ -33,3 +33,4 @@ export default function InvoiceCard1({ data }) {
     </>
   );
 }
+

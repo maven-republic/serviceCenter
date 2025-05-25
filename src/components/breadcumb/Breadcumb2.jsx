@@ -28,3 +28,4 @@ export default function Breadcumb2({ title, brief }) {
     </>
   );
 }
+

@@ -1244,3 +1244,4 @@ export const inspiringProjects = [
     author: "Ali Tufan",
   },
 ];
+

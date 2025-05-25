@@ -19,3 +19,4 @@ export default function Switch1({ i }) {
     </>
   );
 }
+

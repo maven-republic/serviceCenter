@@ -558,3 +558,4 @@ export default function TermsCondition1() {
     </>
   );
 }
+

@@ -22,3 +22,4 @@ export default function FooterSocial4() {
         </div>
     );
 }
+

@@ -13,3 +13,4 @@ export const partnersTwo = [
   "/images/partners/5.png",
   "/images/partners/6.png",
 ];
+

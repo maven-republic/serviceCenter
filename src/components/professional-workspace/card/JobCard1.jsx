@@ -52,3 +52,4 @@ export default function JobCard1({ data, i }) {
     </>
   );
 }
+

@@ -124,3 +124,4 @@ function getAttributeValue(attributes, attributeName) {
   const attribute = attributes.find(attr => attr.attribute_name === attributeName);
   return attribute ? attribute.attribute_value : null;
 }
+

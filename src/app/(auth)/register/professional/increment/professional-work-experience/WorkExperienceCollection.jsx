@@ -45,3 +45,4 @@ export default function WorkExperienceCollection({ experienceList, onUpdate }) {
     </div>
   )
 } 
+

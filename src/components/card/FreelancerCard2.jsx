@@ -62,3 +62,4 @@ export default function FreelancerCard2({ data }) {
     </>
   );
 }
+

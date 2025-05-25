@@ -16,3 +16,4 @@ export default function HeaderInfo1({ title, brief }) {
     </>
   );
 }
+

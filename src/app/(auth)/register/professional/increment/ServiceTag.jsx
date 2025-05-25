@@ -15,3 +15,4 @@ export default function ServiceTag({ service, selected, onToggle }) {
     </button>
   )
 }
+

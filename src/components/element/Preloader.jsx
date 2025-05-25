@@ -21,3 +21,4 @@ export default function Preloader() {
     <div className="preloader" style={loaded ? { display: "none" } : {}}></div>
   );
 }
+

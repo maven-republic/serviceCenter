@@ -19,3 +19,4 @@ export default function useScreen(size) {
 
   return isMatched;
 }
+

@@ -18,3 +18,4 @@ export default function StatementCard1({ data }) {
     </>
   );
 }
+

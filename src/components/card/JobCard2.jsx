@@ -35,3 +35,4 @@ export default function JobCard2({ data }) {
     </>
   );
 }
+

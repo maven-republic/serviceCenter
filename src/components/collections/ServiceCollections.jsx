@@ -84,3 +84,4 @@ export default function ServiceCollections({ services = [], onDelete }) {
     </>
   )
 }
+

@@ -75,3 +75,4 @@ export default function PopularServiceCard2({ data, text1 = false }) {
     </>
   );
 }
+

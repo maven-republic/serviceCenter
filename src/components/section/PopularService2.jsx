@@ -6,7 +6,7 @@ import "swiper/css/pagination";
 import { Navigation, Pagination } from "swiper";
 import { useEffect, useState } from "react";
 import PopularServiceCard1 from "../card/PopularServiceCard1";
-import { product1 } from "@/data/product";
+import { service as product1 } from "@/data/product";
 
 const categories = [
   "Development & IT",
@@ -160,3 +160,4 @@ export default function PopularService2() {
     </>
   );
 }
+

@@ -26,3 +26,4 @@ export default function BrowserCategoryCard1({ data }) {
     </>
   );
 }
+

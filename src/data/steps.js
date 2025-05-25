@@ -79,3 +79,4 @@ export const stepsThree = [
       "It’s free and easy to post a job. Simply fill in a title, description.",
   },
 ];
+

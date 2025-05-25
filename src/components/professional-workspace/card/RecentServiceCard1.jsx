@@ -33,3 +33,4 @@ export default function RecentServiceCard1({ data }) {
     </>
   );
 }
+

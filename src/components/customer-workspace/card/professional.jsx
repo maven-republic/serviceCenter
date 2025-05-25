@@ -198,3 +198,4 @@ export default function ProviderCard({ provider, view = 'grid', isAuthenticated 
     </Link>
   );
 }
+

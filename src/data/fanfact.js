@@ -9,3 +9,4 @@ export const funfactsData2 = [
   "More Than 15 Years Experience",
   "12 Education Award Winning",
 ];
+

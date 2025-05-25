@@ -122,3 +122,4 @@ export default function BrowserCategory12() {
     </section>
   );
 }
+

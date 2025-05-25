@@ -55,3 +55,4 @@ export default function Talent15() {
     </section>
   );
 }
+

@@ -104,3 +104,4 @@ export async function generateMetadata({ searchParams }) {
     description: `Find services and providers ${query ? `matching "${query}"` : ''} on our marketplace.`
   };
 }
+

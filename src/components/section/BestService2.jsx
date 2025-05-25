@@ -4,7 +4,7 @@ import "swiper/css";
 import "swiper/css/navigation";
 import "swiper/css/free-mode";
 import { Navigation, Pagination } from "swiper";
-import { product1 } from "@/data/product";
+import { service as product1 } from "@/data/product";
 import BestServiceCard1 from "../card/BestServiceCard1";
 import { useEffect, useState } from "react";
 
@@ -91,3 +91,4 @@ export default function BestService2() {
     </>
   );
 }
+

@@ -6,3 +6,4 @@ export const useLoaderStore = create((set) => ({
   startLoading: () => set({ loading: true }),
   stopLoading: () => set({ loading: false }),
 }))
+

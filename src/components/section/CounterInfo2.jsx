@@ -66,3 +66,4 @@ export default function CounterInfo2() {
     </section>
   );
 }
+

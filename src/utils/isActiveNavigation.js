@@ -9,3 +9,4 @@ export const isActiveNavigation = (path, data) => {
 
   return x;
 };
+

@@ -22,3 +22,4 @@ export default function useStickyMenu(max = 20) {
 
     return isSticky;
 }
+

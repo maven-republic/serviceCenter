@@ -346,3 +346,4 @@ export const browserCategory2 = [
       "col-sm-6 col-lg-4 col-xl-3 bdr1 m--1 border-bottom-0 border-end-0",
   },
 ];
+

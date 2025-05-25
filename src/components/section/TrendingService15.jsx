@@ -7,7 +7,7 @@ import "swiper/css/free-mode";
 import { Navigation } from "swiper";
 
 import Manifest from "../card/Manifest";
-import { product1 } from "@/data/product";
+import { service as product1 } from "@/data/product";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
@@ -91,3 +91,4 @@ export default function TrendingService15() {
     </>
   );
 }
+

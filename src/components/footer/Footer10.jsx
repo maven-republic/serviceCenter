@@ -122,3 +122,4 @@ export default function Footer10() {
         </section>
     );
 }
+

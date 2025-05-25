@@ -18,3 +18,4 @@ export default function PayoutCard1({ data }) {
     </>
   );
 }
+

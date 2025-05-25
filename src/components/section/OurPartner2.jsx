@@ -42,3 +42,4 @@ export default function OurPartner2() {
     </>
   );
 }
+

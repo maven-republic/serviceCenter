@@ -48,3 +48,4 @@ export default function ShopListCard1({ data }) {
     </>
   );
 }
+

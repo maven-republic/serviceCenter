@@ -174,3 +174,4 @@ export default function Hero12() {
     </section>
   );
 }
+

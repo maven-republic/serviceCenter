@@ -5,7 +5,7 @@ import { useState } from "react";
 import ServiceCard1 from "../card/ServiceCard1";
 import ProjectCard1 from "../card/ProjectCard1";
 import JobCard1 from "../card/JobCard1";
-import { product1, project1 } from "@/data/product";
+import { service as product1, project1 } from "@/data/product";
 import { job1 } from "@/data/job";
 
 const tab = ["Services", "Project", "Jobs"];
@@ -93,3 +93,4 @@ export default function SavedInfo() {
     </>
   );
 }
+

@@ -7,7 +7,7 @@ import "swiper/css/free-mode";
 import { Navigation, Pagination } from "swiper";
 
 import Manifest from "../card/Manifest";
-import { product1 } from "@/data/product";
+import { service as product1 } from "@/data/product";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -112,3 +112,4 @@ export default function TrendingService2({ bgColor }) {
     </>
   );
 }
+

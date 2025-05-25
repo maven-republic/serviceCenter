@@ -53,3 +53,4 @@ export default function FreelancerFutureCard1({ data }) {
     </>
   );
 }
+

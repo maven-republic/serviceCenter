@@ -25,3 +25,4 @@ export default function BlogRecentCard1({ data, index }) {
     </>
   );
 }
+

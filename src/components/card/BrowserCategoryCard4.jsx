@@ -17,3 +17,4 @@ export default function BrowserCategoryCard4({ data }) {
     </>
   );
 }
+

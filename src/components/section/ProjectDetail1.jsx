@@ -245,3 +245,4 @@ export default function ProjectDetail1() {
     </>
   );
 }
+

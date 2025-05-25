@@ -8,3 +8,4 @@ export default function Input1({ lebel, placeholder }) {
     </>
   );
 }
+

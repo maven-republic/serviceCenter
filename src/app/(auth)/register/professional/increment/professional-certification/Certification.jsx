@@ -170,3 +170,4 @@ export default function Certification({ data, onChange, onRemove }) {
     </div>
   )
 }
+

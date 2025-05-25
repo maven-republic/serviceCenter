@@ -1,4 +1,4 @@
-import { product1 } from "@/data/product";
+import { service as product1 } from "@/data/product";
 import Link from "next/link";
 import PopularServiceCard1 from "../card/PopularServiceCard1";
 import PopularServiceSlideCard1 from "../card/PopularServiceSlideCard1";
@@ -45,3 +45,4 @@ export default function PopularService4() {
     </>
   );
 }
+

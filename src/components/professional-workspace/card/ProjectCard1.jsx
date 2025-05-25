@@ -67,3 +67,4 @@ export default function ProjectCard1({ data }) {
     </>
   );
 }
+

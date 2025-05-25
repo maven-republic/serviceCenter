@@ -45,3 +45,4 @@ export default function BlogCard1({ data, isContentExpanded = false }) {
     </>
   );
 }
+

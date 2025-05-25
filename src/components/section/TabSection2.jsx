@@ -44,3 +44,4 @@ export default function TabSection2() {
     </>
   );
 }
+

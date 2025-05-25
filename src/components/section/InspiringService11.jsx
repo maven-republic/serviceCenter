@@ -1,4 +1,4 @@
-import { inspiringProjects, product1 } from "@/data/product";
+import { inspiringProjects, service as product1 } from "@/data/product";
 import Image from "next/image";
 import Link from "next/link";
 import React from "react";
@@ -68,3 +68,4 @@ export default function InspiringService11() {
     </section>
   );
 }
+

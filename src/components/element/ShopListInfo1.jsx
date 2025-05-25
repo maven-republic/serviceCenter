@@ -20,3 +20,4 @@ export default function ShopListInfo1({ length }) {
     </>
   );
 }
+

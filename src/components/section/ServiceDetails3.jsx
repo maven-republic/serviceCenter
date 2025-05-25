@@ -11,7 +11,7 @@ import ServiceContactWidget1 from "../element/ServiceContactWidget1";
 import ServiceDetailSlider2 from "../element/ServiceDetailSlider2";
 import Image from "next/image";
 import { useParams } from "next/navigation";
-import { product1 } from "@/data/product";
+import { service as product1 } from "@/data/product";
 
 export default function ServiceDetail3() {
   const isMatchedScreen = useScreen(1216);
@@ -314,3 +314,4 @@ export default function ServiceDetail3() {
     </>
   );
 }
+

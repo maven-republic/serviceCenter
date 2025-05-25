@@ -84,3 +84,4 @@ export const sidebarEnable = [
     "/freelancer-2",
     "/freelancer-3",
 ];
+

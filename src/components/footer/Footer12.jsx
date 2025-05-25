@@ -188,3 +188,4 @@ export default function Footer12() {
         </section>
     );
 }
+

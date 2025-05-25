@@ -115,3 +115,4 @@ export default function HighestRated18() {
     </section>
   );
 }
+

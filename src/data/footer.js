@@ -96,3 +96,4 @@ export const footer = [
   "/add-services",
   "/create-projects",
 ];
+

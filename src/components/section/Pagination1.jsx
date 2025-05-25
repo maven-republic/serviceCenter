@@ -104,3 +104,4 @@ export default function Pagination1({ totalItems, itemsPerPage = 20, onPageChang
     </>
   );
 }
+

@@ -158,3 +158,4 @@ export default function ServiceCard({ service, view = 'grid', isAuthenticated })
     </Link>
   );
 }
+

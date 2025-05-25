@@ -87,3 +87,4 @@ export default function CertificationMediaUploader({ media, onAdd, onDelete }) {
     </div>
   )
 }
+

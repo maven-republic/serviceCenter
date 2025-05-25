@@ -17,3 +17,4 @@ const priceStore = create((set) => ({
 }));
 
 export default priceStore;
+

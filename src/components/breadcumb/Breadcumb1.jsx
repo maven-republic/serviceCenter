@@ -45,3 +45,4 @@ export default function Breadcumb1({ title, brief, isBtnActive }) {
     </>
   );
 }
+

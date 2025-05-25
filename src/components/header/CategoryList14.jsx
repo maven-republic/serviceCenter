@@ -48,3 +48,4 @@ export default function CategoryList14() {
     </section>
   );
 }
+

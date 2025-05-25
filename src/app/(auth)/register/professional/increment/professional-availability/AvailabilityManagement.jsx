@@ -82,3 +82,4 @@ export default function AvailabilityManagement({ availability, setAvailability }
     </div>
   )
 }
+

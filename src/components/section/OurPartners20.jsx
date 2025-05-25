@@ -32,3 +32,4 @@ export default function OurPartners20() {
     </section>
   );
 }
+

@@ -1,4 +1,4 @@
-import { product1 } from "@/data/product";
+import { service as product1 } from "@/data/product";
 import Pagination1 from "./Pagination1";
 import PopularServiceSlideCard1 from "../card/PopularServiceSlideCard1";
 import PopularServiceCard1 from "../card/PopularServiceCard1";
@@ -156,3 +156,4 @@ export default function ListStyleContent() {
     </>
   );
 }
+

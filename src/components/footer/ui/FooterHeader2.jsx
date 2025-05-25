@@ -29,3 +29,4 @@ export default function FooterHeader2() {
         </div>
     );
 }
+

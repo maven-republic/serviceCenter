@@ -24,3 +24,4 @@ export default function FooterSocial2() {
         </div>
     );
 }
+

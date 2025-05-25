@@ -208,3 +208,4 @@ export async function signupProfessional(formData) {
 
   return { success: true }
 }
+

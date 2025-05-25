@@ -49,3 +49,4 @@ export default function BlogCard4({ data, index }) {
     </>
   );
 }
+

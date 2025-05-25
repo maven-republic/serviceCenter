@@ -1,5 +1,5 @@
 "use client";
-import { product1 } from "@/data/product";
+import { service as product1 } from "@/data/product";
 import ListingOption1 from "../element/ListingOption1";
 import ListingSidebarModal1 from "../modal/ListingSidebarModal1";
 import Pagination1 from "./Pagination1";
@@ -86,3 +86,4 @@ export default function Listing2() {
     </>
   );
 }
+

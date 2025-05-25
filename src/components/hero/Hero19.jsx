@@ -71,3 +71,4 @@ export default function Hero19() {
     </section>
   );
 }
+

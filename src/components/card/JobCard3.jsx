@@ -37,3 +37,4 @@ export default function JobCard3({ data }) {
     </>
   );
 }
+

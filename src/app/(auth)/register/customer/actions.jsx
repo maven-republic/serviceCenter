@@ -162,3 +162,4 @@ export async function signupCustomer(formData) {
   // Redirect to login
   redirect('/login')
 }
+

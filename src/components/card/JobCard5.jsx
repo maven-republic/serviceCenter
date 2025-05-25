@@ -26,3 +26,4 @@ export default function JobCard5({ data }) {
     </>
   );
 }
+

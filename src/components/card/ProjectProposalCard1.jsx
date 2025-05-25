@@ -49,3 +49,4 @@ export default function ProjectProposalCard1({ data }) {
     </>
   );
 }
+

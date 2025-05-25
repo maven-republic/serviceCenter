@@ -42,3 +42,4 @@ export default function Pricing({ formData, updateFormData }) {
     </div>
   )
 }
+

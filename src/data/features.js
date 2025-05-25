@@ -34,3 +34,4 @@ export const features = [
   { id: 3, value: 90, label: "Order received" },
   { id: 4, value: 236, label: "Projects Completed" },
 ];
+

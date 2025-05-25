@@ -45,3 +45,4 @@ export default function EditAvailabilityMenu({ date, onEditDate, onEditDay }) {
     </div>
   )
 }
+

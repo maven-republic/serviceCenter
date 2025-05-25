@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { product1 } from "@/data/product";
+import { service as product1 } from "@/data/product";
 import PopularServiceCard2 from "../card/PopularServiceCard2";
 
 const categories = [
@@ -96,3 +96,4 @@ export default function PopularService3() {
     </>
   );
 }
+
