@@ -4,8 +4,8 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 // In SearchResults.jsx
-import ServiceCard from '@/components/customer-workspace/card/ServiceCard';
-import ProviderCard from '@/components/customer-workspace/card/ProviderCard';
+import ServiceCard from '@/components/customer-workspace/card/category';
+import ProviderCard from '@/components/customer-workspace/card/professional';
 import { ChevronLeft, ChevronRight, Grid, List } from 'lucide-react';
 
 export default function SearchResults({ 
