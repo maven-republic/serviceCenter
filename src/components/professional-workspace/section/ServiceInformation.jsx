@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { createClient } from '../../../../utils/supabase/client'
+import { createClient } from '@/utils/supabase/client'
 import { useUserStore } from '@/store/userStore'
 import { toast } from "sonner"
 import ServiceAddForm from "@/components/professional-workspace/forms/ServiceAddForm"

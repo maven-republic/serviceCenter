@@ -3,7 +3,7 @@
 import toggleStore from "@/store/toggleStore";
 import CustomerSideNavigation from "./sidebar/CustomerSideNavigation";
 import { useUserStore } from "@/store/userStore";
-import { getSession } from '../../../utils/supabase/client';
+import { getSession } from '@/utils/supabase/client';
 import { useEffect } from "react";
 import GlobalSearch from "@/components/customer-workspace/element/GlobalSearch";
 import Link from 'next/link';

@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useRef } from 'react'
 import Address from '@/components/Address/Address'
-import { createClient } from '../../../utils/supabase/client'
+import { createClient } from '@/utils/supabase/client'
 import { Edit2 } from 'lucide-react'
 
 export default function AddressConfirmation({ accountId, onConfirm }) {

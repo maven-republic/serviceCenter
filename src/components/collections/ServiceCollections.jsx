@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { createClient } from '../../../utils/supabase/client';
+import { createClient } from '@/utils/supabase/client';
 import { toast } from "sonner"
 
 export default function ServiceCollections({ services = [], onDelete }) {

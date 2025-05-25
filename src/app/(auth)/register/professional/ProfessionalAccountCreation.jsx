@@ -31,7 +31,7 @@ import {
   validateFieldOfStudy,
   validateEndDate,
   validateWorkExperienceEntry
-} from '../../../../../utils/validation'
+} from '@/utils/validation'
 
 import designs from './ProfessionalForm.module.css'
 import { useState, useEffect } from 'react'

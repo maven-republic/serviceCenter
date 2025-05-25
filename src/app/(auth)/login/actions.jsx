@@ -2,7 +2,7 @@
 
 import { redirect } from 'next/navigation'
 import { useLoaderStore } from '@/store/loaderStore'
-import { createClient } from '../../../../utils/supabase/server'
+import { createClient } from '@/utils/supabase/server'
 
 export async function login(formData) {
   const supabase = await createClient()

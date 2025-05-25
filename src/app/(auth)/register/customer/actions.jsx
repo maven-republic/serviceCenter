@@ -2,7 +2,7 @@
 'use server'
 
 import { redirect } from 'next/navigation'
-import { createClient } from '../../../../../utils/supabase/server'
+import { createClient } from '@/utils/supabase/server'
 
 // Check if email exists in DB
 export async function checkEmailExists(input) {

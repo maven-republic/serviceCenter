@@ -1,7 +1,7 @@
 // import { createClient } from '@/utils/supabase/server'
-// import { createClient } from '../../../../utils/supabase/server'
+// import { createClient } from '@/utils/supabase/server'
 
-import { createApiClient } from '../../../../../utils/supabase/api'
+import { createApiClient } from '@/utils/supabase/api'
 
 
 export async function POST(req) {
