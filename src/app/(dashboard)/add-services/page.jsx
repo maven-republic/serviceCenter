@@ -1,4 +1,4 @@
-import DashboardLayout from "@/components/dashboard/DashboardLayout";
+// import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import AddServiceInfo from "@/components/dashboard/section/AddServiceInfo";
 import { redirect } from 'next/navigation'
 import MobileNavigation2 from "@/components/header/MobileNavigation2";
@@ -21,10 +21,10 @@ console.log("data: ",data)
   return (
     <>
     
-    <MobileNavigation2 />
-      <DashboardLayout>
-        <AddServiceInfo />
-      </DashboardLayout>
+    {/* <MobileNavigation2 /> */}
+      {/* <DashboardLayout> */}
+        {/* <AddServiceInfo /> */}
+      {/* </DashboardLayout> */}
     </>
   );
 }

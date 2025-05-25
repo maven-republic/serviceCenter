@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { FilterX, ChevronDown, Check } from 'lucide-react';
-import FilterChip from '@/components/element/FilterChip';
+import FilterChip from '@/components/element/Filter';
 
 export default function SearchFilters({ 
   currentFilters, 
