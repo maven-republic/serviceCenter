@@ -2,8 +2,8 @@ import { Suspense } from 'react';
 import { createClient } from '@/utils/supabase/server';
 // In app/(customer-workspace)/customer/search/page.jsx
 import SearchResults from '@/components/customer-workspace/section/SearchResults';
-import SearchFilters from '@/components/customer-workspace/section/SearchFilters';
-import LoadingResults from '@/components/section/LoadingResults';
+import SearchFilters from '@/components/customer-workspace/section/ServiceFilters';
+// import LoadingResults from '@/components/section/LoadingResults';
 
 // This is a Server Component
 export default async function SearchPage({ searchParams }) {
@@ -77,7 +77,7 @@ export default async function SearchPage({ searchParams }) {
           />
         </div>
         
-        {/* Results Area */}
+        {/* Results Area 
         <div className="w-full md:w-3/4">
           <Suspense fallback={<LoadingResults />}>
             <SearchResults 
@@ -89,7 +89,7 @@ export default async function SearchPage({ searchParams }) {
               isAuthenticated={isAuthenticated}
             />
           </Suspense>
-        </div>
+        </div> */}
       </div>
     </div>
   );
