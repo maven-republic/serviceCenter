@@ -1,5 +1,5 @@
 // Enhanced /app/api/search/suggestions/route.js
-import { createClient } from '../../../utils/supabase/server';
+import { createClient } from '@/utils/supabase/server';
 import { NextResponse } from 'next/server';
 
 export async function GET(request) {
