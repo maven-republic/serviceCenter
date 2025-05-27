@@ -26,7 +26,7 @@ export default function NavigationSelectors({
                 className="rounded-pill border border-secondary text-secondary px-4 py-2 w-100 w-md-auto bg-transparent hover:bg-secondary-subtle hover:text-dark transition"
               >
                 <i className="fas fa-arrow-left me-2" />
-                Back
+                {/* Back */}
               </button>
             )}
           </div>

@@ -25,12 +25,12 @@ export default function Header20() {
                                             height={40}
                                             width={133}
                                             className="w-100 h-100 object-fit-contain"
-                                            src="/images/header-logo-dark.svg"
+                                            src="/images/maven-republic.png"
                                             alt="Header Logo"
                                         />
                                     </Link>
                                     <div className="home1_style">
-                                        <Mega />
+                                        {/* <Mega /> */}
                                     </div>
                                 </div>
                             </div>
@@ -63,7 +63,7 @@ export default function Header20() {
                                         }`}
                                         href="/login"
                                     >
-                                        Sign in
+SIGN IN 
                                     </Link>
                                     {/* <Link
                                         className="ud-btn btn-thm add-joining"
