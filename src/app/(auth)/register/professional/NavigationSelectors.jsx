@@ -53,19 +53,24 @@ export default function NavigationSelectors({
           {/* Next / Submit Button */}
           <div className="col-12 col-md-4 text-md-end text-center">
             {currentStep < totalSteps ? (
+              
               <button
-                type="button"
-                onClick={nextStep}
-                className="rounded-pill bg-primary text-white px-4 py-2 w-100 w-md-auto border-0 hover:bg-primary-dark transition"
-              >
-                Continue
-                <i className="fas fa-arrow-right ms-2" />
-              </button>
+  type="button"
+  onClick={nextStep}
+  className="rounded-pill bg-black text-white px-4 py-2 w-100 w-md-auto border-0 hover:opacity-90 transition"
+>
+  Continue
+  <i className="fas fa-arrow-right ms-2" />
+</button>
+
+              
+              
+              
             ) : (
               <button
                 type="button"
                 onClick={onSubmit}
-                className="rounded-pill bg-success text-white px-4 py-2 w-100 w-md-auto border-0 hover:bg-success-dark transition"
+  className="rounded-pill bg-secondary text-light px-4 py-2 w-100 w-md-auto border-0 hover:opacity-90 transition"
               >
                 Create Account
               </button>

@@ -15,7 +15,7 @@ const nextStep = () => setCurrentStep(prev => Math.min(prev + 1, 8)) // was 8
 
   return (
     <div>
-      <Header />
+      {/* <Header /> */}
       <section className="our-register">
         <ProfessionalAccountCreation
           errorMessage={errorMessage}
