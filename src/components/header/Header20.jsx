@@ -19,7 +19,7 @@ export default function Header20() {
                                 <div className="d-flex align-items-center">
                                     <Link
                                         className="header-logo bdrr1 pr30 pr5-xl"
-                                        href="/"
+                                        href="https://mavenrepublic.com"
                                     >
                                         <Image
                                             height={40}
