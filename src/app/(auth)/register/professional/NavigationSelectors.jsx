@@ -5,7 +5,9 @@ export default function NavigationSelectors({
   nextStep,
   prevStep,
   totalSteps = 10,
-  onSubmit
+  onSubmit,
+    loading = false
+
 }) {
   const progressPercent = (currentStep / totalSteps) * 100
 
@@ -67,13 +69,24 @@ export default function NavigationSelectors({
               
               
             ) : (
-              <button
-                type="button"
-                onClick={onSubmit}
-  className="rounded-pill bg-secondary text-light px-4 py-2 w-100 w-md-auto border-0 hover:opacity-90 transition"
-              >
-                Create Account
-              </button>
+              
+              
+          <button
+  type="button"
+  onClick={onSubmit}
+  disabled={loading}
+  className="rounded-pill bg-secondary text-light px-4 py-2 w-100 w-md-auto border-0 hover:opacity-90 transition d-flex align-items-center justify-content-center"
+>
+  {loading ? (
+    <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true" />
+  ) : (
+    <>
+      Create Account
+    </>
+  )}
+</button>
+              
+              
             )}
           </div>
 

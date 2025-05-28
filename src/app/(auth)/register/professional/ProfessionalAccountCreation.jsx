@@ -86,6 +86,7 @@ export default function ProfessionalAccountCreation({ errorMessage, currentStep,
   const [dropdownOpen, setDropdownOpen] = useState(false)
   const [isCheckingEmail, setIsCheckingEmail] = useState(false)
 
+
   useEffect(() => {
     async function loadData() {
       setLoading(true)
@@ -205,32 +206,31 @@ export default function ProfessionalAccountCreation({ errorMessage, currentStep,
   }
 
   const handleSubmit = async (e) => {
-    e.preventDefault()
+  e.preventDefault()
+  if (currentStep !== 8) return
 
-    if (currentStep !== 8) return
+  setLoading(true)
 
+  try {
     const form = document.querySelector('form')
     if (!form) return
-
     const data = new FormData(form)
 
     Object.entries(formData).forEach(([k, v]) => {
-      if (Array.isArray(v) || typeof v === 'object') {
-        data.set(k, JSON.stringify(v))
-      } else {
-        data.set(k, v)
-      }
+      data.set(k, Array.isArray(v) || typeof v === 'object' ? JSON.stringify(v) : v)
     })
 
-    try {
-      const result = await signupProfessional(data)
-      if (result?.success) {
-        router.push('/register/professional/success')
-      }
-    } catch (error) {
-      console.error('❌ signupProfessional failed:', error)
+    const result = await signupProfessional(data)
+    if (result?.success) {
+      router.push('/register/professional/success')
     }
+  } catch (error) {
+    console.error('❌ signupProfessional failed:', error)
+  } finally {
+    setLoading(false)
   }
+}
+
 
   return (
     <form className={designs.outer}>
@@ -263,6 +263,8 @@ export default function ProfessionalAccountCreation({ errorMessage, currentStep,
         prevStep={handlePrevStep}
         onSubmit={handleSubmit}
         totalSteps={8}
+          loading={loading}
+
       />
     </form>
   )
