@@ -21,7 +21,7 @@ export default function ProfessionalAccountCreationSuccess() {
           <p className="text-muted mb-2">Your account has been created successfully.</p>
           <p className="small text-secondary mb-4">
             Please check your email to verify your account.<br />
-            Look in your <strong>spamfolder</strong> if you don't see it.
+            Look in your <strong>spam folder</strong> if you don't see it.
           </p>
 
           <a href="/login" className="btn btn-dark rounded-pill px-4 py-2">
