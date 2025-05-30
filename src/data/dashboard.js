@@ -123,13 +123,23 @@ export const professionalNavigation = [
     icon: "flaticon-photo",
     path: "/professional/account-information",
   },
-  {
-    id: 15,
-    name: "Logout",
-    icon: "flaticon-logout",
-    path: "/login",
-  },
-];
+  
+{
+  id: 15,
+  name: "Availability",
+  icon: "flaticon-calendar",
+  path: "/professional/availability",
+},
+{
+  id: 16,
+  name: "Logout",
+  icon: "flaticon-logout",
+  path: "/login",
+},
+
+
+
+]
 
 export const invoice = [
   {
