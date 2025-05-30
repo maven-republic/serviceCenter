@@ -1,7 +1,7 @@
 'use client'
 
 import { format, parse, parseISO, isValid } from 'date-fns'
-import Day from './Day'
+import Day from './DAY'
 
 export default function AvailabilityCalendar({ availability, overrides }) {
   const today = new Date()
