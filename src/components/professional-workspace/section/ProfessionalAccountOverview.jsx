@@ -49,7 +49,7 @@ export default function MyProfileInfo() {
             <Competence />
             <Education />
             <WorkExperience />
-            <Award />
+            {/* <Award /> */}
             <ChangePassword />
             <ConfirmPassword />
           </div>
