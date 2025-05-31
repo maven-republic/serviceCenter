@@ -1,4 +1,3 @@
-'use client'
 
 import { useState, useEffect } from 'react'
 import { SessionContextProvider } from '@supabase/auth-helpers-react'
