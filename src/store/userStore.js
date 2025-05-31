@@ -1,15 +1,35 @@
 import { create } from 'zustand'
 
-export const useUserStore = create((set) => ({
+export const useUserStore = create((set, get) => ({
   user: null,
+  isLoading: false, // 🔒 Add loading state
 
   fetchUser: async (sessionUser, supabase) => {
+    const state = get()
+    
+    // 🛡️ Prevent duplicate calls
+    if (state.isLoading) {
+      console.log('⏳ fetchUser already in progress, skipping...')
+      return
+    }
+
+    // 🛡️ Prevent refetching same user
+    if (state.user?.email === sessionUser?.email) {
+      console.log('👋 User already loaded for:', sessionUser?.email)
+      return
+    }
+
     if (!sessionUser || !supabase) {
       console.warn('⚠️ fetchUser called without valid session or supabase client')
       return
     }
 
+    // 🔒 Set loading state
+    set({ isLoading: true })
+
     try {
+      console.log('🚀 Fetching user data for:', sessionUser.email)
+
       // 1. Lookup account via email
       const { data: accountData, error: accountError } = await supabase
         .from('account')
@@ -59,9 +79,13 @@ export const useUserStore = create((set) => ({
           profile: profileData,
           primaryRole,
         },
+        isLoading: false // ✅ Clear loading state
       })
+
+      console.log('✅ User data loaded successfully')
     } catch (error) {
       console.error('❌ Error fetching user:', error)
+      set({ isLoading: false }) // ✅ Clear loading state on error
     }
   },
 
@@ -93,7 +117,6 @@ export const useUserStore = create((set) => ({
 
   logout: async (supabase) => {
     if (supabase) await supabase.auth.signOut()
-    set({ user: null })
+    set({ user: null, isLoading: false })
   },
 }))
-

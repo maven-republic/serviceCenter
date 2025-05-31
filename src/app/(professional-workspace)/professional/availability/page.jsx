@@ -1,65 +1,80 @@
-'use client'
-
-import { useEffect, useState } from 'react'
-import { createClient } from '@/utils/supabase/client'
-import { useUserStore } from '@/store/userStore'
+// /app/professional/availability/page.jsx
+import { cookies } from 'next/headers'
+import { createServerComponentClient } from '@supabase/auth-helpers-nextjs'
 import AvailabilityViewer from '@/components/professional-workspace/availability/AvailabilityViewer'
 
-export default function AvailabilityPage() {
-  const supabase = createClient()
-  const userStore = useUserStore()
-  const user = userStore.user
-
-  const [formData, setFormData] = useState({
-    availability: [],
-    availabilityOverrides: []
+export default async function AvailabilityPage() {
+  // 🔧 FIX: Await cookies() 
+  const cookieStore = await cookies()
+  const supabase = createServerComponentClient({ 
+    cookies: () => cookieStore 
   })
-  const [loading, setLoading] = useState(true)
 
-  useEffect(() => {
-    const fetchAvailability = async () => {
-      if (!user?.profile?.professional_id) {
-        console.warn('⛔ No professional_id found in user profile')
-        return
-      }
+  const {
+    data: { session },
+  } = await supabase.auth.getSession()
 
-      const professional_id = user.profile.professional_id
+  console.log('🔍 AvailabilityPage Debug:', {
+    hasSession: !!session,
+    hasUser: !!session?.user,
+    userEmail: session?.user?.email,
+    userId: session?.user?.id
+  })
 
-      const { data: availability } = await supabase
-        .from('availability')
-        .select('day_of_week, start_time, end_time')
-        .eq('professional_id', professional_id)
-
-      const { data: overrides } = await supabase
-        .from('availability_override')
-        .select('override_date, start_time, end_time, is_available')
-        .eq('professional_id', professional_id)
-
-      setFormData({
-        availability: availability || [],
-        availabilityOverrides: overrides || []
-      })
-
-      setLoading(false)
-    }
-
-    fetchAvailability()
-  }, [user])
-
-  if (loading) {
-    return <p className="text-center py-5">Loading availability...</p>
+  if (!session?.user) {
+    return <p className="text-center py-5">Please log in to view availability.</p>
   }
 
-  const updateFormData = (e) => {
-    const { name, value } = e.target
-    setFormData((prev) => ({ ...prev, [name]: value }))
+  // 🔧 FIX: Query by email instead of session.user.id
+  // The session.user.id might not match your account_id field
+  const { data: accountData, error: accountError } = await supabase
+    .from('account')
+    .select('account_id')
+    .eq('email', session.user.email)
+    .single()
+
+  console.log('🔍 Account lookup:', { accountData, accountError })
+
+  if (accountError || !accountData) {
+    return <p className="text-center py-5">Account not found. Please contact support.</p>
   }
+
+  const { data: userProfileData, error: profileError } = await supabase
+    .from('individual_professional')
+    .select('professional_id')
+    .eq('account_id', accountData.account_id)
+    .single()
+
+  console.log('🔍 Professional profile lookup:', { userProfileData, profileError })
+
+  const professional_id = userProfileData?.professional_id
+
+  if (!professional_id) {
+    return <p className="text-center py-5">No professional profile found.</p>
+  }
+
+  const { data: availability = [] } = await supabase
+    .from('availability')
+    .select('day_of_week, start_time, end_time')
+    .eq('professional_id', professional_id)
+
+  const { data: overrides = [] } = await supabase
+    .from('availability_override')
+    .select('override_date, start_time, end_time, is_available')
+    .eq('professional_id', professional_id)
+
+  console.log('🎯 Data loaded:', {
+    availabilityCount: availability.length,
+    overridesCount: overrides.length,
+    sampleAvailability: availability[0]
+  })
 
   return (
     <AvailabilityViewer
-    availability={formData.availability}
-    overrides={formData.availabilityOverrides}
-  />
+      availability={availability}
+      overrides={overrides}
+      availabilityJson={JSON.stringify(availability)}
+      overridesJson={JSON.stringify(overrides)}
+    />
   )
-
 }

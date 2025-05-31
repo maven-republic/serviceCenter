@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useSupabaseClient } from '@supabase/auth-helpers-react'
+import { useUserStore } from '@/store/userStore' // ✅ import store
 
 export default function LoginForm({ errorMessage }) {
   const [loading, setLoading] = useState(false)
@@ -20,7 +21,7 @@ export default function LoginForm({ errorMessage }) {
       email,
       password,
       options: {
-        shouldPersistSession: true, // ✅ ensures session survives reloads
+        shouldPersistSession: true,
       },
     })
 
@@ -30,6 +31,11 @@ export default function LoginForm({ errorMessage }) {
       return
     }
 
+    // ✅ Hydrate the userStore immediately after login
+    const fetchUser = useUserStore.getState().fetchUser
+    await fetchUser(data.user, supabase)
+
+    // ✅ Role-based redirect
     const { data: roleData, error: roleError } = await supabase
       .from('account_role')
       .select('role_type')

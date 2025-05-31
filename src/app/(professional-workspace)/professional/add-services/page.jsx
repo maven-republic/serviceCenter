@@ -8,24 +8,22 @@ export const metadata = {
   title: "Freeio - Freelance Marketplace React/Next Js Template | Add Service",
 };
 
-export default async function page() {
-
+export default async function Page() {
   const supabase = await createClient()
 
-  const { data, error } = await supabase.auth.getUser()
-  if (error || !data?.user) {
+  // ✅ use getSession instead of getUser
+  const { data: { session }, error } = await supabase.auth.getSession()
+
+  if (error || !session?.user) {
     redirect('/login')
   }
-console.log("data: ",data)
 
   return (
     <>
-    
-    <MobileNavigation2 />
+      <MobileNavigation2 />
       <DashboardLayout>
         <AddServiceInformation />
       </DashboardLayout>
     </>
   );
 }
-

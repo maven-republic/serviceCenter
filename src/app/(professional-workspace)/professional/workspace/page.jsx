@@ -1,23 +1,40 @@
 'use client'
 
-import { useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useUserStore } from '@/store/userStore'
-import DashboardInfo from "@/components/professional-workspace/section/DashboardInfo"
+import { useSession } from '@supabase/auth-helpers-react'
+import DashboardInfo from '@/components/professional-workspace/section/DashboardInfo'
 
 export default function WorkspaceInterface() {
-  const user = useUserStore((s) => s.user)
+  const { user } = useUserStore()
   const router = useRouter()
+  const session = useSession()
 
-  useEffect(() => {
-    if (user === null) return // still loading
-    if (user?.primaryRole !== 'professional') {
-      router.replace('/login')
-    }
-  }, [user])
+  // 🛑 Wait for session to hydrate
+  if (session === null) {
+    return (
+      <div className="text-center mt-10">
+        <div className="spinner-border text-secondary" role="status" />
+        <p className="mt-2">Checking session...</p>
+      </div>
+    )
+  }
 
-  if (!user) return <div className="text-center mt-10">🔄 Loading workspace...</div>
+  // 🛑 Show loading until user is fully hydrated
+  if (!user) {
+    return (
+      <div className="text-center mt-10">
+        <div className="spinner-border text-primary" role="status" />
+        <p className="mt-2">🔄 Loading workspace...</p>
+      </div>
+    )
+  }
+
+  // 🚫 Redirect if role is incorrect
+  if (user?.primaryRole !== 'professional') {
+    router.replace('/login')
+    return null
+  }
 
   return <DashboardInfo />
 }
-

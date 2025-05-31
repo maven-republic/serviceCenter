@@ -19,23 +19,18 @@ function formatTime12(timeStr) {
 
 export default function Day({ date, isToday, slots = [] }) {
   return (
-   <div
-     className={`h-[120px] p-2 text-xs flex flex-col justify-between border rounded-sm transition ${
-       isToday ? 'bg-primary text-white' : 'bg-white hover:bg-gray-50'
-     }`}
-   >
-      <div className="fw-semibold mb-1">
-        {format(date, 'EEE dd')}
-      </div>
+    <div
+      className={`px-1 py-1 text-muted small d-flex flex-column justify-content-between border rounded-0 ${
+        isToday ? 'bg-primary text-white' : 'bg-white'
+      }`}
+      style={{ height: '80px', fontSize: '0.75rem' }}
+    >
+      <div className="fw-semibold">{format(date, 'EEE dd')}</div>
 
       {slots.length === 0 ? (
-        <div className="text-xs text-muted">Unavailable</div>
+        <div style={{ fontSize: '0.65rem' }}>–</div>
       ) : (
-        slots.map((slot, i) => (
-          <div key={i} className="text-xs text-success">
-            {formatTime12(slot.start_time)} – {formatTime12(slot.end_time)}
-          </div>
-        ))
+        <span className="text-success">●</span>
       )}
     </div>
   )
