@@ -2,13 +2,11 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { useParams, useSearchParams, useRouter } from 'next/navigation'
-import { useAccount } from '@/app/layout'
 import { useSession, useSupabaseClient } from '@supabase/auth-helpers-react'
 
 import AddressConfirmation from '@/components/AddressConfirmation/AddressConfirmation'
 import ProfessionalManifest from '@/components/ProfessionalManifest'
 import NoProfessionalsFound from '@/components/NoProfessionalFound/NoProfessionalsFound'
-
 
 export default function ProfessionalCollectionInterface() {
   const { id: serviceId } = useParams()
@@ -16,8 +14,10 @@ export default function ProfessionalCollectionInterface() {
   const searchParams = useSearchParams()
   const session = useSession()
   const supabase = useSupabaseClient()
-  const account = useAccount()
 
+  // Local account state instead of importing from layout
+  const [account, setAccount] = useState(null)
+  const [accountLoading, setAccountLoading] = useState(true)
   const [professionals, setProfessionals] = useState([])
   const [loading, setLoading] = useState(false)
 
@@ -27,6 +27,36 @@ export default function ProfessionalCollectionInterface() {
   const locationFromQuery = lat && lng
     ? { lat: parseFloat(lat), lng: parseFloat(lng) }
     : null
+
+  // Fetch account data locally
+  useEffect(() => {
+    const fetchAccount = async () => {
+      if (!session?.user?.email) {
+        setAccountLoading(false)
+        return
+      }
+
+      try {
+        const { data, error } = await supabase
+          .from('account')
+          .select('*')
+          .eq('email', session.user.email)
+          .single()
+
+        if (error) {
+          console.error('Error fetching account:', error)
+        } else {
+          setAccount(data)
+        }
+      } catch (err) {
+        console.error('Error fetching account:', err)
+      } finally {
+        setAccountLoading(false)
+      }
+    }
+
+    fetchAccount()
+  }, [session?.user?.email, supabase])
 
   const fetchNearbyProfessionals = useCallback(async (location) => {
     if (!location) return
@@ -77,6 +107,21 @@ export default function ProfessionalCollectionInterface() {
 
     router.push(`/customer/services/${serviceId}?${query}`)
   }
+
+  // Show loading while account is being fetched
+  if (accountLoading) {
+    return (
+      <div className="container py-5">
+        <div className="text-center my-5">
+          <div className="spinner-border text-primary" role="status">
+            <span className="visually-hidden">Loading your account info...</span>
+          </div>
+          <p className="mt-3">Loading your account info...</p>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="container py-5">
       {!account ? (
@@ -96,7 +141,7 @@ export default function ProfessionalCollectionInterface() {
           <p className="mt-3">Loading professionals...</p>
         </div>
       ) : professionals.length === 0 ? (
-        <NoProfessionalsFound serviceId={serviceId} /> // ✅ USE YOUR COMPONENT HERE
+        <NoProfessionalsFound serviceId={serviceId} />
       ) : (
         <div className="row g-4">
           {professionals.map((pro) => (
@@ -108,5 +153,4 @@ export default function ProfessionalCollectionInterface() {
       )}
     </div>
   )
-  
 }
