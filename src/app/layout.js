@@ -3,11 +3,7 @@ import { cookies } from 'next/headers'
 import { createServerComponentClient } from '@supabase/auth-helpers-nextjs'
 import { DM_Sans } from 'next/font/google'
 import './globals.css'
-
-import SupabaseProvider from '@/components/SupabaseProvider'
-import SearchModal1 from '@/components/modal/SearchModal1'
-import NavSidebar from '@/components/sidebar/NavSidebar'
-import Loader from '@/components/loader/Loader'
+import ClientProviders from '@/components/ClientProviders'
 
 const dmSans = DM_Sans({
   subsets: ['latin'],
@@ -30,12 +26,9 @@ export default async function RootLayout({ children }) {
   return (
     <html lang="en">
       <body className={`${dmSans.className}`}>
-        <SupabaseProvider initialSession={session}>
-          <Loader />
-          <SearchModal1 />
+        <ClientProviders initialSession={session}>
           {children}
-          <NavSidebar />
-        </SupabaseProvider>
+        </ClientProviders>
       </body>
     </html>
   )
