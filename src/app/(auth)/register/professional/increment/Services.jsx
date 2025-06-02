@@ -3,7 +3,8 @@
 import serviceDESIGN from './Services.module.css'
 
 export default function Services({
-  categories,
+  verticals,        // ✅ Changed from categories
+  portfolios,       // ✅ New - portfolios data
   services,
   loading,
   dropdownOpen,
@@ -26,7 +27,7 @@ export default function Services({
         </div>
       </div>
 
-      {/* ✅ Tailwind-styled search bar */}
+      {/* ✅ Search bar remains the same */}
       <div className="mb-4 position-relative dropdown-search">
         <div className={serviceDESIGN.searchBox}>
           <i className={`fas fa-search ${serviceDESIGN.searchIcon}`} />
@@ -43,7 +44,7 @@ export default function Services({
           />
         </div>
 
-        {/* ✅ Organized dropdown with new module styles */}
+        {/* ✅ Updated dropdown with new hierarchy */}
         {dropdownOpen && (
           <div className={serviceDESIGN.dropdownPanel}>
             <div className={serviceDESIGN.scrollContainer}>
@@ -69,40 +70,63 @@ export default function Services({
                     </div>
                   )}
 
-                  {categories.map((category) => {
-                    const catServices = services.filter(
-                      (s) =>
-                        s.service_subcategory.category_id === category.category_id &&
-                        (!searchTerm ||
-                          s.name.toLowerCase().includes(searchTerm.toLowerCase()))
+                  {/* ✅ Updated to use vertical → portfolio → service hierarchy */}
+                  {verticals.map((vertical) => {
+                    // Get portfolios for this vertical
+                    const verticalPortfolios = portfolios.filter(
+                      (p) => p.vertical_id === vertical.vertical_id
                     )
-                    if (!catServices.length) return null
+
+                    if (!verticalPortfolios.length) return null
 
                     return (
-                      <div
-                        key={category.category_id}
-                        className={serviceDESIGN.categoryBlock}
-                      >
-                        <div className={serviceDESIGN.dropdownCategoryHeader}>
-                          {category.name}
+                      <div key={vertical.vertical_id} className="mb-4">
+                        {/* ✅ Vertical header */}
+                        <div className={serviceDESIGN.verticalHeader}>
+                          <h6 className="fw-semibold text-primary mb-2">
+                            {vertical.name}
+                          </h6>
                         </div>
-                        <div className={serviceDESIGN.dropdownServicesGrid}>
-                          {catServices.map((service) => {
-                            const isSelected = selectedServices.includes(service.service_id)
-                            return (
-                              <button
-                                key={service.service_id}
-                                type="button"
-                                className={`${serviceDESIGN.serviceTag} ${isSelected ? serviceDESIGN.selected : ''}`}
-                                onClick={() => toggleService(service.service_id)}
-                                title={service.name}
-                                aria-pressed={isSelected}
-                              >
-                                {service.name}
-                              </button>
-                            )
-                          })}
-                        </div>
+
+                        {/* ✅ Portfolios within this vertical */}
+                        {verticalPortfolios.map((portfolio) => {
+                          const portfolioServices = services.filter(
+                            (s) =>
+                              s.portfolio_id === portfolio.portfolio_id &&
+                              (!searchTerm ||
+                                s.name.toLowerCase().includes(searchTerm.toLowerCase()))
+                          )
+
+                          if (!portfolioServices.length) return null
+
+                          return (
+                            <div
+                              key={portfolio.portfolio_id}
+                              className={serviceDESIGN.categoryBlock}
+                            >
+                              <div className={serviceDESIGN.dropdownCategoryHeader}>
+                                {portfolio.name}
+                              </div>
+                              <div className={serviceDESIGN.dropdownServicesGrid}>
+                                {portfolioServices.map((service) => {
+                                  const isSelected = selectedServices.includes(service.service_id)
+                                  return (
+                                    <button
+                                      key={service.service_id}
+                                      type="button"
+                                      className={`${serviceDESIGN.serviceTag} ${isSelected ? serviceDESIGN.selected : ''}`}
+                                      onClick={() => toggleService(service.service_id)}
+                                      title={service.name}
+                                      aria-pressed={isSelected}
+                                    >
+                                      {service.name}
+                                    </button>
+                                  )
+                                })}
+                              </div>
+                            </div>
+                          )
+                        })}
                       </div>
                     )
                   })}
@@ -124,4 +148,3 @@ export default function Services({
     </div>
   )
 }
-
