@@ -4,6 +4,10 @@ import { useState, useEffect } from 'react'
 import { useSupabaseClient } from '@supabase/auth-helpers-react'
 import { useUserStore } from '@/store/userStore'
 
+import AddServiceQuantificationModal from "./AddServiceQuantificationModal"
+import ServiceQuantificationConfiguration from "./ServiceQuantificationConfiguration"
+
+
 export default function ProfessionalServiceQuantification() {
   const { user } = useUserStore()
   const [services, setServices] = useState([])
