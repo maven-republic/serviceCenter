@@ -91,7 +91,7 @@ export const professionalNavigation = [
     id: 9,
     name: "Manage Services",
     icon: "flaticon-presentation",
-    path: "/manage-services",
+    path: "/professional/manage-services",
   },
   {
     id: 10,
@@ -109,13 +109,13 @@ export const professionalNavigation = [
     id: 12,
     name: "Add Services",
     icon: "flaticon-document",
-    path: "/add-services",
+    path: "/professional/add-services",
   },
   {
     id: 13,
-    name: "Create Project",
+    name: "Quotations",
     icon: "flaticon-content",
-    path: "/create-projects",
+    path: "/professional/manage-quotations",
   },
   {
     id: 14,

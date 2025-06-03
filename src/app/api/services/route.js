@@ -1,127 +1,151 @@
-// src/app/(api)/services/route.js
-import { NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
+import { NextResponse } from 'next/server'
+import { createClient } from '@/utils/supabase/server'
 
-export const dynamic = 'force-dynamic'; // This ensures the route is not statically optimized
-export const revalidate = 0;
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
 
 export async function GET(request) {
   try {
-    console.log("Route handler called");
-    console.log("Environment variables:", {
-     supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL ? 'Present' : 'Missing',
-      supabaseKey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ? 'Present' : 'Missing'
-    });
+    const supabase = createClient()
+    const { searchParams } = new URL(request.url)
+    const category = searchParams.get('category')
 
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-    const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-
-    if (!supabaseUrl || !supabaseKey) {
-      console.error("Missing Supabase credentials");
-      return new NextResponse(
-        JSON.stringify({ error: 'Configuration error' }), 
-        { 
-          status: 500, 
-          headers: { 'Content-Type': 'application/json' } 
-        }
-      );
-    }
-
-    const supabase = createClient(supabaseUrl, supabaseKey);
-    
-    // Get query parameters if needed
-    const { searchParams } = new URL(request.url);
-    const category = searchParams.get('category');
-    
-    console.log("Fetching services from Supabase", { category });
-    
-    // Build the query
     let query = supabase
       .from('service')
       .select(`
-        *,
-        service_subcategory(
+        service_id,
+        name,
+        description,
+        base_price,
+        duration_minutes,
+        pricing_model,
+        price_type,
+        is_featured,
+        is_active,
+        display_order,
+        created_at,
+        portfolio:portfolio_id (
+          portfolio_id,
           name,
-          service_category(
+          description,
+          is_featured,
+          vertical:vertical_id (
+            vertical_id,
             name,
-            path,
-            icon
+            description,
+            industry:industry_id (
+              industry_id,
+              name,
+              description,
+              icon
+            )
           )
         ),
-        service_attribute(*),
-        service_image(*),
-        service_search_term(*)
-      `);
-    
-    // Add filters if provided
-    if (category) {
-      query = query.eq('service_subcategory.service_category.path', category);
-    }
-    
-    // Execute the query
-    const { data, error } = await query;
-    
-    if (error) {
-      console.error("Supabase query error:", error);
-      throw error;
-    }
-    
-    console.log(`Retrieved ${data?.length || 0} services from database`);
-    
-    // Transform the data to match the expected format in the frontend
-    const transformedData = data.map(item => ({
-      id: item.service_id,
-      img: item.service_image && item.service_image.length > 0 
-        ? item.service_image[0].image_url 
-        : "/images/listings/default.jpg",
-      img2: item.service_image && item.service_image.length > 0 
-        ? item.service_image[0].image_url 
-        : "/images/listings/default.jpg",
-      category: item.service_subcategory?.service_category?.name || "General",
-      title: item.name,
-      rating: getAttributeValue(item.service_attribute, 'skill_level') || 4.7,
-      review: Math.floor(Math.random() * 100) + 20, // Random reviews count for demo
+        gallery:service_id (
+          image_id,
+          image_url,
+          alt_text,
+          is_primary,
+          display_order
+        ),
+        attribute:service_id (
+          attribute_id,
+          attribute_name,
+          value_type,
+          input_hint,
+          is_required,
+          is_visible,
+          pricing_weight,
+          enum_options,
+          validation_rules
+        ),
+        skeyword:service_id (
+          search_term_id,
+          search_term
+        ),
+        operation:service_id (
+          operation_id,
+          name,
+          description,
+          sequence_order,
+          duration_minutes,
+          skill_level_required,
+          equipment_required,
+          is_optional
+        )
+      `)
+      .eq('is_active', true)
+      .order('is_featured', { ascending: false })
+      .order('display_order', { ascending: true })
+      .order('name', { ascending: true })
+
+    const { data: services, error } = await query
+
+    if (error) throw error
+
+    // Manual filtering (deep .eq not supported)
+    const filtered = category
+      ? (services || []).filter(s => s.portfolio?.vertical?.industry?.name === category)
+      : services
+
+    const transformed = filtered.map(service => ({
+      service_id: service.service_id,
+      id: service.service_id,
+      name: service.name,
+      title: service.name,
+      description: service.description,
+      base_price: service.base_price,
+      price: service.base_price,
+      duration_minutes: service.duration_minutes,
+      pricing_model: service.pricing_model,
+      price_type: service.price_type,
+      is_featured: service.is_featured,
+      portfolio: service.portfolio,
+      category: service.portfolio?.vertical?.industry?.name || 'General',
+      subcategory: service.portfolio?.vertical?.name || 'Other',
+      portfolio_name: service.portfolio?.name || 'General Services',
+      images: service.gallery || [],
+      primary_image: service.gallery?.find(img => img.is_primary)?.image_url || service.gallery?.[0]?.image_url || '/images/listings/default.jpg',
+      img: service.gallery?.find(img => img.is_primary)?.image_url || service.gallery?.[0]?.image_url || '/images/listings/default.jpg',
+      attributes: service.attribute || [],
+      keywords: service.skeyword?.map(k => k.search_term) || [],
+      operations: service.operation || [],
+      deliveryTime: service.duration_minutes ? `${Math.ceil(service.duration_minutes / 60 / 24)}d` : '1d',
+      level: service.is_featured ? 'top-rated' : 'level-1',
+      rating: 4.7 + (Math.random() * 0.6),
+      review: Math.floor(Math.random() * 200) + 50,
+      tag: service.portfolio?.name || 'Service',
       author: {
-        img: "/images/team/fl-s-1.png", // Default author image
-        name: "Service Provider", // Default provider name
+        name: 'Professional Service Provider',
+        img: '/images/team/default-provider.png'
       },
-      price: item.base_price,
-      tag: item.service_subcategory?.name || "Service",
-      deliveryTime: `${Math.ceil((item.duration_minutes || 1440) / 60 / 24)}d`,
-      level: item.is_featured ? "top-rated" : "lavel-1",
-      location: "united-states", // Default location
-      sort: item.is_featured ? "best-seller" : "recommended",
-      tool: getAttributeValue(item.service_attribute, 'service_type') || "professional-tools",
-      language: "english",
-      lat: 23.8103 + (Math.random() - 0.5), // Random coordinates near default
-      long: 90.4125 + (Math.random() - 0.5), // Random coordinates near default
-      description: item.description
-    }));
+      location: 'jamaica',
+      sort: service.is_featured ? 'best-seller' : 'recommended',
+      tool: 'professional-tools',
+      language: 'english'
+    }))
 
+    return NextResponse.json({
+      success: true,
+      data: transformed,
+      count: transformed.length,
+      metadata: {
+        total_services: transformed.length,
+        featured_services: transformed.filter(s => s.is_featured).length,
+        categories: [...new Set(transformed.map(s => s.category))],
+        portfolios: [...new Set(transformed.map(s => s.portfolio_name))]
+      }
+    })
 
-
-    console.log("Transformation complete", transformedData.length);
-
-    
-    return NextResponse.json(transformedData);
   } catch (error) {
-    console.error('Full error details:', {
-      name: error.name,
-      message: error.message,
-      stack: error.stack
-    });
+    console.error('❌ Services API Error:', error)
     return NextResponse.json(
-        
-        { error: error.message }, { status: 500 }
-    
-    );
+      {
+        success: false,
+        error: 'Failed to fetch services',
+        details: error.message
+      },
+      { status: 500 }
+    )
   }
 }
-
-// Helper function to get attribute value
-function getAttributeValue(attributes, attributeName) {
-  if (!attributes || !attributes.length) return null;
-  const attribute = attributes.find(attr => attr.attribute_name === attributeName);
-  return attribute ? attribute.attribute_value : null;
-}
-

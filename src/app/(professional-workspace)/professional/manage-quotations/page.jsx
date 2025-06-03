@@ -1,5 +1,5 @@
 import DashboardLayout from "@/components/professional-workspace/DashboardLayout";
-import ProfessionalPricingManager from "@/components/professional-workspace/section/ManageServices";
+import QuotationManagement from "@/components/professional-workspace/section/QuotationManagement";
 
 import MobileNavigation2 from "@/components/header/MobileNavigation2";
 
@@ -12,10 +12,10 @@ export default function page() {
   return (
     <>
     
-    <MobileNavigation2 />
-      <DashboardLayout>
-        <ProfessionalPricingManager />
-      </DashboardLayout>
+    {/* <MobileNavigation2 /> */}
+      {/* <DashboardLayout> */}
+        <QuotationManagement />
+      {/* </DashboardLayout> */}
     </>
   );
 }
