@@ -91,7 +91,7 @@ export default function ProfessionalServiceQuantification() {
           ) : (
             <div className="row">
               {services.map((service) => (
-                <ServiceQuantificationCard
+                <ServiceQuantificationConfiguration
                   key={service.professional_service_id}
                   service={service}
                   onUpdate={fetchProfessionalServices}
