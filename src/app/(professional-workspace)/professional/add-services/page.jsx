@@ -5,7 +5,7 @@ import MobileNavigation2 from "@/components/header/MobileNavigation2";
 import { createClient } from '@/utils/supabase/server'
 
 export const metadata = {
-  title: "Freeio - Freelance Marketplace React/Next Js Template | Add Service",
+  title: " Add Service",
 };
 
 export default async function Page() {
@@ -20,10 +20,10 @@ export default async function Page() {
 
   return (
     <>
-      <MobileNavigation2 />
-      <DashboardLayout>
+      {/* <MobileNavigation2 /> */}
+      {/* <DashboardLayout> */}
         <AddServiceInformation />
-      </DashboardLayout>
+      {/* </DashboardLayout> */}
     </>
   );
 }
