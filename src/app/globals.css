@@ -14,7 +14,7 @@
 
 
 
-/* @import '../aesthetics/theme.css'; */
+@import '../aesthetics/theme.css';
 
 a {
   cursor: pointer;
