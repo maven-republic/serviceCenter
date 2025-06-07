@@ -1,3 +1,4 @@
+
 @import "./../../public/css/bootstrap.min.css";
 @import "./../../public/css/animate.css";
 @import "./../../public/css/ace-responsive-menu.css";
@@ -10,6 +11,10 @@
 @import "./../../public/css/ud-custom-spacing.css";
 @import "./../../public/css/dashbord_navitaion.css";
 @import "./../../public/css/responsive.css";
+
+
+
+/* @import '../aesthetics/theme.css'; */
 
 a {
   cursor: pointer;
@@ -400,3 +405,4 @@ input.form-control:focus {
 /* input.form-control:hover { */
   /* border-color: #5bbb7b !important; your primary color */
 /* } */
+/* @import './aesthetics/theme.css'; */

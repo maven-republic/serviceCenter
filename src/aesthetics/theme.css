@@ -1,0 +1,87 @@
+@layer utilities {
+  /* -----------------------------------
+     🎨 Maven Design Tokens (Tailwind)
+  ------------------------------------ */
+
+  .artifact-framework {
+    @apply bg-white rounded-md p-6 mb-6 border border-gray-200 shadow-sm transition;
+  }
+
+  .artifact-framework:hover {
+    @apply border-gray-400 shadow-md;
+  }
+
+  .on-hover-menu {
+    @apply opacity-0 transition-opacity duration-150;
+  }
+
+  .artifact-framework:hover .on-hover-menu {
+    @apply opacity-100;
+  }
+
+  /* Typography Scale */
+  .typography-h1 { @apply font-serif font-bold text-3xl; }
+  .typography-h2 { @apply font-sans font-semibold text-xl; }
+  .typography-body { @apply font-sans font-normal text-base; }
+  .typography-label { @apply font-mono font-medium text-sm text-gray-600; }
+
+  /* Buttons */
+  .btn-outline {
+    @apply text-sm px-3 py-1 rounded border border-gray-300 text-gray-800 hover:bg-gray-100;
+  }
+  .btn-danger {
+    @apply text-sm px-3 py-1 rounded bg-red-600 text-white hover:bg-red-700;
+  }
+  .btn-icon {
+    @apply w-7 h-7 flex items-center justify-center rounded-full text-white bg-gray-500 hover:bg-gray-600;
+  }
+
+  /* Inputs + Selects */
+  .input-base {
+    @apply w-full border border-gray-300 rounded px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-accent focus:border-accent;
+  }
+  .select-base {
+    @apply w-full border border-gray-300 rounded px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-accent focus:border-accent;
+  }
+
+  /* Tooltips and Popovers */
+  .ui-tooltip {
+    @apply text-xs px-2 py-1 bg-white border border-gray-200 shadow rounded z-50;
+  }
+
+  /* Animations */
+  .fade-in-fast {
+    @apply transition-all duration-200 ease-in-out;
+  }
+  .scale-subtle {
+    @apply transition-transform duration-200 ease-in-out scale-100 hover:scale-[1.02];
+  }
+
+  /* Badge Tokens */
+  .badge-education {
+    @apply inline-block rounded-full border px-2 py-0.5 text-xs font-medium text-green-700 border-green-300 bg-green-50;
+  }
+
+  /* Utility Blocks */
+  .section-heading {
+    @apply text-xl font-semibold text-gray-800 mb-4 tracking-tight;
+  }
+  .section-subheading {
+    @apply text-sm font-normal text-gray-500 mb-2;
+  }
+
+  /* Timeline Line */
+  .vertical-line {
+    @apply absolute left-3 top-0 bottom-0 w-px bg-gray-300 opacity-25;
+  }
+}
+
+/* ✅ Keep outside for debug only */
+body::before {
+  content: '🌊 Tailwind is running';
+  display: block;
+  background: #d1fae5;
+  color: #065f46;
+  padding: 0.5rem;
+  text-align: center;
+}
