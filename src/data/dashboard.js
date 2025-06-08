@@ -12,7 +12,13 @@ export const customerNavigation = {
       name: "Explore",
       icon: "flaticon-rocket",
       path: "/customer/explore",
-    }
+    },
+    {
+      id: 5,
+      name: "Chat",
+      icon: "flaticon-chat",
+      path: "/customer/chat",
+    },
   ],
   account: [
     {

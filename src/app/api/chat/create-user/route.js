@@ -8,8 +8,8 @@ const serverClient = StreamChat.getInstance(
 );
 
 export async function POST(req) {
-  const { id, name } = await req.json();
-
+  const { id, name } = await req.json();  
+  
   try {
     await serverClient.upsertUser({
       id,      // e.g., user ID from your DB

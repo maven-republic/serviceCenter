@@ -90,13 +90,20 @@ export default function PopularServiceSlideCard1({
                 }`}
               >
                 <span className="far fa-heart" />
+              </a> 
+              <a
+                onClick={() => setFavActive(!isFavActive)}
+                className={`listing-fav fz12 ${isFavActive ? "ui-fav-active" : ""}`}
+                style={{ position: 'absolute', top: '60px', right: '10px', zIndex: 2 }}
+              >
+                <span className="far fa-message" />
               </a>
             </div>
           </div>
         </div>
         <div className={`list-content ${isContentExpanded ? "px-0" : ""}`}>
           <p className="list-text body-color fz14 mb-1">{data.category}</p>
-          <h5 className="list-title">
+          <h5 className="list-title"> 
             <Link href={`/service-single/${data.id}`}>{data.title}</Link>
           </h5>
           <div className="review-meta d-flex align-items-center">

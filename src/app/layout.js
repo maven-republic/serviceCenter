@@ -4,7 +4,7 @@ import { createContext, useContext, useState, useEffect, useRef } from 'react'
 import { useSession, useSupabaseClient } from '@supabase/auth-helpers-react'
 import { createClient } from '@/utils/supabase/client'
 import { DM_Sans } from 'next/font/google'
-import './globals.css'
+import './globals.css' 
 
 import SupabaseProvider from '@/components/SupabaseProvider'
 import SearchModal1 from '@/components/modal/SearchModal1'

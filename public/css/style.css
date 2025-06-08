@@ -13123,13 +13123,23 @@ input.form-control:hover {
 .chat-wrapper {
   display: flex;
   flex-direction: column;
-  height: 100vh;
   background-color: #f9fafb;
+  height: calc(100vh - 148px);
+  @media screen and (max-width: 992px) {
+    height: calc(100vh - 140px);
+    overflow: hidden;
+  }
+
+  @media (max-width: 769.5px) {
+    height: calc(100vh - 182.75px);
+  }
+  
 }
 
 .chat-body {
   display: flex;
-  flex: 1;
+  /* flex: 1; */
+  height:  100%;
   overflow: hidden;
   border-radius: 12px;
 }
@@ -13172,6 +13182,7 @@ input.form-control:hover {
 
 .search-icon {
   position: absolute;
+  background-image: url("data:image/svg+xml,%3Csvg%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%3Cg%20id%3D%22SVGRepo_bgCarrier%22%20stroke-width%3D%220%22%3E%3C%2Fg%3E%3Cg%20id%3D%22SVGRepo_tracerCarrier%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3C%2Fg%3E%3Cg%20id%3D%22SVGRepo_iconCarrier%22%3E%3Cpath%20d%3D%22M11%206C13.7614%206%2016%208.23858%2016%2011M16.6588%2016.6549L21%2021M19%2011C19%2015.4183%2015.4183%2019%2011%2019C6.58172%2019%203%2015.4183%203%2011C3%206.58172%206.58172%203%2011%203C15.4183%203%2019%206.58172%2019%2011Z%22%20stroke%3D%22%23000000%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3C%2Fpath%3E%3C%2Fg%3E%3C%2Fsvg%3E");
   top: 50%;
   left: 12px;
   transform: translateY(-50%);
@@ -13182,6 +13193,7 @@ input.form-control:hover {
 
 .back-icon{  
   display: none;
+  background-image: url("data:image/svg+xml,%3Csvg%20fill%3D%22%23000000%22%20version%3D%221.1%22%20id%3D%22Layer_1%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20xmlns%3Axlink%3D%22http%3A%2F%2Fwww.w3.org%2F1999%2Fxlink%22%20viewBox%3D%220%200%20100%20100%22%20enable-background%3D%22new%200%200%20100%20100%22%20xml%3Aspace%3D%22preserve%22%3E%3Cg%20id%3D%22SVGRepo_bgCarrier%22%20stroke-width%3D%220%22%3E%3C%2Fg%3E%3Cg%20id%3D%22SVGRepo_tracerCarrier%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3C%2Fg%3E%3Cg%20id%3D%22SVGRepo_iconCarrier%22%3E%3Cg%3E%3Cpath%20d%3D%22M33.934%2C54.458l30.822%2C27.938c0.383%2C0.348%2C0.864%2C0.519%2C1.344%2C0.519c0.545%2C0%2C1.087-0.222%2C1.482-0.657%20c0.741-0.818%2C0.68-2.083-0.139-2.824L37.801%2C52.564L64.67%2C22.921c0.742-0.818%2C0.68-2.083-0.139-2.824%20c-0.817-0.742-2.082-0.679-2.824%2C0.139L33.768%2C51.059c-0.439%2C0.485-0.59%2C1.126-0.475%2C1.723%20C33.234%2C53.39%2C33.446%2C54.017%2C33.934%2C54.458z%22%3E%3C%2Fpath%3E%3C%2Fg%3E%3C%2Fg%3E%3C%2Fsvg%3E");
   width: 30px;
   height: 30px;
   margin-right: 10px;

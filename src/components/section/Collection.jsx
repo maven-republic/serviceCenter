@@ -46,7 +46,7 @@ export default function Collection() {
         
 
 
-        console.log("Response received:", response.status);
+        console.log("Response received:", await response.json());
         console.log("Response headers:", Object.fromEntries(response.headers.entries()));
     
     // Check the content type
@@ -66,6 +66,7 @@ export default function Collection() {
       throw new Error(`Failed to fetch: ${response.status} ${response.statusText}`);
         }
         const data = await response.json();
+        console.log("Services data1:", response);
         setServices(data);
       } catch (error) {
         console.error('Detailed error fetching services:', {

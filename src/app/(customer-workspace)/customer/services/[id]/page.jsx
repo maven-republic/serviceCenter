@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { useParams, useSearchParams, useRouter } from 'next/navigation'
-import { useAccount } from '@/app/layout'
+import { useAccount } from '@/app/chat/layout'
 import { useSession, useSupabaseClient } from '@supabase/auth-helpers-react'
 
 import AddressConfirmation from '@/components/AddressConfirmation/AddressConfirmation'

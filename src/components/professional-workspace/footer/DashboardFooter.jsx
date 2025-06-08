@@ -3,7 +3,7 @@ import FooterSelect1 from "@/components/footer/ui/FooterSelect1";
 export default function DashboardFooter() {
     return (
         <>
-            <footer className="dashboard_footer pt30 pb30">
+            <footer className="dashboard_footer pt10 pb10">
                 <div className="container">
                     <div className="row align-items-center justify-content-center justify-content-md-between">
                         <div className="col-auto">

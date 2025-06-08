@@ -1,17 +1,16 @@
-import DashboardLayout from "@/components/dashboard/DashboardLayout";
-import ChatProvider from "@/components/dashboard/section/ChatProvider";
+import DashboardLayout from "@/components/professional-workspace/DashboardLayout";
+import ChatProvider from "@/components/chat/ChatProvider";
 import { redirect } from 'next/navigation'
 import MobileNavigation2 from "@/components/header/MobileNavigation2";
-import { createClient } from '@/utils/supabase/server'
-
+import CustomerWorkspaceStructure from "@/components/customer-workspace/CustomerWorkspaceStructure"
+import { createClient } from '@/utils/supabase/server' 
 export const metadata = {
   title: "Freeio - Freelance Marketplace React/Next Js Template | Add Service",
 };
 
 export default async function page() {
 
-  const supabase = await createClient()
-
+  const supabase = await createClient()  
   const { data, error } = await supabase.auth.getUser()
   if (error || !data?.user) {
     redirect('/login')
@@ -28,13 +27,10 @@ export default async function page() {
     name: account?.first_name + ' ' + account?.last_name,
   }
 
+  
   return (
-    <>
-    
-    <MobileNavigation2 />
-      <DashboardLayout> 
-        <ChatProvider user={user} />
-      </DashboardLayout>
+    <> 
+        <ChatProvider user={user} /> 
     </>
   );
 }
