@@ -1,0 +1,44 @@
+{
+  "compilerOptions": {
+    "baseUrl": ".", // Not "src"
+    "paths": {
+      "@/*": [
+        "src/*"
+      ],
+      "~/*": [
+        "./*"
+      ]
+    },
+    "lib": [
+      "dom",
+      "dom.iterable",
+      "esnext"
+    ],
+    "allowJs": true,
+    "skipLibCheck": true,
+    "strict": false,
+    "noEmit": true,
+    "incremental": true,
+    "module": "esnext",
+    "esModuleInterop": true,
+    "moduleResolution": "node",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "jsx": "preserve",
+    "plugins": [
+      {
+        "name": "next"
+      }
+    ],
+    "target": "ES2017"
+  },
+  "include": [
+    "src",
+    "utils",
+    ".next/types/**/*.ts"
+  ] // Include your utils folder
+  ,
+  "exclude": [
+    "node_modules"
+  ]
+}
