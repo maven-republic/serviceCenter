@@ -1,3 +1,4 @@
+C:\Users\astephson\Downloads\serviceCenter\src\aesthetics
 C:\Users\astephson\Downloads\serviceCenter\src\app
 C:\Users\astephson\Downloads\serviceCenter\src\artifacts
 C:\Users\astephson\Downloads\serviceCenter\src\components
@@ -6,6 +7,7 @@ C:\Users\astephson\Downloads\serviceCenter\src\data
 C:\Users\astephson\Downloads\serviceCenter\src\hook
 C:\Users\astephson\Downloads\serviceCenter\src\store
 C:\Users\astephson\Downloads\serviceCenter\src\utils
+C:\Users\astephson\Downloads\serviceCenter\src\aesthetics\theme.css
 C:\Users\astephson\Downloads\serviceCenter\src\app\(about)
 C:\Users\astephson\Downloads\serviceCenter\src\app\(api)
 C:\Users\astephson\Downloads\serviceCenter\src\app\(auth)
@@ -361,11 +363,17 @@ C:\Users\astephson\Downloads\serviceCenter\src\app\[...not_found]\page.jsx
 C:\Users\astephson\Downloads\serviceCenter\src\artifacts\AccountInformationArtifact.jsx
 C:\Users\astephson\Downloads\serviceCenter\src\artifacts\ArtifactInterface.jsx
 C:\Users\astephson\Downloads\serviceCenter\src\artifacts\CollectionArtifact.jsx
+C:\Users\astephson\Downloads\serviceCenter\src\artifacts\education
 C:\Users\astephson\Downloads\serviceCenter\src\artifacts\EducationArtifact.jsx
 C:\Users\astephson\Downloads\serviceCenter\src\artifacts\HeadingArtifact.jsx
 C:\Users\astephson\Downloads\serviceCenter\src\artifacts\ImageArtifact.jsx
 C:\Users\astephson\Downloads\serviceCenter\src\artifacts\ParagraphArtifact.jsx
 C:\Users\astephson\Downloads\serviceCenter\src\artifacts\QuoteArtifact.jsx
+C:\Users\astephson\Downloads\serviceCenter\src\artifacts\education\CredentialArtifact.jsx
+C:\Users\astephson\Downloads\serviceCenter\src\artifacts\education\DescriptionArtifact.jsx
+C:\Users\astephson\Downloads\serviceCenter\src\artifacts\education\EducationTimelineArtifact.jsx
+C:\Users\astephson\Downloads\serviceCenter\src\artifacts\education\FieldOfStudyArtifact.jsx
+C:\Users\astephson\Downloads\serviceCenter\src\artifacts\education\InstitutionArtifact.jsx
 C:\Users\astephson\Downloads\serviceCenter\src\components\Address
 C:\Users\astephson\Downloads\serviceCenter\src\components\AddressConfirmation
 C:\Users\astephson\Downloads\serviceCenter\src\components\breadcumb

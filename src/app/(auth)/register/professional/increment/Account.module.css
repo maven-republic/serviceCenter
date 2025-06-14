@@ -1,41 +1,40 @@
-/* increment/Account.module.css
+/* Container styles */
 .container {
-    display: flex;
-    flex-wrap: wrap;
-    margin-bottom: 2rem;
-  }
-  .intro {
-    flex: 1 1 40%;
-    padding-right: 1.5rem;
-  }
-  .fieldGroup {
-    margin-bottom: 1rem;
-  }
-  .label {
-    display: block;
-    font-weight: 600;
-    margin-bottom: 0.5rem;
-  }
-  .input {
-    width: 100%;
-    padding: 0.5rem;
-    border: 1px solid #ced4da;
-    border-radius: 0.25rem;
-    transition: border-color 0.2s ease;
-  }
-  .inputValid {
-    border-color: #28a745;
-  }
-  .inputInvalid {
-    border-color: #dc3545;
-  }
-  .errorText {
-    color: #dc3545;
-    font-size: 0.875rem;
-    margin-top: 0.25rem;
-  }
-  .spinner {
-    margin-left: 0.5rem;
-    vertical-align: middle;
-  }
-   */
+  margin: 0 !important;
+  padding: 0 !important;
+  max-width: none !important;
+}
+
+.row {
+  margin: 0 !important;
+}
+
+/* Left column styles */
+.leftColumn {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  overflow: hidden;
+  margin: 0;
+}
+
+.overlay {
+  background-color: rgba(0,0,0,0.2);
+}
+
+.backgroundImage {
+  object-fit: cover;
+  z-index: 1;
+}
+
+/* Right column styles */
+.rightColumn {
+  min-height: 100vh;
+  margin: 0;
+}
+
+.formContainer {
+  margin: 0;
+}
+
+.formContent {
+  max-width: 700px;
+}

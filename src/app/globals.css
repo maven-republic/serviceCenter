@@ -17,7 +17,7 @@
 
 
 
-@import '../aesthetics/theme.css';
+/* @import '../aesthetics/theme.css'; */
 
 a {
   cursor: pointer;
@@ -380,9 +380,9 @@ a {
 
 /* In globals.css or ProfessionalForm.module.css */
 .our-register {
-  min-height: 100vh;
+  /* min-height: 100vh; */
   position: relative;
-  padding-bottom: 120px; /* enough room for the fixed nav */
+  /* padding-bottom: 120px;  */
 }
 
 

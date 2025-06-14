@@ -286,6 +286,9 @@ export default function ProfessionalAccountCreation({ errorMessage, currentStep,
 
   return (
     <form className={designs.outer}>
+
+         {/* <form> */}
+
       {errorMessage && <div className="alert alert-danger mb-4">{errorMessage}</div>}
       {errors.submit && <div className="alert alert-danger mb-4">{errors.submit}</div>}
 

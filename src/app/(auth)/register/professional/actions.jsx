@@ -127,9 +127,7 @@ export async function signupProfessional(formData) {
     console.log('✅ Professional created:', professionalData.professional_id)
     const professionalId = professionalData.professional_id
 
-    // Rest of your insertion logic remains the same...
-    // (availability, services, education, certifications, work experience)
-
+    // Insert availability
     if (availability.length > 0) {
       const { error: availErr } = await supabase.from('availability').insert(
         availability.map(a => ({
@@ -165,8 +163,11 @@ export async function signupProfessional(formData) {
       if (svcErr) throw new Error('Failed to insert professional_service: ' + svcErr.message)
     }
 
-    // Education processing with proper error handling
+    // Education processing with artifact creation
     for (const entry of education) {
+      console.log('🔍 Education entry data:', JSON.stringify(entry, null, 2));
+
+      // First insert the normalized education record
       const { data: eduResult, error: eduError } = await supabase
         .from('professional_education')
         .insert({
@@ -174,10 +175,13 @@ export async function signupProfessional(formData) {
           institution_id: entry.institutionId !== '__new' ? entry.institutionId : null,
           degree_id: entry.degreeId || null,
           field_of_study_id: entry.fieldOfStudyId || null,
+          degree_title: entry.degreeName || null,
+          field_of_study: entry.fieldName || null,
           start_date: entry.startDate || null,
           end_date: entry.endDate || null,
           description: entry.description || null,
-          education_level: entry.educationLevel || null
+          education_level: entry.educationLevel || null,
+          study_mode: entry.studyMode || 'full_time'
         })
         .select()
         .single()
@@ -189,16 +193,27 @@ export async function signupProfessional(formData) {
 
       const educationId = eduResult.education_id
 
-      // Fix: competence_id instead of service_id
+      // Create education artifact
+      const artifactId = await createEducationArtifact(supabase, {
+        userId,
+        entry,
+        educationId,
+        eduResult
+      })
+
+      console.log('✅ Education artifact created:', artifactId)
+
+      // Handle competences
       if (entry.competenceIds?.length) {
         const competenceRows = entry.competenceIds.map(cid => ({
           education_id: educationId,
-          competence_id: cid // Fixed this
+          competence_id: cid
         }))
         const { error: compErr } = await supabase.from('education_competence').insert(competenceRows)
         if (compErr) console.error('❌ Education competence error:', compErr)
       }
 
+      // Handle media
       if (entry.media?.length) {
         const mediaRows = entry.media.map(m => ({
           education_id: educationId,
@@ -212,7 +227,7 @@ export async function signupProfessional(formData) {
       }
     }
 
-    // Rest of certification and work experience logic...
+    // Certification processing
     for (const cert of certifications) {
       const { data: ref } = await supabase
         .from('certification')
@@ -249,6 +264,7 @@ export async function signupProfessional(formData) {
       }
     }
 
+    // Work experience processing
     if (workExperience.length > 0) {
       const workRows = workExperience.map(exp => ({
         professional_id: professionalId,
@@ -269,4 +285,126 @@ export async function signupProfessional(formData) {
     console.error('❌ Professional signup failed:', error)
     return { error: error.message }
   }
+}
+
+/**
+ * Creates education artifact with child artifacts
+ * @param {Object} supabase - Supabase client
+ * @param {Object} params - Parameters object
+ * @param {string} params.userId - User ID
+ * @param {Object} params.entry - Education entry from form
+ * @param {string} params.educationId - Education ID from professional_education
+ * @param {Object} params.eduResult - Full education result from DB
+ * @returns {string} - Artifact ID
+ */
+async function createEducationArtifact(supabase, { userId, entry, educationId, eduResult }) {
+  // Step 1: Insert the education artifact (parent)
+  const { data: artifactResult, error: artifactError } = await supabase
+    .from('artifact')
+    .insert({
+      account_id: userId,
+      type: 'education',
+      context_id: educationId,
+      properties: {
+        education_level: entry.educationLevel || 'bachelor_degree',
+        study_mode: entry.studyMode || 'full_time'
+      },
+      content: [],
+      position: 1
+    })
+    .select('artifact_id')
+    .single();
+
+  if (artifactError || !artifactResult) {
+    console.error('❌ Failed to insert education artifact:', artifactError);
+    throw new Error('Failed to insert education artifact: ' + (artifactError?.message || 'unknown error'));
+  }
+
+  const artifactId = artifactResult.artifact_id;
+
+  // Step 2: Get institution name if we have institution_id
+  let institutionName = entry.institutionName || 'Institution';
+  if (entry.institutionId && entry.institutionId !== '__new') {
+    const { data: instData } = await supabase
+      .from('institution')
+      .select('name')
+      .eq('institution_id', entry.institutionId)
+      .single();
+    
+    if (instData?.name) {
+      institutionName = instData.name;
+    }
+  }
+
+  // Step 3: Define child artifacts with proper data mapping
+  const childArtifacts = [
+    {
+      type: 'heading',
+      artifact_key: 'degree',
+      properties: { 
+        text: entry.degreeName || eduResult.degree_title || 'Degree', 
+        level: 2 
+      },
+      position: 0
+    },
+    {
+      type: 'paragraph',
+      artifact_key: 'institution',
+      properties: { 
+        text: institutionName
+      },
+      position: 1
+    },
+    {
+      type: 'paragraph',
+      artifact_key: 'field_of_study',
+      properties: { 
+        text: entry.fieldName || eduResult.field_of_study || 'Field of Study' 
+      },
+      position: 2
+    },
+    {
+      type: 'paragraph',
+      artifact_key: 'date_range',
+      properties: {
+        text: `${entry.startDate || eduResult.start_date || 'Start'} – ${entry.endDate || eduResult.end_date || 'End'}`
+      },
+      position: 3
+    },
+    {
+      type: 'paragraph',
+      artifact_key: 'description',
+      properties: { 
+        text: entry.description || eduResult.description || '' 
+      },
+      position: 4
+    }
+  ];
+
+  console.log('🚸 Prepared child artifacts payload:', JSON.stringify(childArtifacts, null, 2));
+
+  // Step 4: Insert child artifacts
+  const { data: insertedChildren, error: childErr } = await supabase
+    .from('artifact')
+    .insert(
+      childArtifacts.map((a) => ({
+        account_id: userId,
+        type: a.type,
+        artifact_key: a.artifact_key,
+        properties: a.properties,
+        position: a.position,
+        parent_artifact_id: artifactId,
+        content: []
+      }))
+    )
+    .select();
+
+  if (childErr) {
+    console.error('❌ Supabase error inserting child artifacts:', childErr);
+    throw new Error('Failed to insert child education artifacts — reason: ' + childErr.message);
+  }
+
+  console.log('✅ Inserted child artifacts:', insertedChildren);
+
+  return artifactId;
 }

@@ -6,8 +6,11 @@ import Footer from "@/components/footer/Footer"
 export default function RegisterSelection() {
   return (
      <div className="bgc-thm4"> 
-      <Header />
-      <section className="our-register">
+      {/* <Header /> */}
+      {/* <section className="our-register"> */}
+              <section className="
+              ">
+
         <div className="container">
           <div className="row">
             <div className="col-lg-6 m-auto wow fadeInUp" data-wow-delay="300ms">

@@ -5,10 +5,12 @@ import ParagraphArtifact from './ParagraphArtifact'
 import EducationArtifact from './EducationArtifact'
 
 export default function ArtifactInterface({ artifacts }) {
+  console.log('🧱 Loaded artifacts:', artifacts)
+
   return (
     <div className="space-y-4">
       {artifacts.map((artifact) => (
-        <ArtifactManifest key={artifact.id} artifact={artifact} />
+        <ArtifactManifest key={artifact.artifact_id} artifact={artifact} /> // ✅ Fixed key
       ))}
     </div>
   )
