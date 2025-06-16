@@ -387,7 +387,7 @@ a {
 
 
 input.form-control:hover {
-  border-width: 1px !important; /* thinner border on hover */
+  border-width: 0.5px !important; /* thinner border on hover */
   outline: none;
 }
 
@@ -409,3 +409,26 @@ input.form-control:focus {
   /* border-color: #5bbb7b !important; your primary color */
 /* } */
 /* @import './aesthetics/theme.css'; */
+
+/* certification date picker */
+/* 
+.react-datepicker {
+  font-family: inherit;
+  border: none;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+  border-radius: 0.5rem;
+  padding: 1rem;
+}
+
+.react-datepicker__day--selected {
+  background-color: #5bbb7b;
+  color: white;
+}
+
+.react-datepicker__day--keyboard-selected {
+  background-color: #d1fae5;
+}
+
+.react-datepicker__day:hover {
+  background-color: #e0f2f1;
+} */

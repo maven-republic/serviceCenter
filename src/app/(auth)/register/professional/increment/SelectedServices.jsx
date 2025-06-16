@@ -51,7 +51,7 @@ export default function SelectedServices({
   </label>
   <input
     type="date"
-    className="form-control form-control-sm"
+    className="form-control form-control-lg"
     value={formData.serviceStartDates?.[service.service_id] || ''}
     onChange={(e) =>
       updateFormData({

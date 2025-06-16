@@ -8,7 +8,7 @@ import ProfessionalAccountCreation from './ProfessionalAccountCreation'
 export default function ProfessionalAccountCreationInterface({ searchParams }) {
   const [currentStep, setCurrentStep] = useState(1)
 
-const nextStep = () => setCurrentStep(prev => Math.min(prev + 1, 8)) // was 8
+const nextStep = () => setCurrentStep(prev => Math.min(prev + 1, 7)) // Changed from 8 to 7
   const prevStep = () => setCurrentStep(prev => Math.max(prev - 1, 1))
 
   const errorMessage = searchParams?.error || null

@@ -9,7 +9,7 @@ import Personal from './increment/Personal'
 import GeneralAddress from './increment/GeneralAddress'
 import Services from './increment/Services'
 import SelectedServices from './increment/SelectedServices'
-import Education from './increment/Education'
+// import Education from './increment/Education'
 import CertificationInterface from './increment/professional-certification/CertificationInterface'
 import WorkExperienceInterface from './increment/professional-work-experience/WorkExperienceInterface'
 import AvailabilityInterface from './increment/professional-availability/AvailabilityInterface'
@@ -26,10 +26,10 @@ import {
   validateCity,
   validateParish,
   validatePhone,
-  validateDegree,
-  validateInstitutionId,
-  validateFieldOfStudy,
-  validateEndDate,
+  // validateDegree,
+  // validateInstitutionId,
+  // validateFieldOfStudy,
+  // validateEndDate,
   validateWorkExperienceEntry
 } from '@/utils/validation'
 
@@ -63,7 +63,7 @@ export default function ProfessionalAccountCreation({ errorMessage, currentStep,
     dailyRate: '',
     serviceRadius: '',
     phone: '',
-    education: [],
+    // education: [],
     certifications: [],
     workExperience: [],
     availability: [],
@@ -256,7 +256,7 @@ export default function ProfessionalAccountCreation({ errorMessage, currentStep,
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-    if (currentStep !== 8) return
+    if (currentStep !== 7) return
 
     setLoading(true)
 
@@ -352,7 +352,7 @@ export default function ProfessionalAccountCreation({ errorMessage, currentStep,
         </div>
       )}
 
-      {currentStep === 5 && (
+      {/* {currentStep === 5 && (
         <Education 
           formData={formData} 
           errors={errors} 
@@ -360,23 +360,23 @@ export default function ProfessionalAccountCreation({ errorMessage, currentStep,
           handleBlur={handleBlur} 
           allServices={servicesList} 
         />
-      )}
+      )} */}
 
-      {currentStep === 6 && (
+      {currentStep === 5 && (
         <CertificationInterface 
           formData={formData} 
           updateFormData={updateFormData} 
         />
       )}
 
-      {currentStep === 7 && (
+      {currentStep === 6 && (
         <WorkExperienceInterface 
           formData={formData} 
           updateFormData={updateFormData} 
         />
       )}
 
-      {currentStep === 8 && (
+      {currentStep === 7 && (
         <AvailabilityInterface 
           formData={formData} 
           updateFormData={updateFormData} 
@@ -390,7 +390,7 @@ export default function ProfessionalAccountCreation({ errorMessage, currentStep,
         nextStep={handleNextStep}
         prevStep={handlePrevStep}
         onSubmit={handleSubmit}
-        totalSteps={8}
+        totalSteps={7}
         loading={loading}
       />
     </form>

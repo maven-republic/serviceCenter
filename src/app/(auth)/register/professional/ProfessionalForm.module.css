@@ -6,10 +6,9 @@
 .outer {
     /* margin-left: auto;
     margin-right: auto; */
-    /* padding-left: 1.5rem; */
-    /* originally px-4 → 1.5rem */
-    /* padding-right: 1.5rem; */
-    /* max-width: 1500px; */
+    padding-left: 4rem;    /* or 3rem if you want more breathing room */
+  padding-right: 4rem;
+    max-width: 1500px;
     /* or whatever your container-fluid break-point is */
 }
 

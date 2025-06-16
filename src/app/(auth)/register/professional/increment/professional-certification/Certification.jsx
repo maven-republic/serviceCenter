@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useSupabaseClient } from '@supabase/auth-helpers-react'
+import Calendar from './Calendar'
 
 export default function Certification({ data, onChange, onRemove }) {
   const supabase = useSupabaseClient()
@@ -138,20 +139,18 @@ export default function Certification({ data, onChange, onRemove }) {
       <div className="row mb-4">
         <div className="col-md-6">
           <label className="form-label small text-muted">Issue Date</label>
-          <input
-            type="date"
-            className="form-control rounded-3 px-3 py-2 "
+          <Calendar
             value={data.issueDate}
-            onChange={(e) => onChange('issueDate', e.target.value)}
+            onChange={(value) => onChange('issueDate', value)}
+            placeholder="Select issue date"
           />
         </div>
         <div className="col-md-6">
           <label className="form-label small text-muted">Expiration Date</label>
-          <input
-            type="date"
-            className="form-control rounded-3 px-3 py-2 "
+          <Calendar
             value={data.expirationDate}
-            onChange={(e) => onChange('expirationDate', e.target.value)}
+            onChange={(value) => onChange('expirationDate', value)}
+            placeholder="Select expiration date"
           />
         </div>
       </div>
@@ -170,4 +169,3 @@ export default function Certification({ data, onChange, onRemove }) {
     </div>
   )
 }
-

@@ -1,23 +1,49 @@
 /* Tailwind-like styles for Services.jsx */
 
+.searchWrapper {
+  position: relative;
+  display: flex;
+  align-items: center; /* aligns icon and input vertically */
+  background-color: white;
+  border: 1px solid #d1d5db;
+  border-radius: 0.5rem;
+height: 4rem;
+  padding-left: 2.5rem;
+  padding-right: 1rem;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
 .searchBox {
   position: relative;
   margin-bottom: 1rem;
 }
 
 .searchInput {
+  border: none;
+  outline: none;
   width: 100%;
-  padding: 0.5rem 2.75rem 0.5rem 2.5rem; /* left padding for icon */
-  border: 1px solid #d1d5db;
-  border-radius: 0.375rem; /* rounded-md */
+  height: 100%;
   font-size: 1rem;
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  background-color: transparent;
+  padding: 0; /* input inherits padding from wrapper */
+  line-height: 1.25;
+}
+
+.searchInput::placeholder {
+  color: #6b7280; /* gray-500 */
+  opacity: 1;
+}
+
+.searchIcon {
+  position: absolute;
+  left: 0.75rem;
+  color: #6b7280;
+  font-size: 1rem;
+  pointer-events: none;
 }
 
 .searchInput:focus {
-  border-color: #2563eb; /* blue-600 */
   outline: none;
-  box-shadow: 0 0 0 1px #2563eb;
 }
 
 .searchIcon {
@@ -43,7 +69,7 @@
   border: 1px solid #e5e7eb;         /* gray-200 */
   border-radius: 0.5rem;             /* rounded-lg */
   box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1),
-              0 4px 6px -2px rgba(0, 0, 0, 0.05); /* shadow-xl */
+              0 4px 6px -2px rgba(0, 0, 0, 0.05); 
   z-index: 50;
   overflow: hidden;
 }
@@ -57,15 +83,17 @@
   display: flex;
   flex-direction: column;
   gap: 1rem;
+  position: relative;
+  box-shadow: inset 0 6px 6px -6px #ccc, inset 0 -6px 6px -6px #ccc;
 }
 
 /* ------------------ Category styling ------------------ */
 
 .dropdownCategoryHeader {
-  font-size: 0.875rem; /* Tailwind text-sm */
   font-weight: 600;
-  color: #374151; /* gray-700 */
   margin-bottom: 0.5rem;
+  color: #374151;
+  font-size: 0.875rem;
 }
 
 
@@ -85,20 +113,17 @@
 /* ------------------ Service Tag ------------------ */
 
 .serviceTag {
-  display: inline-block;
-  padding: 0.4rem 0.75rem;
-  font-size: 0.75rem; /* Tailwind text-xs */
-  font-weight: 500;
-  color: #1f2937;              /* gray-800 */
-  background-color: #f3f4f6;   /* gray-100 */
+  /* background: #f9fafb; */
+  border: 1px solid #e5e7eb;
   border-radius: 9999px;
-  border: 1px solid transparent;
-  transition: all 0.2s ease-in-out;
+  padding: 0.4rem 0.75rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  transition: all 0.2s ease;
   white-space: nowrap;
-  text-overflow: ellipsis;
   overflow: hidden;
-  max-width: 100%;
-  cursor: pointer;
+  text-overflow: ellipsis;
+  /* box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04); */
 }
 
 .serviceTag:hover {
@@ -120,7 +145,7 @@
 .dropdownFooter {
   padding: 1rem;
   border-top: 1px solid #e5e7eb;
-  background-color: #ffffff;
+  /* background-color: #ffffff; */
   display: flex;
   justify-content: flex-end;
 }
@@ -135,6 +160,16 @@
   border-bottom: 2px solid #e5e7eb; /* gray-200 */
 }
 
+/* .verticalHeaderSticky {
+  position: sticky;
+  top: 0;
+  background: white;
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+  z-index: 10;
+  border-bottom: 1px solid #e5e7eb;
+} */
+
 .verticalHeader h6 {
   margin: 0;
   font-size: 1rem;
@@ -145,10 +180,9 @@
 /* ------------------ Enhanced Category Block ------------------ */
 .categoryBlock {
   padding: 1rem;
-  background-color: #f9fafb; /* gray-50 */
+  /* background-color: #f9fafb; gray-50 */
   border: 1px solid #e5e7eb;
   border-radius: 0.375rem;   /* rounded-md */
   margin-bottom: 0.75rem;    /* Space between portfolios */
 }
 
-/* Rest of the CSS remains the same */
