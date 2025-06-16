@@ -39,7 +39,7 @@ export default function CertificationServiceSelector({ selected, onSelect, onRem
         {!showInput ? (
           <button
             type="button"
-            className="btn btn-outline-primary btn-sm rounded-pill px-3 py-2 shadow-sm"
+            className="btn btn-outline-primary btn-sm rounded-pill px-3 py-2"
             onClick={() => setShowInput(true)}
           >
             + Add Service
@@ -48,14 +48,14 @@ export default function CertificationServiceSelector({ selected, onSelect, onRem
           <>
             <input
               type="text"
-              className="form-control rounded-pill px-3 py-2 shadow-sm"
+              className="form-control rounded-pill px-3 py-2 "
               placeholder="Search services..."
               value={input}
               onChange={(e) => setInput(e.target.value)}
             />
 
             {suggestions.length > 0 && (
-              <ul className="list-group w-100 shadow-sm mt-2">
+              <ul className="list-group w-100 mt-2">
                 {suggestions.map(service => (
                   <li
                     key={service.service_id}
@@ -85,7 +85,7 @@ export default function CertificationServiceSelector({ selected, onSelect, onRem
               <button
                 key={id}
                 type="button"
-                className="d-inline-flex align-items-center gap-2 px-3 py-1 bg-light border rounded-pill text-primary small fw-medium shadow-sm"
+                className="d-inline-flex align-items-center gap-2 px-3 py-1 bg-light border rounded-pill text-primary small fw-medium "
                 onClick={() => onRemove(id)}
               >
                 {svc.name}

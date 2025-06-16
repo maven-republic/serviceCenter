@@ -1,6 +1,8 @@
 'use client'
 
-export default function WorkExperienceEntry({ data, onChange, onRemove }) {
+import Calendar from '../professional-certification/Calendar'
+
+export default function WorkExperience({ data, onChange, onRemove }) {
   return (
     <div>
       <div className="mb-3">
@@ -37,20 +39,18 @@ export default function WorkExperienceEntry({ data, onChange, onRemove }) {
       <div className="row">
         <div className="col-md-6">
           <label className="form-label">Start Date</label>
-          <input
-            type="date"
-            className="form-control"
+          <Calendar
             value={data.start_date}
-            onChange={(e) => onChange('start_date', e.target.value)}
+            onChange={(value) => onChange('start_date', value)}
+            placeholder="Select start date"
           />
         </div>
         <div className="col-md-6">
           <label className="form-label">End Date</label>
-          <input
-            type="date"
-            className="form-control"
+          <Calendar
             value={data.end_date}
-            onChange={(e) => onChange('end_date', e.target.value)}
+            onChange={(value) => onChange('end_date', value)}
+            placeholder="Select end date"
           />
         </div>
       </div>
@@ -62,5 +62,4 @@ export default function WorkExperienceEntry({ data, onChange, onRemove }) {
       </div>
     </div>
   )
-} 
-
+}
