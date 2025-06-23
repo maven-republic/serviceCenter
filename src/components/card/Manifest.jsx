@@ -4,11 +4,14 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState, useMemo } from "react";
 import { useRouter } from "next/navigation"; 
+import { userChatStore } from '@/store/userChatStore';
+
 export default function Manifest({ data }) {
   const [isFavActive, setFavActive] = useState(false);
   const [showImage, setShowImage] = useState(true); // default to true, we'll disable only if needed
   const path = usePathname();
   const router = useRouter();
+  const { updateChatPartner } = userChatStore();
   // Function to generate a random pastel color
   const getRandomPastelColor = (seed) => {
     const hashCode = (str) => {
@@ -75,11 +78,8 @@ export default function Manifest({ data }) {
           </a>
           <Link
             href={`/customer/chat`}
-            onClick={() => {
-               sessionStorage.setItem('otherUserData', JSON.stringify({
-                id: "1234-yap-5670",
-                name: "test--user"
-               })); 
+            onClick={() => { 
+              updateChatPartner("test-user-124", "Jane Doe2", "https://cdn/jane.jpg");
             }}
             className={`listing-fav fz12 ${isFavActive ? "ui-fav-active" : ""}`}
             style={{ position: 'absolute', top: '60px', right: '10px', zIndex: 2 }}

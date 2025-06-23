@@ -1,9 +1,24 @@
-import { create } from 'zustand'
+import { create } from 'zustand';
 
 export const useLoaderStore = create((set) => ({
-  loading: false, // Initial state
+  loading: {
+    message: '',
+    state: false,
+  },
 
-  startLoading: () => set({ loading: true }),
-  stopLoading: () => set({ loading: false }),
-}))
+  startLoading: (message) =>
+    set({
+      loading: {
+        message: message || 'Loading...',
+        state: true, // ✅ loading has started
+      },
+    }),
 
+  stopLoading: () =>
+    set({
+      loading: {
+        message: '',
+        state: false,
+      },
+    }),
+}));
