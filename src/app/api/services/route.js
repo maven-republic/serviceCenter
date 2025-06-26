@@ -1,127 +1,138 @@
-// src/app/(api)/services/route.js
-import { NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
+// src/app/api/professional/services/route.js
+import { createClient } from '@/utils/supabase/server'
+import { NextResponse } from 'next/server'
 
-export const dynamic = 'force-dynamic'; // This ensures the route is not statically optimized
-export const revalidate = 0;
-
-export async function GET(request) {
+export async function POST(request) {
   try {
-    console.log("Route handler called");
-    console.log("Environment variables:", {
-     supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL ? 'Present' : 'Missing',
-      supabaseKey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ? 'Present' : 'Missing'
-    });
+    const supabase = await createClient()
+    const body = await request.json()
+    
+    const {
+      professional_id,
+      service_id,
+      custom_price,
+      custom_duration_minutes,
+      additional_notes,
+      is_active = true
+    } = body
 
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-    const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-
-    if (!supabaseUrl || !supabaseKey) {
-      console.error("Missing Supabase credentials");
-      return new NextResponse(
-        JSON.stringify({ error: 'Configuration error' }), 
-        { 
-          status: 500, 
-          headers: { 'Content-Type': 'application/json' } 
-        }
-      );
+    if (!professional_id || !service_id) {
+      return NextResponse.json({
+        success: false,
+        error: 'Professional ID and Service ID are required'
+      }, { status: 400 })
     }
 
-    const supabase = createClient(supabaseUrl, supabaseKey);
-    
-    // Get query parameters if needed
-    const { searchParams } = new URL(request.url);
-    const category = searchParams.get('category');
-    
-    console.log("Fetching services from Supabase", { category });
-    
-    // Build the query
-    let query = supabase
-      .from('service')
-      .select(`
-        *,
-        service_subcategory(
-          name,
-          service_category(
-            name,
-            path,
-            icon
-          )
-        ),
-        service_attribute(*),
-        service_image(*),
-        service_search_term(*)
-      `);
-    
-    // Add filters if provided
-    if (category) {
-      query = query.eq('service_subcategory.service_category.path', category);
+    // Check if this professional service already exists
+    const { data: existing, error: checkError } = await supabase
+      .from('professional_service')
+      .select('professional_service_id')
+      .eq('professional_id', professional_id)
+      .eq('service_id', service_id)
+      .single()
+
+    if (existing && !checkError) {
+      return NextResponse.json({
+        success: false,
+        error: 'This service is already added to your profile'
+      }, { status: 409 })
     }
-    
-    // Execute the query
-    const { data, error } = await query;
-    
+
+    // Add the professional service
+    const { data, error } = await supabase
+      .from('professional_service')
+      .insert({
+        professional_id,
+        service_id,
+        custom_price: custom_price ? parseFloat(custom_price) : null,
+        custom_duration_minutes: custom_duration_minutes ? parseInt(custom_duration_minutes) : null,
+        additional_notes,
+        is_active,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      })
+      .select()
+      .single()
+
     if (error) {
-      console.error("Supabase query error:", error);
-      throw error;
+      console.error('Error adding professional service:', error)
+      return NextResponse.json({
+        success: false,
+        error: 'Failed to add service',
+        details: error.message
+      }, { status: 500 })
     }
-    
-    console.log(`Retrieved ${data?.length || 0} services from database`);
-    
-    // Transform the data to match the expected format in the frontend
-    const transformedData = data.map(item => ({
-      id: item.service_id,
-      img: item.service_image && item.service_image.length > 0 
-        ? item.service_image[0].image_url 
-        : "/images/listings/default.jpg",
-      img2: item.service_image && item.service_image.length > 0 
-        ? item.service_image[0].image_url 
-        : "/images/listings/default.jpg",
-      category: item.service_subcategory?.service_category?.name || "General",
-      title: item.name,
-      rating: getAttributeValue(item.service_attribute, 'skill_level') || 4.7,
-      review: Math.floor(Math.random() * 100) + 20, // Random reviews count for demo
-      author: {
-        img: "/images/team/fl-s-1.png", // Default author image
-        name: "Service Provider", // Default provider name
-      },
-      price: item.base_price,
-      tag: item.service_subcategory?.name || "Service",
-      deliveryTime: `${Math.ceil((item.duration_minutes || 1440) / 60 / 24)}d`,
-      level: item.is_featured ? "top-rated" : "lavel-1",
-      location: "united-states", // Default location
-      sort: item.is_featured ? "best-seller" : "recommended",
-      tool: getAttributeValue(item.service_attribute, 'service_type') || "professional-tools",
-      language: "english",
-      lat: 23.8103 + (Math.random() - 0.5), // Random coordinates near default
-      long: 90.4125 + (Math.random() - 0.5), // Random coordinates near default
-      description: item.description
-    }));
 
+    return NextResponse.json({
+      success: true,
+      data,
+      message: 'Service added successfully'
+    })
 
-
-    console.log("Transformation complete", transformedData.length);
-
-    
-    return NextResponse.json(transformedData);
   } catch (error) {
-    console.error('Full error details:', {
-      name: error.name,
-      message: error.message,
-      stack: error.stack
-    });
-    return NextResponse.json(
-        
-        { error: error.message }, { status: 500 }
-    
-    );
+    console.error('Professional services API error:', error)
+    return NextResponse.json({
+      success: false,
+      error: 'Failed to add service',
+      details: error.message
+    }, { status: 500 })
   }
 }
 
-// Helper function to get attribute value
-function getAttributeValue(attributes, attributeName) {
-  if (!attributes || !attributes.length) return null;
-  const attribute = attributes.find(attr => attr.attribute_name === attributeName);
-  return attribute ? attribute.attribute_value : null;
-}
+export async function GET(request) {
+  try {
+    const supabase = await createClient()
+    const { searchParams } = new URL(request.url)
+    const professionalId = searchParams.get('professionalId')
 
+    if (!professionalId) {
+      return NextResponse.json({
+        success: false,
+        error: 'Professional ID is required'
+      }, { status: 400 })
+    }
+
+    const { data: services, error } = await supabase
+      .from('professional_service')
+      .select(`
+        professional_service_id,
+        service_id,
+        custom_price,
+        custom_duration_minutes,
+        additional_notes,
+        is_active,
+        created_at,
+        service:service_id (
+          service_id,
+          name,
+          description,
+          base_price,
+          duration_minutes
+        )
+      `)
+      .eq('professional_id', professionalId)
+      .eq('is_active', true)
+
+    if (error) {
+      console.error('Error fetching professional services:', error)
+      return NextResponse.json({
+        success: false,
+        error: 'Failed to fetch services',
+        details: error.message
+      }, { status: 500 })
+    }
+
+    return NextResponse.json({
+      success: true,
+      data: services || []
+    })
+
+  } catch (error) {
+    console.error('Professional services GET API error:', error)
+    return NextResponse.json({
+      success: false,
+      error: 'Failed to fetch services',
+      details: error.message
+    }, { status: 500 })
+  }
+}

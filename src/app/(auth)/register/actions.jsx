@@ -16,7 +16,13 @@ export default function LoginForm({ errorMessage }) {
     const email = e.target.email.value
     const password = e.target.password.value
 
-    const { error } = await supabase.auth.signInWithPassword({ email, password })
+const { data, error } = await supabase.auth.signInWithPassword({
+  email,
+  password,
+  options: {
+    shouldPersistSession: true,
+  },
+})
 
     if (error) {
       console.error('Login error:', error.message)

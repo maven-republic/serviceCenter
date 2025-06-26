@@ -1,3 +1,6 @@
+'use client'
+
+
 import { useLoaderStore } from '@/store/loaderStore'
 
 export default function Loader() {

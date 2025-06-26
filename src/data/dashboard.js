@@ -1,4 +1,4 @@
-// Updated navigation data structure with items grouped by section
+// Updated navigation data structure with Service Pricing added
 export const customerNavigation = {
   workspace: [
     {
@@ -97,7 +97,7 @@ export const professionalNavigation = [
     id: 9,
     name: "Manage Services",
     icon: "flaticon-presentation",
-    path: "/manage-services",
+    path: "/professional/manage-services",
   },
   {
     id: 10,
@@ -115,28 +115,42 @@ export const professionalNavigation = [
     id: 12,
     name: "Add Services",
     icon: "flaticon-document",
-    path: "/add-services",
+    path: "/professional/add-services",
   },
   {
     id: 13,
-    name: "Create Project",
+    name: "Quotations",
     icon: "flaticon-content",
-    path: "/create-projects",
+    path: "/professional/manage-quotations",
   },
+  // ✅ NEW: Service Pricing with quantification
   {
     id: 14,
+    name: "Valuation",
+    icon: "flaticon-price-tag",
+    path: "/professional/service-pricing",
+  },
+  {
+    id: 15,
     name: "Account Information",
     icon: "flaticon-photo",
     path: "/professional/account-information",
   },
   {
-    id: 15,
+    id: 16,
+    name: "Availability",
+    icon: "flaticon-calendar",
+    path: "/professional/availability",
+  },
+  {
+    id: 17,
     name: "Logout",
     icon: "flaticon-logout",
     path: "/login",
   },
-];
+]
 
+// Rest of your existing exports remain unchanged...
 export const invoice = [
   {
     id: 1,
@@ -487,4 +501,3 @@ export const managejob = [
     status: 1,
   },
 ];
-

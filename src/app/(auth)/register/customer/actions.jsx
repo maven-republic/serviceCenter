@@ -66,7 +66,9 @@ const { data, error } = await supabase.auth.signUp({
   email: userEmail,
   password,
   options: {
-    shouldPersistSession: true
+    shouldPersistSession: true,
+emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/confirm`
+
   }
 })
 

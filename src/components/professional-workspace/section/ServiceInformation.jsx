@@ -11,17 +11,25 @@ export default function ServiceInformation() {
   const supabase = createClient()
   const { user } = useUserStore()
   const [professionalId, setProfessionalId] = useState(null)
-  const [categories, setCategories] = useState([])
+  
+  // ✅ Updated state for new architecture
+  const [verticals, setVerticals] = useState([])
+  const [portfolios, setPortfolios] = useState([])
   const [services, setServices] = useState([])
+  const [filteredPortfolios, setFilteredPortfolios] = useState([])
   const [filteredServices, setFilteredServices] = useState([])
-  const [selectedCategory, setSelectedCategory] = useState('')
+  
+  const [selectedVertical, setSelectedVertical] = useState('')
+  const [selectedPortfolio, setSelectedPortfolio] = useState('')
   const [professionalServices, setProfessionalServices] = useState([])
+  
   const [newService, setNewService] = useState({
     serviceId: '',
     customPrice: '',
     customDuration: '',
     additionalNotes: ''
   })
+  
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [addingService, setAddingService] = useState(false)
@@ -50,58 +58,138 @@ export default function ServiceInformation() {
     }
   }, [professionalId])
 
+  // ✅ Updated refresh services for new structure
   const refreshServices = async () => {
     try {
       setLoading(true)
 
-      const { data: profServices, error } = await supabase
+      // Get professional services
+      const { data: profServiceIds, error: profError } = await supabase
         .from('professional_service')
-        .select('professional_service_id, custom_price, custom_duration_minutes, additional_notes, service:service_id(name, service_subcategory(category_id, name))')
+        .select('professional_service_id, service_id, custom_price, custom_duration_minutes, additional_notes')
         .eq('professional_id', professionalId)
         .eq('is_active', true)
 
-      if (error) throw error
-      setProfessionalServices(profServices || [])
+      if (profError) throw profError
+
+      if (!profServiceIds || profServiceIds.length === 0) {
+        setProfessionalServices([])
+        return
+      }
+
+      // Get service details with portfolio and vertical info
+      const serviceIds = profServiceIds.map(ps => ps.service_id)
+      const { data: serviceDetails, error: serviceError } = await supabase
+        .from('service')
+        .select(`
+          service_id,
+          name,
+          description,
+          portfolio_id,
+          portfolio (
+            name,
+            vertical_id,
+            vertical (
+              name
+            )
+          )
+        `)
+        .in('service_id', serviceIds)
+
+      if (serviceError) throw serviceError
+
+      // Combine professional service data with service details
+      const combinedServices = profServiceIds.map(ps => {
+        const serviceDetail = serviceDetails.find(sd => sd.service_id === ps.service_id)
+        return {
+          ...ps,
+          service: serviceDetail
+        }
+      })
+
+      setProfessionalServices(combinedServices || [])
     } catch (err) {
+      console.error('Error refreshing services:', err)
       toast.error('Failed to refresh services')
     } finally {
       setLoading(false)
     }
   }
 
+  // ✅ Updated metadata fetching for new structure
   useEffect(() => {
     const fetchMeta = async () => {
       try {
-        const { data: categoryData } = await supabase
-          .from('service_category')
-          .select('*')
+        // Fetch verticals
+        const { data: verticalData, error: verticalError } = await supabase
+          .from('vertical')
+          .select('vertical_id, name, description, display_order')
           .eq('is_active', true)
           .order('display_order')
 
-        const { data: serviceData } = await supabase
-          .from('service')
-          .select('service_id, name, description, service_subcategory(category_id)')
-          .eq('is_active', true)
+        if (verticalError) throw verticalError
 
-        setCategories(categoryData || [])
+        // Fetch portfolios
+        const { data: portfolioData, error: portfolioError } = await supabase
+          .from('portfolio')
+          .select('portfolio_id, vertical_id, name, description, display_order')
+          .eq('is_active', true)
+          .order('vertical_id, display_order')
+
+        if (portfolioError) throw portfolioError
+
+        // Fetch services
+        const { data: serviceData, error: serviceError } = await supabase
+          .from('service')
+          .select('service_id, portfolio_id, name, description, display_order')
+          .eq('is_active', true)
+          .order('display_order')
+
+        if (serviceError) throw serviceError
+
+        setVerticals(verticalData || [])
+        setPortfolios(portfolioData || [])
         setServices(serviceData || [])
+
+        console.log('✅ Metadata loaded:', {
+          verticals: verticalData?.length || 0,
+          portfolios: portfolioData?.length || 0,
+          services: serviceData?.length || 0
+        })
+
       } catch (err) {
         setError(err.message)
         toast.error('Failed to load metadata')
+        console.error('Error loading metadata:', err)
       }
     }
 
     fetchMeta()
   }, [])
 
+  // ✅ Filter portfolios when vertical changes
   useEffect(() => {
-    if (selectedCategory) {
-      const filtered = services.filter(s => s.service_subcategory?.category_id === selectedCategory)
+    if (selectedVertical) {
+      const filtered = portfolios.filter(p => p.vertical_id === selectedVertical)
+      setFilteredPortfolios(filtered)
+      setSelectedPortfolio('') // Reset portfolio selection
+      setFilteredServices([]) // Reset service list
+    } else {
+      setFilteredPortfolios([])
+      setSelectedPortfolio('')
+      setFilteredServices([])
+    }
+  }, [selectedVertical, portfolios])
+
+  // ✅ Filter services when portfolio changes
+  useEffect(() => {
+    if (selectedPortfolio) {
+      const filtered = services.filter(s => s.portfolio_id === selectedPortfolio)
       setFilteredServices(filtered)
     } else {
       setFilteredServices([])
     }
-  }, [selectedCategory, services])
+  }, [selectedPortfolio, services])
 
   const handleCustomDetailsChange = (e) => {
     const { name, value } = e.target
@@ -127,8 +215,6 @@ export default function ServiceInformation() {
         .eq('service_id', newService.serviceId)
         .single()
 
-      let newEntry
-
       if (existing) {
         await supabase
           .from('professional_service')
@@ -140,16 +226,9 @@ export default function ServiceInformation() {
           })
           .eq('professional_service_id', existing.professional_service_id)
 
-        const { data } = await supabase
-          .from('professional_service')
-          .select('professional_service_id, service:service_id(name, service_subcategory(category_id, name)), custom_price, custom_duration_minutes, additional_notes')
-          .eq('professional_service_id', existing.professional_service_id)
-          .single()
-
-        newEntry = data
         toast.success('Service reactivated')
       } else {
-        const { data, error } = await supabase
+        const { error } = await supabase
           .from('professional_service')
           .insert({
             professional_id: professionalId,
@@ -159,17 +238,22 @@ export default function ServiceInformation() {
             additional_notes: newService.additionalNotes || null,
             is_active: true
           })
-          .select('professional_service_id, service:service_id(name, service_subcategory(category_id, name)), custom_price, custom_duration_minutes, additional_notes')
 
         if (error) throw error
-        newEntry = data[0]
         toast.success('Service added')
       }
 
-      setProfessionalServices(prev => [...prev, newEntry])
+      // Refresh the services list
+      await refreshServices()
+      
+      // Reset form
       setNewService({ serviceId: '', customPrice: '', customDuration: '', additionalNotes: '' })
+      setSelectedVertical('')
+      setSelectedPortfolio('')
       setShowAddForm(false)
+      
     } catch (err) {
+      console.error('Error adding service:', err)
       toast.error('Failed to add service', { description: err.message })
     } finally {
       setAddingService(false)
@@ -191,18 +275,29 @@ export default function ServiceInformation() {
 
       {showAddForm && (
         <ServiceAddForm
-          categories={categories}
-          filteredServices={filteredServices}
-          selectedCategory={selectedCategory}
+          verticals={verticals}
+          portfolios={filteredPortfolios}
+          services={filteredServices}
+          selectedVertical={selectedVertical}
+          selectedPortfolio={selectedPortfolio}
           newService={newService}
-          onCategoryChange={(e) => {
-            setSelectedCategory(e.target.value)
+          onVerticalChange={(e) => {
+            setSelectedVertical(e.target.value)
+            setNewService({ ...newService, serviceId: '' })
+          }}
+          onPortfolioChange={(e) => {
+            setSelectedPortfolio(e.target.value)
             setNewService({ ...newService, serviceId: '' })
           }}
           onServiceSelect={(e) => handleServiceSelect(e.target.value)}
           onChange={handleCustomDetailsChange}
           onSubmit={addNewService}
-          onCancel={() => setShowAddForm(false)}
+          onCancel={() => {
+            setShowAddForm(false)
+            setSelectedVertical('')
+            setSelectedPortfolio('')
+            setNewService({ serviceId: '', customPrice: '', customDuration: '', additionalNotes: '' })
+          }}
           isSubmitting={addingService}
         />
       )}
@@ -211,4 +306,3 @@ export default function ServiceInformation() {
     </div>
   )
 }
-

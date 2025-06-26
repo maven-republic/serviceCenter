@@ -1,5 +1,5 @@
 import DashboardLayout from "@/components/professional-workspace/DashboardLayout";
-import ManageService from "@/components/professional-workspace/section/ManageServices";
+import ProfessionalPricingManager from "@/components/professional-workspace/section/ManageServices";
 
 import MobileNavigation2 from "@/components/header/MobileNavigation2";
 
@@ -14,7 +14,7 @@ export default function page() {
     
     <MobileNavigation2 />
       <DashboardLayout>
-        <ManageService />
+        <ProfessionalPricingManager />
       </DashboardLayout>
     </>
   );

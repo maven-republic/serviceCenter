@@ -1,26 +1,22 @@
-// steps/ServiceCategoryGroup.jsx
+// steps/PortfolioGroup.jsx
 'use client'
 
 import ServiceTag from './ServiceTag'
 import tagDESIGN from '../ServiceTag.module.css'
 
-export default function ServiceCategoryGroup({
-  category,
+export default function Portfolio({
+  portfolio,        // ✅ Changed from category
   services,
   selectedServices,
   onToggle
 }) {
   return (
     <div>
-
-
       <div className={tagDESIGN.dropdownCategoryHeader}>
-        {category.name}
+        {portfolio.name}  {/* ✅ Updated property */}
       </div>
       <div className={tagDESIGN.dropdownServicesGrid}>
-
         {services.map(service => (
-
           <ServiceTag
             key={service.service_id}
             service={service}
@@ -32,4 +28,3 @@ export default function ServiceCategoryGroup({
     </div>
   )
 }
-

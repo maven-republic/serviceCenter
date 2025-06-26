@@ -79,31 +79,80 @@ export default function ProfessionalAccountCreation({ errorMessage, currentStep,
   })
 
   const [errors, setErrors] = useState({})
-  const [categories, setCategories] = useState([])
+  
+  // ✅ Updated state for new architecture
+  const [verticals, setVerticals] = useState([])
+  const [portfolios, setPortfolios] = useState([])
   const [servicesList, setServicesList] = useState([])
+  
   const [loading, setLoading] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
   const [dropdownOpen, setDropdownOpen] = useState(false)
   const [isCheckingEmail, setIsCheckingEmail] = useState(false)
 
-
+  // ✅ Updated data fetching for new architecture
   useEffect(() => {
     async function loadData() {
       setLoading(true)
-      const { data: cats } = await supabase
-        .from('service_category')
-        .select('*')
-        .eq('is_active', true)
-        .order('display_order')
+      
+      try {
+        // Fetch verticals
+        const { data: verticalsData, error: verticalsError } = await supabase
+          .from('vertical')
+          .select('vertical_id, industry_id, name, description, display_order')
+          .eq('is_active', true)
+          .order('display_order')
 
-      const { data: svcs } = await supabase
-        .from('service')
-        .select('service_id, name, service_subcategory(*)')
-        .eq('is_active', true)
+        if (verticalsError) {
+          console.error('Error fetching verticals:', verticalsError)
+        }
 
-      setCategories(cats || [])
-      setServicesList(svcs || [])
-      setLoading(false)
+        // Fetch portfolios
+        const { data: portfoliosData, error: portfoliosError } = await supabase
+          .from('portfolio')
+          .select('portfolio_id, vertical_id, name, description, is_featured, display_order')
+          .eq('is_active', true)
+          .order('vertical_id, display_order')
+
+        if (portfoliosError) {
+          console.error('Error fetching portfolios:', portfoliosError)
+        }
+
+        // Fetch services with portfolio and vertical info
+        const { data: servicesData, error: servicesError } = await supabase
+          .from('service')
+          .select(`
+            service_id, 
+            portfolio_id, 
+            name, 
+            description,
+            duration_minutes,
+            is_featured,
+            display_order
+          `)
+          .eq('is_active', true)
+          .order('display_order')
+
+        if (servicesError) {
+          console.error('Error fetching services:', servicesError)
+        }
+
+        // Set state with fetched data
+        setVerticals(verticalsData || [])
+        setPortfolios(portfoliosData || [])
+        setServicesList(servicesData || [])
+
+        console.log('✅ Data loaded:', {
+          verticals: verticalsData?.length || 0,
+          portfolios: portfoliosData?.length || 0,
+          services: servicesData?.length || 0
+        })
+
+      } catch (error) {
+        console.error('❌ Error loading service data:', error)
+      } finally {
+        setLoading(false)
+      }
     }
 
     loadData()
@@ -206,54 +255,130 @@ export default function ProfessionalAccountCreation({ errorMessage, currentStep,
   }
 
   const handleSubmit = async (e) => {
-  e.preventDefault()
-  if (currentStep !== 8) return
+    e.preventDefault()
+    if (currentStep !== 8) return
 
-  setLoading(true)
+    setLoading(true)
 
-  try {
-    const form = document.querySelector('form')
-    if (!form) return
-    const data = new FormData(form)
+    try {
+      const form = document.querySelector('form')
+      if (!form) return
+      const data = new FormData(form)
 
-    Object.entries(formData).forEach(([k, v]) => {
-      data.set(k, Array.isArray(v) || typeof v === 'object' ? JSON.stringify(v) : v)
-    })
+      Object.entries(formData).forEach(([k, v]) => {
+        data.set(k, Array.isArray(v) || typeof v === 'object' ? JSON.stringify(v) : v)
+      })
 
-    const result = await signupProfessional(data)
-    if (result?.success) {
-      router.push('/register/professional/success')
+      const result = await signupProfessional(data)
+      if (result?.success) {
+        router.push('/register/professional/success')
+      } else if (result?.error) {
+        console.error('❌ Signup error:', result.error)
+        setErrors(err => ({ ...err, submit: result.error }))
+      }
+    } catch (error) {
+      console.error('❌ signupProfessional failed:', error)
+      setErrors(err => ({ ...err, submit: 'Registration failed. Please try again.' }))
+    } finally {
+      setLoading(false)
     }
-  } catch (error) {
-    console.error('❌ signupProfessional failed:', error)
-  } finally {
-    setLoading(false)
   }
-}
-
 
   return (
     <form className={designs.outer}>
       {errorMessage && <div className="alert alert-danger mb-4">{errorMessage}</div>}
+      {errors.submit && <div className="alert alert-danger mb-4">{errors.submit}</div>}
 
-      {currentStep === 1 && <Account formData={formData} errors={errors} updateFormData={updateFormData} handleBlur={handleBlur} isCheckingEmail={isCheckingEmail} />}
-      {currentStep === 2 && <Personal formData={formData} errors={errors} updateFormData={updateFormData} handleBlur={handleBlur} />}
-      {currentStep === 3 && <GeneralAddress formData={formData} errors={errors} handleAddressSelect={handleAddressSelect} updateFormData={updateFormData} />}
+      {currentStep === 1 && (
+        <Account 
+          formData={formData} 
+          errors={errors} 
+          updateFormData={updateFormData} 
+          handleBlur={handleBlur} 
+          isCheckingEmail={isCheckingEmail} 
+        />
+      )}
+
+      {currentStep === 2 && (
+        <Personal 
+          formData={formData} 
+          errors={errors} 
+          updateFormData={updateFormData} 
+          handleBlur={handleBlur} 
+        />
+      )}
+
+      {currentStep === 3 && (
+        <GeneralAddress 
+          formData={formData} 
+          errors={errors} 
+          handleAddressSelect={handleAddressSelect} 
+          updateFormData={updateFormData} 
+        />
+      )}
+
       {currentStep === 4 && (
         <div className="row">
           <div className="col-md-5">
-            <Services categories={categories} services={servicesList} loading={loading} dropdownOpen={dropdownOpen} searchTerm={searchTerm} setSearchTerm={setSearchTerm} setDropdownOpen={setDropdownOpen} toggleService={toggleService} selectedServices={formData.services} formData={formData} updateFormData={updateFormData} errors={errors.services} />
+            {/* ✅ Updated Services component with new props */}
+            <Services 
+              verticals={verticals}           // ✅ Changed from categories
+              portfolios={portfolios}         // ✅ New prop
+              services={servicesList}         // ✅ Keep existing
+              loading={loading} 
+              dropdownOpen={dropdownOpen} 
+              searchTerm={searchTerm} 
+              setSearchTerm={setSearchTerm} 
+              setDropdownOpen={setDropdownOpen} 
+              toggleService={toggleService} 
+              selectedServices={formData.services} 
+              formData={formData} 
+              updateFormData={updateFormData} 
+              errors={errors.services} 
+            />
           </div>
           <div className="col-md-7">
-            <SelectedServices selected={formData.services} toggleService={toggleService} services={servicesList} formData={formData} updateFormData={updateFormData} />
+            <SelectedServices 
+              selected={formData.services} 
+              toggleService={toggleService} 
+              services={servicesList} 
+              formData={formData} 
+              updateFormData={updateFormData} 
+            />
           </div>
         </div>
       )}
 
-      {currentStep === 5 && <Education formData={formData} errors={errors} updateFormData={updateFormData} handleBlur={handleBlur} allServices={servicesList} />}
-      {currentStep === 6 && <CertificationInterface formData={formData} updateFormData={updateFormData} />}
-      {currentStep === 7 && <WorkExperienceInterface formData={formData} updateFormData={updateFormData} />}
-      {currentStep === 8 && <AvailabilityInterface formData={formData} updateFormData={updateFormData} />}
+      {currentStep === 5 && (
+        <Education 
+          formData={formData} 
+          errors={errors} 
+          updateFormData={updateFormData} 
+          handleBlur={handleBlur} 
+          allServices={servicesList} 
+        />
+      )}
+
+      {currentStep === 6 && (
+        <CertificationInterface 
+          formData={formData} 
+          updateFormData={updateFormData} 
+        />
+      )}
+
+      {currentStep === 7 && (
+        <WorkExperienceInterface 
+          formData={formData} 
+          updateFormData={updateFormData} 
+        />
+      )}
+
+      {currentStep === 8 && (
+        <AvailabilityInterface 
+          formData={formData} 
+          updateFormData={updateFormData} 
+        />
+      )}
 
       <div style={{ height: '80px' }} />
 
@@ -263,10 +388,8 @@ export default function ProfessionalAccountCreation({ errorMessage, currentStep,
         prevStep={handlePrevStep}
         onSubmit={handleSubmit}
         totalSteps={8}
-          loading={loading}
-
+        loading={loading}
       />
     </form>
   )
 }
-

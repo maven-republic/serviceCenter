@@ -1,31 +1,38 @@
 'use client'
 
+import { useState, useEffect } from 'react'
 import { SessionContextProvider } from '@supabase/auth-helpers-react'
 import { createPagesBrowserClient } from '@supabase/auth-helpers-nextjs'
-import { useEffect, useState } from 'react'
-import { useUserStore } from '@/store/userStore'
 
-export default function SupabaseProvider({ children }) {
+export default function SupabaseProvider({ children, initialSession }) {
   const [supabaseClient] = useState(() => createPagesBrowserClient())
-  const fetchUser = useUserStore((state) => state.fetchUser)
+  const [isHydrated, setIsHydrated] = useState(false)
 
+  // 🔄 Handle hydration and quick reloads
   useEffect(() => {
-    const { data: authListener } = supabaseClient.auth.onAuthStateChange(
-      async (event, session) => {
-        if (session?.user) {
-          console.log('💥 Rehydrating session from onAuthStateChange')
-          fetchUser(session.user, supabaseClient)
-        }
-      }
-    )
+    // Small delay to ensure proper hydration
+    const timer = setTimeout(() => {
+      setIsHydrated(true)
+    }, 100)
 
-    return () => {
-      authListener.subscription.unsubscribe()
-    }
-  }, [supabaseClient, fetchUser])
+    return () => clearTimeout(timer)
+  }, [])
+
+  // 🛡️ Prevent hydration mismatch on quick reloads
+  if (!isHydrated) {
+    return (
+      <div className="text-center p-5">
+        <div className="spinner-border text-secondary" role="status" />
+        <p className="mt-2">Initializing...</p>
+      </div>
+    )
+  }
 
   return (
-    <SessionContextProvider supabaseClient={supabaseClient}>
+    <SessionContextProvider 
+      supabaseClient={supabaseClient} 
+      initialSession={initialSession}
+    >
       {children}
     </SessionContextProvider>
   )

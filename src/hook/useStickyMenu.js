@@ -2,7 +2,9 @@
 import { useEffect, useState } from "react";
 
 export default function useStickyMenu(max = 20) {
-    const [isSticky, setIsSticky] = useState(false);
+
+
+const [isSticky, setIsSticky] = useState(false);
 
     useEffect(() => {
         const handleScroll = () => {
