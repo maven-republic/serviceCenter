@@ -18,11 +18,11 @@ export default function Account({ formData, updateFormData, errors, handleBlur }
           <div className={`position-absolute w-100 h-100 ${_Account.overlay}`}></div>
           
           {/* Background image */}
-          <img 
-            src="/images/black-man-working.jpg" 
-            alt="Professional workspace" 
-            className={`position-absolute w-100 h-100 ${_Account.backgroundImage}`}
-          />
+          {/* <img 
+            // src="/images/black-man-working.jpg" 
+            // alt="Professional workspace" 
+            // className={`position-absolute w-100 h-100 ${_Account.backgroundImage}`}
+          // /> */}
         </div>
 
         {/* Right column: Form content */}

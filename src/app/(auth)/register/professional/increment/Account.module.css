@@ -11,13 +11,13 @@
 
 /* Left column styles */
 .leftColumn {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  /* background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); */
   overflow: hidden;
   margin: 0;
 }
 
 .overlay {
-  background-color: rgba(0,0,0,0.2);
+  /* background-color: rgba(0,0,0,0.2); */
 }
 
 .backgroundImage {
