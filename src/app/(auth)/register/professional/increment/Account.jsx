@@ -26,8 +26,8 @@ export default function Account({ formData, updateFormData, errors, handleBlur }
         </div>
 
         {/* Right column: Form content */}
-        <div className={`col-12 col-lg-6 d-flex align-items-center p-0 ${_Account.rightColumn}`}>
-          <div className={`w-100 px-4 px-lg-5 py-4 ${_Account.formContainer}`}>
+        <div className={`col-12 col-lg-6 p-0 d-block  ${_Account.rightColumn}`}>
+          <div className={`w-100 px-4 px-lg-5 py-4 my-5 ${_Account.formContainer}`}>
             <div className={`mx-auto ${_Account.formContent}`}>
               
               {/* Header */}

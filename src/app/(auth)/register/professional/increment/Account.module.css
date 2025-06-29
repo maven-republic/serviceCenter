@@ -33,7 +33,15 @@
 
 .formContainer {
   margin: 0;
+  overflow: hidden;
+  outline: none;
+  border: 1px solid rgba(0, 0, 0, 0.08); /* light grey */
+  border-radius: 0.75rem; /* ≈12px, clean round edges */
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.03); /* subtle lift */
+  background-color: #fff; /* make sure it pops on white or off-white */
 }
+
+
 
 .formContent {
   max-width: 700px;
