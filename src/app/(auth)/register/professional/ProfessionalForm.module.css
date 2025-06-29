@@ -6,8 +6,8 @@
 .outer {
     /* margin-left: auto;
     margin-right: auto; */
-    padding-left: 4rem;    /* or 3rem if you want more breathing room */
-  padding-right: 4rem;
+    padding-left: 2rem;    /* or 3rem if you want more breathing room */
+  padding-right: 2rem;
     max-width: 1500px;
     /* or whatever your container-fluid break-point is */
 }
@@ -116,7 +116,7 @@
 .progress-container {
     width: 100%;
     /* padding: 30px 0; */
-    margin-bottom: 20px;
+    /* margin-bottom: 20px; */
 }
 
 .progress-steps {

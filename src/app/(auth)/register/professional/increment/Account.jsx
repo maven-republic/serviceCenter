@@ -6,7 +6,7 @@ import _Account from './Account.module.css'
 
 export default function Account({ formData, updateFormData, errors, handleBlur }) {
   return (
-    <div className={`container-fluid vh-100 p-0 ${_Account.container}`}>
+    <div className={`container p-0 ${_Account.container}`}>
       <div className={`row h-100 g-0 ${_Account.row}`}>
         {/* Left column: Image/Visual */}
 
@@ -15,7 +15,7 @@ export default function Account({ formData, updateFormData, errors, handleBlur }
         {/* <div className={`col-12 col-lg-6 d-none d-lg-flex align-items-center justify-content-center position-relative p-0 rounded-start-5 ${_Account.leftColumn}`}> */}
           
           {/* Overlay for better text readability */}
-          <div className={`position-absolute w-100 h-100 ${_Account.overlay}`}></div>
+          <div className={`position-absolute w-100  ${_Account.overlay}`}></div>
           
           {/* Background image */}
           {/* <img 
@@ -26,8 +26,8 @@ export default function Account({ formData, updateFormData, errors, handleBlur }
         </div>
 
         {/* Right column: Form content */}
-        <div className={`col-12 col-lg-6 d-flex align-items-center p-0 ${_Account.rightColumn}`}>
-          <div className={`w-100 px-4 px-lg-5 py-4 ${_Account.formContainer}`}>
+        <div className={`col-12 col-lg-6 p-0 d-block ${_Account.rightColumn}`}>
+          <div className={`w-100 px-4 px-lg-5 py-4 my-5  ${_Account.formContainer}`}>
             <div className={`mx-auto ${_Account.formContent}`}>
               
               {/* Header */}
