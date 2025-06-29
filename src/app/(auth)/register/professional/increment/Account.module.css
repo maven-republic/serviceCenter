@@ -26,9 +26,9 @@
 }
 
 /* Right column styles */
+
 .rightColumn {
-  min-height: 100vh;
-  margin: 0;
+  min-height: calc(100vh - 80px); /* subtract height of bottom bar */
 }
 
 .formContainer {

@@ -13,8 +13,7 @@ import {
 } from '@/utils/quantification/quantificationAlgorithms'
 
 /**
- * useQuantificationManifold Hook
- * Provides a complete interface for service quantification calculations
+ * useQuantificationManifold  * Provides a complete interface for service quantification calculations
  * Integrates sophisticated algorithms with React state management
  */
 const useQuantificationManifold = ({
