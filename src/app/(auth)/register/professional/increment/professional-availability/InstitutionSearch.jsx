@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useSupabaseClient } from '@supabase/auth-helpers-react'
-import SearchableDropdown from './SearchableDropdown'
+import SelectWithSearch from './SelectWithSearch'
 
 export default function InstitutionSearch({ value, onChange }) {
   const supabase = useSupabaseClient()

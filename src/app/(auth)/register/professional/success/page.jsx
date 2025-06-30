@@ -34,7 +34,7 @@ export default function ProfessionalAccountCreationSuccess() {
       <div
         className="d-none d-md-block w-100 w-md-50 bg-cover bg-center"
         style={{
-          backgroundImage: "url('/your-image.jpg')",
+          backgroundImage: "url('/images/black-man-working.jpg')",
           backgroundSize: 'cover',
           backgroundPosition: 'center'
         }}
