@@ -135,7 +135,7 @@ export default function AvailabilityFramework({ availability, setAvailability })
               <div className="fw-semibold text-capitalize mb-2">{label}</div>
 
               {blocks.map((block, index) => (
-                <div key={index} className="row g-2 align-items-center">
+                <div key={index} className="row g-2 align-items-center mb-3">
                   <div className="col-auto">
                     <input
                       type="time"
@@ -200,7 +200,7 @@ export default function AvailabilityFramework({ availability, setAvailability })
                 <div
                   role="button"
                   onClick={() => handleAddBlock(value)}
-                  className="d-flex align-items-center justify-content-center border rounded-circle bg-white"
+                  className="d-flex align-items-center justify-content-center border rounded-circle bg-white mb-6"
                   style={{ width: '40px', height: '40px', cursor: 'pointer' }}
                   title="Add hours"
                 >
