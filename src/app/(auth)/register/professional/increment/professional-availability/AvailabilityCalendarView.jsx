@@ -9,6 +9,7 @@ import { useState } from 'react'
 import EditAvailabilityMenu from './EditAvailabilityMenu'
 import SingleDateEditorModal from './SingleDateEditorModal'
 import RecurringDayEditorModal from './RecurringDayEditorModal'
+import _AvailabilityCalendarView from './AvailabilityCalendarView.module.css'
 
 const weekdays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 
@@ -116,8 +117,8 @@ export default function AvailabilityCalendarView({
         className="calendar-grid px-2"
         style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))',
-          gap: '1rem'
+          gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))',
+          gap: '0.2rem'
         }}
       >
         {dateRange.map((date, idx) => {
@@ -134,9 +135,9 @@ export default function AvailabilityCalendarView({
           return (
             <div
               key={idx}
-              className="border bg-white rounded p-3 shadow-sm d-flex flex-column gap-2 position-relative"
+              className="border bg-white rounded-4 p-3  d-flex flex-column position-relative"
               style={{
-                minHeight: '180px',
+                minHeight: '100px',
                 opacity: isPast ? 0.5 : 1,
                 cursor: isPast ? 'not-allowed' : 'pointer'
               }}
@@ -146,7 +147,7 @@ export default function AvailabilityCalendarView({
                 <time dateTime={dateKey}>{format(date, 'd')}</time>
               </div>
 
-              <div className="d-flex flex-column gap-1 small">
+              <div className="d-flex flex-column gap-1 ">
                 {override.length > 0 ? (
                   <>
                     {override.slice(0, 2).map((o, i) => (
@@ -163,8 +164,13 @@ export default function AvailabilityCalendarView({
                   <>
                     {recurring.slice(0, 2).map((r, i) => (
                       <div key={i} className="text-success d-flex align-items-center gap-1">
-                        <i className="fas fa-repeat text-muted" title="Recurring" />
-                        <span>{formatTime12(r.start_time)} – {formatTime12(r.end_time)}</span>
+                       <i
+  className={`fas fa-repeat text-muted ${_AvailabilityCalendarView.iconTiny}`}
+  title="Recurring"
+/>
+  <span   className={`${_AvailabilityCalendarView.calendarTime}`}
+>
+{formatTime12(r.start_time)} – {formatTime12(r.end_time)}</span>
                       </div>
                     ))}
                     {recurring.length > 2 && (
@@ -172,7 +178,8 @@ export default function AvailabilityCalendarView({
                     )}
                   </>
                 ) : (
-                  <div className="text-muted">No availability</div>
+                  <div className={`${_AvailabilityCalendarView.calendarTime}`}
+>No availability</div>
                 )}
               </div>
 

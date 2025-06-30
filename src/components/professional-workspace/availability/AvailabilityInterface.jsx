@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import AvailabilityBuilder from './AvailabilityBuilder'
+import AvailabilityFramework from './AvailabilityFramework'
 import AvailabilityCalendarView from './AvailabilityCalendarView'
 
 export default function AvailabilityInterface({ 
@@ -110,7 +110,7 @@ export default function AvailabilityInterface({
             <h6 className="fw-semibold mb-2">Weekly Hours</h6>
             <p className="text-muted small">Set when you're typically available for meetings</p>
           </div>
-          <AvailabilityBuilder
+          <AvailabilityFramework
             availability={localAvailability}
             setAvailability={handleUpdateAvailability}
           />

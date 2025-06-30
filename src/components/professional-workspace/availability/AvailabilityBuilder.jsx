@@ -51,7 +51,7 @@ function generateNextTimeBlock(existingBlocks, increment = 60) {
   return { start_time: toTime(start), end_time: toTime(end) }
 }
 
-export default function AvailabilityBuilder({ availability, setAvailability }) {
+export default function AvailabilityFramework({ availability, setAvailability }) {
   const initialState = () => {
     const map = {}
     daysOfWeek.forEach(d => {

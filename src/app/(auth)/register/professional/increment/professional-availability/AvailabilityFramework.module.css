@@ -1,0 +1,18 @@
+.cleanTimeInput {
+  background-color: #f2faff;
+  border: none;
+  border-radius: 0.5rem;
+  box-shadow: none;
+  padding: 0.5rem 0.75rem;
+  height: 4rem;           /* full vertical height */
+  width: 100%;              /* fills container */
+  font-size: 0.9rem;        /* visually balanced */
+  line-height: 1.25rem;     /* vertical alignment */
+  appearance: none;         /* remove OS-specific styling */
+}
+
+.cleanTimeInput:focus {
+  outline: none;
+  box-shadow: none;
+  background-color: #FFFAFA; /* prevent flashing white on focus */
+}

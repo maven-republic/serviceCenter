@@ -105,7 +105,7 @@ C:\Users\adrom\Downloads\serviceCenter\src\app\(auth)\register\professional\incr
 C:\Users\adrom\Downloads\serviceCenter\src\app\(auth)\register\professional\increment\Services.module.css
 C:\Users\adrom\Downloads\serviceCenter\src\app\(auth)\register\professional\increment\ServiceTag.jsx
 C:\Users\adrom\Downloads\serviceCenter\src\app\(auth)\register\professional\increment\ServiceTag.module.css
-C:\Users\adrom\Downloads\serviceCenter\src\app\(auth)\register\professional\increment\professional-availability\AvailabilityBuilder.jsx
+C:\Users\adrom\Downloads\serviceCenter\src\app\(auth)\register\professional\increment\professional-availability\AvailabilityFramework.jsx
 C:\Users\adrom\Downloads\serviceCenter\src\app\(auth)\register\professional\increment\professional-availability\AvailabilityCalendarView.jsx
 C:\Users\adrom\Downloads\serviceCenter\src\app\(auth)\register\professional\increment\professional-availability\AvailabilityInterface.jsx
 C:\Users\adrom\Downloads\serviceCenter\src\app\(auth)\register\professional\increment\professional-availability\AvailabilityManagement.jsx
@@ -696,7 +696,7 @@ C:\Users\adrom\Downloads\serviceCenter\src\components\professional-workspace\mod
 C:\Users\adrom\Downloads\serviceCenter\src\components\professional-workspace\option
 C:\Users\adrom\Downloads\serviceCenter\src\components\professional-workspace\section
 C:\Users\adrom\Downloads\serviceCenter\src\components\professional-workspace\sidebar
-C:\Users\adrom\Downloads\serviceCenter\src\components\professional-workspace\availability\AvailabilityBuilder.jsx
+C:\Users\adrom\Downloads\serviceCenter\src\components\professional-workspace\availability\AvailabilityFramework.jsx
 C:\Users\adrom\Downloads\serviceCenter\src\components\professional-workspace\availability\AvailabilityCalendar.jsx
 C:\Users\adrom\Downloads\serviceCenter\src\components\professional-workspace\availability\AvailabilityCalendarView.jsx
 C:\Users\adrom\Downloads\serviceCenter\src\components\professional-workspace\availability\AvailabilityInterface.jsx

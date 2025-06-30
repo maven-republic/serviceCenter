@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import AvailabilityBuilder from './AvailabilityBuilder'
+import AvailabilityFramework from './AvailabilityFramework'
 import AvailabilityCalendarView from './AvailabilityCalendarView'
 
 export default function AvailabilityInterface({ formData, updateFormData }) {
@@ -59,14 +59,14 @@ export default function AvailabilityInterface({ formData, updateFormData }) {
       <h5 className="fw-bold mb-4">Set Your Availability</h5>
 
       <div className="row gx-5 gy-4">
-        <div className="col-12 col-lg-6 mb-4">
-          <AvailabilityBuilder
+        <div className="col-12 col-lg-4 mb-4">
+          <AvailabilityFramework
             availability={formData.availability || []}
             setAvailability={setAvailability}
           />
         </div>
 
-        <div className="col-12 col-lg-6">
+        <div className="col-12 col-lg-8">
           <AvailabilityCalendarView
             availability={formData.availability || []}
             overrides={overrides}

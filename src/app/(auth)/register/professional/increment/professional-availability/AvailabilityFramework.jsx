@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { Button } from 'react-bootstrap'
 import { AVAILABILITY_RULES } from '@/config/availabilityRules'
+import _AvailabilityFramework from './AvailabilityFramework.module.css'
 
 const daysOfWeek = [
   { label: 'Sunday', value: 0 },
@@ -51,7 +52,7 @@ function generateNextTimeBlock(existingBlocks, increment = 60) {
   return { start_time: toTime(start), end_time: toTime(end) }
 }
 
-export default function AvailabilityBuilder({ availability, setAvailability }) {
+export default function AvailabilityFramework({ availability, setAvailability }) {
   const initialState = () => {
     const map = {}
     daysOfWeek.forEach(d => {
@@ -129,7 +130,7 @@ export default function AvailabilityBuilder({ availability, setAvailability }) {
           return (
             <div
               key={value}
-              className="p-3 bg-white rounded shadow-sm border d-flex flex-column gap-2"
+              className="p-3 bg-white rounded-4  border d-flex flex-column"
             >
               <div className="fw-semibold text-capitalize mb-2">{label}</div>
 
@@ -138,7 +139,7 @@ export default function AvailabilityBuilder({ availability, setAvailability }) {
                   <div className="col-auto">
                     <input
                       type="time"
-                      className="form-control form-control-sm"
+  className={`${_AvailabilityFramework.cleanTimeInput}`}
                       value={block.start_time}
                       onChange={e => handleTimeChange(value, index, 'start_time', e.target.value)}
                     />
@@ -149,7 +150,7 @@ export default function AvailabilityBuilder({ availability, setAvailability }) {
                   <div className="col-auto">
                     <input
                       type="time"
-                      className="form-control form-control-sm"
+  className={`${_AvailabilityFramework.cleanTimeInput}`}
                       value={block.end_time}
                       onChange={e => handleTimeChange(value, index, 'end_time', e.target.value)}
                     />
@@ -159,7 +160,7 @@ export default function AvailabilityBuilder({ availability, setAvailability }) {
                     <div
                       role="button"
                       onClick={() => handleRemoveBlock(value, index)}
-                      className="d-flex align-items-center justify-content-center border rounded-circle bg-white shadow-sm"
+                      className="d-flex align-items-center justify-content-center border rounded-circle bg-white "
                       style={{ width: '30px', height: '30px', cursor: 'pointer' }}
                       title="Remove"
                     >
@@ -171,7 +172,7 @@ export default function AvailabilityBuilder({ availability, setAvailability }) {
                         <div
                           role="button"
                           onClick={() => handleAddBlock(value)}
-                          className="d-flex align-items-center justify-content-center border rounded-circle bg-white shadow-sm"
+                          className="d-flex align-items-center justify-content-center border rounded-circle bg-white "
                           style={{ width: '30px', height: '30px', cursor: 'pointer' }}
                           title="Add time block"
                         >
@@ -182,7 +183,7 @@ export default function AvailabilityBuilder({ availability, setAvailability }) {
                           <div
                             role="button"
                             onClick={() => handleCopyPrevious(value)}
-                            className="d-flex align-items-center justify-content-center border rounded-circle bg-white shadow-sm"
+                            className="d-flex align-items-center justify-content-center border rounded-circle bg-white"
                             style={{ width: '30px', height: '30px', cursor: 'pointer' }}
                             title="Copy previous day"
                           >
@@ -199,7 +200,7 @@ export default function AvailabilityBuilder({ availability, setAvailability }) {
                 <div
                   role="button"
                   onClick={() => handleAddBlock(value)}
-                  className="d-flex align-items-center justify-content-center border rounded-circle bg-white shadow-sm"
+                  className="d-flex align-items-center justify-content-center border rounded-circle bg-white"
                   style={{ width: '40px', height: '40px', cursor: 'pointer' }}
                   title="Add hours"
                 >
