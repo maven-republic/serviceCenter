@@ -47,6 +47,7 @@
     "react-sticky": "^6.0.3",
     "react-sticky-box": "^2.0.5",
     "react-tooltip": "^5.20.0",
+    "recharts": "^3.0.2",
     "sonner": "^2.0.3",
     "supabase": "^2.23.4",
     "swiper": "^8.0.0",

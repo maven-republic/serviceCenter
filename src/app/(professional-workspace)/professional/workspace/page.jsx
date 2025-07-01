@@ -3,7 +3,7 @@
 import { useRouter } from 'next/navigation'
 import { useUserStore } from '@/store/userStore'
 import { useSession } from '@supabase/auth-helpers-react'
-import DashboardInfo from '@/components/professional-workspace/section/DashboardInfo'
+import AnalyticsInterface from '@/components/professional-workspace/section/AnalyticsInterface'
 
 export default function WorkspaceInterface() {
   const { user } = useUserStore()
@@ -36,5 +36,5 @@ export default function WorkspaceInterface() {
     return null
   }
 
-  return <DashboardInfo />
+  return <AnalyticsInterface />
 }
