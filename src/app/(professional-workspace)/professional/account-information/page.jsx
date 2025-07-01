@@ -5,7 +5,7 @@ export const metadata = {
   title: "Get paid for exceptional work",
 };
 
-export default function AccountInformationPage() {
+export default function AccountInformationInterface() {
   return <ProfessionalAccountOverview />;
 }
 

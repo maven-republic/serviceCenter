@@ -121,10 +121,20 @@ export default function LoginForm({ errorMessage }) {
                 <a className="fz14 ff-heading">Forgot Password?</a>
               </div>
               <div className="d-grid mb20">
-                <button className="ud-btn btn-thm" type="submit" disabled={loading}>
-                  {loading ? 'Logging in...' : 'Log In'} <i className="fal fa-arrow-right-long" />
-                </button>
-              </div>
+                <button className="ud-btn btn-thm d-flex align-items-center justify-content-center gap-2" type="submit" disabled={loading}>
+  {loading ? (
+    <>
+      <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+      Logging in...
+    </>
+  ) : (
+    <>
+      Log In <i className="fal fa-arrow-right-long" />
+    </>
+  )}
+</button>
+
+                                               </div>
               {errorMessage && (
                 <p style={{ color: 'red', marginTop: '10px' }}>{errorMessage}</p>
               )}
