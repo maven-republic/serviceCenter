@@ -7,7 +7,7 @@ export default function EditAvailabilityMenu({ date, onEditDate, onEditDay }) {
 
   return (
     <div
-      className="position-absolute shadow border p-2 small"
+      className="position-absolute  p-2 small"
       style={{
         top: '10px',
         left: '10px',

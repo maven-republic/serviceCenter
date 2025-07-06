@@ -19,7 +19,24 @@
 
 /* @import '../aesthetics/theme.css'; */
 
-a {
+.role-customer {
+  --theme-primary: #5bbb7b;
+  --theme-bg: #ffffff;
+  --theme-text: #222222;
+}
+
+.role-professional {
+  --theme-primary: #1f4b3f;
+  --theme-bg: #f5f5f5;
+  --theme-text: #111111;
+}
+
+body {
+  background-color: var(--theme-bg);
+}
+
+
+ a {
   cursor: pointer;
 }
 :root {

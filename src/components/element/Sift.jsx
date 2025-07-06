@@ -46,7 +46,7 @@ export default function Sift() {
 
   return (
     <>
-      <div className="row align-items-center mb20">
+      <div className="row align-items-center">
         <div className="col-6 col-sm-6 col-lg-9 pe-0">
           <div className="text-center text-sm-start">
             <div className="dropdown-lists">

@@ -11,7 +11,7 @@ export default function DashboardSidebar() {
     <>
       <div className="dashboard__sidebar d-none d-lg-block">
         <div className="dashboard_sidebar_list">
-          <p className="fz15 fw400 ff-heading pl30">Start</p>
+          <p className="fz15 fw400 ff-heading pl30">Home</p>
           {professionalNavigation.slice(0, 8).map((item, i) => (
             <div key={i} className="sidebar_list_item mb-1">
               <Link
@@ -26,7 +26,7 @@ export default function DashboardSidebar() {
             </div>
           ))}
 
-          <p className="fz15 fw400 ff-heading pl30 mt30">Organize and Manage</p>
+          {/* <p className="fz15 fw400 ff-heading pl30 mt30">Organize and Manage</p> */}
           {professionalNavigation.slice(8, 14).map((item, i) => (
             <div key={i} className="sidebar_list_item mb-1">
               <Link
@@ -41,7 +41,7 @@ export default function DashboardSidebar() {
             </div>
           ))}
 
-          <p className="fz15 fw400 ff-heading pl30 mt30">Schedule</p>
+          {/* <p className="fz15 fw400 ff-heading pl30 mt30">Schedule</p> */}
           {professionalNavigation.slice(14, 15).map((item, i) => (
             <div key={i} className="sidebar_list_item mb-1">
               <Link
@@ -56,7 +56,7 @@ export default function DashboardSidebar() {
             </div>
           ))}
 
-          <p className="fz15 fw400 ff-heading pl30 mt30">Account</p>
+          {/* <p className="fz15 fw400 ff-heading pl30 mt30">Account</p> */}
           {professionalNavigation.slice(15, 17).map((item, i) => (
             <div key={i} className="sidebar_list_item mb-1">
               {item.name === "Logout" ? (

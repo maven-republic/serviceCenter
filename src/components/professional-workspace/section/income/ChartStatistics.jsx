@@ -24,6 +24,12 @@ export default function ChartStatistics({ activeChart, hideEarnings }) {
           { label: 'Best Week', value: formatEarnings(4100), detail: 'Week 3', highlight: true },
           { label: 'Growth', value: '+15%', detail: 'vs last month', highlight: true }
         ];
+      case 'monthly':
+        return [
+          { label: 'Best Month', value: 'December', detail: formatEarnings(13200), highlight: true },
+          { label: 'Monthly Average', value: formatEarnings(10250), detail: 'This year', highlight: false },
+          { label: 'Year Total', value: formatEarnings(123000), detail: '+22% vs last year', highlight: true }
+        ];
       default:
         return [];
     }

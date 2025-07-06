@@ -220,7 +220,7 @@ export default function AvailabilityCalendarView({
               <button
                 key={mode}
                 className={`btn btn-sm rounded-pill px-3 fw-medium ${
-                  mode === viewMode ? 'bg-white text-dark shadow-sm' : 'text-muted'
+                  mode === viewMode ? 'bg-white text-dark' : 'text-muted'
                 }`}
                 style={{ minWidth: '70px' }}
                 onClick={() => setViewMode(mode)}
@@ -455,7 +455,7 @@ export default function AvailabilityCalendarView({
                   minHeight: viewMode === 'Week' ? '140px' : '120px',
                   borderRight: idx % 7 === 6 ? 'none' : '1px solid #dee2e6',
                   borderBottom: Math.floor(idx / 7) === Math.floor((dateRange.length - 1) / 7) ? 'none' : '1px solid #dee2e6',
-                  backgroundColor: isToday ? '#f8f9ff' : hasAvailability ? '#f8fff8' : '#ffffff'
+                  backgroundColor: isToday ? '#f8f9ff' : hasAvailability ? '#f8fff8' : '#000000'
                 }}
                 onClick={() => !isPast && handleDayClick(date)}
               >

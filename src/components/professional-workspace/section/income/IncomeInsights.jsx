@@ -6,10 +6,18 @@ import ChartTabs from './ChartTabs';
 import InteractiveChart from './InteractiveChart';
 import InsightsCards from './InsightsCards';
 import ChartInstructions from './ChartInstructions';
+import TimelineSelector from './TimelineSelector';
 
 export default function IncomeInsights() {
   const [hideEarnings, setHideEarnings] = useState(false);
   const [activeChart, setActiveChart] = useState('daily');
+  const [activeTimeline, setActiveTimeline] = useState('last30days');
+  const [dateRange, setDateRange] = useState(null);
+
+  const handleDateRangeChange = (newDateRange) => {
+    setDateRange(newDateRange);
+    console.log('Date range changed:', newDateRange);
+  };
 
   return (
     <div className="row">
@@ -22,6 +30,13 @@ export default function IncomeInsights() {
           
           <TodaysIncome hideEarnings={hideEarnings} />
           
+          {/* Timeline Selector */}
+          <TimelineSelector
+            activeTimeline={activeTimeline}
+            setActiveTimeline={setActiveTimeline}
+            onDateRangeChange={handleDateRangeChange}
+          />
+          
           <ChartTabs 
             activeChart={activeChart}
             setActiveChart={setActiveChart}
@@ -30,6 +45,8 @@ export default function IncomeInsights() {
           <InteractiveChart 
             activeChart={activeChart}
             hideEarnings={hideEarnings}
+            activeTimeline={activeTimeline}
+            dateRange={dateRange}
           />
           
           <InsightsCards />

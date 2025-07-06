@@ -129,7 +129,7 @@ export default function AvailabilityFramework({ availability, setAvailability })
           return (
             <div
               key={value}
-              className="p-3 bg-white rounded shadow-sm border d-flex flex-column gap-2"
+              className="p-3 bg-white rounded-4 border d-flex flex-column gap-2"
             >
               <div className="fw-semibold text-capitalize mb-2">{label}</div>
 
@@ -159,7 +159,7 @@ export default function AvailabilityFramework({ availability, setAvailability })
                     <div
                       role="button"
                       onClick={() => handleRemoveBlock(value, index)}
-                      className="d-flex align-items-center justify-content-center border rounded-circle bg-white shadow-sm"
+                      className="d-flex align-items-center justify-content-center border rounded-circle bg-white "
                       style={{ width: '30px', height: '30px', cursor: 'pointer' }}
                       title="Remove"
                     >
@@ -171,7 +171,7 @@ export default function AvailabilityFramework({ availability, setAvailability })
                         <div
                           role="button"
                           onClick={() => handleAddBlock(value)}
-                          className="d-flex align-items-center justify-content-center border rounded-circle bg-white shadow-sm"
+                          className="d-flex align-items-center justify-content-center border rounded-circle bg-white"
                           style={{ width: '30px', height: '30px', cursor: 'pointer' }}
                           title="Add time block"
                         >
@@ -182,7 +182,7 @@ export default function AvailabilityFramework({ availability, setAvailability })
                           <div
                             role="button"
                             onClick={() => handleCopyPrevious(value)}
-                            className="d-flex align-items-center justify-content-center border rounded-circle bg-white shadow-sm"
+                            className="d-flex align-items-center justify-content-center border rounded-circle bg-white"
                             style={{ width: '30px', height: '30px', cursor: 'pointer' }}
                             title="Copy previous day"
                           >
@@ -199,7 +199,7 @@ export default function AvailabilityFramework({ availability, setAvailability })
                 <div
                   role="button"
                   onClick={() => handleAddBlock(value)}
-                  className="d-flex align-items-center justify-content-center border rounded-circle bg-white shadow-sm"
+                  className="d-flex align-items-center justify-content-center border rounded-circle bg-white"
                   style={{ width: '40px', height: '40px', cursor: 'pointer' }}
                   title="Add hours"
                 >
