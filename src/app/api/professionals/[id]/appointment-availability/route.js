@@ -161,7 +161,25 @@ export async function GET(request, { params }) {
   }
 }
 
-// ✅ FIXED: Helper function to calculate available slots with debugging
+// ✅ TIMEZONE FIXED: Helper function to get Jamaica time
+function getJamaicaTime() {
+  // Get current time in Jamaica timezone (UTC-5)
+  return new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Jamaica' }))
+}
+
+// ✅ TIMEZONE FIXED: Helper function to create Jamaica timezone date
+function createJamaicaDate(dateString, timeString) {
+  // Create date in Jamaica timezone by adding the offset
+  const jamaicaOffset = -5 * 60 // Jamaica is UTC-5, convert to minutes
+  const localDate = new Date(`${dateString}T${timeString}`)
+  
+  // Adjust for Jamaica timezone
+  const jamaicaDate = new Date(localDate.getTime() - (jamaicaOffset * 60 * 1000))
+  return jamaicaDate
+}
+
+// FINAL FIX: Replace the calculateAvailableSlots function in route.js
+
 function calculateAvailableSlots({
   baseAvailability,
   overrides,
@@ -183,22 +201,25 @@ function calculateAvailableSlots({
   const slots = []
   const currentDate = new Date(startDate)
   const endDateTime = new Date(endDate)
-  const now = new Date()
   
-  // ✅ FIXED: Handle NaN values properly
-  const minBookingTime = new Date(now.getTime() + ((minNoticeHours || 1) * 60 * 60 * 1000))
+  // ✅ TIMEZONE FIXED: Use Jamaica time for all calculations
+  const jamaicaNow = getJamaicaTime()
+  const minBookingTime = new Date(jamaicaNow.getTime() + ((minNoticeHours || 1) * 60 * 60 * 1000))
 
-  console.log('🔥🔥 Calculated times:')
-  console.log('  - now:', now.toISOString())
-  console.log('  - minBookingTime:', minBookingTime.toISOString())
+  console.log('🔥🔥 Calculated times (Jamaica timezone):')
+  console.log('  - jamaicaNow:', jamaicaNow.toISOString(), '(Jamaica time)')
+  console.log('  - minBookingTime:', minBookingTime.toISOString(), '(Jamaica time)')
 
   let dayCount = 0
   // Generate slots for each day in the range
-  while (currentDate <= endDateTime && dayCount < 10) { // Safety limit
+  while (currentDate <= endDateTime && dayCount < 50) {
     const dateString = currentDate.toISOString().split('T')[0]
-    const dayOfWeek = currentDate.getDay() // 0 = Sunday, 1 = Monday, etc.
+    
+    // ✅ CRITICAL FIX: Use timezone-safe day calculation
+    const dayOfWeek = new Date(dateString + 'T12:00:00Z').getDay()
     
     console.log(`🔥🔥 Processing day ${dayCount + 1}: ${dateString} (dayOfWeek: ${dayOfWeek})`)
+    console.log(`🔥🔥 Date verification: ${new Date(dateString).toDateString()}`)
     
     // Check if there's an override for this specific date
     const dayOverrides = overrides.filter(override => override.override_date === dateString)
@@ -224,32 +245,37 @@ function calculateAvailableSlots({
 
     console.log(`🔥🔥 Day availability for ${dateString}:`, dayAvailability)
 
-    // Generate time slots for this day
-    for (const availability of dayAvailability) {
-      console.log(`🔥🔥 Generating slots for: ${availability.start_time} - ${availability.end_time}`)
-      
-      const daySlots = generateTimeSlotsForDay(
-        dateString,
-        availability.start_time,
-        availability.end_time,
-        slotDuration,
-        minBookingTime,
-        bufferMinutes
-      )
-      
-      console.log(`🔥🔥 Generated ${daySlots.length} slots for time block`)
-      
-      // Filter out conflicting slots
-      const availableSlots = daySlots.filter(slot => {
-        const hasConflictResult = hasConflict(slot, existingAppointments, existingBookings, slotDuration, bufferMinutes)
-        if (hasConflictResult) {
-          console.log(`🔥🔥 Slot ${slot.time} has conflict, removing`)
-        }
-        return !hasConflictResult
-      })
-      
-      console.log(`🔥🔥 After conflict filtering: ${availableSlots.length} slots remain`)
-      slots.push(...availableSlots)
+    // ✅ FIX: Only generate slots if day has availability
+    if (dayAvailability.length > 0) {
+      // Generate time slots for this day
+      for (const availability of dayAvailability) {
+        console.log(`🔥🔥 Generating slots for: ${availability.start_time} - ${availability.end_time}`)
+        
+        const daySlots = generateTimeSlotsForDay(
+          dateString,
+          availability.start_time,
+          availability.end_time,
+          slotDuration,
+          minBookingTime,
+          bufferMinutes
+        )
+        
+        console.log(`🔥🔥 Generated ${daySlots.length} slots for time block`)
+        
+        // Filter out conflicting slots
+        const availableSlots = daySlots.filter(slot => {
+          const hasConflictResult = hasConflict(slot, existingAppointments, existingBookings, slotDuration, bufferMinutes)
+          if (hasConflictResult) {
+            console.log(`🔥🔥 Slot ${slot.time} has conflict, removing`)
+          }
+          return !hasConflictResult
+        })
+        
+        console.log(`🔥🔥 After conflict filtering: ${availableSlots.length} slots remain`)
+        slots.push(...availableSlots)
+      }
+    } else {
+      console.log(`🔥🔥 No availability for ${dateString} - day blocked`)
     }
     
     // Move to next day
@@ -261,7 +287,7 @@ function calculateAvailableSlots({
   return slots.sort((a, b) => new Date(a.datetime) - new Date(b.datetime))
 }
 
-// ✅ FIXED: Generate time slots for a specific day with debugging
+// ✅ TIMEZONE FIXED: Generate time slots for a specific day with proper timezone handling
 function generateTimeSlotsForDay(dateString, startTime, endTime, slotDuration, minBookingTime, bufferMinutes) {
   console.log(`🔥🔥🔥 generateTimeSlotsForDay called:`)
   console.log(`    - dateString: ${dateString}`)
@@ -271,13 +297,18 @@ function generateTimeSlotsForDay(dateString, startTime, endTime, slotDuration, m
 
   const slots = []
   
-  // ✅ FIXED: Ensure proper time parsing
-  const dayStart = new Date(`${dateString}T${startTime}`)
-  const dayEnd = new Date(`${dateString}T${endTime}`)
+  // ✅ TIMEZONE FIXED: Create dates in Jamaica timezone
+  const dayStart = createJamaicaDate(dateString, startTime)
+  const dayEnd = createJamaicaDate(dateString, endTime)
   
-  console.log(`🔥🔥🔥 Parsed times:`)
+  // ✅ FIX: Calculate day_of_week once from the requested date
+  const requestedDate = new Date(dateString)
+  const fixedDayOfWeek = requestedDate.getDay()  // Always use original day
+  
+  console.log(`🔥🔥🔥 Parsed times (Jamaica timezone):`)
   console.log(`    - dayStart: ${dayStart.toISOString()}`)
   console.log(`    - dayEnd: ${dayEnd.toISOString()}`)
+  console.log(`    - fixedDayOfWeek: ${fixedDayOfWeek}`)
   
   let currentSlot = new Date(dayStart)
   let slotCount = 0
@@ -301,9 +332,9 @@ function generateTimeSlotsForDay(dateString, startTime, endTime, slotDuration, m
       const slot = {
         datetime: currentSlot.toISOString(),
         date: dateString,
-        time: formatTime(currentSlot),
+        time: formatTimeInJamaica(currentSlot),
         duration_minutes: slotDuration,
-        day_of_week: currentSlot.getDay(),
+        day_of_week: fixedDayOfWeek,  // ✅ FIX: Use fixed day_of_week
         available: true
       }
       slots.push(slot)
@@ -372,15 +403,22 @@ function hasConflict(slot, existingAppointments, existingBookings, slotDuration,
 
 // Helper functions
 function getDateDaysFromNow(days) {
-  const date = new Date()
-  date.setDate(date.getDate() + days)
-  return date.toISOString().split('T')[0]
+  const jamaicaTime = getJamaicaTime()
+  jamaicaTime.setDate(jamaicaTime.getDate() + days)
+  return jamaicaTime.toISOString().split('T')[0]
 }
 
-function formatTime(date) {
-  return date.toLocaleTimeString('en-US', {
+// ✅ TIMEZONE FIXED: Format time in Jamaica timezone
+function formatTimeInJamaica(date) {
+  return date.toLocaleString('en-US', {
+    timeZone: 'America/Jamaica',
     hour: 'numeric',
     minute: '2-digit',
     hour12: true
   })
+}
+
+// Legacy function for backward compatibility
+function formatTime(date) {
+  return formatTimeInJamaica(date)
 }

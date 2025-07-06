@@ -425,7 +425,7 @@ const [formInformation, setFormInformation] = useState({
     </div>
 
     {/* Urgency Level - Keep this */}
-    <div className="form-group full-width urgency-section">
+    {/* <div className="form-group full-width urgency-section">
       <label>How urgent is this project?</label>
       <div className="urgency-grid">
         {urgencyOptions.map(option => (
@@ -443,7 +443,7 @@ const [formInformation, setFormInformation] = useState({
           </div>
         ))}
       </div>
-    </div>
+    </div> */}
   </div>
 )}
 

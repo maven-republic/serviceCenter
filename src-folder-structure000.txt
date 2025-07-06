@@ -524,10 +524,6 @@ C:\Users\adrom\Downloads\serviceCenter\src\components\customer-workspace\section
 C:\Users\adrom\Downloads\serviceCenter\src\components\customer-workspace\section\CustomerAccountInformation.jsx
 C:\Users\adrom\Downloads\serviceCenter\src\components\customer-workspace\section\CustomerAccountOverview.jsx
 C:\Users\adrom\Downloads\serviceCenter\src\components\customer-workspace\section\CustomerSearchInterface.jsx
-C:\Users\adrom\Downloads\serviceCenter\src\components\customer-workspace\section\SearchResults.jsx
-C:\Users\adrom\Downloads\serviceCenter\src\components\customer-workspace\section\ServiceDetail.jsx
-C:\Users\adrom\Downloads\serviceCenter\src\components\customer-workspace\section\ServiceFilters.jsx
-C:\Users\adrom\Downloads\serviceCenter\src\components\customer-workspace\section\ServicesInventory.jsx
 C:\Users\adrom\Downloads\serviceCenter\src\components\customer-workspace\section\SkeletonTemplate.jsx
 C:\Users\adrom\Downloads\serviceCenter\src\components\customer-workspace\sidebar\CustomerWorkspaceNavigation .jsx
 C:\Users\adrom\Downloads\serviceCenter\src\components\dropdown\CategoryDropdown1.jsx
