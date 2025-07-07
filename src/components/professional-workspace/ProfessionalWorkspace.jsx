@@ -3,12 +3,12 @@
 import { useEffect, useState, useRef } from 'react'
 import { useSession, useSupabaseClient } from '@supabase/auth-helpers-react'
 import toggleStore from '@/store/toggleStore'
-import DashboardHeader from './header/DashboardHeader'
+import ProfessionalAxis from './header/ProfessionalAxis'
 import DashboardSidebar from './sidebar/DashboardSidebar'
 import DashboardFooter from './footer/DashboardFooter'
 import { useUserStore } from '@/store/userStore'
 
-export default function DashboardLayout({ children }) {
+export default function ProfessionalWorkspace({ children }) {
   const isActive = toggleStore((state) => state.isDasboardSidebarActive)
   const { user, fetchUser, isLoading } = useUserStore()
   const session = useSession()
@@ -258,7 +258,7 @@ export default function DashboardLayout({ children }) {
   // 🎉 Everything loaded successfully - user stays logged in!
   return (
     <>
-      <DashboardHeader />
+      <ProfessionalAxis />
       <div className="dashboard_content_wrapper">
         <div
           className={`dashboard dashboard_wrapper pr30 pr0-xl ${

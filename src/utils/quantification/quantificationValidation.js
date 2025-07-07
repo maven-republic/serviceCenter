@@ -1,4 +1,4 @@
-// src/hook/useQuantificationManifold.js
+// src/primitives/useQuantificationManifold.js
 
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { toast } from 'react-hot-toast'
@@ -13,7 +13,7 @@ import {
 } from '@/utils/quantification/quantificationAlgorithms'
 
 /**
- * useQuantificationManifold Hook
+ * useQuantificationManifold primitives
  * Provides a complete interface for service quantification calculations
  * Integrates sophisticated algorithms with React state management
  */
@@ -434,7 +434,7 @@ export const useQuantificationManifold = ({
   }, [service, calculateMonteCarlo, calculateBlackScholes, calculateQuote, logDebug])
   
   // ==========================================
-  // RETURN HOOK INTERFACE
+  // RETURN primitives INTERFACE
   // ==========================================
   
   return {

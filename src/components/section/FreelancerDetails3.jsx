@@ -7,7 +7,7 @@ import ServiceDetailComment1 from "../element/ServiceDetailComment1";
 import ServiceDetailReviewInfo1 from "../element/ServiceDetailReviewInfo1";
 import FreelancerFutureCard1 from "../card/FreelancerFutureCard1";
 import { Sticky, StickyContainer } from "react-sticky";
-import useScreen from "@/hook/useScreen";
+import useScreen from "@/primitives/useScreen";
 import Image from "next/image";
 import { useParams } from "next/navigation";
 export default function FreelancerDetail3() {

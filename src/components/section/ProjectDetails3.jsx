@@ -5,7 +5,7 @@ import ServiceDetailExtra1 from "../element/ServiceDetailExtra1";
 import { Sticky, StickyContainer } from "react-sticky";
 import ProjectPriceWidget1 from "../element/ProjectPriceWidget1";
 import ProjectContactWidget1 from "../element/ProjectContactWidget1";
-import useScreen from "@/hook/useScreen";
+import useScreen from "@/primitives/useScreen";
 import { useParams } from "next/navigation";
 
 const skills = [

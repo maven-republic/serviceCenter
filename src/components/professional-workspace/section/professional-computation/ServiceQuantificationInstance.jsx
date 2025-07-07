@@ -3,7 +3,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useQuantificationManifold } from '@/hook/useQuantificationManifold'
+import { useQuantificationManifold } from '@/primitives/useQuantificationManifold'
 
 // Import all child components
 import ServiceTableInstance from './ServiceTableInstance'
@@ -69,7 +69,7 @@ export default function ServiceQuantificationInstance({
     }
   }
 
-  // Initialize quantification hook
+  // Initialize quantification primitive
   const {
     setService,
     attributes,

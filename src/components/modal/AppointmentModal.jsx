@@ -32,7 +32,7 @@ export default function AppointmentModal({
     console.log('✅ appointment successful:', appointmentRequest)
     
     // Show success message or redirect
-    alert('appointment request sent successfully! You will receive a confirmation email shortly.')
+    alert('Appointment sent  You will receive a confirmation email shortly.')
     
     // Close modal
     onClose?.()

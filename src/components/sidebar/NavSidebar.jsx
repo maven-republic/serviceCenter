@@ -25,7 +25,7 @@ export default function NavSidebar() {
               alt="Header Logo"
               width="133"
               height="40"
-              src="/images/header-logo2.svg"
+              // src="/images/header-logo2.svg"
             />
           </Link>
           <button

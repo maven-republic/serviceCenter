@@ -11,7 +11,7 @@ export default function DashboardSidebar() {
     <>
       <div className="dashboard__sidebar d-none d-lg-block">
         <div className="dashboard_sidebar_list">
-          <p className="fz15 fw400 ff-heading pl30">Home</p>
+          <p className="fz15 fw400 ff-heading pl30">Workspace</p>
           {professionalNavigation.slice(0, 8).map((item, i) => (
             <div key={i} className="sidebar_list_item mb-1">
               <Link

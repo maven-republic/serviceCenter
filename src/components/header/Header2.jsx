@@ -4,7 +4,7 @@ import Mega from "./Mega";
 import MobileNavigation2 from "./MobileNavigation2";
 import Navigation from "./Navigation";
 import Image from "next/image";
-import useStickyMenu from "@/hook/useStickyMenu";
+import useStickyMenu from "@/primitives/useStickyMenu";
 
 export default function Header2() {
     const sticky = useStickyMenu(50);

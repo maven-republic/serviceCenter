@@ -6,7 +6,7 @@ import ServiceDetailPrice1 from "../element/ServiceDetailPrice1";
 import ServiceDetailReviewInfo1 from "../element/ServiceDetailReviewInfo1";
 import ServiceDetailSlider1 from "../element/ServiceDetailSlider1";
 import StickyBox from "react-sticky-box";
-import useScreen from "@/hook/useScreen";
+import useScreen from "@/primitives/useScreen";
 import ServiceContactWidget1 from "../element/ServiceContactWidget1";
 
 export default function ServiceDetail1() {

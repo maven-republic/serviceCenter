@@ -16,7 +16,7 @@ export default function Calendar({ value, onChange, placeholder = "Select date" 
   // Refs
   const calendarRef = useRef(null)
   
-  // Custom hook for calendar logic
+  // Custom primitive for calendar logic
   const {
     currentDate,
     setCurrentDate,

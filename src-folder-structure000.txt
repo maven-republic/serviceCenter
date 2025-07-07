@@ -4,7 +4,7 @@ C:\Users\adrom\Downloads\serviceCenter\src\artifacts
 C:\Users\adrom\Downloads\serviceCenter\src\components
 C:\Users\adrom\Downloads\serviceCenter\src\config
 C:\Users\adrom\Downloads\serviceCenter\src\data
-C:\Users\adrom\Downloads\serviceCenter\src\hook
+C:\Users\adrom\Downloads\serviceCenter\src\primitives
 C:\Users\adrom\Downloads\serviceCenter\src\store
 C:\Users\adrom\Downloads\serviceCenter\src\utils
 C:\Users\adrom\Downloads\serviceCenter\src\aesthetics\theme.css
@@ -261,6 +261,7 @@ C:\Users\adrom\Downloads\serviceCenter\src\app\(professional-workspace)\professi
 C:\Users\adrom\Downloads\serviceCenter\src\app\(professional-workspace)\professional\create-projects
 C:\Users\adrom\Downloads\serviceCenter\src\app\(professional-workspace)\professional\invoice
 C:\Users\adrom\Downloads\serviceCenter\src\app\(professional-workspace)\professional\layout.jsx
+C:\Users\adrom\Downloads\serviceCenter\src\app\(professional-workspace)\professional\manage-appointments
 C:\Users\adrom\Downloads\serviceCenter\src\app\(professional-workspace)\professional\manage-jobs
 C:\Users\adrom\Downloads\serviceCenter\src\app\(professional-workspace)\professional\manage-projects
 C:\Users\adrom\Downloads\serviceCenter\src\app\(professional-workspace)\professional\manage-quotations
@@ -278,6 +279,7 @@ C:\Users\adrom\Downloads\serviceCenter\src\app\(professional-workspace)\professi
 C:\Users\adrom\Downloads\serviceCenter\src\app\(professional-workspace)\professional\availability\page.jsx
 C:\Users\adrom\Downloads\serviceCenter\src\app\(professional-workspace)\professional\create-projects\page.jsx
 C:\Users\adrom\Downloads\serviceCenter\src\app\(professional-workspace)\professional\invoice\page.jsx
+C:\Users\adrom\Downloads\serviceCenter\src\app\(professional-workspace)\professional\manage-appointments\page.jsx
 C:\Users\adrom\Downloads\serviceCenter\src\app\(professional-workspace)\professional\manage-jobs\page.jsx
 C:\Users\adrom\Downloads\serviceCenter\src\app\(professional-workspace)\professional\manage-projects\page.jsx
 C:\Users\adrom\Downloads\serviceCenter\src\app\(professional-workspace)\professional\manage-quotations\page.jsx
@@ -359,6 +361,8 @@ C:\Users\adrom\Downloads\serviceCenter\src\app\api\services
 C:\Users\adrom\Downloads\serviceCenter\src\app\api\valuation-units
 C:\Users\adrom\Downloads\serviceCenter\src\app\api\address\route.js
 C:\Users\adrom\Downloads\serviceCenter\src\app\api\appointments\route.js
+C:\Users\adrom\Downloads\serviceCenter\src\app\api\appointments\[id]
+C:\Users\adrom\Downloads\serviceCenter\src\app\api\appointments\[id]\route.js
 C:\Users\adrom\Downloads\serviceCenter\src\app\api\categories\route.js
 C:\Users\adrom\Downloads\serviceCenter\src\app\api\professionals\nearby
 C:\Users\adrom\Downloads\serviceCenter\src\app\api\professionals\profile
@@ -607,6 +611,7 @@ C:\Users\adrom\Downloads\serviceCenter\src\components\footer\ui\FooterSocial4.js
 C:\Users\adrom\Downloads\serviceCenter\src\components\footer\ui\FooterSocial6.jsx
 C:\Users\adrom\Downloads\serviceCenter\src\components\forms\Appointment.jsx
 C:\Users\adrom\Downloads\serviceCenter\src\components\forms\AppointmentAddressSelector.jsx
+C:\Users\adrom\Downloads\serviceCenter\src\components\forms\AppointmentInteractionForm.jsx
 C:\Users\adrom\Downloads\serviceCenter\src\components\forms\CustomerAvailabilityCalendar.jsx
 C:\Users\adrom\Downloads\serviceCenter\src\components\forms\MeasurementInputs.jsx
 C:\Users\adrom\Downloads\serviceCenter\src\components\forms\ProfessionalQuantConfig.jsx
@@ -695,7 +700,6 @@ C:\Users\adrom\Downloads\serviceCenter\src\components\option\SpeakOption1.jsx
 C:\Users\adrom\Downloads\serviceCenter\src\components\professional-workspace\availability
 C:\Users\adrom\Downloads\serviceCenter\src\components\professional-workspace\card
 C:\Users\adrom\Downloads\serviceCenter\src\components\professional-workspace\chart
-C:\Users\adrom\Downloads\serviceCenter\src\components\professional-workspace\DashboardLayout.jsx
 C:\Users\adrom\Downloads\serviceCenter\src\components\professional-workspace\element
 C:\Users\adrom\Downloads\serviceCenter\src\components\professional-workspace\footer
 C:\Users\adrom\Downloads\serviceCenter\src\components\professional-workspace\forms
@@ -703,8 +707,10 @@ C:\Users\adrom\Downloads\serviceCenter\src\components\professional-workspace\hea
 C:\Users\adrom\Downloads\serviceCenter\src\components\professional-workspace\input
 C:\Users\adrom\Downloads\serviceCenter\src\components\professional-workspace\modal
 C:\Users\adrom\Downloads\serviceCenter\src\components\professional-workspace\option
+C:\Users\adrom\Downloads\serviceCenter\src\components\professional-workspace\ProfessionalWorkspace.jsx
 C:\Users\adrom\Downloads\serviceCenter\src\components\professional-workspace\section
 C:\Users\adrom\Downloads\serviceCenter\src\components\professional-workspace\sidebar
+C:\Users\adrom\Downloads\serviceCenter\src\components\professional-workspace\table
 C:\Users\adrom\Downloads\serviceCenter\src\components\professional-workspace\availability\AvailabilityCalendar.jsx
 C:\Users\adrom\Downloads\serviceCenter\src\components\professional-workspace\availability\AvailabilityCalendarView.jsx
 C:\Users\adrom\Downloads\serviceCenter\src\components\professional-workspace\availability\AvailabilityFramework.jsx
@@ -716,6 +722,7 @@ C:\Users\adrom\Downloads\serviceCenter\src\components\professional-workspace\ava
 C:\Users\adrom\Downloads\serviceCenter\src\components\professional-workspace\availability\EditAvailabilityMenu.jsx
 C:\Users\adrom\Downloads\serviceCenter\src\components\professional-workspace\availability\RecurringDayEditorModal.jsx
 C:\Users\adrom\Downloads\serviceCenter\src\components\professional-workspace\availability\SingleDateEditorModal.jsx
+C:\Users\adrom\Downloads\serviceCenter\src\components\professional-workspace\card\AppointmentCard.jsx
 C:\Users\adrom\Downloads\serviceCenter\src\components\professional-workspace\card\InvoiceCard1.jsx
 C:\Users\adrom\Downloads\serviceCenter\src\components\professional-workspace\card\JobCard1.jsx
 C:\Users\adrom\Downloads\serviceCenter\src\components\professional-workspace\card\ManageJobCard.jsx
@@ -736,9 +743,10 @@ C:\Users\adrom\Downloads\serviceCenter\src\components\professional-workspace\ele
 C:\Users\adrom\Downloads\serviceCenter\src\components\professional-workspace\element\ReviewComment.jsx
 C:\Users\adrom\Downloads\serviceCenter\src\components\professional-workspace\footer\DashboardFooter.jsx
 C:\Users\adrom\Downloads\serviceCenter\src\components\professional-workspace\forms\ServiceAddForm.jsx
-C:\Users\adrom\Downloads\serviceCenter\src\components\professional-workspace\header\DashboardHeader.jsx
 C:\Users\adrom\Downloads\serviceCenter\src\components\professional-workspace\header\DashboardNavigation.jsx
+C:\Users\adrom\Downloads\serviceCenter\src\components\professional-workspace\header\ProfessionalAxis.jsx
 C:\Users\adrom\Downloads\serviceCenter\src\components\professional-workspace\input\AcademicExperienceOverview.jsx
+C:\Users\adrom\Downloads\serviceCenter\src\components\professional-workspace\modal\AppointmentInformationModal.jsx
 C:\Users\adrom\Downloads\serviceCenter\src\components\professional-workspace\modal\DeleteModal.jsx
 C:\Users\adrom\Downloads\serviceCenter\src\components\professional-workspace\modal\ProposalModal1.jsx
 C:\Users\adrom\Downloads\serviceCenter\src\components\professional-workspace\option\SelectInput.jsx
@@ -746,6 +754,7 @@ C:\Users\adrom\Downloads\serviceCenter\src\components\professional-workspace\sec
 C:\Users\adrom\Downloads\serviceCenter\src\components\professional-workspace\section\AddressInfo.jsx
 C:\Users\adrom\Downloads\serviceCenter\src\components\professional-workspace\section\AddServiceInformation.jsx
 C:\Users\adrom\Downloads\serviceCenter\src\components\professional-workspace\section\AnalyticsInterface.jsx
+C:\Users\adrom\Downloads\serviceCenter\src\components\professional-workspace\section\AppointmentManagement.jsx
 C:\Users\adrom\Downloads\serviceCenter\src\components\professional-workspace\section\Award.jsx
 C:\Users\adrom\Downloads\serviceCenter\src\components\professional-workspace\section\BasicInformation2.jsx
 C:\Users\adrom\Downloads\serviceCenter\src\components\professional-workspace\section\BusinessDetails.jsx
@@ -828,6 +837,7 @@ C:\Users\adrom\Downloads\serviceCenter\src\components\professional-workspace\sec
 C:\Users\adrom\Downloads\serviceCenter\src\components\professional-workspace\section\professional-computation\misc\ServiceConfigurationModal.jsx
 C:\Users\adrom\Downloads\serviceCenter\src\components\professional-workspace\section\professional-computation\misc\ServiceQuantificationGrid.jsx
 C:\Users\adrom\Downloads\serviceCenter\src\components\professional-workspace\sidebar\DashboardSidebar.jsx
+C:\Users\adrom\Downloads\serviceCenter\src\components\professional-workspace\table\AppointmentInformationTable.jsx
 C:\Users\adrom\Downloads\serviceCenter\src\components\quantification\manifold
 C:\Users\adrom\Downloads\serviceCenter\src\components\quantification\manifold\AttributeQuantifier.jsx
 C:\Users\adrom\Downloads\serviceCenter\src\components\quantification\manifold\ModelSelector.jsx
@@ -1065,15 +1075,16 @@ C:\Users\adrom\Downloads\serviceCenter\src\data\product.js
 C:\Users\adrom\Downloads\serviceCenter\src\data\project.js
 C:\Users\adrom\Downloads\serviceCenter\src\data\steps.js
 C:\Users\adrom\Downloads\serviceCenter\src\data\testimonials.js
-C:\Users\adrom\Downloads\serviceCenter\src\hook\useAddressSelection.js
-C:\Users\adrom\Downloads\serviceCenter\src\hook\useAttributeQuantification.js
-C:\Users\adrom\Downloads\serviceCenter\src\hook\useGoogleMaps.js
-C:\Users\adrom\Downloads\serviceCenter\src\hook\useGooglePlaces.js
-C:\Users\adrom\Downloads\serviceCenter\src\hook\useProfessionalServices.js
-C:\Users\adrom\Downloads\serviceCenter\src\hook\useQuantificationManifold.js
-C:\Users\adrom\Downloads\serviceCenter\src\hook\useQuantificationModels.js
-C:\Users\adrom\Downloads\serviceCenter\src\hook\useScreen.js
-C:\Users\adrom\Downloads\serviceCenter\src\hook\useStickyMenu.js
+C:\Users\adrom\Downloads\serviceCenter\src\primitives\useAddressSelection.js
+C:\Users\adrom\Downloads\serviceCenter\src\primitives\useAppointmentNotifications.js
+C:\Users\adrom\Downloads\serviceCenter\src\primitives\useAttributeQuantification.js
+C:\Users\adrom\Downloads\serviceCenter\src\primitives\useGoogleMaps.js
+C:\Users\adrom\Downloads\serviceCenter\src\primitives\useGooglePlaces.js
+C:\Users\adrom\Downloads\serviceCenter\src\primitives\useProfessionalServices.js
+C:\Users\adrom\Downloads\serviceCenter\src\primitives\useQuantificationManifold.js
+C:\Users\adrom\Downloads\serviceCenter\src\primitives\useQuantificationModels.js
+C:\Users\adrom\Downloads\serviceCenter\src\primitives\useScreen.js
+C:\Users\adrom\Downloads\serviceCenter\src\primitives\useStickyMenu.js
 C:\Users\adrom\Downloads\serviceCenter\src\store\listingStore.js
 C:\Users\adrom\Downloads\serviceCenter\src\store\loaderStore.js
 C:\Users\adrom\Downloads\serviceCenter\src\store\priceStore.js

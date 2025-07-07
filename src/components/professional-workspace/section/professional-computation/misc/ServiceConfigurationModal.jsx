@@ -3,7 +3,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { useQuantificationManifold } from '@/hook/useQuantificationManifold'
+import { useQuantificationManifold } from '@/primitives/useQuantificationManifold'
 
 export default function ServiceConfigurationModal({ 
   service, 
@@ -21,7 +21,7 @@ export default function ServiceConfigurationModal({
   const [presetName, setPresetName] = useState('')
   const [showPresetSave, setShowPresetSave] = useState(false)
 
-  // Initialize quantification hook
+  // Initialize quantification primitive
   const {
     setService,
     attributes,

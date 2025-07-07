@@ -2,7 +2,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useQuantificationManifold } from '@/hook/useQuantificationManifold'
+import { useQuantificationManifold } from '@/primitives/useQuantificationManifold'
 
 export default function ServiceQuantificationConfiguration({ 
   service, 
@@ -15,7 +15,7 @@ export default function ServiceQuantificationConfiguration({
   const [notes, setNotes] = useState(service?.additional_notes || '')
   const [activeTab, setActiveTab] = useState('parameters')
 
-  // Initialize quantification hook with the service
+  // Initialize quantification primitive with the service
   const {
     setService,
     attributes,

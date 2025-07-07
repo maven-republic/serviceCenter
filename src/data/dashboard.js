@@ -45,6 +45,14 @@ export const professionalNavigation = [
     icon: "flaticon-home",
     path: "/professional/workspace",
   },
+
+  {
+    id: 2,
+    name: "Appointments", // 🆕 NEW APPOINTMENT LINK
+    icon: "flaticon-appointment",
+    path: "/professional/manage-appointments",
+  },
+
   // {
     // id: 2,
     // name: "Projects",
@@ -111,19 +119,18 @@ export const professionalNavigation = [
     // icon: "flaticon-document",
     // path: "/professional/add-services",
   // },
-  {
-    id: 13,
-    name: "Quotations",
-    icon: "flaticon-content",
-    path: "/professional/manage-quotations",
-  },
-  // ✅ NEW: Service Pricing with quantification
-  {
-    id: 14,
-    name: "Valuation",
-    icon: "flaticon-price-tag",
-    path: "/professional/service-pricing",
-  },
+  // {
+  //   id: 13,
+  //   name: "Quotations",
+  //   icon: "flaticon-content",
+  //   path: "/professional/manage-quotations",
+  // },
+  // {
+  //   id: 14,
+  //   name: "Valuation",
+  //   icon: "flaticon-price-tag",
+  //   path: "/professional/service-pricing",
+  // },
   {
     id: 15,
     name: "Account Information",

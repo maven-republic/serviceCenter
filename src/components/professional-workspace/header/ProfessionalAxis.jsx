@@ -5,7 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-export default function DashboardHeader() {
+export default function ProfessionalAxis() {
   const toggle = toggleStore((state) => state.dashboardSlidebarToggleHandler);
   const path = usePathname();
 
@@ -22,7 +22,7 @@ export default function DashboardHeader() {
                       <Image
                         height={40}
                         width={133}
-                        src="/images/header-logo-dark.svg"
+                        src="/images/maven-republic.svg"
                         alt="logo"
                       />
                     </Link>
