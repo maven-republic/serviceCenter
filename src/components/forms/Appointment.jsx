@@ -4,7 +4,6 @@ import { useState, useCallback, useMemo, useEffect } from 'react'
 import { useUserStore } from '@/store/userStore'
 import { createClient } from '@/utils/supabase/client'
 import AppointmentAddressSelector from '@/components/forms/AppointmentAddressSelector'
-// Add this import at the top with your other imports
 import CustomerAvailabilityCalendar from '@/components/forms/CustomerAvailabilityCalendar'
 
 export default function Appointment({ 
@@ -22,37 +21,37 @@ export default function Appointment({
   console.log('🔍 Appointment received location prop:', JSON.stringify(location, null, 2))
   
   const steps = useMemo(() => [
-  { id: 1, title: 'Project' },
-  { id: 2, title: 'Assessment' },
-  { id: 3, title: 'Location' },
-  { id: 4, title: 'Audit' }
-], [])
+    { id: 1, title: 'Project' },
+    { id: 2, title: 'Assessment' },
+    { id: 3, title: 'Location' },
+    { id: 4, title: 'Audit' }
+  ], [])
 
   // Form state
-const [formInformation, setFormInformation] = useState({
-  // NEW PROJECT FIELDS
-  title: serviceInformation?.name || '',      // Auto-populated from service
-  description: '',                            // Customer input required
-  deadline: '',                               // Customer input optional
-  
-  // EXISTING FIELDS
-  preferred_start: '',
-  urgency: 'standard',
-  customer_message: '',
-  use_different_address: false,
-  service_location: location || {
-    street_address: '',
-    city: '',
-    parish: '',
-    community: '',
-    landmark: '',
-    is_rural: false,
-    latitude: null,
-    longitude: null,
-    formatted_address: '',
-    place_id: null
-  }
-})
+  const [formInformation, setFormInformation] = useState({
+    // NEW PROJECT FIELDS
+    title: serviceInformation?.name || '',
+    description: '',
+    deadline: '',
+    
+    // EXISTING FIELDS
+    preferred_start: '',
+    urgency: 'standard',
+    customer_message: '',
+    use_different_address: false,
+    service_location: location || {
+      street_address: '',
+      city: '',
+      parish: '',
+      community: '',
+      landmark: '',
+      is_rural: false,
+      latitude: null,
+      longitude: null,
+      formatted_address: '',
+      place_id: null
+    }
+  })
 
   // Debug step changes
   useEffect(() => {
@@ -90,13 +89,13 @@ const [formInformation, setFormInformation] = useState({
   }, [currentStep, steps.length])
 
   useEffect(() => {
-  if (serviceInformation?.name) {
-    setFormInformation(prev => ({
-      ...prev,
-      title: serviceInformation.name
-    }))
-  }
-}, [serviceInformation?.name])
+    if (serviceInformation?.name) {
+      setFormInformation(prev => ({
+        ...prev,
+        title: serviceInformation.name
+      }))
+    }
+  }, [serviceInformation?.name])
 
   // Memoized urgency options
   const urgencyOptions = useMemo(() => [
@@ -128,11 +127,10 @@ const [formInformation, setFormInformation] = useState({
   // Validation
   const validateForm = useCallback(() => {
     const newErrors = {}
-    // Project validation
-  if (!formInformation.description.trim()) {
-    newErrors.description = 'Project description is required'
-  }
-  
+    
+    if (!formInformation.description.trim()) {
+      newErrors.description = 'Project description is required'
+    }
     
     if (!formInformation.preferred_start) {
       newErrors.preferred_start = 'Please select your preferred start time'
@@ -143,7 +141,7 @@ const [formInformation, setFormInformation] = useState({
       }
     }
 
-        if (formInformation.use_different_address) {
+    if (formInformation.use_different_address) {
       if (!formInformation.service_location.street_address) {
         newErrors.street_address = 'Street address is required'
       }
@@ -201,14 +199,8 @@ const [formInformation, setFormInformation] = useState({
         professional_id: professional?.professional_id || null,
         service_id: serviceInformation.service_id,
         address_id: addressId,
-
-
-
-        // PROJECT FIELDS - NO TITLE (comes from service)
-  description: formInformation.description,  // ✅ Customer input
-  deadline: formInformation.deadline || null, // ✅ Customer input
-  
-
+        description: formInformation.description,
+        deadline: formInformation.deadline || null,
         preferred_start: formInformation.preferred_start,
         urgency: formInformation.urgency,
         customer_message: formInformation.customer_message || null,
@@ -278,18 +270,18 @@ const [formInformation, setFormInformation] = useState({
 
   // Check if current step is valid for navigation
   const isStepValid = useCallback((step) => {
-  switch (step) {
-    case 1: return formInformation.description.trim() !== '' 
-    case 2: return formInformation.preferred_start !== ''         // Schedule step
-    case 3: return !formInformation.use_different_address || (   // Location step
-      formInformation.service_location.street_address &&
-      formInformation.service_location.city &&
-      formInformation.service_location.parish
-    )
-    case 4: return true                                    // Audit step
-    default: return false
-  }
-}, [formInformation])
+    switch (step) {
+      case 1: return formInformation.description.trim() !== '' 
+      case 2: return formInformation.preferred_start !== ''
+      case 3: return !formInformation.use_different_address || (
+        formInformation.service_location.street_address &&
+        formInformation.service_location.city &&
+        formInformation.service_location.parish
+      )
+      case 4: return true
+      default: return false
+    }
+  }, [formInformation])
 
   // Calculate progress percentage
   const calculateProgress = useCallback(() => {
@@ -313,40 +305,36 @@ const [formInformation, setFormInformation] = useState({
 
   return (
     <div className="appointment-form">
-      {/* Linear Step Indicator */}
-      <div className="linear-step-indicator">
-        {/* Progress Header */}
-        <div className="progress-header">
-          {/* <h4>{steps[currentStep - 1]?.title}</h4> */}
-          {/* <span className="step-counter"> {currentStep} of {steps.length}</span> */}
-        </div>
-
-        {/* Progress Bar Container */}
-        <div className="progress-container">
-          {/* Background Track */}
-          <div className="progress-track">
-            {/* Active Progress Fill */}
-            <div 
-              className="progress-fill" 
-              style={{ width: `${calculateProgress()}%` }}
-            />
+      {/* Conditionally render step indicator - HIDE on calendar step */}
+      {currentStep !== 2 && (
+        <div className="linear-step-indicator">
+          <div className="progress-header">
+            {/* <h4>{steps[currentStep - 1]?.title}</h4> */}
+            {/* <span className="step-counter"> {currentStep} of {steps.length}</span> */}
           </div>
 
-          {/* Step Labels */}
-          <div className="steps-labels">
-            {steps.map((step, index) => (
+          <div className="progress-container">
+            <div className="progress-track">
               <div 
-                key={step.id}
-                className={`step-label ${getStepStatus(step.id)}`}
-                onClick={() => isStepValid(step.id) && goToStep(step.id)}
-              >
-                
-                <span className="step-text">{step.title}</span>
-              </div>
-            ))}
+                className="progress-fill" 
+                style={{ width: `${calculateProgress()}%` }}
+              />
+            </div>
+
+            <div className="steps-labels">
+              {steps.map((step, index) => (
+                <div 
+                  key={step.id}
+                  className={`step-label ${getStepStatus(step.id)}`}
+                  onClick={() => isStepValid(step.id) && goToStep(step.id)}
+                >
+                  <span className="step-text">{step.title}</span>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
-      </div>
+      )}
 
       <form 
         onSubmit={handleSubmit} 
@@ -354,100 +342,83 @@ const [formInformation, setFormInformation] = useState({
         autoComplete="off"
       >
 
+        {/* Step 1: Project Details */}
         {currentStep === 1 && (
-  <div className="form-step">
-        
-    <div className="form-grid">
-      <div className="form-group full-width">
-        <label>Tell us what you need *</label>
-        <textarea
-          className={`form-textarea ${errors.description ? 'error' : ''}`}
-          rows="4"
-          value={formInformation.description}
-          onChange={(e) => handleChange('description', e.target.value)}
-          placeholder="Describe what you need done in detail..."
-          required
-        />
-        {errors.description && <span className="error-text">{errors.description}</span>}
-      </div>
-
-            <div className="form-group">
-        <label>When do you want the service to be done?   (Optional)</label>
-        <input
-          type="date"
-          className={`form-input ${errors.deadline ? 'error' : ''}`}
-          value={formInformation.deadline}
-          onChange={(e) => handleChange('deadline', e.target.value)}
-          min={new Date().toISOString().split('T')[0]}
-        />
-        {errors.deadline && <span className="error-text">{errors.deadline}</span>}
-      </div>
-    </div>
-  </div>
-)}
-
-        {/* Step 1: Schedule */}
-       {currentStep === 2 && (
-  <div className="form-step">
-    {/* <h4 className="step-title">When can we assess your project?</h4> */}
-    
-    {errors.general && (
-      <div className="error-alert">{errors.general}</div>
-    )}
-
-    {/* Assessment Information */}
-    {/* <div className="assessment-info">
-      <div className="info-card">
-        <h6>📋 What happens during the assessment?</h6>
-        <ul>
-          <li>Professional reviews your project requirements</li>
-          <li>Takes measurements and photos if needed</li>
-          <li>Discusses timeline and materials</li>
-          <li>Provides detailed quote within 24 hours</li>
-        </ul>
-        <p className="duration-note">⏱️ Assessment takes approximately 1 hour</p>
-      </div>
-    </div> */}
-
-    {/* Professional's Available Slots */}
-    <div className="calendar-section">
-      <label className="calendar-label">Select an available time slot:</label>
-      
-      <CustomerAvailabilityCalendar
-        professionalId={professional?.professional_id}
-        onSlotSelect={(datetime) => handleChange('preferred_start', datetime)}
-        selectedSlot={formInformation.preferred_start}
-      />
-      
-      {errors.preferred_start && (
-        <span className="error-text">{errors.preferred_start}</span>
-      )}
-    </div>
-
-    {/* Urgency Level - Keep this */}
-    {/* <div className="form-group full-width urgency-section">
-      <label>How urgent is this project?</label>
-      <div className="urgency-grid">
-        {urgencyOptions.map(option => (
-          <div 
-            key={option.value}
-            className={`urgency-option ${formInformation.urgency === option.value ? 'selected' : ''}`}
-            onClick={() => handleChange('urgency', option.value)}
-          >
-            <div className="urgency-label">{option.label}</div>
-            {option.badge && (
-              <div className={`urgency-badge ${option.priceMultiplier > 1 ? 'premium' : 'discount'}`}>
-                {option.badge}
+          <div className="form-step">
+            <div className="form-grid">
+              <div className="form-group full-width">
+                <label>Tell us what you need *</label>
+                <textarea
+                  className={`form-textarea ${errors.description ? 'error' : ''}`}
+                  rows="4"
+                  value={formInformation.description}
+                  onChange={(e) => handleChange('description', e.target.value)}
+                  placeholder="Describe what you need done in detail..."
+                  required
+                />
+                {errors.description && <span className="error-text">{errors.description}</span>}
               </div>
-            )}
-          </div>
-        ))}
-      </div>
-    </div> */}
-  </div>
-)}
 
-        {/* Step 2: Location */}
+              <div className="form-group">
+                <label>When do you want the service to be done? (Optional)</label>
+                <input
+                  type="date"
+                  className={`form-input ${errors.deadline ? 'error' : ''}`}
+                  value={formInformation.deadline}
+                  onChange={(e) => handleChange('deadline', e.target.value)}
+                  min={new Date().toISOString().split('T')[0]}
+                />
+                {errors.deadline && <span className="error-text">{errors.deadline}</span>}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Step 2: Calendar - FIXED VERSION with proper height constraints */}
+        {currentStep === 2 && (
+          <div className="form-step calendar-step">
+            {/* Mini navigation bar */}
+            <div className="mini-navigation">
+              <button 
+                type="button" 
+                className="mini-nav-btn back-btn"
+                onClick={prevStep}
+              >
+                ← Back
+              </button>
+              
+              <span className="mini-nav-title">Select Assessment Time</span>
+              
+              <button 
+                type="button"
+                className="mini-nav-btn next-btn" 
+                onClick={nextStep}
+                disabled={!formInformation.preferred_start}
+              >
+                Continue →
+              </button>
+            </div>
+            
+            <div className="calendar-section">
+              <CustomerAvailabilityCalendar
+                professionalId={professional?.professional_id}
+                onSlotSelect={(datetime) => {
+                  console.log('🔘 Calendar slot selected:', datetime)
+                  handleChange('preferred_start', datetime)
+                }}
+                selectedSlot={formInformation.preferred_start}
+              />
+              
+              {errors.preferred_start && (
+                <div className="calendar-error-banner">
+                  {errors.preferred_start}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Step 3: Location */}
         {currentStep === 3 && (
           <div className="form-step">
             <h4 className="step-title">Where should the service be performed?</h4>
@@ -491,7 +462,7 @@ const [formInformation, setFormInformation] = useState({
           </div>
         )}
 
-        {/* Step 3: Audit */}
+        {/* Step 4: Audit */}
         {currentStep === 4 && (
           <div className="form-step">
             <h4 className="step-title">Is this what you want?</h4>
@@ -544,58 +515,59 @@ const [formInformation, setFormInformation] = useState({
           </div>
         )}
 
-        {/* Form Actions */}
-        <div className="form-actions">
-          {currentStep > 1 && (
-            <button 
-              type="button" 
-              className="btn btn-secondary" 
-              onClick={prevStep}
-            >
-              ← Back
-            </button>
-          )}
-          
-          {currentStep === 1 && (
-            <button 
-              type="button" 
-              className="btn btn-outline" 
-              onClick={(e) => {
-                e.preventDefault()
-                onCancel()
-              }}
-            >
-              Cancel
-            </button>
-          )}
+        {/* Form Actions - Show for all steps EXCEPT calendar step (handled by mini-nav) */}
+        {currentStep !== 2 && (
+          <div className="form-actions">
+            {currentStep > 1 && (
+              <button 
+                type="button" 
+                className="btn btn-secondary" 
+                onClick={prevStep}
+              >
+                ← Back
+              </button>
+            )}
+            
+            {currentStep === 1 && (
+              <button 
+                type="button" 
+                className="btn btn-outline" 
+                onClick={(e) => {
+                  e.preventDefault()
+                  onCancel()
+                }}
+              >
+                Cancel
+              </button>
+            )}
 
-          {currentStep < steps.length ? (
-            <button 
-              type="button"
-              className="btn btn-primary" 
-              onClick={nextStep}
-              disabled={!isStepValid(currentStep)}
-            >
-              Continue →
-            </button>
-          ) : (
-            <button
-              type="submit"
-              className="btn btn-success"
-              disabled={loading}
-              onClick={(e) => {
-                console.log('🚀 Submit button clicked')
-                // handleSubmit will be called by form onSubmit
-              }}
-            >
-              {loading ? (
-                <>⏳ Creating Request...</>
-              ) : (
-                <>🚀 Send appointment Request</>
-              )}
-            </button>
-          )}
-        </div>
+            {currentStep < steps.length ? (
+              <button 
+                type="button"
+                className="btn btn-primary" 
+                onClick={nextStep}
+                disabled={!isStepValid(currentStep)}
+              >
+                Continue →
+              </button>
+            ) : (
+              <button
+                type="submit"
+                className="btn btn-success"
+                disabled={loading}
+                onClick={(e) => {
+                  console.log('🚀 Submit button clicked')
+                }}
+              >
+                {loading ? (
+                  <>⏳ Creating Request...</>
+                ) : (
+                  <>🚀 Send appointment Request</>
+                )}
+              </button>
+            )}
+          </div>
+        )}
       </form>
 
       <style jsx>{`
@@ -603,13 +575,11 @@ const [formInformation, setFormInformation] = useState({
           height: 100%;
           display: flex;
           flex-direction: column;
-          background: white;
+          // background: white;
         }
 
         /* Linear Step Indicator */
         .linear-step-indicator {
-          padding: 0.5rem;
-          // background: #f8f9fa;
           border-bottom: 1px solid #dee2e6;
         }
 
@@ -620,33 +590,10 @@ const [formInformation, setFormInformation] = useState({
           margin-bottom: 1rem;
         }
 
-        // .progress-header h4 {
-        //   margin: 0;
-        //   font-size: 18px;
-        //   font-weight: 600;
-        //   color: #495057;
-        // }
-
         .step-counter {
           font-size: 14px;
           color: #6c757d;
           font-weight: 500;
-        }
-
-        .service-title-display {
-          background: #f0f9ff;
-          border: 1px solid #0ea5e9;
-          border-radius: 8px;
-          padding: 16px;
-          margin-bottom: 24px;
-          text-align: center;
-        }
-
-        .service-title-display h5 {
-          margin: 0;
-          color: #0c4a6e;
-          font-size: 18px;
-          font-weight: 600;
         }
 
         /* Progress Bar Styles */
@@ -670,7 +617,7 @@ const [formInformation, setFormInformation] = useState({
           transition: width 0.4s ease;
         }
 
-        /* Step Labels - Simplified without circular markers */
+        /* Step Labels */
         .steps-labels {
           position: relative;
           margin-top: 1rem;
@@ -701,7 +648,7 @@ const [formInformation, setFormInformation] = useState({
           transition: all 0.2s ease;
         }
 
-        /* Step States - Text only */
+        /* Step States */
         .step-label.pending .step-text {
           color: #6c757d;
         }
@@ -722,7 +669,6 @@ const [formInformation, setFormInformation] = useState({
           font-weight: 600;
         }
 
-        /* Optional: Add underline indicator for active step */
         .step-label.active::after {
           content: '';
           position: absolute;
@@ -749,10 +695,130 @@ const [formInformation, setFormInformation] = useState({
           overflow-y: auto;
         }
 
+        /* ✅ FIXED: Calendar Step Layout with proper height constraints */
+        .form-step.calendar-step {
+          padding: 0;
+          overflow: hidden;
+          display: flex;
+          flex-direction: column;
+          min-height: 0;         /* ✅ CRITICAL: Allow shrinking */
+          max-height: 100%;      /* ✅ CRITICAL: Prevent overflow */
+        }
+
+        /* ✅ FIXED: Mini Navigation with exact positioning */
+        /* ✅ FIXED: Mini Navigation with exact positioning */
+        .mini-navigation {
+          display: grid;
+          grid-template-columns: 120px 1fr 120px;
+          gap: 1rem;
+          align-items: center;
+          padding: 0.75rem 1rem;
+          background: #f8f9fa;
+          border-bottom: 1px solid #e5e7eb;
+          height: 70px;
+          box-sizing: border-box;
+          flex-shrink: 0;        
+          position: relative;
+          z-index: 10;
+        }
+
+        .mini-nav-btn {
+          margin: 0 !important;
+          padding: 0.5rem 0.75rem !important;
+          border: none !important;
+          border-radius: 6px;
+          font-size: 13px;
+          font-weight: 500;
+          cursor: pointer;
+          transition: all 0.2s ease;
+          display: inline-flex !important;
+          align-items: center;
+          justify-content: center;
+          gap: 4px;
+          white-space: nowrap;
+          width: 100% !important;
+          height: auto !important;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          box-sizing: border-box;
+          line-height: 1;
+          text-align: center;
+          position: static !important;
+          top: auto !important;
+          right: auto !important;
+          left: auto !important;
+          bottom: auto !important;
+          z-index: auto !important;
+        }
+
+        .mini-nav-btn.back-btn {
+          background: #6c757d;
+          color: white;
+          grid-column: 1;
+        }
+
+        .mini-nav-title {
+          font-weight: 600;
+          color: #495057;
+          font-size: 14px;
+          text-align: center;
+          margin: 0;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          grid-column: 2;
+        }
+
+        .mini-nav-btn.next-btn {
+          background: #0d6efd;
+          color: white;
+          grid-column: 3;
+        }
+
+        .mini-nav-btn.back-btn:hover {
+          background: #5c636a;
+          transform: translateY(-1px);
+        }
+
+        .mini-nav-btn.next-btn:hover:not(:disabled) {
+          background: #0b5ed7;
+          transform: translateY(-1px);
+        }
+
+        .mini-nav-btn:disabled {
+          opacity: 0.6;
+          cursor: not-allowed;
+          transform: none;
+        }
+
+        /* ✅ FIXED: Calendar Section with strict height control */
+        .calendar-step .calendar-section {
+          flex: 1;                    /* ✅ CRITICAL: Take remaining space */
+          display: flex;
+          flex-direction: column;
+            overflow-y: auto;
+          /* ✅ CRITICAL: Prevent expansion */
+          position: relative;
+          z-index: 1;
+          min-height: 0;             
+          max-height: calc(100% - 40px); 
+            height: 100%; /* 🟨 might be needed to enforce layout control */
+
+        }
+
+
+        .calendar-error-banner {
+          background: #fff5f5;
+          color: #dc2626;
+          padding: 0.75rem 1rem;
+          border-bottom: 1px solid #fecaca;
+          font-size: 13px;
+          font-weight: 500;
+          text-align: center;
+          flex-shrink: 0;
+        }
+
         .step-title {
-          // font-size: 20px;
-          // font-weight: 600;
-          // color: #212529;
           margin-bottom: 1.5rem;
           text-align: center;
         }
@@ -812,59 +878,6 @@ const [formInformation, setFormInformation] = useState({
           border-radius: 8px;
           margin-bottom: 1rem;
           font-size: 14px;
-        }
-
-        /* Urgency Options */
-        .urgency-grid {
-          display: grid;
-          grid-template-columns: repeat(2, 1fr);
-          gap: 8px;
-        }
-
-        .urgency-option {
-          padding: 12px;
-          border: 2px solid #e9ecef;
-          border-radius: 8px;
-          cursor: pointer;
-          transition: all 0.2s ease;
-          text-align: center;
-          position: relative;
-        }
-
-        .urgency-option:hover {
-          border-color: #0d6efd;
-          transform: translateY(-2px);
-        }
-
-        .urgency-option.selected {
-          border-color: #0d6efd;
-          background: #f0f9ff;
-        }
-
-        .urgency-label {
-          font-weight: 600;
-          font-size: 13px;
-          color: #495057;
-        }
-
-        .urgency-badge {
-          position: absolute;
-          top: -6px;
-          right: -6px;
-          padding: 2px 6px;
-          border-radius: 12px;
-          font-size: 10px;
-          font-weight: 700;
-        }
-
-        .urgency-badge.premium {
-          background: #dc3545;
-          color: white;
-        }
-
-        .urgency-badge.discount {
-          background: #198754;
-          color: white;
         }
 
         /* Location Toggle */
@@ -1086,21 +1099,51 @@ const [formInformation, setFormInformation] = useState({
           }
 
           .form-step {
-            padding: 1rem;
+            padding: 0.5rem;
           }
 
-          .step-title {
-            font-size: 18px;
-            margin-bottom: 1rem;
+          .form-step.calendar-step {
+            padding: 0;
+          }
+
+          .mini-navigation {
+            grid-template-columns: 100px 1fr 100px;
+            padding: 0.5rem 0.75rem;
+            height: 60px;
+            gap: 0.5rem;
+              background: rgba(255, 255, 0, 0.2);
+
+          }
+
+          .mini-nav-title {
+            font-size: 13px;
+          }
+
+          .mini-nav-btn {
+  all: unset; /* 🚫 reset all inherited styles (esp. from Bootstrap) */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 38px;
+  padding: 0 14px;
+  background-color: #0d6efd;
+  color: white;
+  font-size: 14px;
+  font-weight: 600;
+  border-radius: 6px;
+  cursor: pointer;
+  box-sizing: border-box;
+  line-height: 1; /* ✅ ensures vertical centering */
+  text-align: center;
+}
+
+          .calendar-step .calendar-section {
+            max-height: calc(100% - 60px); /* 
           }
 
           .form-grid {
             grid-template-columns: 1fr;
             gap: 1rem;
-          }
-
-          .urgency-grid {
-            grid-template-columns: 1fr;
           }
 
           .detail-grid {
@@ -1149,7 +1192,6 @@ const [formInformation, setFormInformation] = useState({
             font-size: 12px;
           }
 
-          /* On very small screens, consider showing only current step */
           .step-label:not(.active) .step-text {
             opacity: 0.6;
             font-size: 10px;
@@ -1157,6 +1199,44 @@ const [formInformation, setFormInformation] = useState({
 
           .form-step {
             padding: 0.75rem;
+          }
+
+          .form-step.calendar-step {
+            padding: 0;
+          }
+
+          .mini-navigation {
+            display: flex;
+            flex-direction: column;
+            height: auto;
+            padding: 0.4rem 0.5rem;
+            gap: 0.5rem;
+            text-align: center;
+          }
+
+          .mini-nav-title {
+            font-size: 12px;
+            order: 1;
+            margin: 0;
+          }
+
+          .mini-nav-btn.back-btn {
+            order: 2;
+            width: 100%;
+          }
+
+          .mini-nav-btn.next-btn {
+            order: 3;
+            width: 100%;
+          }
+
+          .mini-nav-btn {
+            padding: 0.3rem 0.6rem;
+            font-size: 11px;
+          }
+
+          .calendar-step .calendar-section {
+            max-height: calc(100% - 90px); 
           }
 
           .audit-summary {
@@ -1182,93 +1262,6 @@ const [formInformation, setFormInformation] = useState({
         .form-step::-webkit-scrollbar-thumb:hover {
           background: #a8a8a8;
         }
-
-        /* Assessment Information Styles */
-.assessment-info {
-  margin-bottom: 2rem;
-}
-
-.info-card {
-  background: #f0f9ff;
-  border: 1px solid #0ea5e9;
-  border-radius: 12px;
-  padding: 1.5rem;
-  margin-bottom: 1rem;
-}
-
-.info-card h6 {
-  margin: 0 0 1rem 0;
-  color: #0c4a6e;
-  font-size: 16px;
-  font-weight: 600;
-}
-
-.info-card ul {
-  margin: 0 0 1rem 0;
-  padding-left: 1.2rem;
-}
-
-.info-card li {
-  margin-bottom: 0.5rem;
-  color: #0c4a6e;
-  font-size: 14px;
-}
-
-.duration-note {
-  margin: 0;
-  font-size: 13px;
-  color: #0369a1;
-  font-weight: 500;
-  text-align: center;
-  padding: 0.5rem;
-  background: rgba(3, 105, 161, 0.1);
-  border-radius: 6px;
-}
-
-/* Calendar Section */
-.calendar-section {
-  margin-bottom: 2rem;
-}
-
-.calendar-label {
-  display: block;
-  font-weight: 600;
-  font-size: 14px;
-  color: #495057;
-  margin-bottom: 1rem;
-}
-
-/* Urgency Section - Updated */
-.urgency-section {
-  margin-top: 2rem;
-  padding-top: 1.5rem;
-  border-top: 1px solid #e9ecef;
-}
-
-.urgency-section label {
-  margin-bottom: 1rem;
-  font-size: 15px;
-}
-
-/* Mobile Responsive for Assessment Info */
-@media (max-width: 768px) {
-  .info-card {
-    padding: 1rem;
-  }
-  
-  .info-card h6 {
-    font-size: 14px;
-  }
-  
-  .info-card li {
-    font-size: 13px;
-  }
-  
-  .duration-note {
-    font-size: 12px;
-  }
-}
-  
       `}</style>
     </div>
   )

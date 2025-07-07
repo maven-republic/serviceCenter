@@ -243,12 +243,12 @@ const handleDateSelect = useCallback((dateStr, isAvailable) => {
   className={`nav-btn ${loading ? 'loading' : ''}`}
   disabled={loading}
 >
-  {loading ? '⟳' : '‹'}
+{loading ? <div className="nav-skeleton"></div> : '<'}
 </button>
 
 <h3 className={`month-title ${loading ? 'loading' : ''}`}>
   {loading ? (
-    <span className="loading-text">Loading...</span>
+    <div className="month-skeleton"></div>
   ) : (
     monthName
   )}
@@ -259,7 +259,8 @@ const handleDateSelect = useCallback((dateStr, isAvailable) => {
   className={`nav-btn ${loading ? 'loading' : ''}`}
   disabled={loading}
 >
-  {loading ? '⟳' : '›'}
+{loading ? <div className="nav-skeleton"></div> : '>'}
+
 </button>
             </div>
             
@@ -281,6 +282,8 @@ const handleDateSelect = useCallback((dateStr, isAvailable) => {
             <div className="calendar-days">
               {calendarDays.map((day, index) => (
                 <button
+
+                key={day.date}
   className={`calendar-day ${
     !day.isCurrentMonth ? 'other-month' : ''
   } ${
@@ -411,7 +414,7 @@ const handleDateSelect = useCallback((dateStr, isAvailable) => {
 
         /* Left Side - Date Picker (Compact) */
         .date-picker-section {
-          padding: 1rem;         /* Reduced from 2rem */
+          padding: 0.5rem;         /* Reduced from 2rem */
           border-right: 1px solid #e5e7eb;
           background: white;
           display: flex;
@@ -420,15 +423,15 @@ const handleDateSelect = useCallback((dateStr, isAvailable) => {
         }
 
         .calendar-header {
-          margin-bottom: 1rem;   /* Reduced from 2rem */
-          flex-shrink: 0;        /* Keep header size */
+         margin-bottom: 0.25rem;
+          flex-shrink: 0;       
         }
 
         .month-navigation {
           display: flex;
           align-items: center;
           justify-content: space-between;
-          margin-bottom: 0.75rem; /* Reduced from 1.5rem */
+          margin-bottom: 0.25rem;
         }
 
         .month-title {
@@ -442,6 +445,16 @@ const handleDateSelect = useCallback((dateStr, isAvailable) => {
         .month-title.loading {
           opacity: 0.7;
         }
+
+        .month-skeleton {
+  height: 24px;           /* Matches text height */
+  width: 140px;           /* Approximate width of "July 2025" */
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200px 100%;
+  animation: skeleton-shimmer 1.5s infinite linear;
+  border-radius: 6px;     /* Rounded corners */
+  margin: 0 auto;         /* Center it */
+}
 
         .loading-text {
           background: linear-gradient(90deg, #d0d0d0 25%, #c0c0c0 50%, #d0d0d0 75%);
@@ -468,14 +481,23 @@ const handleDateSelect = useCallback((dateStr, isAvailable) => {
           transition: all 0.2s ease;
         }
 
+        .nav-skeleton {
+  width: 16px;
+  height: 16px;
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200px 100%;
+  animation: skeleton-shimmer 1.5s infinite linear;
+  border-radius: 50%;        /* Makes it circular */
+}
+
+
         .nav-btn:hover:not(:disabled) {
           background: #f3f4f6;
           color: #374151;
         }
 
         .nav-btn.loading {
-          animation: button-spin 1s linear infinite;
-          opacity: 0.7;
+          opacity: 1;
           cursor: not-allowed;
         }
 
@@ -515,7 +537,7 @@ const handleDateSelect = useCallback((dateStr, isAvailable) => {
         .calendar-days {
           display: grid;
           grid-template-columns: repeat(7, 1fr);
-          gap: 4px;              /* Reduced from 6px */
+          gap: 2px;              /* Reduced from 6px */
           flex: 1;               /* Take remaining space */
           align-content: start;  /* Align to top */
         }
@@ -524,7 +546,7 @@ const handleDateSelect = useCallback((dateStr, isAvailable) => {
         .calendar-day {
           width: 100%;
           aspect-ratio: 1;       /* Square aspect ratio - responsive height */
-          min-height: 44px;      /* Minimum touch target */
+          min-height: 40px;      /* Minimum touch target */
           border: 1px solid #e5e7eb;
           background: transparent;
           color: #374151;
@@ -538,7 +560,7 @@ const handleDateSelect = useCallback((dateStr, isAvailable) => {
           align-items: center;
           justify-content: center;
           position: relative;
-          padding: 2px;          /* Reduced padding */
+          padding: 1px;          /* Reduced padding */
           gap: 1px;              /* Reduced gap */
         }
 
@@ -662,7 +684,7 @@ const handleDateSelect = useCallback((dateStr, isAvailable) => {
 
         /* Right Side - Time Slots (Full Height) */
         .time-slots-section {
-          padding: 1rem;         /* Reduced from 1.5rem */
+          padding: 0.5rem;         /* Reduced from 1.5rem */
           background: white;
           display: flex;
           flex-direction: column;
@@ -880,7 +902,7 @@ const handleDateSelect = useCallback((dateStr, isAvailable) => {
           }
 
           .calendar-header {
-            margin-bottom: 0.75rem;
+            margin-bottom: 0.5rem;
           }
 
           .calendar-day {
@@ -950,7 +972,7 @@ const handleDateSelect = useCallback((dateStr, isAvailable) => {
           }
 
           .calendar-days {
-            gap: 2px;            /* Tighter on small screens */
+            gap: 2px;           
           }
 
           .time-slots-list {

@@ -146,9 +146,7 @@ export default function AppointmentModal({
         }
 
         .appointment-modal-header {
-          padding: 1rem 1.5rem;
           background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-          // border-bottom: 1px solid #dee2e6;
           display: flex;
           align-items: center;
           justify-content: space-between;
@@ -218,8 +216,7 @@ export default function AppointmentModal({
           }
           
           .appointment-modal-header {
-            padding: 0.75rem 1rem;
-            min-height: 60px;
+            // min-height: 60px;
           }
           
           .modal-title {
