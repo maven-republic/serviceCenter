@@ -9,7 +9,7 @@ export default function StatementInfo() {
       <div className="dashboard__content hover-bgc-color">
         <div className="row pb40">
           <div className="col-lg-12">
-            <DashboardNavigation />
+            {/* <DashboardNavigation /> */}
           </div>
           <div className="col-lg-12">
             <div className="dashboard_title_area">

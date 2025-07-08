@@ -1,17 +1,38 @@
-// ============ 4. InsightsHeader.jsx ============
+// ============ InsightsHeader.jsx - Tailwind + shadcn/ui Version ============
+import { Button } from '@/components/ui/button'
+import { Eye, EyeOff, TrendingUp } from 'lucide-react'
+
 export default function InsightsHeader({ hideEarnings, setHideEarnings }) {
   return (
-    <div className="d-flex justify-content-between bdrb1 pb15 mb20">
-      <div>
-        <h5 className="title">Income Insights</h5>
-        <p className="text fz14 mb-0">Track your earning patterns and optimize your schedule</p>
+    <div className="flex items-start justify-between border-b border-border pb-4 mb-6">
+      <div className="space-y-1">
+        <div className="flex items-center gap-2">
+          <TrendingUp className="h-5 w-5 text-primary" />
+          <h2 className="text-xl font-semibold text-foreground">Income Insights</h2>
+        </div>
+        <p className="text-sm text-muted-foreground max-w-md">
+          Track your earning patterns and optimize your schedule for better performance
+        </p>
       </div>
-      <button
-        onClick={() => setHideEarnings(!hideEarnings)}
-        className="btn btn-outline-primary btn-sm"
-      >
-        {hideEarnings ? '👁️ Show' : '🙈 Hide'} Earnings
-      </button>
+      
+     <Button 
+  variant="outline" 
+  size="sm"
+  className="gap-2 shrink-0 hover:!bg-gray-50 hover:!text-gray-900 hover:!border-gray-300"
+  onClick={() => setHideEarnings(!hideEarnings)}
+>
+  {hideEarnings ? (
+    <>
+      <Eye className="h-4 w-4" />
+      Show Earnings
+    </>
+  ) : (
+    <>
+      <EyeOff className="h-4 w-4" />
+      Hide Earnings
+    </>
+  )}
+</Button>
     </div>
   );
 }

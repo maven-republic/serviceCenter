@@ -1,6 +1,10 @@
-// ============ ChartBase.jsx - FIXED ============
+// ============ ChartBase.jsx - Tailwind + shadcn/ui Version ============
 import React, { useEffect, useRef, useState } from 'react';
 import * as Chart from 'chart.js';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Card, CardContent } from '@/components/ui/card';
+import { Eye, EyeOff, BarChart3, Beaker } from 'lucide-react';
 import ChartClickPopup from '../../ChartClickPopup';
 import ChartStatistics from '../../ChartStatistics';
 import { getChartTitle, getChartSubtitle } from './ChartUtils';
@@ -139,86 +143,89 @@ export default function ChartBase({
   }, []);
 
   return (
-    <div className="p20" style={{backgroundColor: '#f8f9fa', borderRadius: '8px'}}>
-      {/* Chart Header */}
-      <div className="d-flex justify-content-between align-items-center mb20">
-        <h6 className="mb-0">{getChartTitle(chartType, hasBookings, showPreview)}</h6>
-        <div className="d-flex align-items-center gap-2">
-          {showPreview && (
-            <span 
-              className="badge" 
-              style={{ 
-                backgroundColor: '#fbbf24', 
-                color: '#92400e',
-                fontSize: '10px'
-              }}
-            >
-              Preview Mode
-            </span>
-          )}
-          {!hasBookings && (
-            <span 
-              className="badge" 
-              style={{ 
-                backgroundColor: '#3b82f6', 
-                color: 'white',
-                fontSize: '10px'
-              }}
-            >
-              Beta
-            </span>
-          )}
-          <span className="text fz14" style={{ color: '#6b7280' }}>
-            {getChartSubtitle(chartType, hasBookings, showPreview, dateRange)}
-          </span>
-        </div>
-      </div>
-
-      {/* Chart Content */}
-      <div style={{height: '320px', position: 'relative'}}>
-        {!hasBookings && !showPreview ? (
-          emptyStateComponent
-        ) : (
-          <>
-            <canvas ref={chartRef}></canvas>
+    <Card className="bg-muted/30 border-0">
+      <CardContent className="p-5">
+        {/* Chart Header */}
+        <div className="flex justify-between items-center mb-5">
+          <div className="flex items-center gap-2">
+            <BarChart3 className="h-4 w-4 text-muted-foreground" />
+            <h3 className="text-sm font-semibold text-foreground">
+              {getChartTitle(chartType, hasBookings, showPreview)}
+            </h3>
+          </div>
+          
+          <div className="flex items-center gap-2">
+            {showPreview && (
+              <Badge variant="secondary" className="bg-yellow-100 text-yellow-800 gap-1 text-xs">
+                <Eye className="h-3 w-3" />
+                Preview Mode
+              </Badge>
+            )}
             
-            <ChartClickPopup 
-              selectedBarData={selectedBarData}
-              setSelectedBarData={setSelectedBarData}
+            {!hasBookings && (
+              <Badge variant="default" className="bg-blue-500 hover:bg-blue-500 gap-1 text-xs">
+                <Beaker className="h-3 w-3" />
+                Beta
+              </Badge>
+            )}
+            
+            <span className="text-xs text-muted-foreground">
+              {getChartSubtitle(chartType, hasBookings, showPreview, dateRange)}
+            </span>
+          </div>
+        </div>
+
+        {/* Chart Content */}
+        <div className="h-80 relative">
+          {!hasBookings && !showPreview ? (
+            emptyStateComponent
+          ) : (
+            <>
+              <canvas ref={chartRef} className="w-full h-full"></canvas>
+              
+              <ChartClickPopup 
+                selectedBarData={selectedBarData}
+                setSelectedBarData={setSelectedBarData}
+                hideEarnings={hideEarnings}
+              />
+            </>
+          )}
+        </div>
+
+        {/* Preview Toggle Button - Always visible in beta mode */}
+        {!hasBookings && (
+          <div className="flex justify-center mt-5">
+            <Button 
+              variant="outline"
+              size="sm"
+              onClick={() => setShowPreview(!showPreview)}
+              className="gap-2 text-xs"
+            >
+              {showPreview ? (
+                <>
+                  <EyeOff className="h-3 w-3" />
+                  Hide preview
+                </>
+              ) : (
+                <>
+                  <Eye className="h-3 w-3" />
+                  Preview with sample data
+                </>
+              )}
+            </Button>
+          </div>
+        )}
+
+        {/* Chart Statistics - only show when there's data or preview */}
+        {(hasBookings || showPreview) && (
+          <div className="mt-5">
+            <ChartStatistics 
+              activeChart={chartType}
               hideEarnings={hideEarnings}
             />
-          </>
+          </div>
         )}
-      </div>
-
-      {/* Preview Toggle Button - Always visible in beta mode */}
-      {!hasBookings && (
-        <div className="text-center mt20">
-          <button 
-            onClick={() => setShowPreview(!showPreview)}
-            className="btn btn-outline-primary btn-sm"
-            style={{ fontSize: '12px', padding: '6px 16px' }}
-          >
-            {showPreview ? '🙈 Hide preview' : '👁️ Preview with sample data'}
-          </button>
-        </div>
-      )}
-
-      {/* Chart Statistics - only show when there's data or preview */}
-      {(hasBookings || showPreview) && (
-        <ChartStatistics 
-          activeChart={chartType}
-          hideEarnings={hideEarnings}
-        />
-      )}
-
-      {/* CSS Animations */}
-      <style jsx>{`
-        @keyframes chartPulse {
-          0% { opacity: 0.4; transform: scaleY(0.8); }
-          100% { opacity: 0.8; transform: scaleY(1.1); }
-        }
-      `}</style>
-    </div>
+      </CardContent>
+    </Card>
   );
 }

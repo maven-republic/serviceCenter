@@ -1,85 +1,124 @@
-// ============ DayChart.jsx ============
+"use client";
+
 import React from 'react';
-import ChartBase from './shared/ChartBase';
-import { generateEarnings, calculateDaysDiff, getBaseChartOptions, COLORS } from './shared/ChartUtils';
+import { TrendingUp, Eye, EyeOff, CheckCircle, Beaker } from 'lucide-react';
+import { Bar, BarChart, CartesianGrid, XAxis } from "recharts";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  ChartContainer,
+  ChartTooltip,
+  ChartTooltipContent,
+} from "@/components/ui/chart";
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { generateEarnings, calculateDaysDiff, formatEarnings } from './shared/ChartUtils';
+
+const chartConfig = {
+  earnings: {
+    label: "Earnings",
+    color: "#000000",
+  },
+};
 
 export default function DayChart({ hideEarnings, activeTimeline, dateRange, showPreview, setShowPreview }) {
   const hasBookings = false; // This would come from your app state/API
 
-  // Generate daily chart data
+  // Generate daily chart data for Recharts format
   const generateDailyData = () => {
     if (!dateRange) {
-      // Default data
-      return {
-        labels: ['Mon 25', 'Tue 26', 'Wed 27', 'Thu 28', 'Fri 29', 'Sat 30', 'Sun 31'],
-        earnings: [450, 320, 580, 720, 650, 890, 420],
-        colors: ['#e5e7eb', '#e5e7eb', '#e5e7eb', '#000000', '#e5e7eb', '#000000', '#e5e7eb']
-      };
+      // Default data - convert to Recharts format
+      const defaultData = [
+        { day: 'Mon 25', earnings: 450, fullDate: 'Monday, Dec 25' },
+        { day: 'Tue 26', earnings: 320, fullDate: 'Tuesday, Dec 26' },
+        { day: 'Wed 27', earnings: 580, fullDate: 'Wednesday, Dec 27' },
+        { day: 'Thu 28', earnings: 720, fullDate: 'Thursday, Dec 28' },
+        { day: 'Fri 29', earnings: 650, fullDate: 'Friday, Dec 29' },
+        { day: 'Sat 30', earnings: 890, fullDate: 'Saturday, Dec 30' },
+        { day: 'Sun 31', earnings: 420, fullDate: 'Sunday, Dec 31' }
+      ];
+      return defaultData;
     }
 
     const daysDiff = calculateDaysDiff(dateRange.startDate, dateRange.endDate);
     
     if (daysDiff <= 1) {
       // Single day
-      return {
-        labels: ['Today'],
-        earnings: [850],
-        colors: ['#000000']
-      };
+      return [
+        { day: 'Today', earnings: 850, fullDate: 'Today' }
+      ];
     } else {
       // Multiple days
-      const labels = [];
-      const colors = [];
+      const data = [];
+      const earnings = generateEarnings(Math.min(daysDiff, 31), 500);
       
       for (let i = 0; i < Math.min(daysDiff, 31); i++) {
         const date = new Date(dateRange.startDate);
         date.setDate(date.getDate() + i);
         
-        labels.push(date.toLocaleDateString('en-US', { 
+        const shortLabel = date.toLocaleDateString('en-US', { 
           weekday: 'short', 
           day: 'numeric' 
-        }));
+        });
         
-        colors.push(i % 3 === 0 ? COLORS.primary : COLORS.muted);
+        const fullDate = date.toLocaleDateString('en-US', { 
+          weekday: 'long', 
+          month: 'long',
+          day: 'numeric'
+        });
+        
+        data.push({
+          day: shortLabel,
+          earnings: earnings[i],
+          fullDate: fullDate
+        });
       }
       
-      return {
-        labels,
-        earnings: generateEarnings(labels.length, 500),
-        colors
-      };
+      return data;
     }
   };
 
   const chartData = generateDailyData();
 
-  // Daily chart configuration
-  const chartConfig = {
-    type: 'bar',
-    data: {
-      labels: chartData.labels,
-      datasets: [{
-        data: chartData.earnings,
-        backgroundColor: showPreview 
-          ? chartData.colors.map(color => color === COLORS.primary ? COLORS.preview : '#e2e8f0')
-          : chartData.colors,
-        borderRadius: 4,
-        borderSkipped: false,
-        opacity: showPreview ? 0.7 : 1
-      }]
-    },
-    options: getBaseChartOptions()
+  // Calculate stats for footer
+  const totalEarnings = chartData.reduce((sum, item) => sum + item.earnings, 0);
+  const avgEarnings = totalEarnings / chartData.length;
+  const highestDay = chartData.reduce((max, item) => item.earnings > max.earnings ? item : max, chartData[0]);
+
+  // Get date range for subtitle
+  const getDateRangeText = () => {
+    if (!dateRange) {
+      return "Last 7 days";
+    }
+    
+    if (calculateDaysDiff(dateRange.startDate, dateRange.endDate) <= 1) {
+      return "Today";
+    }
+    
+    const start = new Date(dateRange.startDate).toLocaleDateString('en-US', { 
+      month: 'short', 
+      day: 'numeric' 
+    });
+    const end = new Date(dateRange.endDate).toLocaleDateString('en-US', { 
+      month: 'short', 
+      day: 'numeric' 
+    });
+    
+    return `${start} - ${end}`;
   };
 
   // Beta Empty State
   const emptyStateComponent = (
-    <div 
-      className="d-flex flex-column align-items-center justify-content-center text-center"
-      style={{ minHeight: '280px' }}
-    >
+    <div className="flex flex-col items-center justify-center text-center min-h-[280px]">
       {/* Animated Chart Placeholder */}
       <div className="mb-4">
-        <svg width="120" height="80" viewBox="0 0 120 80" style={{ opacity: 0.7 }}>
+        <svg width="120" height="80" viewBox="0 0 120 80" className="opacity-70">
           {[0, 1, 2, 3, 4, 5, 6].map((index) => (
             <rect
               key={index}
@@ -89,9 +128,10 @@ export default function DayChart({ hideEarnings, activeTimeline, dateRange, show
               height={Math.random() * 40 + 10}
               fill="#e2e8f0"
               rx="2"
+              className="animate-pulse"
               style={{
-                animation: `chartPulse ${2 + index * 0.1}s ease-in-out infinite alternate`,
-                opacity: '0.6'
+                animationDelay: `${index * 0.1}s`,
+                animationDuration: '2s'
               }}
             />
           ))}
@@ -103,77 +143,196 @@ export default function DayChart({ hideEarnings, activeTimeline, dateRange, show
       </div>
 
       {/* Main Message */}
-      <h5 className="text-muted mb-2" style={{ color: '#64748b' }}>
+      <h3 className="text-lg font-semibold text-muted-foreground mb-2">
         Your daily earnings chart is ready! 📊
-      </h5>
-      <p className="text-muted mb-4" style={{ maxWidth: '300px', color: '#94a3b8', fontSize: '14px' }}>
+      </h3>
+      <p className="text-sm text-muted-foreground mb-6 max-w-sm">
         Track your daily earnings once bookings start
       </p>
 
       {/* Steps Indicator */}
-      <div className="d-flex align-items-center gap-3" style={{ flexWrap: 'wrap', justifyContent: 'center' }}>
-        <div className="d-flex align-items-center">
-          <div 
-            className="rounded-circle me-2 d-flex align-items-center justify-content-center"
-            style={{
-              width: '24px',
-              height: '24px',
-              backgroundColor: '#10b981',
-              color: 'white',
-              fontSize: '12px'
-            }}
-          >
-            ✓
-          </div>
-          <span style={{ fontSize: '12px', color: '#10b981' }}>Profile setup</span>
+      <div className="flex items-center gap-4 flex-wrap justify-center">
+        <div className="flex items-center gap-2">
+          <Badge variant="default" className="bg-green-500 hover:bg-green-500 gap-1">
+            <CheckCircle className="h-3 w-3" />
+            <span className="text-xs">Profile setup</span>
+          </Badge>
         </div>
         
-        <div className="d-flex align-items-center">
-          <div 
-            className="rounded-circle me-2 d-flex align-items-center justify-content-center"
-            style={{
-              width: '24px',
-              height: '24px',
-              backgroundColor: '#f59e0b',
-              color: 'white',
-              fontSize: '12px'
-            }}
-          >
-            2
-          </div>
-          <span style={{ fontSize: '12px', color: '#f59e0b' }}>Get first booking</span>
+        <div className="flex items-center gap-2">
+          <Badge variant="secondary" className="bg-yellow-500 text-yellow-50 hover:bg-yellow-500 gap-1">
+            <span className="text-xs font-bold">2</span>
+            <span className="text-xs">Get first booking</span>
+          </Badge>
         </div>
         
-        <div className="d-flex align-items-center">
-          <div 
-            className="rounded-circle me-2 d-flex align-items-center justify-content-center"
-            style={{
-              width: '24px',
-              height: '24px',
-              backgroundColor: '#6b7280',
-              color: 'white',
-              fontSize: '12px'
-            }}
-          >
-            3
-          </div>
-          <span style={{ fontSize: '12px', color: '#6b7280' }}>Watch earnings grow</span>
+        <div className="flex items-center gap-2">
+          <Badge variant="outline" className="gap-1">
+            <span className="text-xs font-bold">3</span>
+            <span className="text-xs">Watch earnings grow</span>
+          </Badge>
         </div>
+      </div>
+
+      {/* Preview Toggle Button */}
+      <div className="flex justify-center mt-6">
+        <Button 
+          variant="outline"
+          size="sm"
+          onClick={() => setShowPreview(!showPreview)}
+          className="gap-2 text-xs"
+        >
+          {showPreview ? (
+            <>
+              <EyeOff className="h-3 w-3" />
+              Hide preview
+            </>
+          ) : (
+            <>
+              <Eye className="h-3 w-3" />
+              Preview with sample data
+            </>
+          )}
+        </Button>
       </div>
     </div>
   );
 
+  // Custom tooltip formatter
+  const tooltipLabelFormatter = (label, payload) => {
+    if (payload && payload.length > 0) {
+      const data = payload[0].payload;
+      return data.fullDate;
+    }
+    return label;
+  };
+
+  const tooltipFormatter = (value, name) => {
+    return [
+      hideEarnings ? '••••' : `$${value}`,
+      showPreview ? 'Sample Earnings' : 'Earnings'
+    ];
+  };
+
+  // If no bookings and not showing preview, show empty state
+  if (!hasBookings && !showPreview) {
+    return (
+      <Card className="bg-muted/30 border-0">
+        <CardContent className="p-5">
+          {emptyStateComponent}
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
-    <ChartBase
-      chartType="daily"
-      chartData={chartData}
-      chartConfig={chartConfig}
-      hideEarnings={hideEarnings}
-      showPreview={showPreview}
-      setShowPreview={setShowPreview}
-      hasBookings={hasBookings}
-      dateRange={dateRange}
-      emptyStateComponent={emptyStateComponent}
-    />
+    <Card className="bg-muted/30 border-0">
+      <CardHeader className="pb-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <CardTitle className="text-base">Daily Earnings</CardTitle>
+            {showPreview && (
+              <Badge variant="secondary" className="bg-yellow-100 text-yellow-800 gap-1 text-xs">
+                <Eye className="h-3 w-3" />
+                Preview Mode
+              </Badge>
+            )}
+            {!hasBookings && (
+              <Badge variant="default" className="bg-blue-500 hover:bg-blue-500 gap-1 text-xs">
+                <Beaker className="h-3 w-3" />
+                Beta
+              </Badge>
+            )}
+          </div>
+          
+          {!hasBookings && (
+            <Button 
+              variant="outline"
+              size="sm"
+              onClick={() => setShowPreview(!showPreview)}
+              className="gap-2 text-xs"
+            >
+              {showPreview ? (
+                <>
+                  <EyeOff className="h-3 w-3" />
+                  Hide preview
+                </>
+              ) : (
+                <>
+                  <Eye className="h-3 w-3" />
+                  Preview
+                </>
+              )}
+            </Button>
+          )}
+        </div>
+        <CardDescription>
+          {getDateRangeText()}
+        </CardDescription>
+      </CardHeader>
+      
+      <CardContent className="pb-4">
+        <ChartContainer config={chartConfig}>
+          <BarChart
+            width={700}
+            height={500}
+            data={chartData}
+            margin={{
+              top: 20,
+              right: 30,
+              left: 20,
+              bottom: 5,
+            }}
+          >
+            <CartesianGrid strokeDasharray="3 3" />
+            <XAxis 
+              dataKey="day" 
+              tick={{ fontSize: 12 }}
+              tickLine={false}
+              axisLine={false}
+            />
+            <ChartTooltip
+              content={<ChartTooltipContent 
+                labelFormatter={tooltipLabelFormatter}
+                formatter={tooltipFormatter}
+              />}
+            />
+            <Bar 
+              dataKey="earnings" 
+              fill={showPreview ? "#e2e8f0" : "#000000"}
+              radius={8}
+              opacity={showPreview ? 0.7 : 1}
+            />
+          </BarChart>
+        </ChartContainer>
+      </CardContent>
+      
+      <CardFooter className="flex-col items-start gap-2 text-sm pt-0">
+        <div className="flex gap-2 font-medium leading-none">
+          {hideEarnings ? (
+            <span>Earnings data hidden</span>
+          ) : (
+            <>
+              <span>
+                {showPreview ? 'Sample: ' : ''}
+                Peak day: {formatEarnings(highestDay.earnings, hideEarnings)} on {highestDay.day}
+              </span>
+              <TrendingUp className="h-4 w-4" />
+            </>
+          )}
+        </div>
+        <div className="leading-none text-muted-foreground">
+          {hideEarnings ? (
+            'Toggle visibility to see earnings details'
+          ) : (
+            <>
+              {showPreview ? 'Sample data: ' : ''}
+              Total: {formatEarnings(totalEarnings, hideEarnings)} • 
+              Average: {formatEarnings(Math.round(avgEarnings), hideEarnings)} per day
+            </>
+          )}
+        </div>
+      </CardFooter>
+    </Card>
   );
 }

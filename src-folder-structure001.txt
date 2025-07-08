@@ -4,6 +4,7 @@ C:\Users\adrom\Downloads\serviceCenter\src\artifacts
 C:\Users\adrom\Downloads\serviceCenter\src\components
 C:\Users\adrom\Downloads\serviceCenter\src\config
 C:\Users\adrom\Downloads\serviceCenter\src\data
+C:\Users\adrom\Downloads\serviceCenter\src\lib
 C:\Users\adrom\Downloads\serviceCenter\src\primitives
 C:\Users\adrom\Downloads\serviceCenter\src\store
 C:\Users\adrom\Downloads\serviceCenter\src\utils
@@ -49,6 +50,8 @@ C:\Users\adrom\Downloads\serviceCenter\src\app\(api)\search\suggestions\route.js
 C:\Users\adrom\Downloads\serviceCenter\src\app\(api)\services\quote
 C:\Users\adrom\Downloads\serviceCenter\src\app\(api)\services\route.js
 C:\Users\adrom\Downloads\serviceCenter\src\app\(api)\services\quote\route.js
+C:\Users\adrom\Downloads\serviceCenter\src\app\(auth)\auth.css
+C:\Users\adrom\Downloads\serviceCenter\src\app\(auth)\layout.jsx
 C:\Users\adrom\Downloads\serviceCenter\src\app\(auth)\login
 C:\Users\adrom\Downloads\serviceCenter\src\app\(auth)\logout
 C:\Users\adrom\Downloads\serviceCenter\src\app\(auth)\register
@@ -150,6 +153,7 @@ C:\Users\adrom\Downloads\serviceCenter\src\app\(blog)\blog-single\page.jsx
 C:\Users\adrom\Downloads\serviceCenter\src\app\(blog)\blog-single\[id]
 C:\Users\adrom\Downloads\serviceCenter\src\app\(blog)\blog-single\[id]\page.jsx
 C:\Users\adrom\Downloads\serviceCenter\src\app\(customer-workspace)\customer
+C:\Users\adrom\Downloads\serviceCenter\src\app\(customer-workspace)\customer.css
 C:\Users\adrom\Downloads\serviceCenter\src\app\(customer-workspace)\search
 C:\Users\adrom\Downloads\serviceCenter\src\app\(customer-workspace)\customer\account-information
 C:\Users\adrom\Downloads\serviceCenter\src\app\(customer-workspace)\customer\address
@@ -255,6 +259,7 @@ C:\Users\adrom\Downloads\serviceCenter\src\app\(job)\job-single\page.jsx
 C:\Users\adrom\Downloads\serviceCenter\src\app\(job)\job-single\[id]
 C:\Users\adrom\Downloads\serviceCenter\src\app\(job)\job-single\[id]\page.jsx
 C:\Users\adrom\Downloads\serviceCenter\src\app\(professional-workspace)\professional
+C:\Users\adrom\Downloads\serviceCenter\src\app\(professional-workspace)\professional.css
 C:\Users\adrom\Downloads\serviceCenter\src\app\(professional-workspace)\professional\account-information
 C:\Users\adrom\Downloads\serviceCenter\src\app\(professional-workspace)\professional\add-services
 C:\Users\adrom\Downloads\serviceCenter\src\app\(professional-workspace)\professional\availability
@@ -436,6 +441,9 @@ C:\Users\adrom\Downloads\serviceCenter\src\components\quantification
 C:\Users\adrom\Downloads\serviceCenter\src\components\section
 C:\Users\adrom\Downloads\serviceCenter\src\components\sidebar
 C:\Users\adrom\Downloads\serviceCenter\src\components\SupabaseProvider.jsx
+C:\Users\adrom\Downloads\serviceCenter\src\components\theme-provider.jsx
+C:\Users\adrom\Downloads\serviceCenter\src\components\theme-toggle.jsx
+C:\Users\adrom\Downloads\serviceCenter\src\components\ui
 C:\Users\adrom\Downloads\serviceCenter\src\components\ui-elements
 C:\Users\adrom\Downloads\serviceCenter\src\components\Address\Address.jsx
 C:\Users\adrom\Downloads\serviceCenter\src\components\Address\AddressMap.jsx
@@ -1035,6 +1043,22 @@ C:\Users\adrom\Downloads\serviceCenter\src\components\sidebar\ListingSideber7.js
 C:\Users\adrom\Downloads\serviceCenter\src\components\sidebar\NavSidebar.jsx
 C:\Users\adrom\Downloads\serviceCenter\src\components\sidebar\ShopAreaSidebar1.jsx
 C:\Users\adrom\Downloads\serviceCenter\src\components\sidebar\ShopCheckoutAreaInfo1.jsx
+C:\Users\adrom\Downloads\serviceCenter\src\components\ui\alert.jsx
+C:\Users\adrom\Downloads\serviceCenter\src\components\ui\avatar.jsx
+C:\Users\adrom\Downloads\serviceCenter\src\components\ui\badge.jsx
+C:\Users\adrom\Downloads\serviceCenter\src\components\ui\button.jsx
+C:\Users\adrom\Downloads\serviceCenter\src\components\ui\card.jsx
+C:\Users\adrom\Downloads\serviceCenter\src\components\ui\chart.jsx
+C:\Users\adrom\Downloads\serviceCenter\src\components\ui\checkbox.jsx
+C:\Users\adrom\Downloads\serviceCenter\src\components\ui\dropdown-menu.jsx
+C:\Users\adrom\Downloads\serviceCenter\src\components\ui\input.jsx
+C:\Users\adrom\Downloads\serviceCenter\src\components\ui\label.jsx
+C:\Users\adrom\Downloads\serviceCenter\src\components\ui\select.jsx
+C:\Users\adrom\Downloads\serviceCenter\src\components\ui\separator.jsx
+C:\Users\adrom\Downloads\serviceCenter\src\components\ui\sheet.jsx
+C:\Users\adrom\Downloads\serviceCenter\src\components\ui\skeleton.jsx
+C:\Users\adrom\Downloads\serviceCenter\src\components\ui\table.jsx
+C:\Users\adrom\Downloads\serviceCenter\src\components\ui\tooltip.jsx
 C:\Users\adrom\Downloads\serviceCenter\src\components\ui-elements\Accordion1.jsx
 C:\Users\adrom\Downloads\serviceCenter\src\components\ui-elements\Alert1.jsx
 C:\Users\adrom\Downloads\serviceCenter\src\components\ui-elements\Buttons1.jsx
@@ -1075,6 +1099,7 @@ C:\Users\adrom\Downloads\serviceCenter\src\data\product.js
 C:\Users\adrom\Downloads\serviceCenter\src\data\project.js
 C:\Users\adrom\Downloads\serviceCenter\src\data\steps.js
 C:\Users\adrom\Downloads\serviceCenter\src\data\testimonials.js
+C:\Users\adrom\Downloads\serviceCenter\src\lib\utils.js
 C:\Users\adrom\Downloads\serviceCenter\src\primitives\useAddressSelection.js
 C:\Users\adrom\Downloads\serviceCenter\src\primitives\useAppointmentNotifications.js
 C:\Users\adrom\Downloads\serviceCenter\src\primitives\useAttributeQuantification.js

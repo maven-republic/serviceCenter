@@ -52,6 +52,13 @@ export const formatDate = (date) => {
   });
 };
 
+// Format earnings for display (NEW FUNCTION)
+export const formatEarnings = (amount, hide = false) => {
+  if (hide) return '••••';
+  if (typeof amount !== 'number') return '$0';
+  return `$${amount.toLocaleString()}`;
+};
+
 // Get chart title based on type and state
 export const getChartTitle = (chartType, hasBookings, showPreview) => {
   const titles = {

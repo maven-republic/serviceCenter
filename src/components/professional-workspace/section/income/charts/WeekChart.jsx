@@ -1,5 +1,7 @@
 // ============ WeekChart.jsx ============
 import React from 'react';
+import { Badge } from '@/components/ui/badge';
+import { CheckCircle, Clock, TrendingUp } from 'lucide-react';
 import ChartBase from './shared/ChartBase';
 import { generateEarnings, calculateDaysDiff, getBaseChartOptions, COLORS } from './shared/ChartUtils';
 
@@ -67,23 +69,18 @@ export default function WeekChart({ hideEarnings, activeTimeline, dateRange, sho
 
   // Beta Empty State
   const emptyStateComponent = (
-    <div 
-      className="d-flex flex-column align-items-center justify-content-center text-center"
-      style={{ minHeight: '280px' }}
-    >
+    <div className="flex flex-col items-center justify-center text-center min-h-[280px]">
       {/* Animated Chart Placeholder */}
       <div className="mb-4">
-        <svg width="120" height="80" viewBox="0 0 120 80" style={{ opacity: 0.7 }}>
+        <svg width="120" height="80" viewBox="0 0 120 80" className="opacity-70">
           {/* Weekly trend line simulation */}
           <polyline
             points="15,55 35,40 55,45 75,25 95,30"
             fill="none"
             stroke="#e2e8f0"
             strokeWidth="3"
-            style={{
-              animation: 'chartPulse 2.5s ease-in-out infinite alternate',
-              opacity: '0.6'
-            }}
+            className="animate-pulse"
+            style={{ animationDuration: '2.5s' }}
           />
           
           {/* Data points */}
@@ -96,9 +93,10 @@ export default function WeekChart({ hideEarnings, activeTimeline, dateRange, sho
                 cy={y}
                 r="4"
                 fill="#cbd5e1"
+                className="animate-pulse"
                 style={{
-                  animation: `chartPulse ${2.5 + index * 0.1}s ease-in-out infinite alternate`,
-                  opacity: '0.7'
+                  animationDelay: `${index * 0.1}s`,
+                  animationDuration: '2.5s'
                 }}
               />
             );
@@ -111,61 +109,34 @@ export default function WeekChart({ hideEarnings, activeTimeline, dateRange, sho
       </div>
 
       {/* Main Message */}
-      <h5 className="text-muted mb-2" style={{ color: '#64748b' }}>
+      <h3 className="text-lg font-semibold text-muted-foreground mb-2">
         Your weekly overview chart is ready! 📅
-      </h5>
-      <p className="text-muted mb-4" style={{ maxWidth: '300px', color: '#94a3b8', fontSize: '14px' }}>
+      </h3>
+      <p className="text-sm text-muted-foreground mb-6 max-w-sm">
         Monitor weekly progress and growth patterns
       </p>
 
       {/* Steps Indicator */}
-      <div className="d-flex align-items-center gap-3" style={{ flexWrap: 'wrap', justifyContent: 'center' }}>
-        <div className="d-flex align-items-center">
-          <div 
-            className="rounded-circle me-2 d-flex align-items-center justify-content-center"
-            style={{
-              width: '24px',
-              height: '24px',
-              backgroundColor: '#10b981',
-              color: 'white',
-              fontSize: '12px'
-            }}
-          >
-            ✓
-          </div>
-          <span style={{ fontSize: '12px', color: '#10b981' }}>Profile setup</span>
+      <div className="flex items-center gap-4 flex-wrap justify-center">
+        <div className="flex items-center gap-2">
+          <Badge variant="default" className="bg-green-500 hover:bg-green-500 gap-1">
+            <CheckCircle className="h-3 w-3" />
+            <span className="text-xs">Profile setup</span>
+          </Badge>
         </div>
         
-        <div className="d-flex align-items-center">
-          <div 
-            className="rounded-circle me-2 d-flex align-items-center justify-content-center"
-            style={{
-              width: '24px',
-              height: '24px',
-              backgroundColor: '#f59e0b',
-              color: 'white',
-              fontSize: '12px'
-            }}
-          >
-            2
-          </div>
-          <span style={{ fontSize: '12px', color: '#f59e0b' }}>Get first booking</span>
+        <div className="flex items-center gap-2">
+          <Badge variant="secondary" className="bg-yellow-500 text-yellow-50 hover:bg-yellow-500 gap-1">
+            <span className="text-xs font-bold">2</span>
+            <span className="text-xs">Get first booking</span>
+          </Badge>
         </div>
         
-        <div className="d-flex align-items-center">
-          <div 
-            className="rounded-circle me-2 d-flex align-items-center justify-content-center"
-            style={{
-              width: '24px',
-              height: '24px',
-              backgroundColor: '#6b7280',
-              color: 'white',
-              fontSize: '12px'
-            }}
-          >
-            3
-          </div>
-          <span style={{ fontSize: '12px', color: '#6b7280' }}>Watch earnings grow</span>
+        <div className="flex items-center gap-2">
+          <Badge variant="outline" className="gap-1">
+            <span className="text-xs font-bold">3</span>
+            <span className="text-xs">Watch earnings grow</span>
+          </Badge>
         </div>
       </div>
     </div>

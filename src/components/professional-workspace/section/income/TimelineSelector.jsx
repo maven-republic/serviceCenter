@@ -1,5 +1,16 @@
-// ============ TimelineSelector.jsx - Enhanced Layout Structure ============
+// ============ TimelineSelector.jsx - Tailwind + shadcn/ui Version ============
 import React, { useState, useEffect } from 'react';
+import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { 
+  Calendar, 
+  ChevronDown, 
+  BarChart3, 
+  Target,
+  Lightbulb,
+  ArrowRight
+} from 'lucide-react';
 import AnalyticsCalendar from './calendar/AnalyticsCalendar';
 import CalendarIcon from './calendar/CalendarIcon';
 import StartDate from './calendar/StartDate';
@@ -248,501 +259,263 @@ export default function TimelineSelector({ activeTimeline, setActiveTimeline, on
 
   const insights = getDataInsights();
 
-  const styles = {
-    container: {
-      border: '1px solid #e2e8f0',
-      borderRadius: '12px',
-      padding: '20px',
-      marginBottom: '24px',
-      backgroundColor: '#ffffff',
-      position: 'relative' // Added for dropdown positioning
-    },
-    
-    // Compact Header
-    header: {
-      display: 'flex',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-      marginBottom: '16px'
-    },
-    headerTitle: {
-      fontSize: '14px',
-      fontWeight: '600',
-      color: '#1f2937',
-      margin: 0
-    },
-    headerActions: {
-      display: 'flex',
-      gap: '8px',
-      alignItems: 'center'
-    },
-    actionButton: (isActive) => ({
-      display: 'flex',
-      alignItems: 'center',
-      gap: '4px',
-      padding: '6px 12px',
-      fontSize: '12px',
-      fontWeight: isActive ? '600' : '500',
-      backgroundColor: isActive ? '#000000' : '#ffffff',
-      color: isActive ? '#ffffff' : '#64748b',
-      border: `1px solid ${isActive ? '#000000' : '#d1d5db'}`,
-      borderRadius: '6px',
-      cursor: 'pointer',
-      transition: 'all 0.2s ease',
-      outline: 'none'
-    }),
-    
-    // Unified Selection Area
-    selectionArea: {
-      marginBottom: '16px'
-    },
-    desktopButtons: {
-      display: 'flex',
-      gap: '8px',
-      flexWrap: 'wrap',
-      alignItems: 'center'
-    },
-    quickButton: (isActive) => ({
-      padding: '8px 16px',
-      fontSize: '13px',
-      fontWeight: isActive ? '600' : '500',
-      backgroundColor: isActive ? '#000000' : '#ffffff',
-      color: isActive ? '#ffffff' : '#64748b',
-      border: `1px solid ${isActive ? '#000000' : '#d1d5db'}`,
-      borderRadius: '8px',
-      cursor: 'pointer',
-      transition: 'all 0.2s ease',
-      outline: 'none'
-    }),
-    mobileSelect: {
-      width: '100%',
-      padding: '10px 12px',
-      fontSize: '14px',
-      border: '1px solid #d1d5db',
-      borderRadius: '8px',
-      backgroundColor: '#ffffff',
-      outline: 'none'
-    },
-    
-    // Inline Calendar Area
-    calendarArea: {
-      position: 'absolute',
-      top: '100%',
-      left: '0',
-      right: '0',
-      zIndex: 1000,
-      backgroundColor: '#ffffff',
-      border: '1px solid #e2e8f0',
-      borderRadius: '12px',
-      padding: '20px',
-      marginTop: '8px',
-      boxShadow: '0 10px 25px rgba(0, 0, 0, 0.15)',
-      maxWidth: '100%',
-      overflow: 'hidden'
-    },
-    calendarContent: {
-      display: 'grid',
-      gridTemplateColumns: '1fr 200px',
-      gap: '20px',
-      '@media (max-width: 768px)': {
-        gridTemplateColumns: '1fr'
-      }
-    },
-    shortcuts: {
-      display: 'flex',
-      flexDirection: 'column',
-      gap: '8px'
-    },
-    shortcutButton: {
-      padding: '8px 12px',
-      fontSize: '12px',
-      fontWeight: '500',
-      backgroundColor: '#ffffff',
-      color: '#64748b',
-      border: '1px solid #d1d5db',
-      borderRadius: '6px',
-      cursor: 'pointer',
-      transition: 'all 0.2s ease',
-      textAlign: 'left'
-    },
-    calendarActions: {
-      display: 'flex',
-      gap: '8px',
-      marginTop: '12px',
-      justifyContent: 'flex-end'
-    },
-    
-    // Custom Date Inputs
-    customArea: {
-      position: 'absolute',
-      top: '100%',
-      left: '0',
-      right: '0',
-      zIndex: 1000,
-      backgroundColor: '#ffffff',
-      border: '1px solid #e2e8f0',
-      borderRadius: '12px',
-      padding: '20px',
-      marginTop: '8px',
-      boxShadow: '0 10px 25px rgba(0, 0, 0, 0.15)'
-    },
-    customGrid: {
-      display: 'grid',
-      gridTemplateColumns: '1fr auto 1fr auto 120px auto 100px',
-      gap: '12px',
-      alignItems: 'end',
-      '@media (max-width: 768px)': {
-        gridTemplateColumns: '1fr',
-        gap: '12px'
-      }
-    },
-    dateInput: {
-      padding: '8px 12px',
-      fontSize: '13px',
-      border: '1px solid #d1d5db',
-      borderRadius: '6px',
-      outline: 'none',
-      transition: 'border-color 0.2s ease'
-    },
-    
-    // Smart Status Bar
-    statusBar: {
-      background: 'linear-gradient(90deg, #f1f5f9 0%, #e2e8f0 100%)',
-      padding: '12px 16px',
-      borderRadius: '8px',
-      display: 'flex',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-      flexWrap: 'wrap',
-      gap: '8px'
-    },
-    statusLeft: {
-      display: 'flex',
-      flexDirection: 'column',
-      gap: '2px'
-    },
-    statusMain: {
-      fontSize: '13px',
-      fontWeight: '600',
-      color: '#1f2937'
-    },
-    statusSub: {
-      fontSize: '11px',
-      color: '#64748b'
-    },
-    statusRight: {
-      fontSize: '11px',
-      color: '#64748b',
-      fontStyle: 'italic'
-    }
-  };
-
   return (
-    <div style={styles.container} data-timeline-selector>
-      {/* Compact Header */}
-      <div style={styles.header}>
-        <h6 style={styles.headerTitle}>Timeline Selection</h6>
-        <div style={styles.headerActions}>
-          <button
-            style={styles.actionButton(expandedView === 'calendar')}
-            onClick={(e) => handleActionButtonClick('calendar', e)}
-            title="Visual calendar"
-          >
-            📅 Calendar
-          </button>
-          <button
-            className="d-md-none"
-            style={styles.actionButton(mobileMenuOpen)}
-            onClick={(e) => {
-              e.stopPropagation();
-              setMobileMenuOpen(!mobileMenuOpen);
-            }}
-            title="More options"
-          >
-            ≡ Menu
-          </button>
-        </div>
-      </div>
-
-      {/* Unified Selection Area */}
-      <div style={styles.selectionArea}>
-        {/* Desktop Quick Buttons */}
-        <div className="d-none d-md-flex" style={styles.desktopButtons}>
-          {quickRanges.map((range) => (
-            <button
-              key={range.key}
-              onClick={() => handleTimelineSelect(range.key)}
-              style={styles.quickButton(activeTimeline === range.key)}
-              onMouseEnter={(e) => {
-                if (activeTimeline !== range.key) {
-                  e.target.style.backgroundColor = '#f8fafc';
-                  e.target.style.borderColor = '#9ca3af';
-                }
-              }}
-              onMouseLeave={(e) => {
-                if (activeTimeline !== range.key) {
-                  e.target.style.backgroundColor = '#ffffff';
-                  e.target.style.borderColor = '#d1d5db';
-                }
+    <Card className="relative mb-6" data-timeline-selector>
+      <CardContent className="p-5">
+        {/* Compact Header */}
+        <div className="flex justify-between items-center mb-4">
+          <h3 className="text-sm font-semibold text-foreground">Timeline Selection</h3>
+          <div className="flex gap-2 items-center">
+            <Button
+              variant={expandedView === 'calendar' ? 'default' : 'outline'}
+              size="sm"
+              onClick={(e) => handleActionButtonClick('calendar', e)}
+              className="gap-1 text-xs"
+            >
+              <Calendar className="h-3 w-3" />
+              Calendar
+            </Button>
+            <Button
+              variant={mobileMenuOpen ? 'default' : 'outline'}
+              size="sm"
+              className="md:hidden gap-1 text-xs"
+              onClick={(e) => {
+                e.stopPropagation();
+                setMobileMenuOpen(!mobileMenuOpen);
               }}
             >
-              {range.shortLabel}
-            </button>
-          ))}
-          
-          {activeTimeline === 'custom' && (
-            <button style={styles.quickButton(true)}>
-              Custom Range
-            </button>
-          )}
+              <ChevronDown className="h-3 w-3" />
+              Menu
+            </Button>
+          </div>
         </div>
 
-        {/* Mobile Select */}
-        <div className="d-md-none">
-          <select
-            style={styles.mobileSelect}
-            value={activeTimeline || 'last30days'}
-            onChange={(e) => handleTimelineSelect(e.target.value)}
-          >
+        {/* Unified Selection Area */}
+        <div className="mb-4">
+          {/* Desktop Quick Buttons */}
+          <div className="hidden md:flex gap-2 flex-wrap items-center">
             {quickRanges.map((range) => (
-              <option key={range.key} value={range.key}>
-                {range.label}
-              </option>
+              <Button
+                key={range.key}
+                variant={activeTimeline === range.key ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => handleTimelineSelect(range.key)}
+                className="text-xs"
+              >
+                {range.shortLabel}
+              </Button>
             ))}
-            {activeTimeline === 'custom' && (
-              <option value="custom">Custom Range</option>
-            )}
-          </select>
-        </div>
-      </div>
-
-      {/* Enhanced Calendar View (when expanded) */}
-      {expandedView === 'calendar' && (
-        <div style={styles.calendarArea}>
-          {!inputMode ? (
-            // Visual Calendar Mode
-            <div style={{
-              display: 'grid',
-              gridTemplateColumns: '280px 280px 200px',
-              gap: '20px'
-            }}>
-              {/* Start Date Calendar Component */}
-              <StartDate
-                selectedDate={customRange?.startDate}
-                endDate={customRange?.endDate}
-                onDateSelect={(startDate, endDate) => {
-                  setCustomRange({
-                    startDate: startDate,
-                    endDate: endDate || customRange?.endDate || startDate
-                  });
-                }}
-              />
-              
-              {/* End Date Calendar Component */}
-              <EndDate
-                selectedDate={customRange?.endDate}
-                startDate={customRange?.startDate}
-                onDateSelect={(startDate, endDate) => {
-                  setCustomRange({
-                    startDate: startDate || customRange?.startDate || endDate,
-                    endDate: endDate
-                  });
-                }}
-              />
-              
-              {/* Quick Shortcuts Panel */}
-              <div style={styles.shortcuts}>
-                <div style={{ fontSize: '12px', fontWeight: '600', color: '#374151', marginBottom: '8px' }}>
-                  Quick Shortcuts:
-                </div>
-                {calendarShortcuts.map((shortcut) => (
-                  <button
-                    key={shortcut.key}
-                    style={styles.shortcutButton}
-                    onClick={() => handleShortcutSelect(shortcut)}
-                    onMouseEnter={(e) => {
-                      e.target.style.backgroundColor = '#f1f5f9';
-                      e.target.style.borderColor = '#9ca3af';
-                    }}
-                    onMouseLeave={(e) => {
-                      e.target.style.backgroundColor = '#ffffff';
-                      e.target.style.borderColor = '#d1d5db';
-                    }}
-                  >
-                    {shortcut.key === 'custom' ? '⌨️' : '•'} {shortcut.label}
-                  </button>
-                ))}
-                
-                {/* Range Preview */}
-                {customRange?.startDate && customRange?.endDate && (
-                  <div style={{
-                    marginTop: '16px',
-                    padding: '12px',
-                    backgroundColor: '#f0f9ff',
-                    border: '1px solid #0ea5e9',
-                    borderRadius: '6px'
-                  }}>
-                    <div style={{ fontSize: '11px', fontWeight: '600', color: '#0369a1', marginBottom: '4px' }}>
-                      📊 Selected Range:
-                    </div>
-                    <div style={{ fontSize: '12px', color: '#0369a1' }}>
-                      {customRange.startDate.toLocaleDateString()} - {customRange.endDate.toLocaleDateString()}
-                    </div>
-                    <div style={{ fontSize: '10px', color: '#64748b', marginTop: '4px' }}>
-                      {Math.ceil((customRange.endDate - customRange.startDate) / (1000 * 60 * 60 * 24)) + 1} days
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-          ) : (
-            // Text Input Mode (within calendar)
-            <div>
-              <div style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                marginBottom: '16px',
-                paddingBottom: '12px',
-                borderBottom: '1px solid #e2e8f0'
-              }}>
-                <h6 style={{ margin: 0, fontSize: '14px', fontWeight: '600', color: '#1f2937' }}>
-                  ⌨️ Type Exact Dates
-                </h6>
-                <button
-                  onClick={() => setInputMode(false)}
-                  style={{
-                    backgroundColor: 'transparent',
-                    border: 'none',
-                    color: '#64748b',
-                    cursor: 'pointer',
-                    fontSize: '12px'
-                  }}
-                >
-                  ← Back to Calendar
-                </button>
-              </div>
-              
-              <div style={{
-                display: 'grid',
-                gridTemplateColumns: '1fr auto 1fr auto 120px',
-                gap: '12px',
-                alignItems: 'end'
-              }}>
-                <div>
-                  <label style={{ fontSize: '11px', fontWeight: '600', color: '#374151', display: 'block', marginBottom: '4px' }}>
-                    📅 Start Date
-                  </label>
-                  <input
-                    type="date"
-                    value={customStartDate}
-                    onChange={(e) => setCustomStartDate(e.target.value)}
-                    style={styles.dateInput}
-                    max={new Date().toISOString().split('T')[0]}
-                  />
-                </div>
-                
-                <div style={{ display: 'flex', alignItems: 'end', paddingBottom: '8px', fontSize: '14px', color: '#64748b' }}>
-                  to
-                </div>
-                
-                <div>
-                  <label style={{ fontSize: '11px', fontWeight: '600', color: '#374151', display: 'block', marginBottom: '4px' }}>
-                    📅 End Date
-                  </label>
-                  <input
-                    type="date"
-                    value={customEndDate}
-                    onChange={(e) => setCustomEndDate(e.target.value)}
-                    style={styles.dateInput}
-                    max={new Date().toISOString().split('T')[0]}
-                  />
-                </div>
-                
-                <div style={{ display: 'flex', alignItems: 'end', paddingBottom: '8px', fontSize: '14px', color: '#64748b' }}>
-                  →
-                </div>
-                
-                <button
-                  onClick={handleCustomDateSubmit}
-                  style={{
-                    ...styles.actionButton(false),
-                    backgroundColor: '#000000',
-                    color: '#ffffff',
-                    border: '1px solid #000000',
-                    padding: '8px 16px'
-                  }}
-                >
-                  Apply Dates
-                </button>
-              </div>
-              
-              <div style={{
-                marginTop: '12px',
-                fontSize: '11px',
-                color: '#64748b',
-                padding: '8px 12px',
-                backgroundColor: '#f8fafc',
-                borderRadius: '6px',
-                border: '1px solid #e2e8f0'
-              }}>
-                💡 Enter dates in YYYY-MM-DD format or use the date picker
-              </div>
-            </div>
-          )}
-          
-          <div style={styles.calendarActions}>
-            <button
-              style={{
-                ...styles.actionButton(false),
-                padding: '6px 16px'
-              }}
-              onClick={() => {
-                setExpandedView(null);
-                setInputMode(false);
-              }}
-            >
-              Cancel
-            </button>
             
-            {customRange?.startDate && customRange?.endDate && !inputMode && (
-              <button
-                style={{
-                  ...styles.actionButton(false),
-                  backgroundColor: '#000000',
-                  color: '#ffffff',
-                  border: '1px solid #000000',
-                  padding: '6px 16px'
-                }}
+            {activeTimeline === 'custom' && (
+              <Button variant="default" size="sm" className="text-xs">
+                Custom Range
+              </Button>
+            )}
+          </div>
+
+          {/* Mobile Select */}
+          <div className="md:hidden">
+            <select
+              className="w-full p-2 text-sm border border-input bg-background rounded-md outline-none"
+              value={activeTimeline || 'last30days'}
+              onChange={(e) => handleTimelineSelect(e.target.value)}
+            >
+              {quickRanges.map((range) => (
+                <option key={range.key} value={range.key}>
+                  {range.label}
+                </option>
+              ))}
+              {activeTimeline === 'custom' && (
+                <option value="custom">Custom Range</option>
+              )}
+            </select>
+          </div>
+        </div>
+
+        {/* Enhanced Calendar View (when expanded) */}
+        {expandedView === 'calendar' && (
+          <div className="absolute top-full left-0 right-0 z-50 bg-background border border-border rounded-lg p-5 mt-2 shadow-lg max-w-full overflow-hidden">
+            {!inputMode ? (
+              // Visual Calendar Mode
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+                {/* Start Date Calendar Component */}
+                <div className="lg:col-span-1">
+                  <StartDate
+                    selectedDate={customRange?.startDate}
+                    endDate={customRange?.endDate}
+                    onDateSelect={(startDate, endDate) => {
+                      setCustomRange({
+                        startDate: startDate,
+                        endDate: endDate || customRange?.endDate || startDate
+                      });
+                    }}
+                  />
+                </div>
+                
+                {/* End Date Calendar Component */}
+                <div className="lg:col-span-1">
+                  <EndDate
+                    selectedDate={customRange?.endDate}
+                    startDate={customRange?.startDate}
+                    onDateSelect={(startDate, endDate) => {
+                      setCustomRange({
+                        startDate: startDate || customRange?.startDate || endDate,
+                        endDate: endDate
+                      });
+                    }}
+                  />
+                </div>
+                
+                {/* Quick Shortcuts Panel */}
+                <div className="lg:col-span-1 space-y-2">
+                  <div className="text-xs font-semibold text-foreground mb-2">
+                    Quick Shortcuts:
+                  </div>
+                  {calendarShortcuts.map((shortcut) => (
+                    <Button
+                      key={shortcut.key}
+                      variant="outline"
+                      size="sm"
+                      className="w-full justify-start text-xs"
+                      onClick={() => handleShortcutSelect(shortcut)}
+                    >
+                      {shortcut.key === 'custom' ? '⌨️' : '•'} {shortcut.label}
+                    </Button>
+                  ))}
+                  
+                  {/* Range Preview */}
+                  {customRange?.startDate && customRange?.endDate && (
+                    <Card className="mt-4 bg-blue-50 border-blue-200">
+                      <CardContent className="p-3">
+                        <div className="text-xs font-semibold text-blue-700 mb-1 flex items-center gap-1">
+                          <BarChart3 className="h-3 w-3" />
+                          Selected Range:
+                        </div>
+                        <div className="text-xs text-blue-700">
+                          {customRange.startDate.toLocaleDateString()} - {customRange.endDate.toLocaleDateString()}
+                        </div>
+                        <div className="text-xs text-muted-foreground mt-1">
+                          {Math.ceil((customRange.endDate - customRange.startDate) / (1000 * 60 * 60 * 24)) + 1} days
+                        </div>
+                      </CardContent>
+                    </Card>
+                  )}
+                </div>
+              </div>
+            ) : (
+              // Text Input Mode (within calendar)
+              <div className="space-y-4">
+                <div className="flex items-center justify-between pb-3 border-b border-border">
+                  <h4 className="text-sm font-semibold text-foreground flex items-center gap-1">
+                    ⌨️ Type Exact Dates
+                  </h4>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setInputMode(false)}
+                    className="text-xs"
+                  >
+                    ← Back to Calendar
+                  </Button>
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-5 gap-3 items-end">
+                  <div>
+                    <label className="text-xs font-semibold text-foreground block mb-1">
+                      📅 Start Date
+                    </label>
+                    <input
+                      type="date"
+                      value={customStartDate}
+                      onChange={(e) => setCustomStartDate(e.target.value)}
+                      className="w-full p-2 text-xs border border-input bg-background rounded-md outline-none"
+                      max={new Date().toISOString().split('T')[0]}
+                    />
+                  </div>
+                  
+                  <div className="flex items-end pb-2 justify-center text-sm text-muted-foreground">
+                    to
+                  </div>
+                  
+                  <div>
+                    <label className="text-xs font-semibold text-foreground block mb-1">
+                      📅 End Date
+                    </label>
+                    <input
+                      type="date"
+                      value={customEndDate}
+                      onChange={(e) => setCustomEndDate(e.target.value)}
+                      className="w-full p-2 text-xs border border-input bg-background rounded-md outline-none"
+                      max={new Date().toISOString().split('T')[0]}
+                    />
+                  </div>
+                  
+                  <div className="flex items-end pb-2 justify-center text-sm text-muted-foreground">
+                    <ArrowRight className="h-4 w-4" />
+                  </div>
+                  
+                  <Button
+                    onClick={handleCustomDateSubmit}
+                    className="text-xs"
+                  >
+                    Apply Dates
+                  </Button>
+                </div>
+                
+                <div className="text-xs text-muted-foreground p-3 bg-muted rounded-md border border-border">
+                  💡 Enter dates in YYYY-MM-DD format or use the date picker
+                </div>
+              </div>
+            )}
+            
+            <div className="flex justify-end gap-2 mt-4 pt-4 border-t border-border">
+              <Button
+                variant="outline"
+                size="sm"
                 onClick={() => {
-                  handleCalendarRangeSelect(customRange);
+                  setExpandedView(null);
+                  setInputMode(false);
                 }}
               >
-                Apply Selection
-              </button>
+                Cancel
+              </Button>
+              
+              {customRange?.startDate && customRange?.endDate && !inputMode && (
+                <Button
+                  size="sm"
+                  onClick={() => {
+                    handleCalendarRangeSelect(customRange);
+                  }}
+                >
+                  Apply Selection
+                </Button>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Smart Status Bar */}
+        <div className="bg-gradient-to-r from-muted/50 to-muted/30 p-3 rounded-lg flex justify-between items-center flex-wrap gap-2">
+          <div className="space-y-1">
+            <div className="text-xs font-semibold text-foreground flex items-center gap-1">
+              <BarChart3 className="h-3 w-3" />
+              Viewing: {getCurrentSelectionLabel()}
+              {insights && ` (${insights.days} day${insights.days !== 1 ? 's' : ''})`}
+            </div>
+            {insights && (
+              <div className="text-xs text-muted-foreground flex items-center gap-1">
+                <Target className="h-3 w-3" />
+                Data points: {insights.transactions.toLocaleString()} transactions found
+              </div>
             )}
           </div>
-        </div>
-      )}
-
-      {/* Smart Status Bar */}
-      <div style={styles.statusBar}>
-        <div style={styles.statusLeft}>
-          <div style={styles.statusMain}>
-            📊 Viewing: {getCurrentSelectionLabel()}
-            {insights && ` (${insights.days} day${insights.days !== 1 ? 's' : ''})`}
+          
+          <div className="text-xs text-muted-foreground italic flex items-center gap-1">
+            <Lightbulb className="h-3 w-3" />
+            Pro tip: Use calendar for visual or precise date selection
           </div>
-          {insights && (
-            <div style={styles.statusSub}>
-              🎯 Data points: {insights.transactions.toLocaleString()} transactions found
-            </div>
-          )}
         </div>
-        
-        <div style={styles.statusRight}>
-          💡 Pro tip: Use 📅 calendar for visual or precise date selection
-        </div>
-      </div>
-    </div>
+      </CardContent>
+    </Card>
   );
 }

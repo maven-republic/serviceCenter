@@ -8,77 +8,99 @@ export default function DashboardSidebar() {
   const path = usePathname()
 
   return (
-    <>
-      <div className="dashboard__sidebar d-none d-lg-block">
-        <div className="dashboard_sidebar_list">
-          <p className="fz15 fw400 ff-heading pl30">Workspace</p>
+    <div className="dashboard__sidebar d-none d-lg-block fixed left-0 top-0 h-screen w-[300px] bg-card border-r border-border overflow-y-auto">
+      <div className="dashboard_sidebar_list p-4">
+        <p className="fz15 fw400 ff-heading pl30 text-muted-foreground mb-4">Workspace</p>
+        
+        {/* Navigation items with better spacing */}
+        <div className="space-y-1">
           {professionalNavigation.slice(0, 8).map((item, i) => (
-            <div key={i} className="sidebar_list_item mb-1">
+            <div key={i} className="sidebar_list_item">
               <Link
                 href={item.path}
-                className={`items-center ${
-                  path === item.path ? "-is-active" : ""
+                className={`flex items-center px-3 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
+                  path === item.path 
+                    ? "bg-primary text-primary-foreground -is-active" 
+                    : "text-muted-foreground hover:text-foreground hover:bg-muted"
                 }`}
               >
-                <i className={`${item.icon} mr15`} />
+                <i className={`${item.icon} mr-3 w-4 h-4`} />
                 {item.name}
               </Link>
             </div>
           ))}
+        </div>
 
-          {/* <p className="fz15 fw400 ff-heading pl30 mt30">Organize and Manage</p> */}
+        {/* Divider */}
+        <div className="border-t border-border my-4"></div>
+        
+        <div className="space-y-1">
           {professionalNavigation.slice(8, 14).map((item, i) => (
-            <div key={i} className="sidebar_list_item mb-1">
+            <div key={i} className="sidebar_list_item">
               <Link
                 href={item.path}
-                className={`items-center ${
-                  path === item.path ? "-is-active" : ""
+                className={`flex items-center px-3 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
+                  path === item.path 
+                    ? "bg-primary text-primary-foreground -is-active" 
+                    : "text-muted-foreground hover:text-foreground hover:bg-muted"
                 }`}
               >
-                <i className={`${item.icon} mr15`} />
+                <i className={`${item.icon} mr-3 w-4 h-4`} />
                 {item.name}
               </Link>
             </div>
           ))}
+        </div>
 
-          {/* <p className="fz15 fw400 ff-heading pl30 mt30">Schedule</p> */}
+        <div className="border-t border-border my-4"></div>
+
+        <div className="space-y-1">
           {professionalNavigation.slice(14, 15).map((item, i) => (
-            <div key={i} className="sidebar_list_item mb-1">
+            <div key={i} className="sidebar_list_item">
               <Link
                 href={item.path}
-                className={`items-center ${
-                  path === item.path ? "-is-active" : ""
+                className={`flex items-center px-3 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
+                  path === item.path 
+                    ? "bg-primary text-primary-foreground -is-active" 
+                    : "text-muted-foreground hover:text-foreground hover:bg-muted"
                 }`}
               >
-                <i className={`${item.icon} mr15`} />
+                <i className={`${item.icon} mr-3 w-4 h-4`} />
                 {item.name}
               </Link>
             </div>
           ))}
+        </div>
 
-          {/* <p className="fz15 fw400 ff-heading pl30 mt30">Account</p> */}
+        <div className="border-t border-border my-4"></div>
+
+        <div className="space-y-1">
           {professionalNavigation.slice(15, 17).map((item, i) => (
-            <div key={i} className="sidebar_list_item mb-1">
+            <div key={i} className="sidebar_list_item">
               {item.name === "Logout" ? (
-                <form className="sidebar_list_item mb-1">
+                <form>
                   <button
-                    className={`items-center ${
-                      path === item.path ? "-is-active" : ""
+                    className={`flex items-center px-3 py-2 rounded-md text-sm font-medium transition-all duration-200 w-full text-left ${
+                      path === item.path 
+                        ? "bg-primary text-primary-foreground -is-active" 
+                        : "text-muted-foreground hover:text-foreground hover:bg-muted"
                     }`}
                     formAction={logout}
                   >
-                    <i className={`${item.icon} mr15`} />
+                    <i className={`${item.icon} mr-3 w-4 h-4`} />
                     {item.name}
                   </button>
                 </form>
               ) : (
                 <Link
                   href={item.path}
-                  className={`items-center ${
-                    path === item.path ? "-is-active" : ""
+                  className={`flex items-center px-3 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
+                    path === item.path 
+                      ? "bg-primary text-primary-foreground -is-active" 
+                      : "text-muted-foreground hover:text-foreground hover:bg-muted"
                   }`}
                 >
-                  <i className={`${item.icon} mr15`} />
+                  <i className={`${item.icon} mr-3 w-4 h-4`} />
                   {item.name}
                 </Link>
               )}
@@ -86,6 +108,6 @@ export default function DashboardSidebar() {
           ))}
         </div>
       </div>
-    </>
+    </div>
   )
 }

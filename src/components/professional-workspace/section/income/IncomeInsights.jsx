@@ -1,5 +1,6 @@
-// ============ 3. IncomeInsights.jsx ============
+// ============ IncomeInsights.jsx - Tailwind + shadcn/ui Version ============
 import React, { useState } from 'react';
+import { Card, CardContent } from '@/components/ui/card';
 import InsightsHeader from './InsightsHeader';
 import TodaysIncome from './TodaysIncome';
 import ChartTabs from './ChartTabs';
@@ -20,40 +21,44 @@ export default function IncomeInsights() {
   };
 
   return (
-    <div className="row">
-      <div className="col-lg-12">
-        <div className="ps-widget bgc-white bdrs4 p30 mb30 overflow-hidden position-relative">
-          <InsightsHeader 
-            hideEarnings={hideEarnings}
-            setHideEarnings={setHideEarnings}
-          />
-          
-          <TodaysIncome hideEarnings={hideEarnings} />
-          
-          {/* Timeline Selector */}
-          <TimelineSelector
-            activeTimeline={activeTimeline}
-            setActiveTimeline={setActiveTimeline}
-            onDateRangeChange={handleDateRangeChange}
-          />
-          
-          <ChartTabs 
-            activeChart={activeChart}
-            setActiveChart={setActiveChart}
-          />
-          
-          <InteractiveChart 
-            activeChart={activeChart}
-            hideEarnings={hideEarnings}
-            activeTimeline={activeTimeline}
-            dateRange={dateRange}
-          />
-          
-          <InsightsCards />
-          
-          <ChartInstructions activeChart={activeChart} />
-        </div>
-      </div>
-    </div>
+    <Card className="overflow-hidden">
+      <CardContent className="p-6 space-y-6">
+        {/* Header Section */}
+        <InsightsHeader 
+          hideEarnings={hideEarnings}
+          setHideEarnings={setHideEarnings}
+        />
+        
+        {/* Today's Income Summary */}
+        <TodaysIncome hideEarnings={hideEarnings} />
+        
+        {/* Timeline Selector */}
+        <TimelineSelector
+          activeTimeline={activeTimeline}
+          setActiveTimeline={setActiveTimeline}
+          onDateRangeChange={handleDateRangeChange}
+        />
+        
+        {/* Chart Navigation Tabs */}
+        <ChartTabs 
+          activeChart={activeChart}
+          setActiveChart={setActiveChart}
+        />
+        
+        {/* Main Chart Component */}
+        <InteractiveChart 
+          activeChart={activeChart}
+          hideEarnings={hideEarnings}
+          activeTimeline={activeTimeline}
+          dateRange={dateRange}
+        />
+        
+        {/* Additional Insights Cards */}
+        <InsightsCards />
+        
+        {/* Chart Help/Instructions */}
+        <ChartInstructions activeChart={activeChart} />
+      </CardContent>
+    </Card>
   );
 }

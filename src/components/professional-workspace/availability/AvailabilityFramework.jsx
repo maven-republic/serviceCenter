@@ -1,17 +1,37 @@
 'use client'
 
 import { useState } from 'react'
-import { Button } from 'react-bootstrap'
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card"
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Badge } from '@/components/ui/badge'
+import { Alert, AlertDescription } from '@/components/ui/alert'
+import { 
+  Plus, 
+  X, 
+  Copy, 
+  Clock,
+  Calendar,
+  AlertTriangle,
+  Info
+} from 'lucide-react'
 import { AVAILABILITY_RULES } from '@/config/availabilityRules'
 
 const daysOfWeek = [
-  { label: 'Sunday', value: 0 },
-  { label: 'Monday', value: 1 },
-  { label: 'Tuesday', value: 2 },
-  { label: 'Wednesday', value: 3 },
-  { label: 'Thursday', value: 4 },
-  { label: 'Friday', value: 5 },
-  { label: 'Saturday', value: 6 }
+  { label: 'Sunday', value: 0, short: 'Sun' },
+  { label: 'Monday', value: 1, short: 'Mon' },
+  { label: 'Tuesday', value: 2, short: 'Tue' },
+  { label: 'Wednesday', value: 3, short: 'Wed' },
+  { label: 'Thursday', value: 4, short: 'Thu' },
+  { label: 'Friday', value: 5, short: 'Fri' },
+  { label: 'Saturday', value: 6, short: 'Sat' }
 ]
 
 function hasDuplicateBlock(blocks) {
@@ -37,8 +57,8 @@ function generateNextTimeBlock(existingBlocks, increment = 60) {
 
   if (!existingBlocks.length) {
     return {
-      start_time: AVAILABILITY_RULES.DEFAULT_BLOCK_START,
-      end_time: AVAILABILITY_RULES.DEFAULT_BLOCK_END
+      start_time: AVAILABILITY_RULES?.DEFAULT_BLOCK_START || '09:00',
+      end_time: AVAILABILITY_RULES?.DEFAULT_BLOCK_END || '17:00'
     }
   }
 
@@ -51,7 +71,7 @@ function generateNextTimeBlock(existingBlocks, increment = 60) {
   return { start_time: toTime(start), end_time: toTime(end) }
 }
 
-export default function AvailabilityFramework({ availability, setAvailability }) {
+export default function AvailabilityFramework({ availability = [], setAvailability }) {
   const initialState = () => {
     const map = {}
     daysOfWeek.forEach(d => {
@@ -115,110 +135,292 @@ export default function AvailabilityFramework({ availability, setAvailability })
     updateAndSync(updated)
   }
 
+  const handleCopyToAll = (day) => {
+    const updated = { ...weeklySlots }
+    const sourceBlocks = [...weeklySlots[day]]
+    daysOfWeek.forEach(({ value }) => {
+      if (value !== day) {
+        updated[value] = [...sourceBlocks]
+      }
+    })
+    updateAndSync(updated)
+  }
+
+  const getTotalHours = () => {
+    let totalMinutes = 0
+    Object.values(weeklySlots).forEach(blocks => {
+      blocks.forEach(block => {
+        const start = new Date(`2000-01-01 ${block.start_time}`)
+        const end = new Date(`2000-01-01 ${block.end_time}`)
+        totalMinutes += (end - start) / (1000 * 60)
+      })
+    })
+    return Math.round(totalMinutes / 60 * 10) / 10 // Round to 1 decimal
+  }
+
+  const getActiveDays = () => {
+    return Object.values(weeklySlots).filter(blocks => blocks.length > 0).length
+  }
+
   return (
-    <div className="container px-0">
-      <div className="mb-4">
-        <h5 className="fw-bold">Set Weekly Hours</h5>
+    <div className="max-w-4xl mx-auto p-6 space-y-6">
+      {/* Header */}
+      <div className="space-y-2">
+        <div className="flex items-center gap-2">
+          <Calendar className="h-5 w-5 text-muted-foreground" />
+          <h1 className="text-2xl font-bold text-foreground">Weekly Schedule</h1>
+        </div>
+        <p className="text-muted-foreground">
+          Set your regular availability for each day of the week.
+        </p>
       </div>
 
-      <div className="d-flex flex-column gap-4">
-        {daysOfWeek.map(({ label, value }) => {
+      {/* Summary Stats */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-muted">
+                <Clock className="h-4 w-4 text-muted-foreground" />
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Weekly Hours</p>
+                <p className="text-xl font-bold">{getTotalHours()}h</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-muted">
+                <Calendar className="h-4 w-4 text-muted-foreground" />
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Active Days</p>
+                <p className="text-xl font-bold">{getActiveDays()}/7</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-muted">
+                <Info className="h-4 w-4 text-muted-foreground" />
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Time Blocks</p>
+                <p className="text-xl font-bold">
+                  {Object.values(weeklySlots).reduce((sum, blocks) => sum + blocks.length, 0)}
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Weekly Schedule */}
+      <div className="space-y-4">
+        {daysOfWeek.map(({ label, value, short }) => {
           const blocks = weeklySlots[value] || []
           const showDuplicateWarning = hasDuplicateBlock(blocks)
+          const hasBlocks = blocks.length > 0
 
           return (
-            <div
-              key={value}
-              className="p-3 bg-white rounded-4 border d-flex flex-column gap-2"
-            >
-              <div className="fw-semibold text-capitalize mb-2">{label}</div>
-
-              {blocks.map((block, index) => (
-                <div key={index} className="row g-2 align-items-center">
-                  <div className="col-auto">
-                    <input
-                      type="time"
-                      className="form-control form-control-sm"
-                      value={block.start_time}
-                      onChange={e => handleTimeChange(value, index, 'start_time', e.target.value)}
-                    />
-                  </div>
-                  <div className="col-auto">
-                    <span className="fw-semibold">to</span>
-                  </div>
-                  <div className="col-auto">
-                    <input
-                      type="time"
-                      className="form-control form-control-sm"
-                      value={block.end_time}
-                      onChange={e => handleTimeChange(value, index, 'end_time', e.target.value)}
-                    />
-                  </div>
-
-                  <div className="col-auto d-flex gap-2 align-items-center">
-                    <div
-                      role="button"
-                      onClick={() => handleRemoveBlock(value, index)}
-                      className="d-flex align-items-center justify-content-center border rounded-circle bg-white "
-                      style={{ width: '30px', height: '30px', cursor: 'pointer' }}
-                      title="Remove"
-                    >
-                      <span className="text-danger fw-bold">✕</span>
+            <Card key={value} className={`transition-all duration-200 ${hasBlocks ? 'border-primary/20 bg-muted/20' : ''}`}>
+              <CardHeader className="pb-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className={`
+                      w-10 h-10 rounded-full flex items-center justify-center text-sm font-medium
+                      ${hasBlocks ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'}
+                    `}>
+                      {short}
                     </div>
+                    <div>
+                      <CardTitle className="text-lg">{label}</CardTitle>
+                      <CardDescription>
+                        {blocks.length === 0 ? 'No availability set' : `${blocks.length} time block${blocks.length !== 1 ? 's' : ''}`}
+                      </CardDescription>
+                    </div>
+                  </div>
+                  
+                  {/* Day Actions */}
+                  <div className="flex items-center gap-2">
+                    {blocks.length > 0 && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleCopyToAll(value)}
+                        className="h-8 px-3 text-xs"
+                      >
+                        <Copy className="h-3 w-3 mr-1" />
+                        Copy to all
+                      </Button>
+                    )}
+                    
+                    {value !== 0 && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleCopyPrevious(value)}
+                        className="h-8 px-3 text-xs"
+                      >
+                        <Copy className="h-3 w-3 mr-1" />
+                        Copy previous
+                      </Button>
+                    )}
+                    
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleAddBlock(value)}
+                      className="h-8 px-3 text-xs"
+                    >
+                      <Plus className="h-3 w-3 mr-1" />
+                      Add hours
+                    </Button>
+                  </div>
+                </div>
+              </CardHeader>
 
-                    {index === 0 && (
-                      <>
-                        <div
-                          role="button"
-                          onClick={() => handleAddBlock(value)}
-                          className="d-flex align-items-center justify-content-center border rounded-circle bg-white"
-                          style={{ width: '30px', height: '30px', cursor: 'pointer' }}
-                          title="Add time block"
-                        >
-                          <span className="text-primary fw-bold">+</span>
+              <CardContent className="space-y-3">
+                {/* Time Blocks */}
+                {blocks.length > 0 ? (
+                  <div className="space-y-3">
+                    {blocks.map((block, index) => (
+                      <div key={index} className="flex items-center gap-3 p-3 bg-card border rounded-lg">
+                        <div className="flex items-center gap-2 flex-1">
+                          <Label htmlFor={`${value}-${index}-start`} className="text-sm font-medium min-w-12">
+                            From:
+                          </Label>
+                          <Input
+                            id={`${value}-${index}-start`}
+                            type="time"
+                            value={block.start_time}
+                            onChange={(e) => handleTimeChange(value, index, 'start_time', e.target.value)}
+                            className="w-32"
+                          />
+                          
+                          <span className="text-muted-foreground mx-2">to</span>
+                          
+                          <Label htmlFor={`${value}-${index}-end`} className="text-sm font-medium min-w-8">
+                            To:
+                          </Label>
+                          <Input
+                            id={`${value}-${index}-end`}
+                            type="time"
+                            value={block.end_time}
+                            onChange={(e) => handleTimeChange(value, index, 'end_time', e.target.value)}
+                            className="w-32"
+                          />
+
+                          {/* Duration Display */}
+                          <Badge variant="secondary" className="ml-3">
+                            {(() => {
+                              const start = new Date(`2000-01-01 ${block.start_time}`)
+                              const end = new Date(`2000-01-01 ${block.end_time}`)
+                              const diffMs = end - start
+                              const hours = Math.floor(diffMs / (1000 * 60 * 60))
+                              const minutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60))
+                              return hours > 0 ? `${hours}h ${minutes}m` : `${minutes}m`
+                            })()}
+                          </Badge>
                         </div>
 
-                        {value !== 0 && (
-                          <div
-                            role="button"
-                            onClick={() => handleCopyPrevious(value)}
-                            className="d-flex align-items-center justify-content-center border rounded-circle bg-white"
-                            style={{ width: '30px', height: '30px', cursor: 'pointer' }}
-                            title="Copy previous day"
-                          >
-                            <span className="text-secondary">📋</span>
-                          </div>
-                        )}
-                      </>
-                    )}
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleRemoveBlock(value, index)}
+                          className="h-8 w-8 p-0 text-destructive hover:text-destructive hover:bg-destructive/10"
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    ))}
                   </div>
-                </div>
-              ))}
+                ) : (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <Clock className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                    <p className="text-sm">No hours set for {label}</p>
+                    <p className="text-xs">Click "Add hours" to get started</p>
+                  </div>
+                )}
 
-              {blocks.length === 0 && (
-                <div
-                  role="button"
-                  onClick={() => handleAddBlock(value)}
-                  className="d-flex align-items-center justify-content-center border rounded-circle bg-white"
-                  style={{ width: '40px', height: '40px', cursor: 'pointer' }}
-                  title="Add hours"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" className="text-primary" viewBox="0 0 24 24">
-                    <path d="M12 5v14m-7-7h14" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
-                </div>
-              )}
-
-              {showDuplicateWarning && (
-                <div className="text-danger small mt-2">
-                  Duplicate time block detected. Please adjust or remove.
-                </div>
-              )}
-            </div>
+                {/* Duplicate Warning */}
+                {showDuplicateWarning && (
+                  <Alert variant="destructive">
+                    <AlertTriangle className="h-4 w-4" />
+                    <AlertDescription>
+                      Duplicate time block detected. Please adjust or remove conflicting times.
+                    </AlertDescription>
+                  </Alert>
+                )}
+              </CardContent>
+            </Card>
           )
         })}
       </div>
+
+      {/* Quick Actions */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Quick Setup</CardTitle>
+          <CardDescription>
+            Common schedule templates to get you started quickly
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <Button
+              variant="outline"
+              onClick={() => {
+                const businessHours = { start_time: '09:00', end_time: '17:00' }
+                const updated = { ...weeklySlots }
+                for (let i = 1; i <= 5; i++) { // Monday to Friday
+                  updated[i] = [businessHours]
+                }
+                updateAndSync(updated)
+              }}
+              className="h-auto p-4 flex flex-col items-start gap-2"
+            >
+              <div className="font-medium">Standard Business</div>
+              <div className="text-xs text-muted-foreground">Mon-Fri, 9 AM - 5 PM</div>
+            </Button>
+            
+            <Button
+              variant="outline"
+              onClick={() => {
+                const extendedHours = { start_time: '08:00', end_time: '18:00' }
+                const updated = { ...weeklySlots }
+                for (let i = 1; i <= 6; i++) { // Monday to Saturday
+                  updated[i] = [extendedHours]
+                }
+                updateAndSync(updated)
+              }}
+              className="h-auto p-4 flex flex-col items-start gap-2"
+            >
+              <div className="font-medium">Extended Hours</div>
+              <div className="text-xs text-muted-foreground">Mon-Sat, 8 AM - 6 PM</div>
+            </Button>
+            
+            <Button
+              variant="outline"
+              onClick={() => {
+                const updated = initialState()
+                updateAndSync(updated)
+              }}
+              className="h-auto p-4 flex flex-col items-start gap-2"
+            >
+              <div className="font-medium">Clear All</div>
+              <div className="text-xs text-muted-foreground">Remove all time blocks</div>
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   )
 }
-
