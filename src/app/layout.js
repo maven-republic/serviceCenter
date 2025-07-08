@@ -11,8 +11,7 @@ const dmSans = DM_Sans({
   variable: '--font-dm-sans',
 })
 
-export default async function RootLayout({ children }) {
-  // 🔧 FIX: Await cookies() to prevent the sync API error
+export default async function InterfaceFoundation({ children }) {
   const cookieStore = await cookies()
   
   const supabase = createServerComponentClient({ 
@@ -24,7 +23,7 @@ export default async function RootLayout({ children }) {
   } = await supabase.auth.getSession()
 
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning> {/* ✅ REMOVED: className="dark" */}
       <body className={`${dmSans.className}`}>
         <ClientProviders initialSession={session}>
           {children}

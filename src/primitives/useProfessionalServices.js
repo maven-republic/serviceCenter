@@ -1,4 +1,4 @@
-// src/hook/useProfessionalServices.js
+// src/primitive/useProfessionalServices.js
 
 import { useState, useEffect, useCallback } from 'react'
 import { toast } from 'react-hot-toast'

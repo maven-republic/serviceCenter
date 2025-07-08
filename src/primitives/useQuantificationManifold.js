@@ -1,4 +1,4 @@
-// src/hook/useQuantificationManifold.js
+// src/primitive/useQuantificationManifold.js
 
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { toast } from 'react-hot-toast'
@@ -433,7 +433,7 @@ const useQuantificationManifold = ({
   }, [service, calculateMonteCarlo, calculateBlackScholes, calculateQuote, logDebug])
   
   // ==========================================
-  // RETURN HOOK INTERFACE
+  // RETURN primitive INTERFACE
   // ==========================================
   
   return {

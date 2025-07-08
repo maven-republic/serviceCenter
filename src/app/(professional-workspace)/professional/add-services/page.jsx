@@ -1,4 +1,4 @@
-import DashboardLayout from "@/components/professional-workspace/DashboardLayout";
+import ProfessionalWorkspace from "@/components/professional-workspace/ProfessionalWorkspace";
 import AddServiceInformation from "@/components/professional-workspace/section/AddServiceInformation";
 import { redirect } from 'next/navigation'
 import MobileNavigation2 from "@/components/header/MobileNavigation2";
@@ -21,9 +21,9 @@ export default async function Page() {
   return (
     <>
       {/* <MobileNavigation2 /> */}
-      {/* <DashboardLayout> */}
+      {/* <ProfessionalWorkspace> */}
         <AddServiceInformation />
-      {/* </DashboardLayout> */}
+      {/* </ProfessionalWorkspace> */}
     </>
   );
 }

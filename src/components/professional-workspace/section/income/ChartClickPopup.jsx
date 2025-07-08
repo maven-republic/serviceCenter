@@ -1,74 +1,60 @@
-// ============ 8. ChartClickPopup.jsx ============
+'use client'
+
 export default function ChartClickPopup({ selectedBarData, setSelectedBarData, hideEarnings }) {
-  if (!selectedBarData) return null;
+  if (!selectedBarData) return null
 
   const formatEarnings = (amount) => {
-    if (hideEarnings) return '••••';
-    return `$${amount.toFixed(2)}`;
-  };
+    if (hideEarnings) return '••••'
+    return `$${amount.toFixed(2)}`
+  }
 
   const getContextMessage = () => {
-    const { type, value } = selectedBarData;
-    
+    const { type, value } = selectedBarData
+
     if (type === 'daily') {
-      return value > 600 ? '🔥 Great day!' : 
-             value > 400 ? '👍 Good performance' : 
-             '💡 Room for improvement';
+      return value > 600 ? '🔥 Great day!' :
+             value > 400 ? '👍 Good performance' :
+             '💡 Room for improvement'
     }
-    
+
     if (type === 'hourly') {
-      return value > 300 ? '⭐ Peak hour' : 
-             value > 200 ? '📈 Good hour' : 
-             '🔍 Low activity';
+      return value > 300 ? '⭐ Peak hour' :
+             value > 200 ? '📈 Good hour' :
+             '🔍 Low activity'
     }
-    
+
     if (type === 'weekly') {
-      return value > 3500 ? '🎯 Excellent week!' : 
-             value > 3000 ? '✅ Solid week' : 
-             '📊 Building momentum';
+      return value > 3500 ? '🎯 Excellent week!' :
+             value > 3000 ? '✅ Solid week' :
+             '📊 Building momentum'
     }
-    
-    return '';
-  };
+
+    return ''
+  }
 
   return (
-    <div 
-      className="position-absolute"
-      style={{
-        top: '20px',
-        right: '20px',
-        background: 'linear-gradient(135deg, #3b82f6 0%, #1e40af 100%)',
-        color: 'white',
-        padding: '12px 16px',
-        borderRadius: '8px',
-        boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-        zIndex: 10,
-        minWidth: '200px',
-        animation: 'fadeIn 0.3s ease-in'
-      }}
-    >
-      <div className="d-flex justify-content-between align-items-start">
+    <div className="absolute top-5 right-5 min-w-[200px] z-50 bg-gradient-to-br from-blue-500 to-blue-900 text-white p-4 rounded-md shadow-lg animate-fade-in">
+      <div className="flex justify-between items-start">
         <div>
-          <div className="fz12 text-white-50">
+          <div className="text-xs text-white/70">
             {selectedBarData.type === 'daily' && 'Daily Earnings'}
             {selectedBarData.type === 'hourly' && 'Hourly Average'}
             {selectedBarData.type === 'weekly' && 'Weekly Total'}
           </div>
-          <div className="fz16 fw-bold">{selectedBarData.label}</div>
-          <div className="h5 mb-0">{formatEarnings(selectedBarData.value)}</div>
+          <div className="text-sm font-semibold">{selectedBarData.label}</div>
+          <div className="text-lg font-bold">{formatEarnings(selectedBarData.value)}</div>
         </div>
         <button
           onClick={() => setSelectedBarData(null)}
-          className="btn btn-sm p-0 text-white-50"
-          style={{background: 'none', border: 'none', fontSize: '14px'}}
+          className="text-white/60 hover:text-white transition text-sm"
         >
           ✕
         </button>
       </div>
-      
-      <div className="mt-2 fz12 text-white-50">
+
+      <div className="mt-2 text-xs text-white/70">
         {getContextMessage()}
       </div>
     </div>
-  );
+  )
 }

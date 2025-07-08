@@ -1,5 +1,9 @@
-// ============ 5. TodaysIncome.jsx ============
+// ============ TodaysIncome.jsx - Tailwind + shadcn/ui Version ============
 import React, { useEffect, useState } from 'react';
+import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Eye, EyeOff, Clock, DollarSign, TrendingUp } from 'lucide-react';
 
 export default function TodaysIncome({ hideEarnings }) {
   const [currentEarnings, setCurrentEarnings] = useState(0);
@@ -26,38 +30,41 @@ export default function TodaysIncome({ hideEarnings }) {
   // Beta Empty State
   if (!hasBookings && !showPreview) {
     return (
-      <div className="row mb20">
-        <div className="col-lg-8">
-          <div 
-            className="d-flex align-items-center justify-content-between p20" 
-            style={{
-              background: 'linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)', 
-              border: '2px dashed #cbd5e1',
-              borderRadius: '12px',
-              transition: 'all 0.3s ease'
-            }}
-          >
-            <div>
-              <div className="fz15 mb-2" style={{ color: '#64748b' }}>Today's Earnings</div>
- </div>
-            <div className="text-end">
-              <div className="fz15" style={{ color: '#64748b' }}>Time Online</div>
-              <div className="h4 mb-0" style={{ color: '#94a3b8' }}>
-                <span style={{ fontSize: '28px', opacity: '0.6' }}>⏰</span>
+      <div className="max-w-2xl">
+        <Card className="border-2 border-dashed border-muted bg-gradient-to-br from-muted/20 to-muted/40 transition-all duration-300 hover:border-muted-foreground/40">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div className="space-y-2">
+                <p className="text-sm font-medium text-muted-foreground">Today's Earnings</p>
+                <div className="flex items-center gap-2">
+                  <div className="h-8 w-20 bg-gradient-to-r from-muted-foreground/20 to-muted-foreground/40 rounded animate-pulse" />
+                  <DollarSign className="h-5 w-5 text-muted-foreground/60" />
+                </div>
+                <p className="text-xs text-muted-foreground/80">Waiting for your first booking</p>
+              </div>
+              
+              <div className="text-right space-y-2">
+                <p className="text-sm font-medium text-muted-foreground">Time Online</p>
+                <div className="flex items-center gap-2 justify-end">
+                  <Clock className="h-6 w-6 text-muted-foreground/60" />
+                  <div className="h-6 w-12 bg-gradient-to-r from-muted-foreground/20 to-muted-foreground/40 rounded animate-pulse" />
+                </div>
               </div>
             </div>
-          </div>
-          
-          {/* Preview Toggle */}
-          <div className="text-center mt-3">
-            <button 
-              onClick={() => setShowPreview(true)}
-              className="btn btn-outline-primary btn-sm"
-              style={{ fontSize: '11px', padding: '4px 12px' }}
-            >
-              👁️ Preview earnings
-            </button>
-          </div>
+          </CardContent>
+        </Card>
+        
+        {/* Preview Toggle */}
+        <div className="flex justify-center mt-4">
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={() => setShowPreview(true)}
+            className="gap-2 text-xs"
+          >
+            <Eye className="h-3 w-3" />
+            Preview earnings
+          </Button>
         </div>
       </div>
     );
@@ -65,62 +72,68 @@ export default function TodaysIncome({ hideEarnings }) {
 
   // Preview or Live Mode
   return (
-    <div className="row mb20">
-      <div className="col-lg-8">
-        <div 
-          className="d-flex align-items-center justify-content-between p20" 
-          style={{
-            background: showPreview 
-              ? 'linear-gradient(135deg, #64748b 0%, #94a3b8 100%)' 
-              : 'linear-gradient(135deg, #000000 0%, #374151 100%)', 
-            borderRadius: '8px',
-            opacity: showPreview ? 0.8 : 1
-          }}
-        >
-          <div>
-            <div className="fz15 text-white mb-2">
-              {showPreview ? "Today's Earnings (Preview)" : "Today's Earnings"}
+    <div className="max-w-2xl">
+      <Card className={`bg-gradient-to-br transition-all duration-300 border-0 ${
+        showPreview 
+          ? 'from-slate-600 to-slate-700 opacity-80' 
+          : 'from-gray-900 to-gray-800'
+      }`}>
+        <CardContent className="p-6">
+          <div className="flex items-center justify-between">
+            <div className="space-y-2">
+              <div className="flex items-center gap-2">
+                <p className="text-sm font-medium text-white">
+                  {showPreview ? "Today's Earnings (Preview)" : "Today's Earnings"}
+                </p>
+                {showPreview && (
+                  <Badge variant="secondary" className="bg-yellow-100 text-yellow-800 text-xs">
+                    Preview Mode
+                  </Badge>
+                )}
+              </div>
+              
+              <div className="flex items-center gap-2">
+                <p className="text-2xl font-bold text-white">
+                  {showPreview ? `Sample: ${formatEarnings(currentEarnings)}` : formatEarnings(currentEarnings)}
+                </p>
+                <DollarSign className="h-5 w-5 text-white/80" />
+              </div>
+              
+              <div className="flex items-center gap-1 text-white/90">
+                <TrendingUp className="h-3 w-3" />
+                <p className="text-sm">
+                  {showPreview ? "Sample data +12%" : "+12% from yesterday"}
+                </p>
+              </div>
             </div>
-            <div className="title text-white">
-              {showPreview ? `Sample: ${formatEarnings(currentEarnings)}` : formatEarnings(currentEarnings)}
-            </div>
-            <div className="text fz14 text-white">
-              {showPreview ? "Sample data +12%" : "+12% from yesterday"}
+            
+            <div className="text-right space-y-2">
+              <p className="text-sm font-medium text-white">Active Hours</p>
+              <div className="flex items-center gap-2 justify-end">
+                <Clock className="h-5 w-5 text-white/80" />
+                <p className="text-2xl font-bold text-white">
+                  {showPreview ? "Demo" : "6.5h"}
+                </p>
+              </div>
             </div>
           </div>
-          <div className="text-end">
-            <div className="fz15 text-white">Active Hours</div>
-            <div className="h4 text-white mb-0">
-              {showPreview ? "Demo" : "6.5h"}
-            </div>
-          </div>
+        </CardContent>
+      </Card>
+      
+      {/* Show preview controls only in beta mode */}
+      {!hasBookings && showPreview && (
+        <div className="flex justify-center mt-4">
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={() => setShowPreview(false)}
+            className="gap-2 text-xs"
+          >
+            <EyeOff className="h-3 w-3" />
+            Hide preview
+          </Button>
         </div>
-        
-        {/* Show preview controls only in beta mode */}
-        {!hasBookings && showPreview && (
-          <div className="text-center mt-3">
-            <div className="d-flex justify-content-center gap-2">
-              <span 
-                className="badge" 
-                style={{ 
-                  backgroundColor: '#fbbf24', 
-                  color: '#92400e',
-                  fontSize: '10px'
-                }}
-              >
-                Preview Mode
-              </span>
-              <button 
-                onClick={() => setShowPreview(false)}
-                className="btn btn-outline-secondary btn-sm"
-                style={{ fontSize: '11px', padding: '2px 8px' }}
-              >
-                🙈 Hide preview
-              </button>
-            </div>
-          </div>
-        )}
-      </div>
+      )}
     </div>
   );
 }

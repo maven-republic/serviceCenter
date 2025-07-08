@@ -21,6 +21,9 @@ export default function ProfessionalCollectionInterface() {
   const [professionals, setProfessionals] = useState([])
   const [loading, setLoading] = useState(false)
 
+  const [serviceInformation, setServiceInformation] = useState(null)
+  const [serviceLoading, setServiceLoading] = useState(true)
+
   const lat = searchParams.get('lat')
   const lng = searchParams.get('lng')
 
@@ -57,6 +60,50 @@ export default function ProfessionalCollectionInterface() {
 
     fetchAccount()
   }, [session?.user?.email, supabase])
+
+  // Fetch service data
+  useEffect(() => {
+    const fetchService = async () => {
+      if (!serviceId) return
+
+      try {
+        setServiceLoading(true)
+        
+        const { data: service, error } = await supabase
+          .from('service')
+          .select(`
+            service_id,
+            name,
+            description,
+            base_price,
+            duration_minutes,
+            portfolio:portfolio_id (
+              name,
+              vertical:vertical_id (
+                name,
+                industry:industry_id (
+                  name
+                )
+              )
+            )
+          `)
+          .eq('service_id', serviceId)
+          .single()
+
+        if (error) {
+          console.error('Error fetching service:', error)
+        } else {
+          setServiceInformation(service)
+        }
+      } catch (err) {
+        console.error('Error fetching service:', err)
+      } finally {
+        setServiceLoading(false)
+      }
+    }
+
+    fetchService()
+  }, [serviceId, supabase])
 
   const fetchNearbyProfessionals = useCallback(async (location) => {
     if (!location) return
@@ -124,7 +171,8 @@ export default function ProfessionalCollectionInterface() {
 
   return (
     <div className="container py-5">
-      {!account ? (
+      {/* Service Header */}
+          {!account ? (
         <div className="text-center my-5">
           <div className="spinner-border text-primary" role="status">
             <span className="visually-hidden">Loading your account info...</span>
@@ -146,7 +194,10 @@ export default function ProfessionalCollectionInterface() {
         <div className="row g-4">
           {professionals.map((pro) => (
             <div className="col-md-6 col-lg-4" key={pro.professional_id}>
-              <ProfessionalManifest data={pro} />
+              <ProfessionalManifest 
+                data={pro} 
+                serviceInformation={serviceInformation || { name: 'Loading...', service_id: serviceId }}
+              />
             </div>
           ))}
         </div>

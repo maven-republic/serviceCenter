@@ -4,7 +4,7 @@ import { customerNavigation } from "@/data/dashboard";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-export default function CustomerSideNavigation() {
+export default function CustomerWorkspaceNavigation() {
   const path = usePathname();
 
   return (

@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import useStickyMenu from "@/hook/useStickyMenu";
+import useStickyMenu from "@/primitives/useStickyMenu";
 import Image from "next/image";
 import Link from "next/link";
 import Navigation from "./Navigation";

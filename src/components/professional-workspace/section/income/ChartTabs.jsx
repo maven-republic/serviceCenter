@@ -1,29 +1,93 @@
-// ============ 6. ChartTabs.jsx ============
+// ============ ChartTabs.jsx - Tailwind + shadcn/ui Version ============
+import React from 'react';
+import { Button } from '@/components/ui/button';
+import { 
+  BarChart3, 
+  Clock, 
+  TrendingUp, 
+  Calendar 
+} from 'lucide-react';
+
 export default function ChartTabs({ activeChart, setActiveChart }) {
   const tabs = [
-    { key: 'daily', label: 'Day'},
-    { key: 'hourly', label: 'Hour' },
-    { key: 'weekly', label: 'Week' }
+    { 
+      key: 'daily', 
+      label: 'Day', 
+      icon: BarChart3, 
+      description: 'Daily trends',
+      color: 'text-blue-600'
+    },
+    { 
+      key: 'hourly', 
+      label: 'Hour', 
+      icon: Clock, 
+      description: 'Peak hours',
+      color: 'text-green-600'
+    },
+    { 
+      key: 'weekly', 
+      label: 'Week', 
+      icon: TrendingUp, 
+      description: 'Weekly view',
+      color: 'text-purple-600'
+    },
+    { 
+      key: 'monthly', 
+      label: 'Month', 
+      icon: Calendar, 
+      description: 'Monthly stats',
+      color: 'text-orange-600'
+    }
   ];
 
   return (
-    <div className="d-flex mb20 p3">
-      {tabs.map((tab) => (
-        <button
-          key={tab.key}
-          onClick={() => setActiveChart(tab.key)}
-          className="btn flex-fill mx-3"
-          style={{
-            backgroundColor: activeChart === tab.key ? '#000000' : '#ffffff',
-            color: activeChart === tab.key ? '#ffffff' : '#64748b',
-            border: `1px solid ${activeChart === tab.key ? '#000000' : '#64748b'}`,
-            fontWeight: activeChart === tab.key ? '600' : '400',
-            transition: 'all 0.3s ease'
-          }}
-        >
-          {tab.label}
-        </button>
-      ))}
+    <div className="bg-gradient-to-br from-muted/50 to-muted/30 rounded-xl p-1.5 mb-6 shadow-sm border border-border">
+      <div className="flex gap-1 w-full">
+        {tabs.map((tab) => {
+          const IconComponent = tab.icon;
+          const isActive = activeChart === tab.key;
+          
+          return (
+            <Button
+              key={tab.key}
+              variant={isActive ? "default" : "ghost"}
+              onClick={() => setActiveChart(tab.key)}
+              className={`
+                flex-1 flex flex-col items-center gap-1 h-auto py-3 px-2 
+                transition-all duration-300 ease-out rounded-lg
+                ${isActive 
+                  ? 'bg-foreground text-background shadow-md hover:bg-foreground/90' 
+                  : 'text-muted-foreground hover:text-foreground hover:bg-background/80 hover:shadow-sm hover:-translate-y-0.5'
+                }
+                active:scale-95 active:translate-y-0
+              `}
+            >
+              {/* Icon */}
+              <div className={`transition-transform duration-300 ${isActive ? 'scale-110' : 'scale-100'}`}>
+                <IconComponent 
+                  className={`h-4 w-4 ${isActive ? 'text-background' : tab.color}`} 
+                />
+              </div>
+              
+              {/* Label */}
+              <div className={`text-xs font-medium ${isActive ? 'text-background' : 'text-foreground'}`}>
+                {tab.label}
+              </div>
+              
+              {/* Description */}
+              <div className={`
+                text-xs transition-opacity duration-300 text-center
+                ${isActive 
+                  ? 'text-background/90 opacity-90' 
+                  : 'text-muted-foreground opacity-70'
+                }
+              `}>
+                {tab.description}
+              </div>
+            </Button>
+          );
+        })}
+      </div>
     </div>
   );
 }

@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { useUserStore } from '@/store/userStore';
 // ✅ NEW: Add quantification import
-import useQuantificationManifold from '@/hook/useQuantificationManifold';
+import useQuantificationManifold from '@/primitives/useQuantificationManifold';
 
 export default function QuotationManagement() {
   const { user } = useUserStore();
@@ -27,7 +27,7 @@ export default function QuotationManagement() {
   const [selectedServiceForQuantification, setSelectedServiceForQuantification] = useState(null);
   const [quantificationNotes, setQuantificationNotes] = useState('');
 
-  // ✅ NEW: Add quantification hook
+  // ✅ NEW: Add quantification primitive
   const {
     service: quantService,
     setService: setQuantService,
@@ -596,7 +596,7 @@ export default function QuotationManagement() {
     <>
       <div dangerouslySetInnerHTML={{ __html: customStyles }} />
       
-      {/* Content renders directly inside DashboardLayout's dashboard__content */}
+      {/* Content renders directly inside ProfessionalWorkspace's dashboard__content */}
       <div className="dashboard__content hover-bgc-color">
         {/* Header Section */}
         <div className="row pb40">

@@ -1,4 +1,4 @@
-import DashboardLayout from "@/components/professional-workspace/DashboardLayout";
+import ProfessionalWorkspace from "@/components/professional-workspace/ProfessionalWorkspace";
 import QuotationManagement from "@/components/professional-workspace/section/QuotationManagement";
 
 import MobileNavigation2 from "@/components/header/MobileNavigation2";
@@ -13,9 +13,9 @@ export default function page() {
     <>
     
     {/* <MobileNavigation2 /> */}
-      {/* <DashboardLayout> */}
+      {/* <ProfessionalWorkspace> */}
         <QuotationManagement />
-      {/* </DashboardLayout> */}
+      {/* </ProfessionalWorkspace> */}
     </>
   );
 }

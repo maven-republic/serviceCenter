@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { useQuantificationManifold } from '@/hook/useQuantificationManifold'
+import { useQuantificationManifold } from '@/primitives/useQuantificationManifold'
 
 /**
  * QuantificationManifold Component
@@ -14,7 +14,7 @@ const QuantificationManifold = ({
   allowModelSelection = true
 }) => {
   // ==========================================
-  // HOOK INTEGRATION
+  // primitive INTEGRATION
   // ==========================================
   
   const {

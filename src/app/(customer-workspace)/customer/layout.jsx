@@ -1,8 +1,9 @@
-// app/(professional-workspace)/professional/workspace/layout.jsx
 import { redirect } from 'next/navigation'
 import { createClient } from '@/utils/supabase/server'
 import CustomerWorkspaceStructure from "@/components/customer-workspace/CustomerWorkspaceStructure"
 import MobileNavigation2 from "@/components/header/MobileNavigation2"
+import '../customer.css' // Bootstrap styles only for customers
+
 
 export const metadata = {
   title: "Customer Workspace",
@@ -30,10 +31,12 @@ export default async function WorkspaceLayout({ children }) {
 
   return (
     <>
-      <MobileNavigation2 />
-      <CustomerWorkspaceStructure>
-        {children}
-      </CustomerWorkspaceStructure>
+      {/* <MobileNavigation2 /> */}
+     <div className="customer-workspace"> {/* Apply customer-workspace class */}
+        <CustomerWorkspaceStructure>
+          {children}
+        </CustomerWorkspaceStructure>
+      </div>
     </>
   );
 }

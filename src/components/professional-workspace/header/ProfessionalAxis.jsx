@@ -5,13 +5,13 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-export default function DashboardHeader() {
+export default function ProfessionalAxis() {
   const toggle = toggleStore((state) => state.dashboardSlidebarToggleHandler);
   const path = usePathname();
 
   return (
     <>
-      <header className="header-nav nav-innerpage-style menu-home4 dashboard_header main-menu">
+      <header className="header-nav nav-innerpage-style menu-home4  main-menu">
         <nav className="posr">
           <div className="container-fluid pr30 pr15-xs pl30 posr menu_bdrt1">
             <div className="row align-items-center justify-content-between">
@@ -22,7 +22,7 @@ export default function DashboardHeader() {
                       <Image
                         height={40}
                         width={133}
-                        src="/images/header-logo-dark.svg"
+                        src="/images/maven-republic.svg"
                         alt="logo"
                       />
                     </Link>

@@ -1,4 +1,15 @@
-// ============ 2. Statistics.jsx ============
+// ============ Statistics.jsx - Tailwind + shadcn/ui Version ============
+import { Card, CardContent } from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
+import { 
+  DollarSign, 
+  TrendingUp, 
+  BarChart3, 
+  Award,
+  ArrowUp,
+  ArrowDown
+} from 'lucide-react'
+
 export default function Statistics() {
   // Beta state - set to true when user has actual bookings
   const hasBookings = false; // This would come from your app state/API
@@ -8,104 +19,130 @@ export default function Statistics() {
       title: "Total Earnings",
       value: hasBookings ? "$89,340" : "",
       change: hasBookings ? "+15%" : "",
+      changeType: "positive",
       subtitle: hasBookings ? "This Month" : "Your first booking",
-      icon: "flaticon-dollar",
+      icon: DollarSign,
+      iconColor: "text-green-600",
+      iconBg: "bg-green-100",
     },
     {
       title: "This Month's Earning",
       value: hasBookings ? "$12,850" : "", 
       change: hasBookings ? "+8%" : "",
+      changeType: "positive",
       subtitle: hasBookings ? "vs Last Month" : "Initial transactions",
-      icon: "flaticon-profit",
+      icon: TrendingUp,
+      iconColor: "text-blue-600",
+      iconBg: "bg-blue-100",
     },
     {
       title: "Mean Order Value",
       value: hasBookings ? "$485" : "",
-      change: hasBookings ? "+12%" : "", 
+      change: hasBookings ? "+12%" : "",
+      changeType: "positive", 
       subtitle: hasBookings ? "Increase" : "After 3+ orders",
-      icon: "flaticon-analytics",
+      icon: BarChart3,
+      iconColor: "text-purple-600",
+      iconBg: "bg-purple-100",
     },
     {
       title: "Commission Earned",
       value: hasBookings ? "$8,934" : "",
       change: hasBookings ? "10%" : "",
+      changeType: "neutral",
       subtitle: hasBookings ? "Platform Fee" : "First customer", 
-      icon: "flaticon-badge",
+      icon: Award,
+      iconColor: "text-orange-600",
+      iconBg: "bg-orange-100",
     }
   ];
 
   if (!hasBookings) {
     // Beta Empty State
     return (
-      <div className="row">
-        {stats.map((stat, index) => (
-          <div key={index} className="col-sm-6 col-xxl-3">
-            <div 
-              className="d-flex align-items-center justify-content-between statistics_funfact"
-              style={{
-                background: 'linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)',
-                border: '2px dashed #cbd5e1',
-                borderRadius: '12px',
-                padding: '20px',
-                transition: 'all 0.3s ease',
-                opacity: '0.8'
-              }}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {stats.map((stat, index) => {
+          const IconComponent = stat.icon;
+          return (
+            <Card 
+              key={index} 
+              className="border-2 border-dashed border-muted bg-gradient-to-br from-muted/20 to-muted/40 opacity-80 hover:opacity-90 transition-all duration-300"
             >
-              <div className="details">
-                <div className="title" 
-                style={{ color: '#64748b' }}>{stat.title}
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div className="space-y-2">
+                    <p className="text-sm font-medium text-muted-foreground">
+                      {stat.title}
+                    </p>
+                    <div className="h-8 flex items-center">
+                      <div className="h-6 w-16 bg-gradient-to-r from-muted-foreground/20 to-muted-foreground/40 rounded animate-pulse" />
+                    </div>
+                    <p className="text-xs text-muted-foreground/80">
+                      {stat.subtitle}
+                    </p>
+                  </div>
+                  <div className={`p-2 rounded-lg ${stat.iconBg} opacity-60`}>
+                    <IconComponent className={`h-5 w-5 ${stat.iconColor}`} />
+                  </div>
                 </div>
-                <div 
-                  className="h4"
-                  style={{
-                    background: 'linear-gradient(45deg, #64748b, #94a3b8)',
-                    WebkitBackgroundClip: 'text',
-                    WebkitTextFillColor: 'transparent',
-                    fontWeight: '600'
-                  }}
-                >
-                  {stat.value}
-                </div>
-                <div className="text fz14" style={{ color: '#94a3b8' }}>
-                  {stat.subtitle}
-                </div>
-              </div>
-              <div className="icon text-center">
-                <span 
-                  style={{
-                    fontSize: '12px',
-                    opacity: '0.6',
-                    filter: 'grayscale(0.3)'
-                  }}
-                >
-                </span>
-              </div>
-            </div>
-          </div>
-        ))}
+              </CardContent>
+            </Card>
+          );
+        })}
       </div>
     );
   }
 
   // Original Statistics (when hasBookings = true)
   return (
-    <div className="row">
-      {stats.map((stat, index) => (
-        <div key={index} className="col-sm-6 col-xxl-3">
-          <div className="d-flex align-items-center justify-content-between statistics_funfact">
-            <div className="details">
-              <div className="fz15">{stat.title}</div>
-              <div className="title">{stat.value}</div>
-              <div className="text fz14">
-                <span className="text-thm">{stat.change}</span> {stat.subtitle}
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      {stats.map((stat, index) => {
+        const IconComponent = stat.icon;
+        const isPositive = stat.changeType === "positive";
+        const isNegative = stat.changeType === "negative";
+        
+        return (
+          <Card key={index} className="hover:shadow-md transition-shadow duration-200">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div className="space-y-2">
+                  <p className="text-sm font-medium text-muted-foreground">
+                    {stat.title}
+                  </p>
+                  <p className="text-2xl font-bold text-foreground">
+                    {stat.value}
+                  </p>
+                  <div className="flex items-center gap-1">
+                    {stat.change && (
+                      <>
+                        <Badge 
+                          variant={isPositive ? "default" : isNegative ? "destructive" : "secondary"}
+                          className="text-xs gap-1"
+                        >
+                          {isPositive && <ArrowUp className="h-3 w-3" />}
+                          {isNegative && <ArrowDown className="h-3 w-3" />}
+                          {stat.change}
+                        </Badge>
+                        <span className="text-xs text-muted-foreground">
+                          {stat.subtitle}
+                        </span>
+                      </>
+                    )}
+                    {!stat.change && (
+                      <span className="text-xs text-muted-foreground">
+                        {stat.subtitle}
+                      </span>
+                    )}
+                  </div>
+                </div>
+                <div className={`p-3 rounded-lg ${stat.iconBg}`}>
+                  <IconComponent className={`h-6 w-6 ${stat.iconColor}`} />
+                </div>
               </div>
-            </div>
-            <div className="icon text-center">
-              <i className={stat.icon} />
-            </div>
-          </div>
-        </div>
-      ))}
+            </CardContent>
+          </Card>
+        );
+      })}
     </div>
   );
 }

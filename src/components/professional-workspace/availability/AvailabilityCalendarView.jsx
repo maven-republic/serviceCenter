@@ -6,6 +6,42 @@ import {
   isSameMonth, isSameDay, isValid
 } from 'date-fns'
 import { useState } from 'react'
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card"
+import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
+import { Alert, AlertDescription } from '@/components/ui/alert'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+import { 
+  Calendar, 
+  ChevronLeft, 
+  ChevronRight,
+  MoreVertical,
+  Edit,
+  Repeat,
+  Clock,
+  AlertCircle,
+  Info,
+  Plus,
+  Eye
+} from 'lucide-react'
 import EditAvailabilityMenu from './EditAvailabilityMenu'
 import SingleDateEditorModal from './SingleDateEditorModal'
 import RecurringDayEditorModal from './RecurringDayEditorModal'
@@ -169,508 +205,434 @@ export default function AvailabilityCalendarView({
     setShowModal(false)
   }
 
+  const getViewTitle = () => {
+    if (viewMode === 'Day') {
+      return format(currentDate, 'EEEE, MMMM d, yyyy')
+    } else if (viewMode === 'Week') {
+      return `${format(start, 'MMM d')} - ${format(end, 'MMM d, yyyy')}`
+    } else {
+      return format(currentDate, 'MMMM yyyy')
+    }
+  }
+
   return (
-    <div className="container-fluid px-0">
-      {/* Navigation Header */}
-      <div className="d-flex justify-content-between align-items-center mb-4 px-3">
-        <div className="d-flex align-items-center gap-2">
-          <button 
-            type="button" 
-            className="btn btn-outline-secondary btn-sm d-flex align-items-center gap-2" 
+    <div className="max-w-7xl mx-auto p-6 space-y-6">
+      {/* Header Controls */}
+      <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
+        {/* Navigation */}
+        <div className="flex items-center gap-3">
+          <Button 
+            variant="outline" 
+            size="sm"
             onClick={goToPreviousMonth}
+            className="h-9 px-3"
           >
-            <i className="fas fa-chevron-left"></i>
-            <span className="d-none d-sm-inline">
-              {viewMode === 'Month' ? 'Previous' : viewMode === 'Week' ? 'Previous' : 'Previous'}
-            </span>
-          </button>
+            <ChevronLeft className="h-4 w-4" />
+            <span className="hidden sm:inline ml-1">Previous</span>
+          </Button>
           
-          <button 
-            type="button" 
-            className="btn btn-outline-primary btn-sm" 
+          <Button 
+            variant="outline" 
+            size="sm"
             onClick={goToToday}
+            className="h-9 px-4"
           >
             Today
-          </button>
+          </Button>
           
-          <button 
-            type="button" 
-            className="btn btn-outline-secondary btn-sm d-flex align-items-center gap-2" 
+          <Button 
+            variant="outline" 
+            size="sm"
             onClick={goToNextMonth}
+            className="h-9 px-3"
           >
-            <span className="d-none d-sm-inline">
-              {viewMode === 'Month' ? 'Next' : viewMode === 'Week' ? 'Next' : 'Next'}
-            </span>
-            <i className="fas fa-chevron-right"></i>
-          </button>
+            <span className="hidden sm:inline mr-1">Next</span>
+            <ChevronRight className="h-4 w-4" />
+          </Button>
         </div>
         
-        <h5 className="fw-bold mb-0 text-center">
-          {viewMode === 'Month' 
-            ? format(currentDate, 'MMMM yyyy')
-            : viewMode === 'Week'
-            ? `${format(start, 'MMM d')} - ${format(end, 'MMM d, yyyy')}`
-            : format(currentDate, 'EEEE, MMMM d, yyyy')
-          }
-        </h5>
+        {/* Title */}
+        <div className="text-center flex-1">
+          <h2 className="text-2xl font-bold text-foreground">
+            {getViewTitle()}
+          </h2>
+        </div>
         
-        <div className="d-flex align-items-center gap-2">
-          <div className="d-none d-md-flex bg-light rounded-pill p-1 gap-1">
+        {/* View Controls */}
+        <div className="flex items-center gap-3">
+          {/* Desktop View Toggle */}
+          <div className="hidden md:flex border rounded-lg p-1 bg-muted/50">
             {['Day', 'Week', 'Month'].map((mode) => (
-              <button
+              <Button
                 key={mode}
-                className={`btn btn-sm rounded-pill px-3 fw-medium ${
-                  mode === viewMode ? 'bg-white text-dark shadow-sm' : 'text-muted'
-                }`}
-                style={{ minWidth: '70px' }}
+                variant={mode === viewMode ? "default" : "ghost"}
+                size="sm"
                 onClick={() => setViewMode(mode)}
+                className="h-8 px-4 text-sm"
               >
                 {mode}
-              </button>
+              </Button>
             ))}
           </div>
 
-          <div className="d-md-none">
-            <select
-              className="form-select form-select-sm"
-              value={viewMode}
-              onChange={(e) => setViewMode(e.target.value)}
-            >
-              <option value="Day">Day View</option>
-              <option value="Week">Week View</option>
-              <option value="Month">Month View</option>
-            </select>
+          {/* Mobile View Toggle */}
+          <div className="md:hidden">
+            <Select value={viewMode} onValueChange={setViewMode}>
+              <SelectTrigger className="w-32 h-9">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="Day">Day View</SelectItem>
+                <SelectItem value="Week">Week View</SelectItem>
+                <SelectItem value="Month">Month View</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
         </div>
       </div>
 
-      {/* Calendar Container */}
-      <div className="calendar-container">
-        {viewMode === 'Day' ? (
-          // DAY VIEW - Consistent with week/month design
-          <div className="day-view">
-            <div className="bg-white border rounded" style={{ border: '1px solid #dee2e6' }}>
-              {/* Day Header - consistent with calendar headers */}
-              <div 
-                className="d-flex align-items-center justify-content-between p-3 bg-light border-bottom"
-                style={{ borderBottom: '1px solid #dee2e6' }}
-              >
-                <h6 className="fw-semibold mb-0 d-flex align-items-center gap-2">
-                  <div 
-                    className={`
-                      fw-semibold d-flex align-items-center justify-content-center rounded-circle
-                      ${isSameDay(currentDate, new Date()) ? 'bg-primary text-white' : 'bg-white border text-dark'}
-                    `}
-                    style={{ 
-                      width: '32px', 
-                      height: '32px', 
-                      fontSize: '0.875rem',
-                      border: isSameDay(currentDate, new Date()) ? 'none' : '1px solid #dee2e6'
-                    }}
-                  >
-                    {format(currentDate, 'd')}
-                  </div>
-                  <span>{format(currentDate, 'EEEE, MMMM yyyy')}</span>
-                  {isSameDay(currentDate, new Date()) && (
-                    <span className="badge bg-primary ms-2">Today</span>
-                  )}
-                </h6>
-                
-                {(() => {
-                  const isPast = currentDate < new Date(new Date().setHours(0, 0, 0, 0))
-                  return !isPast && (
-                    <button 
-                      className="btn btn-outline-secondary btn-sm"
-                      onClick={() => handleEditDate(currentDate)}
-                    >
-                      <i className="fas fa-edit me-1"></i>
-                      Edit
-                    </button>
-                  )
-                })()}
+      {/* Calendar Content */}
+      {viewMode === 'Day' ? (
+        // DAY VIEW
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className={`
+                  w-12 h-12 rounded-full flex items-center justify-content-center font-bold text-lg
+                  ${isSameDay(currentDate, new Date()) ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'}
+                `}>
+                  {format(currentDate, 'd')}
+                </div>
+                <div>
+                  <CardTitle className="text-lg">
+                    {format(currentDate, 'EEEE, MMMM d, yyyy')}
+                  </CardTitle>
+                  <CardDescription>
+                    {isSameDay(currentDate, new Date()) && (
+                      <Badge variant="default" className="mt-1">Today</Badge>
+                    )}
+                  </CardDescription>
+                </div>
               </div>
               
-              {/* Day Content */}
-              <div className="p-3">
-                {(() => {
-                  const { recurring, override } = getDayContent(currentDate)
-                  const allSlots = override.length > 0 ? override : recurring
-                  const isPast = currentDate < new Date(new Date().setHours(0, 0, 0, 0))
-                  
-                  if (allSlots.length === 0) {
-                    return (
-                      <div className="text-center py-4">
-                        <div className="text-muted mb-3" style={{ fontSize: '2rem' }}>
-                          📅
-                        </div>
-                        <h6 className="text-muted mb-2">No availability set</h6>
-                        <p className="text-muted small mb-3">
-                          {isPast ? 'This day has passed' : 'Click to add your available hours for this day'}
-                        </p>
-                        {!isPast && (
-                          <button 
-                            className="btn btn-outline-primary btn-sm"
-                            onClick={() => handleEditDate(currentDate)}
-                          >
-                            <i className="fas fa-plus me-2"></i>
-                            Add Hours
-                          </button>
-                        )}
-                      </div>
-                    )
-                  }
-                  
-                  return (
-                    <div>
-                      {/* Slots grid - horizontal layout */}
-                      <div className="row g-2">
-                        {allSlots.map((slot, i) => (
-                          <div key={i} className="col-md-6 col-lg-4">
-                            <div 
-                              className={`
-                                d-flex flex-column p-3 border rounded h-100
-                                ${slot.is_available === false ? 'border-danger bg-danger-subtle' : 'border-light bg-white'}
-                              `}
-                              style={{ borderColor: slot.is_available === false ? '#dc3545' : '#dee2e6' }}
-                            >
-                              <div className="d-flex align-items-center gap-2 mb-2">
-                                <i className={`fas ${
-                                  override.length > 0 ? 'fa-calendar-check' : 'fa-repeat'
-                                } ${slot.is_available === false ? 'text-danger' : 'text-muted'}`}></i>
-                                
-                                <span className="small text-muted">
-                                  {override.length > 0 ? 'Override' : 'Regular'}
-                                </span>
-                                
-                                {slot.is_available === false && (
-                                  <span className="badge bg-danger text-white ms-auto">Blocked</span>
-                                )}
-                              </div>
-                              
-                              <div className={`
-                                fw-semibold mb-1
-                                ${slot.is_available === false ? 'text-danger' : 'text-dark'}
-                              `} style={{ fontSize: '1rem' }}>
-                                {formatTime12(slot.start_time)} – {formatTime12(slot.end_time)}
-                              </div>
-                              
-                              <div className="small text-muted mt-auto">
-                                Duration: {(() => {
-                                  const start = new Date(`2000-01-01 ${slot.start_time}`)
-                                  const end = new Date(`2000-01-01 ${slot.end_time}`)
-                                  const diffMs = end - start
-                                  const hours = Math.floor(diffMs / (1000 * 60 * 60))
-                                  const minutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60))
-                                  return hours > 0 ? `${hours}h ${minutes}m` : `${minutes}m`
-                                })()}
-                              </div>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                      
-                      {override.length > 0 && (
-                        <div className="mt-3 p-3 bg-warning-subtle border border-warning rounded">
-                          <div className="d-flex align-items-center gap-2">
-                            <i className="fas fa-info-circle text-warning"></i>
-                            <div className="small">
-                              <span className="fw-medium text-warning-emphasis">Date Override: </span>
-                              <span className="text-warning-emphasis">
-                                These hours override your regular weekly schedule for this date.
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  )
-                })()}
-              </div>
+              {(() => {
+                const isPast = currentDate < new Date(new Date().setHours(0, 0, 0, 0))
+                return !isPast && (
+                  <Button 
+                    variant="outline"
+                    onClick={() => handleEditDate(currentDate)}
+                  >
+                    <Edit className="h-4 w-4 mr-2" />
+                    Edit Day
+                  </Button>
+                )
+              })()}
             </div>
-          </div>
-        ) : (
-          // WEEK & MONTH VIEW
-          <>
+          </CardHeader>
+          
+          <CardContent>
+            {(() => {
+              const { recurring, override } = getDayContent(currentDate)
+              const allSlots = override.length > 0 ? override : recurring
+              const isPast = currentDate < new Date(new Date().setHours(0, 0, 0, 0))
+              
+              if (allSlots.length === 0) {
+                return (
+                  <div className="text-center py-12">
+                    <Calendar className="h-16 w-16 text-muted-foreground mx-auto mb-4 opacity-50" />
+                    <h3 className="text-lg font-medium text-muted-foreground mb-2">No availability set</h3>
+                    <p className="text-muted-foreground mb-4">
+                      {isPast ? 'This day has passed' : 'Click to add your available hours for this day'}
+                    </p>
+                    {!isPast && (
+                      <Button onClick={() => handleEditDate(currentDate)}>
+                        <Plus className="h-4 w-4 mr-2" />
+                        Add Hours
+                      </Button>
+                    )}
+                  </div>
+                )
+              }
+              
+              return (
+                <div className="space-y-4">
+                  {/* Time slots grid */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {allSlots.map((slot, i) => (
+                      <Card key={i} className={`
+                        ${slot.is_available === false ? 'border-destructive bg-destructive/5' : 'border-border'}
+                      `}>
+                        <CardContent className="p-4">
+                          <div className="flex items-center gap-2 mb-2">
+                            {override.length > 0 ? (
+                              <Calendar className="h-4 w-4 text-amber-600" />
+                            ) : (
+                              <Repeat className="h-4 w-4 text-muted-foreground" />
+                            )}
+                            <Badge variant={override.length > 0 ? "secondary" : "outline"} className="text-xs">
+                              {override.length > 0 ? 'Override' : 'Regular'}
+                            </Badge>
+                            {slot.is_available === false && (
+                              <Badge variant="destructive">Blocked</Badge>
+                            )}
+                          </div>
+                          
+                          <div className={`
+                            text-lg font-semibold mb-2
+                            ${slot.is_available === false ? 'text-destructive' : 'text-foreground'}
+                          `}>
+                            {formatTime12(slot.start_time)} – {formatTime12(slot.end_time)}
+                          </div>
+                          
+                          <p className="text-sm text-muted-foreground">
+                            Duration: {(() => {
+                              const start = new Date(`2000-01-01 ${slot.start_time}`)
+                              const end = new Date(`2000-01-01 ${slot.end_time}`)
+                              const diffMs = end - start
+                              const hours = Math.floor(diffMs / (1000 * 60 * 60))
+                              const minutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60))
+                              return hours > 0 ? `${hours}h ${minutes}m` : `${minutes}m`
+                            })()}
+                          </p>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                  
+                  {override.length > 0 && (
+                    <Alert>
+                      <AlertCircle className="h-4 w-4" />
+                      <AlertDescription>
+                        <strong>Date Override:</strong> These hours override your regular weekly schedule for this date.
+                      </AlertDescription>
+                    </Alert>
+                  )}
+                </div>
+              )
+            })()}
+          </CardContent>
+        </Card>
+      ) : (
+        // WEEK & MONTH VIEW
+        <Card>
+          <CardContent className="p-0">
             {/* Weekdays Header */}
-            <div 
-              className="calendar-header d-none d-md-grid mb-2"
-              style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(7, 1fr)',
-                gap: '1px',
-                border: '1px solid #dee2e6',
-                borderRadius: '0.375rem 0.375rem 0 0',
-                overflow: 'hidden'
-              }}
-            >
+            <div className="hidden md:grid grid-cols-7 border-b bg-muted/50">
               {weekdays.map((day, i) => (
                 <div 
                   key={i} 
-                  className="text-center fw-semibold text-muted py-2 bg-light"
-                  style={{ 
-                    fontSize: '0.875rem',
-                    borderRight: i === 6 ? 'none' : '1px solid #dee2e6'
-                  }}
+                  className="p-3 text-center font-medium text-muted-foreground text-sm border-r last:border-r-0"
                 >
                   {day}
                 </div>
               ))}
             </div>
 
-            {/* Calendar Grid - Fixed 7 columns to match headers */}
-            <div
-              className="calendar-grid"
-              style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(7, 1fr)',
-                gap: '1px',
-                border: viewMode === 'Month' ? '1px solid #dee2e6' : '1px solid #dee2e6',
-                borderTop: viewMode === 'Month' ? 'none' : '1px solid #dee2e6',
-                borderRadius: viewMode === 'Month' ? '0 0 0.375rem 0.375rem' : '0.375rem',
-                overflow: 'hidden'
-              }}
-            >
-          {dateRange.map((date, idx) => {
-            const isToday = isSameDay(date, new Date())
-            const isOtherMonth = viewMode === 'Month' ? !isSameMonth(date, currentDate) : false
-            const isPast = date < new Date(new Date().setHours(0, 0, 0, 0))
-            const dateKey = format(date, 'yyyy-MM-dd')
-            const { recurring, override } = getDayContent(date)
-            const showMenu = !isPast && activeDate && format(activeDate, 'yyyy-MM-dd') === dateKey
-            const hasAvailability = recurring.length > 0 || override.length > 0
+            {/* Calendar Grid */}
+            <div className="grid grid-cols-7 divide-x divide-y border-b">
+              {dateRange.map((date, idx) => {
+                const isToday = isSameDay(date, new Date())
+                const isOtherMonth = viewMode === 'Month' ? !isSameMonth(date, currentDate) : false
+                const isPast = date < new Date(new Date().setHours(0, 0, 0, 0))
+                const dateKey = format(date, 'yyyy-MM-dd')
+                const { recurring, override } = getDayContent(date)
+                const showMenu = !isPast && activeDate && format(activeDate, 'yyyy-MM-dd') === dateKey
+                const hasAvailability = recurring.length > 0 || override.length > 0
 
-            const slotClass = (slot) =>
-              slot.is_available === false ? 'text-danger' : 'text-dark'
-
-            return (
-              <div
-                key={idx}
-                className={`
-                  calendar-day bg-white d-flex flex-column position-relative
-                  ${!isPast ? 'cursor-pointer' : 'cursor-not-allowed'}
-                  ${isOtherMonth ? 'opacity-60' : ''}
-                  ${isPast ? 'opacity-50' : ''}
-                `}
-                style={{
-                  minHeight: viewMode === 'Week' ? '140px' : '120px',
-                  borderRight: idx % 7 === 6 ? 'none' : '1px solid #dee2e6',
-                  borderBottom: Math.floor(idx / 7) === Math.floor((dateRange.length - 1) / 7) ? 'none' : '1px solid #dee2e6',
-                  backgroundColor: isToday ? '#f8f9ff' : hasAvailability ? '#f8fff8' : '#ffffff'
-                }}
-                onClick={() => !isPast && handleDayClick(date)}
-              >
-                {/* Date Number */}
-                <div className="p-2 pb-0">
-                  <div className="d-flex flex-column align-items-center">
-                    <div 
-                      className={`
-                        fw-semibold d-flex align-items-center justify-content-center rounded-circle
-                        ${isToday ? 'bg-primary text-white' : 'bg-transparent'}
-                        ${!isToday && !isOtherMonth ? 'text-dark' : ''}
-                        ${isOtherMonth ? 'text-muted' : ''}
-                      `}
-                      style={{ 
-                        width: '32px', 
-                        height: '32px', 
-                        fontSize: '0.875rem',
-                        minWidth: '32px',
-                        border: isToday ? 'none' : '1px solid transparent'
-                      }}
-                    >
-                      <time dateTime={dateKey}>
+                return (
+                  <div
+                    key={idx}
+                    className={`
+                      relative min-h-[120px] ${viewMode === 'Week' ? 'min-h-[140px]' : ''} p-2
+                      ${!isPast ? 'cursor-pointer hover:bg-muted/30' : 'cursor-not-allowed'}
+                      ${isOtherMonth ? 'opacity-60 bg-muted/20' : ''}
+                      ${isPast ? 'opacity-50' : ''}
+                      ${isToday ? 'bg-primary/5' : ''}
+                      ${hasAvailability ? 'bg-green-50/50' : ''}
+                    `}
+                    onClick={() => !isPast && handleDayClick(date)}
+                  >
+                    {/* Date Number */}
+                    <div className="flex items-center justify-center mb-2">
+                      <div className={`
+                        w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium
+                        ${isToday ? 'bg-primary text-primary-foreground' : 'text-foreground'}
+                        ${isOtherMonth ? 'text-muted-foreground' : ''}
+                      `}>
                         {format(date, 'd')}
-                      </time>
+                      </div>
                     </div>
+
+                    {/* Mobile Day Label */}
                     {viewMode === 'Week' && (
-                      <div className="text-muted small mt-1" style={{ fontSize: '0.7rem' }}>
+                      <div className="text-center text-xs text-muted-foreground mb-2 md:hidden">
                         {format(date, 'EEE')}
                       </div>
                     )}
-                  </div>
-                </div>
 
-                {/* Availability Content */}
-                <div className="px-2 pb-2 flex-grow-1 d-flex flex-column justify-content-start">
-                  <div className="d-flex flex-column gap-1" style={{ fontSize: '0.75rem' }}>
-                    {override.length > 0 ? (
-                      <>
-                        {override.slice(0, viewMode === 'Week' ? 5 : 2).map((o, i) => (
-                          <div 
-                            key={i} 
-                            className={`
-                              d-flex align-items-center gap-1 px-2 py-1 rounded
-                              ${slotClass(o)}
-                            `}
-                            style={{ 
-                              fontSize: viewMode === 'Week' ? '0.65rem' : '0.7rem', 
-                              lineHeight: '1.3',
-                              minHeight: '20px'
-                            }}
-                          >
-                            <i className="fas fa-calendar-check" style={{ fontSize: '0.5rem', flexShrink: 0 }}></i>
-                            <span className="text-truncate" style={{ lineHeight: '1.2' }}>
+                    {/* Availability Content */}
+                    <div className="space-y-1">
+                      {override.length > 0 ? (
+                        <>
+                          {override.slice(0, viewMode === 'Week' ? 4 : 2).map((o, i) => (
+                            <div 
+                              key={i} 
+                              className={`
+                                text-xs px-2 py-1 rounded bg-amber-100 text-amber-800 truncate
+                                ${o.is_available === false ? 'bg-red-100 text-red-800' : ''}
+                              `}
+                            >
+                              <Calendar className="inline h-3 w-3 mr-1" />
                               {formatTime12(o.start_time)} – {formatTime12(o.end_time)}
                               {o.is_available === false && ' (Blocked)'}
-                            </span>
-                          </div>
-                        ))}
-                        {override.length > (viewMode === 'Week' ? 5 : 2) && (
-                          <div className="text-muted text-center px-1" style={{ fontSize: '0.6rem' }}>
-                            +{override.length - (viewMode === 'Week' ? 5 : 2)} more
-                          </div>
-                        )}
-                      </>
-                    ) : recurring.length > 0 ? (
-                      <>
-                        {recurring.slice(0, viewMode === 'Week' ? 5 : 2).map((r, i) => (
-                          <div 
-                            key={i} 
-                            className="d-flex align-items-center gap-1 text-dark px-2 py-1 rounded"
-                            style={{ 
-                              fontSize: viewMode === 'Week' ? '0.65rem' : '0.7rem', 
-                              lineHeight: '1.3',
-                              minHeight: '20px'
-                            }}
-                          >
-                            <i className="fas fa-repeat" style={{ fontSize: '0.5rem', flexShrink: 0 }} title="Recurring"></i>
-                            <span className="text-truncate" style={{ lineHeight: '1.2' }}>
+                            </div>
+                          ))}
+                          {override.length > (viewMode === 'Week' ? 4 : 2) && (
+                            <div className="text-xs text-muted-foreground text-center px-1">
+                              +{override.length - (viewMode === 'Week' ? 4 : 2)} more
+                            </div>
+                          )}
+                        </>
+                      ) : recurring.length > 0 ? (
+                        <>
+                          {recurring.slice(0, viewMode === 'Week' ? 4 : 2).map((r, i) => (
+                            <div 
+                              key={i} 
+                              className="text-xs px-2 py-1 rounded bg-green-100 text-green-800 truncate"
+                            >
+                              <Repeat className="inline h-3 w-3 mr-1" />
                               {formatTime12(r.start_time)} – {formatTime12(r.end_time)}
-                            </span>
-                          </div>
-                        ))}
-                        {recurring.length > (viewMode === 'Week' ? 5 : 2) && (
-                          <div className="text-muted text-center px-1" style={{ fontSize: '0.6rem' }}>
-                            +{recurring.length - (viewMode === 'Week' ? 5 : 2)} more
-                          </div>
-                        )}
-                      </>
-                    ) : (
-                      <div className="text-muted text-center mt-2 px-1" style={{ fontSize: viewMode === 'Week' ? '0.65rem' : '0.7rem' }}>
-                        {!isPast ? 'Click to add' : 'No availability'}
+                            </div>
+                          ))}
+                          {recurring.length > (viewMode === 'Week' ? 4 : 2) && (
+                            <div className="text-xs text-muted-foreground text-center px-1">
+                              +{recurring.length - (viewMode === 'Week' ? 4 : 2)} more
+                            </div>
+                          )}
+                        </>
+                      ) : (
+                        <div className="text-xs text-muted-foreground text-center mt-4">
+                          {!isPast ? 'Click to add' : 'No availability'}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Edit Menu */}
+                    {showMenu && (
+                      <EditAvailabilityMenu
+                        date={date}
+                        onEditDate={(d) => {
+                          setActiveDate(null)
+                          handleEditDate(d)
+                        }}
+                        onEditDay={(dayIndex) => {
+                          setActiveDate(null)
+                          setEditingWeekdayIndex(dayIndex)
+                          setShowRecurringModal(true)
+                        }}
+                      />
+                    )}
+
+                    {/* Availability Indicator Dot */}
+                    {hasAvailability && (
+                      <div className="absolute top-2 right-2">
+                        <div 
+                          className={`w-2 h-2 rounded-full ${override.length > 0 ? 'bg-amber-500' : 'bg-green-500'}`}
+                          title={override.length > 0 ? 'Has overrides' : 'Regular availability'}
+                        />
                       </div>
                     )}
                   </div>
-                </div>
+                )
+              })}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
-                {/* Edit Menu */}
-                {showMenu && (
-                  <EditAvailabilityMenu
-                    date={date}
-                    onEditDate={(d) => {
-                      setActiveDate(null)
-                      handleEditDate(d)
-                    }}
-                    onEditDay={(dayIndex) => {
-                      setActiveDate(null)
-                      setEditingWeekdayIndex(dayIndex)
-                      setShowRecurringModal(true)
-                    }}
-                  />
-                )}
+      {/* Mobile List View (shown on small screens for month view) */}
+      <div className="md:hidden space-y-3">
+        {dateRange.filter(date => isSameMonth(date, currentDate)).map((date, idx) => {
+          const isToday = isSameDay(date, new Date())
+          const isPast = date < new Date(new Date().setHours(0, 0, 0, 0))
+          const { recurring, override } = getDayContent(date)
+          const hasAvailability = recurring.length > 0 || override.length > 0
 
-                {/* Availability Indicator Dot */}
-                {hasAvailability && (
-                  <div 
-                    className="position-absolute"
-                    style={{ top: '8px', right: '8px' }}
-                  >
-                    <div 
-                      className={`rounded-circle ${override.length > 0 ? 'bg-warning' : 'bg-success'}`}
-                      style={{ width: '6px', height: '6px' }}
-                      title={override.length > 0 ? 'Has overrides' : 'Regular availability'}
-                    ></div>
-                  </div>
-                )}
-              </div>
-            )
-          })}
-        </div>
-        </>
-        )}
-      </div>
-
-      {/* Mobile View - Show as list on small screens */}
-      <div className="d-md-none mt-4">
-        <div className="row g-2">
-          {dateRange.filter(date => isSameMonth(date, currentDate)).map((date, idx) => {
-            const isToday = isSameDay(date, new Date())
-            const isPast = date < new Date(new Date().setHours(0, 0, 0, 0))
-            const { recurring, override } = getDayContent(date)
-            const hasAvailability = recurring.length > 0 || override.length > 0
-
-            return (
-              <div key={idx} className="col-12">
-                <div 
-                  className={`
-                    border rounded p-3 bg-white
-                    ${isToday ? 'border-primary' : 'border-light'}
-                    ${hasAvailability ? 'border-success' : ''}
-                    ${isPast ? 'opacity-50' : ''}
-                  `}
-                  onClick={() => !isPast && handleDayClick(date)}
-                >
-                  <div className="d-flex justify-content-between align-items-start mb-2">
-                    <h6 className={`mb-0 ${isToday ? 'text-primary' : ''}`}>
+          return (
+            <Card 
+              key={idx}
+              className={`
+                ${isToday ? 'border-primary' : ''}
+                ${hasAvailability ? 'border-green-200' : ''}
+                ${isPast ? 'opacity-50' : ''}
+              `}
+              onClick={() => !isPast && handleDayClick(date)}
+            >
+              <CardContent className="p-4">
+                <div className="flex justify-between items-start mb-3">
+                  <div>
+                    <h3 className={`font-medium ${isToday ? 'text-primary' : ''}`}>
                       {format(date, 'EEEE, MMM d')}
-                    </h6>
-                    {hasAvailability && (
-                      <span className={`badge ${override.length > 0 ? 'bg-warning' : 'bg-success'}`}>
-                        {override.length > 0 ? 'Override' : 'Available'}
-                      </span>
-                    )}
+                    </h3>
+                    {isToday && <Badge variant="default" className="mt-1">Today</Badge>}
                   </div>
-                  
-                  {/* Mobile availability display */}
-                  <div className="small">
-                    {override.length > 0 ? (
-                      override.map((o, i) => (
-                        <div key={i} className={`${o.is_available === false ? 'text-danger' : 'text-success'}`}>
-                          {formatTime12(o.start_time)} – {formatTime12(o.end_time)}
-                          {o.is_available === false && ' (Blocked)'}
-                        </div>
-                      ))
-                    ) : recurring.length > 0 ? (
-                      recurring.map((r, i) => (
-                        <div key={i} className="text-success">
-                          <i className="fas fa-repeat me-1"></i>
-                          {formatTime12(r.start_time)} – {formatTime12(r.end_time)}
-                        </div>
-                      ))
-                    ) : (
-                      <div className="text-muted">No availability</div>
-                    )}
-                  </div>
+                  {hasAvailability && (
+                    <Badge variant={override.length > 0 ? "secondary" : "outline"}>
+                      {override.length > 0 ? 'Override' : 'Available'}
+                    </Badge>
+                  )}
                 </div>
-              </div>
-            )
-          })}
-        </div>
+                
+                <div className="space-y-1 text-sm">
+                  {override.length > 0 ? (
+                    override.map((o, i) => (
+                      <div key={i} className={`flex items-center gap-2 ${o.is_available === false ? 'text-destructive' : 'text-green-600'}`}>
+                        <Calendar className="h-3 w-3" />
+                        {formatTime12(o.start_time)} – {formatTime12(o.end_time)}
+                        {o.is_available === false && ' (Blocked)'}
+                      </div>
+                    ))
+                  ) : recurring.length > 0 ? (
+                    recurring.map((r, i) => (
+                      <div key={i} className="flex items-center gap-2 text-green-600">
+                        <Repeat className="h-3 w-3" />
+                        {formatTime12(r.start_time)} – {formatTime12(r.end_time)}
+                      </div>
+                    ))
+                  ) : (
+                    <div className="text-muted-foreground">No availability</div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          )
+        })}
       </div>
 
       {/* Legend */}
-      <div className="mt-4 p-3 bg-light rounded">
-        <div className="row align-items-center small">
-          <div className="col-md-8">
-            <div className="d-flex flex-wrap gap-3">
-              <div className="d-flex align-items-center gap-1">
-                <div className="bg-success rounded-circle" style={{ width: '8px', height: '8px' }}></div>
-                <span>Regular hours</span>
-              </div>
-              <div className="d-flex align-items-center gap-1">
-                <div className="bg-warning rounded-circle" style={{ width: '8px', height: '8px' }}></div>
-                <span>Date override</span>
-              </div>
-              <div className="d-flex align-items-center gap-1">
-                <div className="border border-primary rounded-circle" style={{ width: '8px', height: '8px' }}></div>
-                <span>Today</span>
-              </div>
+      <Card>
+        <CardContent className="p-4">
+          <div className="flex flex-wrap items-center gap-6 text-sm">
+            <div className="flex items-center gap-2">
+              <div className="w-3 h-3 rounded-full bg-green-500" />
+              <span>Regular hours</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-3 h-3 rounded-full bg-amber-500" />
+              <span>Date override</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-3 h-3 rounded-full border-2 border-primary" />
+              <span>Today</span>
+            </div>
+            <div className="flex items-center gap-2 ml-auto">
+              <Info className="h-4 w-4 text-muted-foreground" />
+              <span className="text-muted-foreground">Click any day to edit hours</span>
             </div>
           </div>
-          <div className="col-md-4 text-end">
-            <span className="text-muted">Click any day to edit hours</span>
-          </div>
-        </div>
-      </div>
+        </CardContent>
+      </Card>
 
       {/* Modals */}
       {showModal && editTargetDate && (

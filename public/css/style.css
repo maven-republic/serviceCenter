@@ -747,7 +747,7 @@ li {
   top: 0;
   left: 0;
   width: 100%;
-  background-color: #f0efec;
+  /* background-color: #f0efec; */
   z-index: 100;
 }
 
@@ -918,15 +918,17 @@ li {
 .dashboard__sidebar {
   background-color: #f0efec;
   flex-shrink: 0;
-  height: calc(100% - 90px);
+  height: 100vh; /* Full viewport height */
   left: 0;
-  margin-top: 80px;
+  margin-top: 0; /* Remove top margin */
   overflow-y: scroll;
   padding: 30px 30px 30px 0;
   padding-bottom: 40px;
   position: fixed;
   width: 300px;
+  top: 0; /* Ensure it starts from the very top */
 }
+
 .dashboard__sidebar::-webkit-scrollbar {
   height: 4px;
   width: 4px;
@@ -1907,7 +1909,7 @@ li {
   width: 5px;
 }
 .half_map_area_content::-webkit-scrollbar-thumb {
-  background-color: #f7f7f7;
+  /* background-color: #f7f7f7; */
   border-radius: 3px;
   height: 200px;
 }
@@ -4247,7 +4249,7 @@ section:not(.full-height) {
   font-weight: 400;
 }
 .advance-search-field .box-suggestions li:hover {
-  background-color: #f0efec;
+  /* background-color: #f0efec; */
 }
 .advance-search-field .box-suggestions li:last-child {
   border-bottom: none;
@@ -7886,12 +7888,12 @@ textarea {
 
 /*	Menu Style  */
 header.nav-innerpage-style {
-  background-color: #f0efec;
+  /* background-color: #f0efec; */
   border-bottom: 1px solid #e9e9e9;
   padding: 7px 0;
 }
 header.nav-innerpage-style .ace-responsive-menu .sub-menu {
-  background-color: #f0efec;
+  /* background-color: #f0efec; */
   border-radius: 12px;
   -webkit-box-shadow: 0px 6px 15px rgba(64, 79, 104, 0.05);
   -moz-box-shadow: 0px 6px 15px rgba(64, 79, 104, 0.05);
@@ -7912,7 +7914,7 @@ header.nav-innerpage-style .ace-responsive-menu .sub-menu li {
   transition: all 0.4s ease;
 }
 header.nav-innerpage-style .ace-responsive-menu .sub-menu li:hover {
-  background-color: #f0efec;
+  /* background-color: #f0efec; */
   border-left: 2px solid var(--primary-color);
 }
 header.nav-innerpage-style .ace-responsive-menu .sub-menu a {
@@ -11930,11 +11932,11 @@ input:focus-visible {
 }
 
 .bgc-white {
-  background-color: #ffffff;
+  /* background-color: #ffffff; */
 }
 
 .hover-bgc-color {
-  background-color: #f0efec;
+  /* background-color: #f0efec; */
 }
 
 .bgc-transparent {

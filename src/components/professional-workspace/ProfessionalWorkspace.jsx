@@ -3,12 +3,12 @@
 import { useEffect, useState, useRef } from 'react'
 import { useSession, useSupabaseClient } from '@supabase/auth-helpers-react'
 import toggleStore from '@/store/toggleStore'
-import DashboardHeader from './header/DashboardHeader'
+import ProfessionalAxis from './header/ProfessionalAxis'
 import DashboardSidebar from './sidebar/DashboardSidebar'
 import DashboardFooter from './footer/DashboardFooter'
 import { useUserStore } from '@/store/userStore'
 
-export default function DashboardLayout({ children }) {
+export default function ProfessionalWorkspace({ children }) {
   const isActive = toggleStore((state) => state.isDasboardSidebarActive)
   const { user, fetchUser, isLoading } = useUserStore()
   const session = useSession()
@@ -255,23 +255,21 @@ export default function DashboardLayout({ children }) {
     )
   }
 
-  // 🎉 Everything loaded successfully - user stays logged in!
-  return (
-    <>
-      <DashboardHeader />
-      <div className="dashboard_content_wrapper">
-        <div
-          className={`dashboard dashboard_wrapper pr30 pr0-xl ${
-            isActive ? 'dsh_board_sidebar_hidden' : ''
-          }`}
-        >
-          <DashboardSidebar />
-          <div className="dashboard__main pl0-md">
-            {children}
-            <DashboardFooter />
-          </div>
+  // In ProfessionalWorkspace.jsx - replace the return statement
+return (
+  <div className="min-h-screen bg-background">
+    <div className={`flex ${isActive ? 'dashboard-sidebar-hidden' : ''}`}>
+      {/* Sidebar with fixed width */}
+      <DashboardSidebar />
+      
+      {/* Main content with proper offset */}
+      <div className="flex-1 ml-[300px] transition-all duration-300 ease-in-out">
+        <div className="p-6">
+          {children}
         </div>
+        {/* <DashboardFooter /> */}
       </div>
-    </>
-  )
+    </div>
+  </div>
+)
 }
