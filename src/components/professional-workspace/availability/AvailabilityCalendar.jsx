@@ -193,7 +193,7 @@ export default function AvailabilityCalendar({ availability = [], overrides = []
   const stats = getStats()
 
   return (
-    <div className="max-w-6xl mx-auto space-y-6">
+    <div className="professional-workspace max-w-6xl mx-auto space-y-6">
       {/* Header */}
       <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
         <div className="space-y-2">
@@ -320,7 +320,7 @@ export default function AvailabilityCalendar({ availability = [], overrides = []
                         </span>
                       </div>
                       {slot.isOverride && (
-                        <Badge variant="secondary" className="bg-amber-100 text-amber-700">
+                        <Badge variant="secondary" className="bg-card text-card-foreground">
                           Override
                         </Badge>
                       )}
@@ -361,7 +361,7 @@ export default function AvailabilityCalendar({ availability = [], overrides = []
                             <div key={idx} className="text-xs p-2 rounded bg-green-100 text-green-800">
                               {formatTime(s.start_time)} – {formatTime(s.end_time)}
                               {s.isOverride && (
-                                <Badge variant="secondary" className="ml-1 text-xs bg-amber-100 text-amber-700">
+                                <Badge variant="secondary" className="ml-1 text-xs bg-card text-card-foreground">
                                   Override
                                 </Badge>
                               )}
@@ -428,7 +428,7 @@ export default function AvailabilityCalendar({ availability = [], overrides = []
 
                       <div className="space-y-1">
                         {slots.slice(0, 2).map((slot, idx) => (
-                          <div key={idx} className="text-xs p-1 rounded bg-green-100 text-green-700 truncate">
+                          <div key={idx} className="text-xs p-1 rounded bg-muted text-muted-foreground truncate">
                             {formatTime(slot.start_time)} – {formatTime(slot.end_time)}
                             {slot.isOverride && (
                               <div className="text-xs text-amber-600">Override</div>

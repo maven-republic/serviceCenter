@@ -8,11 +8,14 @@ export const dynamic = 'force-dynamic'
 
 // GET /api/appointments/[id] - Get specific appointment details
 export async function GET(request, { params }) {
-  console.log('🔥 Single Appointment GET API called for ID:', params.id)
+  // ✅ Fix: Await params for Next.js 15+
+  const resolvedParams = await params
+  const { id } = resolvedParams
+  
+  console.log('🔥 Single Appointment GET API called for ID:', id)
   
   try {
     const supabase = await createClient()
-    const { id } = params
 
     // Get the appointment first
     const { data: appointment, error: appointmentError } = await supabase
@@ -134,11 +137,14 @@ export async function GET(request, { params }) {
 
 // PATCH /api/appointments/[id] - Update appointment status and details
 export async function PATCH(request, { params }) {
-  console.log('🔥 Appointment PATCH API called for ID:', params.id)
+  // ✅ Fix: Await params for Next.js 15+
+  const resolvedParams = await params
+  const { id } = resolvedParams
+  
+  console.log('🔥 Appointment PATCH API called for ID:', id)
   
   try {
     const supabase = await createClient()
-    const { id } = params
     const body = await request.json()
 
     console.log('🔥 Update request:', body)
@@ -326,11 +332,14 @@ export async function PATCH(request, { params }) {
 
 // DELETE /api/appointments/[id] - Delete appointment (optional - for cancellations)
 export async function DELETE(request, { params }) {
-  console.log('🔥 Appointment DELETE API called for ID:', params.id)
+  // ✅ Fix: Await params for Next.js 15+
+  const resolvedParams = await params
+  const { id } = resolvedParams
+  
+  console.log('🔥 Appointment DELETE API called for ID:', id)
   
   try {
     const supabase = await createClient()
-    const { id } = params
 
     // Check if appointment exists and can be deleted
     const { data: appointment, error: fetchError } = await supabase

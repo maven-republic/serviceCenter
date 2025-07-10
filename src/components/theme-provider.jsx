@@ -24,10 +24,22 @@ export function ThemeProvider({
   ...props
 }) {
   const [theme, setTheme] = useState(defaultTheme)
+  const [isInitialized, setIsInitialized] = useState(false)
 
+  // 🔧 CRITICAL FIX: Load saved theme from localStorage on mount
   useEffect(() => {
-    const root = window.document.documentElement
+const savedTheme = localStorage.getItem(storageKey) || defaultTheme
+    if (savedTheme) {
+      setTheme(savedTheme)
+    }
+    setIsInitialized(true)
+  }, [storageKey])
 
+  // Apply theme to DOM
+  useEffect(() => {
+    if (!isInitialized) return
+
+    const root = window.document.documentElement
     root.classList.remove("light", "dark")
 
     if (theme === "system") {
@@ -35,20 +47,23 @@ export function ThemeProvider({
         .matches
         ? "dark"
         : "light"
-
       root.classList.add(systemTheme)
-      return
+    } else {
+      root.classList.add(theme)
     }
-
-    root.classList.add(theme)
-  }, [theme])
+  }, [theme, isInitialized])
 
   const value = {
     theme,
-    setTheme: (theme) => {
-      localStorage.setItem(storageKey, theme)
-      setTheme(theme)
+    setTheme: (newTheme) => {
+      localStorage.setItem(storageKey, newTheme)
+      setTheme(newTheme)
     },
+  }
+
+  // 🚫 Prevent flash of unstyled content
+  if (!isInitialized) {
+    return <div style={{ visibility: 'hidden' }}>{children}</div>
   }
 
   return (

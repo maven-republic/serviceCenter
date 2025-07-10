@@ -101,13 +101,11 @@ export const getBaseChartOptions = () => ({
   plugins: {
     legend: { display: false },
     tooltip: {
-      backgroundColor: '#1f2937',
-      titleColor: '#ffffff',
-      bodyColor: '#ffffff',
-      borderColor: '#374151',
-      borderWidth: 1,
-      cornerRadius: 8,
-      displayColors: false
+backgroundColor: "hsl(var(--muted))",
+      backgroundColor: 'hsl(var(--popover))',
+  titleColor: 'hsl(var(--popover-foreground))',
+  bodyColor: 'hsl(var(--popover-foreground))',
+  borderColor: 'hsl(var(--border))',
     }
   },
   scales: {
@@ -128,11 +126,10 @@ export const getBaseChartOptions = () => ({
   animation: { duration: 800, easing: 'easeOutQuart' }
 });
 
-// Color constants
 export const COLORS = {
-  primary: '#000000',
-  secondary: '#64748b', 
-  background: '#ffffff',
-  muted: '#e5e7eb',
-  preview: '#94a3b8'
-};
+  primary: 'hsl(var(--foreground))',
+  secondary: 'hsl(var(--muted-foreground))', 
+  background: 'hsl(var(--background))',
+  muted: 'hsl(var(--muted))',
+  preview: 'hsl(var(--muted-foreground))'
+}

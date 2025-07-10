@@ -177,13 +177,13 @@ export default function AvailabilityViewer({
   const getDataSourceInfo = () => {
     switch (dataSource) {
       case 'server':
-        return { label: 'Server Data', color: 'bg-green-100 text-green-700', icon: Database }
+        return { label: 'Server Data', color: 'bg-muted text-muted-foreground', icon: Database }
       case 'fallback':
-        return { label: 'Fallback Data', color: 'bg-blue-100 text-blue-700', icon: Database }
+        return { label: 'Fallback Data', color: 'bg-secondary text-secondary-foreground', icon: Database }
       case 'client-fetch':
         return { label: 'Live Data', color: 'bg-purple-100 text-purple-700', icon: RefreshCw }
       case 'no-session':
-        return { label: 'No Session', color: 'bg-amber-100 text-amber-700', icon: User }
+        return { label: 'No Session', color: 'bg-card text-card-foreground', icon: User }
       default:
         return { label: 'Initial', color: 'bg-gray-100 text-gray-700', icon: Database }
     }
@@ -203,7 +203,7 @@ export default function AvailabilityViewer({
   const stats = getStats()
 
   return (
-    <div className="max-w-6xl mx-auto space-y-6">
+    <div className="professional-workspace max-w-7xl mx-auto p-6 space-y-6">
       {/* Header with Data Source Info */}
       <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
         <div className="space-y-2">
@@ -245,7 +245,7 @@ export default function AvailabilityViewer({
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-blue-100 text-blue-600">
+              <div className="p-2 rounded-lg bg-blue-100 text-primary">
                 <Clock className="h-4 w-4" />
               </div>
               <div>
@@ -275,7 +275,7 @@ export default function AvailabilityViewer({
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-green-100 text-green-600">
+              <div className="p-2 rounded-lg bg-green-100 text-primary">
                 <CheckCircle2 className="h-4 w-4" />
               </div>
               <div>

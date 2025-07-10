@@ -1,4 +1,3 @@
-// app/(professional-workspace)/professional/account-information/page.jsx
 import CustomerAccountOverview from "@/components/customer-workspace/section/CustomerAccountOverview";
 
 export const metadata = {

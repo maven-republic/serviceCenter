@@ -1,4 +1,3 @@
-// ============ IncomeInsights.jsx - Tailwind + shadcn/ui Version ============
 import React, { useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import InsightsHeader from './InsightsHeader';
@@ -7,7 +6,6 @@ import ChartTabs from './ChartTabs';
 import InteractiveChart from './InteractiveChart';
 import InsightsCards from './InsightsCards';
 import ChartInstructions from './ChartInstructions';
-import TimelineSelector from './TimelineSelector';
 
 export default function IncomeInsights() {
   const [hideEarnings, setHideEarnings] = useState(false);
@@ -31,13 +29,6 @@ export default function IncomeInsights() {
         
         {/* Today's Income Summary */}
         <TodaysIncome hideEarnings={hideEarnings} />
-        
-        {/* Timeline Selector */}
-        <TimelineSelector
-          activeTimeline={activeTimeline}
-          setActiveTimeline={setActiveTimeline}
-          onDateRangeChange={handleDateRangeChange}
-        />
         
         {/* Chart Navigation Tabs */}
         <ChartTabs 

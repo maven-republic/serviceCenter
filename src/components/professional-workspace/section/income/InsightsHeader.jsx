@@ -1,4 +1,3 @@
-// ============ InsightsHeader.jsx - Tailwind + shadcn/ui Version ============
 import { Button } from '@/components/ui/button'
 import { Eye, EyeOff, TrendingUp } from 'lucide-react'
 
@@ -15,24 +14,24 @@ export default function InsightsHeader({ hideEarnings, setHideEarnings }) {
         </p>
       </div>
       
-     <Button 
-  variant="outline" 
-  size="sm"
-  className="gap-2 shrink-0 hover:!bg-gray-50 hover:!text-gray-900 hover:!border-gray-300"
-  onClick={() => setHideEarnings(!hideEarnings)}
->
-  {hideEarnings ? (
-    <>
-      <Eye className="h-4 w-4" />
-      Show Earnings
-    </>
-  ) : (
-    <>
-      <EyeOff className="h-4 w-4" />
-      Hide Earnings
-    </>
-  )}
-</Button>
+      <Button 
+        variant="outline" 
+        size="sm"
+        className="gap-2 shrink-0"
+        onClick={() => setHideEarnings(!hideEarnings)}
+      >
+        {hideEarnings ? (
+          <>
+            <Eye className="h-4 w-4" />
+            Show Earnings
+          </>
+        ) : (
+          <>
+            <EyeOff className="h-4 w-4" />
+            Hide Earnings
+          </>
+        )}
+      </Button>
     </div>
   );
 }

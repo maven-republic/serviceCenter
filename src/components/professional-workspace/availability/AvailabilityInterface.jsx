@@ -127,7 +127,7 @@ export default function AvailabilityInterface({
   const stats = getStats()
 
   return (
-    <div className="max-w-6xl mx-auto space-y-6">
+<div className="professional-workspace max-w-6xl mx-auto space-y-6">
       {/* Header with View Toggle */}
       <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
         <div className="space-y-2">

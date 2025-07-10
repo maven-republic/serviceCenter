@@ -1,8 +1,21 @@
 // src/components/professional-workspace/modal/AppointmentInformationModal.jsx
 'use client'
 
-import { useState, useEffect, useRef, useCallback } from 'react'
-import { createPortal } from 'react-dom'
+import { useState, useEffect, useCallback } from 'react'
+import { ArrowLeft, User, Calendar, MapPin, MessageSquare, Clock, Phone, Mail, Building2, AlertCircle } from 'lucide-react'
+import { cn } from '@/lib/utils'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { Separator } from '@/components/ui/separator'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
+import { ScrollArea } from '@/components/ui/scroll-area'
 import AppointmentInteractionForm from '@/components/forms/AppointmentInteractionForm'
 
 export default function AppointmentInformationModal({ 
@@ -12,16 +25,8 @@ export default function AppointmentInformationModal({
   onAccept,
   onDecline 
 }) {
-  const modalRef = useRef(null)
   const [currentView, setCurrentView] = useState('details') // 'details', 'accept', 'decline', 'quote'
   const [actionLoading, setActionLoading] = useState(false)
-  const [mounted, setMounted] = useState(false)
-
-  // Fix for Next.js SSR - ensure component is mounted before using createPortal
-  useEffect(() => {
-    setMounted(true)
-    return () => setMounted(false)
-  }, [])
 
   // Reset view when modal opens/closes
   useEffect(() => {
@@ -30,20 +35,6 @@ export default function AppointmentInformationModal({
       setActionLoading(false)
     }
   }, [isOpen])
-
-  // Handle escape key press
-  const handleEscapeKey = useCallback((event) => {
-    if (event.key === 'Escape' && !actionLoading) {
-      handleClose()
-    }
-  }, [actionLoading])
-
-  // Handle click outside modal
-  const handleBackdropClick = useCallback((event) => {
-    if (modalRef.current && !modalRef.current.contains(event.target) && !actionLoading) {
-      handleClose()
-    }
-  }, [actionLoading])
 
   // Handle modal close
   const handleClose = useCallback(() => {
@@ -60,7 +51,6 @@ export default function AppointmentInformationModal({
     try {
       console.log('📝 Submitting appointment response:', formData)
       
-      // Call the API to update appointment
       const response = await fetch(`/api/appointments/${formData.appointment_id}`, {
         method: 'PATCH',
         headers: {
@@ -70,7 +60,6 @@ export default function AppointmentInformationModal({
           status: formData.action === 'accept' ? 'accepted' : 
                  formData.action === 'decline' ? 'declined' : 'quoted',
           
-          // Include all form data
           professional_notes: formData.professional_notes,
           estimated_duration: formData.estimated_duration,
           suggested_start: formData.suggested_start,
@@ -82,7 +71,6 @@ export default function AppointmentInformationModal({
           decline_reason: formData.decline_reason,
           alternative_suggestions: formData.alternative_suggestions,
           
-          // Additional metadata
           response_timestamp: new Date().toISOString(),
           duration_minutes: formData.estimated_duration
         })
@@ -96,18 +84,14 @@ export default function AppointmentInformationModal({
 
       console.log(`✅ Appointment ${formData.action}ed successfully:`, data.appointment)
 
-      // Call the appropriate callback
       if (formData.action === 'accept') {
         onAccept?.()
       } else if (formData.action === 'decline') {
         onDecline?.()
       }
 
-      // Show success message
       // TODO: Replace with toast notification
       alert(`Appointment ${formData.action}ed successfully!`)
-
-      // Close modal
       handleClose()
 
     } catch (error) {
@@ -119,40 +103,7 @@ export default function AppointmentInformationModal({
     }
   }, [onAccept, onDecline, handleClose])
 
-  // Handle quick actions (for simple accept/decline without form)
-  const handleQuickAction = useCallback(async (action) => {
-    setActionLoading(true)
-    
-    try {
-      if (action === 'accept') {
-        await onAccept?.()
-      } else if (action === 'decline') {
-        await onDecline?.()
-      }
-      handleClose()
-    } catch (error) {
-      console.error(`❌ Quick ${action} error:`, error)
-    } finally {
-      setActionLoading(false)
-    }
-  }, [onAccept, onDecline, handleClose])
-
-  // Add event listeners when modal is open
-  useEffect(() => {
-    if (isOpen) {
-      document.addEventListener('keydown', handleEscapeKey)
-      document.addEventListener('mousedown', handleBackdropClick)
-      document.body.style.overflow = 'hidden'
-    }
-
-    return () => {
-      document.removeEventListener('keydown', handleEscapeKey)
-      document.removeEventListener('mousedown', handleBackdropClick)
-      document.body.style.overflow = 'unset'
-    }
-  }, [isOpen, handleEscapeKey, handleBackdropClick])
-
-  // Don't render if not open
+  // Don't render if not open or no appointment
   if (!isOpen || !appointment) return null
 
   // Format date for display
@@ -169,249 +120,314 @@ export default function AppointmentInformationModal({
     })
   }
 
-  // Get status styling
-  const getStatusColor = (status) => {
-    switch (status) {
-      case 'pending': return '#ffc107'
-      case 'quoted': return '#17a2b8'
-      case 'accepted': return '#28a745'
-      case 'converted': return '#20c997'
-      case 'declined': return '#dc3545'
-      default: return '#6c757d'
+  // Professional status configuration
+  const getStatusConfig = (status) => {
+    const configs = {
+      pending: { 
+        variant: 'secondary', 
+        className: 'bg-muted text-muted-foreground',
+        label: 'Pending Review'
+      },
+      quoted: { 
+        variant: 'outline', 
+        className: 'bg-primary/10 text-primary border-primary/20',
+        label: 'Quote Sent'
+      },
+      accepted: { 
+        variant: 'default', 
+        className: 'bg-primary text-primary-foreground',
+        label: 'Accepted'
+      },
+      converted: { 
+        variant: 'default', 
+        className: 'bg-primary text-primary-foreground',
+        label: 'Completed'
+      },
+      declined: { 
+        variant: 'secondary', 
+        className: 'bg-muted text-muted-foreground',
+        label: 'Declined'
+      }
     }
+    return configs[status] || configs.pending
   }
 
-  // Render modal using portal
-  return createPortal(
-    <div className="appointment-modal-overlay">
-      <div className="appointment-modal-backdrop" />
-      <div className="appointment-modal-container">
-        <div 
-          ref={modalRef}
-          className="appointment-modal-content"
-          role="dialog" 
-          aria-modal="true"
-          aria-labelledby="appointment-modal-title"
-        >
-          
-          {/* Modal Header */}
-          <div className="appointment-modal-header">
-            <div className="header-left">
-              <h3 id="appointment-modal-title">
-                {currentView === 'details' ? 'Appointment Details' :
-                 currentView === 'accept' ? 'Accept Appointment' :
-                 currentView === 'decline' ? 'Decline Appointment' :
-                 currentView === 'quote' ? 'Send Quote' : 'Appointment'}
-              </h3>
-              <div className="appointment-status">
-                <span 
-                  className="status-badge"
-                  style={{ backgroundColor: getStatusColor(appointment.status) }}
-                >
-                  {appointment.status.charAt(0).toUpperCase() + appointment.status.slice(1)}
-                </span>
-                <span className="urgency-badge urgency-{appointment.urgency}">
-                  {appointment.urgency === 'standard' ? 'Standard' :
-                   appointment.urgency === 'low' ? 'Flexible' :
-                   appointment.urgency === 'high' ? 'Priority' : 'Urgent'}
-                </span>
+  // Professional urgency configuration
+  const getUrgencyConfig = (urgency) => {
+    const configs = {
+      low: { 
+        className: 'bg-muted text-muted-foreground',
+        label: 'Flexible'
+      },
+      standard: { 
+        className: 'bg-muted text-muted-foreground',
+        label: 'Standard'
+      },
+      high: { 
+        className: 'bg-secondary text-secondary-foreground',
+        label: 'Priority'
+      },
+      urgent: { 
+        className: 'bg-destructive text-destructive-foreground',
+        label: 'Urgent'
+      }
+    }
+    return configs[urgency] || configs.standard
+  }
+
+  const statusConfig = getStatusConfig(appointment.status)
+  const urgencyConfig = getUrgencyConfig(appointment.urgency)
+
+  return (
+    <Dialog open={isOpen} onOpenChange={handleClose}>
+      <DialogContent className="max-w-4xl max-h-[90vh] bg-background border-border p-0 gap-0">
+        
+        {/* Professional Modal Header */}
+        <DialogHeader className="p-6 border-b border-border bg-muted/30">
+          <div className="flex items-start justify-between">
+            <div className="flex-1">
+              <div className="flex items-center gap-3 mb-3">
+                {currentView !== 'details' && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setCurrentView('details')}
+                    disabled={actionLoading}
+                    className="h-8 w-8 p-0"
+                  >
+                    <ArrowLeft className="h-4 w-4" />
+                  </Button>
+                )}
+                
+                <DialogTitle className="text-xl font-semibold text-foreground">
+                  {currentView === 'details' ? 'Appointment Details' :
+                   currentView === 'accept' ? 'Accept Appointment' :
+                   currentView === 'decline' ? 'Decline Appointment' :
+                   currentView === 'quote' ? 'Send Quote' : 'Appointment'}
+                </DialogTitle>
+              </div>
+              
+              <div className="flex items-center gap-2">
+                <Badge className={statusConfig.className}>
+                  {statusConfig.label}
+                </Badge>
+                <Badge className={urgencyConfig.className}>
+                  {urgencyConfig.label}
+                  {appointment.urgency === 'standard' ? ' (3 days)' :
+                   appointment.urgency === 'low' ? ' (1 week)' :
+                   appointment.urgency === 'high' ? ' (24hrs)' : ' (ASAP)'}
+                </Badge>
               </div>
             </div>
-            
-            <div className="header-actions">
-              {currentView !== 'details' && (
-                <button
-                  type="button"
-                  className="btn-back"
-                  onClick={() => setCurrentView('details')}
-                  disabled={actionLoading}
-                  title="Back to details"
-                >
-                  <i className="flaticon-left-arrow"></i>
-                </button>
-              )}
-              
-              <button
-                type="button"
-                className="btn-close"
-                onClick={handleClose}
-                disabled={actionLoading}
-                aria-label="Close modal"
-              >
-                ×
-              </button>
-            </div>
           </div>
+        </DialogHeader>
 
-          {/* Modal Body */}
-          <div className="appointment-modal-body">
-            
-            {/* Details View */}
-            {currentView === 'details' && (
-              <div className="appointment-details">
-                
-                {/* Customer Information */}
-                <div className="detail-section">
-                  <h6 className="section-title">
-                    <i className="flaticon-user"></i>
+        {/* Scrollable Modal Body */}
+        <ScrollArea className="flex-1 max-h-[calc(90vh-200px)]">
+          
+          {/* Details View */}
+          {currentView === 'details' && (
+            <div className="p-6 space-y-6">
+              
+              {/* Customer Information */}
+              <Card className="bg-card border-border">
+                <CardHeader className="pb-3">
+                  <CardTitle className="flex items-center gap-2 text-base text-foreground">
+                    <User className="h-4 w-4" />
                     Customer Information
-                  </h6>
-                  <div className="customer-card">
-                    <div className="customer-avatar">
-                      {appointment.customer?.account?.profile_picture_url ? (
-                        <img 
-                          src={appointment.customer.account.profile_picture_url} 
-                          alt="Customer"
-                        />
-                      ) : (
-                        <div className="avatar-initials">
-                          {appointment.customer?.account?.first_name?.[0]}
-                          {appointment.customer?.account?.last_name?.[0]}
-                        </div>
-                      )}
-                    </div>
-                    <div className="customer-info">
-                      <h5>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex items-center gap-4">
+                    <Avatar className="h-12 w-12 border border-border">
+                      <AvatarImage 
+                        src={appointment.customer?.account?.profile_picture_url} 
+                        alt="Customer"
+                      />
+                      <AvatarFallback className="bg-muted text-muted-foreground">
+                        {appointment.customer?.account?.first_name?.[0]}
+                        {appointment.customer?.account?.last_name?.[0]}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="flex-1">
+                      <h5 className="font-semibold text-foreground">
                         {appointment.customer?.account?.first_name} {appointment.customer?.account?.last_name}
                       </h5>
-                      <div className="contact-info">
-                        <div className="contact-item">
-                          <i className="flaticon-email"></i>
+                      <div className="space-y-1 mt-2">
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                          <Mail className="h-3 w-3" />
                           <span>{appointment.customer?.account?.email}</span>
                         </div>
                         {appointment.customer?.phone?.phone_number && (
-                          <div className="contact-item">
-                            <i className="flaticon-phone"></i>
+                          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                            <Phone className="h-3 w-3" />
                             <span>{appointment.customer.phone.phone_number}</span>
                           </div>
                         )}
                       </div>
                     </div>
                   </div>
-                </div>
+                </CardContent>
+              </Card>
 
-                {/* Service Information */}
-                <div className="detail-section">
-                  <h6 className="section-title">
-                    <i className="flaticon-tools"></i>
+              {/* Service Information */}
+              <Card className="bg-card border-border">
+                <CardHeader className="pb-3">
+                  <CardTitle className="flex items-center gap-2 text-base text-foreground">
+                    <Building2 className="h-4 w-4" />
                     Service Details
-                  </h6>
-                  <div className="service-info">
-                    <h5>{appointment.service?.name || appointment.title}</h5>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div>
+                    <h5 className="font-semibold text-foreground mb-2">
+                      {appointment.service?.name || appointment.title}
+                    </h5>
                     {appointment.description && (
-                      <div className="service-description">
-                        <strong>Project Description:</strong>
-                        <p>{appointment.description}</p>
+                      <div className="space-y-2">
+                        <p className="text-sm font-medium text-muted-foreground">Project Description:</p>
+                        <div className="p-3 bg-muted rounded-md border-l-4 border-primary">
+                          <p className="text-sm text-foreground">{appointment.description}</p>
+                        </div>
                       </div>
                     )}
                     {appointment.service?.base_price && (
-                      <div className="price-info">
-                        <strong>Base Price:</strong> JMD ${appointment.service.base_price}
+                      <div className="mt-3 text-sm">
+                        <span className="font-medium text-foreground">Base Price:</span>
+                        <span className="ml-2 text-primary font-semibold">
+                          JMD ${appointment.service.base_price}
+                        </span>
                         {appointment.service.duration_minutes && (
-                          <span> • {appointment.service.duration_minutes} minutes</span>
+                          <span className="ml-2 text-muted-foreground">
+                            • {appointment.service.duration_minutes} minutes
+                          </span>
                         )}
                       </div>
                     )}
                   </div>
-                </div>
+                </CardContent>
+              </Card>
 
-                {/* Schedule Information */}
-                <div className="detail-section">
-                  <h6 className="section-title">
-                    <i className="flaticon-calendar"></i>
+              {/* Schedule Information */}
+              <Card className="bg-card border-border">
+                <CardHeader className="pb-3">
+                  <CardTitle className="flex items-center gap-2 text-base text-foreground">
+                    <Calendar className="h-4 w-4" />
                     Scheduling
-                  </h6>
-                  <div className="schedule-info">
-                    <div className="schedule-item">
-                      <strong>Preferred Start:</strong>
-                      <span>{formatDateTime(appointment.preferred_start)}</span>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <div className="grid grid-cols-1 gap-3">
+                    <div className="flex items-center justify-between py-2 border-b border-border">
+                      <span className="font-medium text-muted-foreground">Preferred Start:</span>
+                      <span className="text-foreground">{formatDateTime(appointment.preferred_start)}</span>
                     </div>
                     {appointment.preferred_end && (
-                      <div className="schedule-item">
-                        <strong>Preferred End:</strong>
-                        <span>{formatDateTime(appointment.preferred_end)}</span>
+                      <div className="flex items-center justify-between py-2 border-b border-border">
+                        <span className="font-medium text-muted-foreground">Preferred End:</span>
+                        <span className="text-foreground">{formatDateTime(appointment.preferred_end)}</span>
                       </div>
                     )}
                     {appointment.deadline && (
-                      <div className="schedule-item deadline">
-                        <strong>Project Deadline:</strong>
-                        <span>{formatDateTime(appointment.deadline)}</span>
+                      <div className="flex items-center justify-between py-2 border-b border-border">
+                        <span className="font-medium text-muted-foreground">Project Deadline:</span>
+                        <span className="text-destructive font-medium">{formatDateTime(appointment.deadline)}</span>
                       </div>
                     )}
+                    <div className="flex items-center justify-between py-2">
+                      <span className="font-medium text-muted-foreground">Urgency Level:</span>
+                      <Badge className={urgencyConfig.className}>
+                        {urgencyConfig.label}
+                      </Badge>
+                    </div>
                   </div>
-                </div>
+                </CardContent>
+              </Card>
 
-                {/* Location Information */}
-                {appointment.address && (
-                  <div className="detail-section">
-                    <h6 className="section-title">
-                      <i className="flaticon-location"></i>
+              {/* Location Information */}
+              {appointment.address && (
+                <Card className="bg-card border-border">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="flex items-center gap-2 text-base text-foreground">
+                      <MapPin className="h-4 w-4" />
                       Service Location
-                    </h6>
-                    <div className="location-info">
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-2 text-sm">
                       {appointment.address.street_address && (
-                        <div>{appointment.address.street_address}</div>
+                        <div className="text-foreground">{appointment.address.street_address}</div>
                       )}
-                      <div>{appointment.address.city}, {appointment.address.parish}</div>
+                      <div className="text-foreground">
+                        {appointment.address.city}, {appointment.address.parish}
+                      </div>
                       {appointment.address.community && (
-                        <div className="community">{appointment.address.community}</div>
+                        <div className="text-muted-foreground italic">{appointment.address.community}</div>
                       )}
                       {appointment.address.landmark && (
-                        <div className="landmark">Near {appointment.address.landmark}</div>
+                        <div className="text-primary font-medium">Near {appointment.address.landmark}</div>
                       )}
                       {appointment.address.is_rural && (
-                        <div className="rural-indicator">
-                          <i className="flaticon-info"></i>
-                          Rural location
+                        <div className="flex items-center gap-2 mt-2 p-2 bg-secondary/50 border border-secondary rounded-md">
+                          <AlertCircle className="h-4 w-4 text-secondary-foreground" />
+                          <span className="text-secondary-foreground text-sm">Rural location</span>
                         </div>
                       )}
                     </div>
-                  </div>
-                )}
+                  </CardContent>
+                </Card>
+              )}
 
-                {/* Customer Message */}
-                {appointment.customer_message && (
-                  <div className="detail-section">
-                    <h6 className="section-title">
-                      <i className="flaticon-chat"></i>
+              {/* Customer Message */}
+              {appointment.customer_message && (
+                <Card className="bg-card border-border">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="flex items-center gap-2 text-base text-foreground">
+                      <MessageSquare className="h-4 w-4" />
                       Customer Notes
-                    </h6>
-                    <div className="customer-message">
-                      <p>"{appointment.customer_message}"</p>
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="p-4 bg-primary/5 border border-primary/20 rounded-md border-l-4 border-l-primary">
+                      <p className="text-sm text-foreground italic">"{appointment.customer_message}"</p>
                     </div>
-                  </div>
-                )}
+                  </CardContent>
+                </Card>
+              )}
 
-                {/* Request Information */}
-                <div className="detail-section">
-                  <h6 className="section-title">
-                    <i className="flaticon-time"></i>
+              {/* Request Information */}
+              <Card className="bg-card border-border">
+                <CardHeader className="pb-3">
+                  <CardTitle className="flex items-center gap-2 text-base text-foreground">
+                    <Clock className="h-4 w-4" />
                     Request Information
-                  </h6>
-                  <div className="request-info">
-                    <div className="info-item">
-                      <strong>Requested:</strong>
-                      <span>{formatDateTime(appointment.created_at)}</span>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <div className="grid grid-cols-1 gap-3">
+                    <div className="flex items-center justify-between py-2 border-b border-border">
+                      <span className="font-medium text-muted-foreground">Requested:</span>
+                      <span className="text-foreground">{formatDateTime(appointment.created_at)}</span>
                     </div>
-                    <div className="info-item">
-                      <strong>Last Updated:</strong>
-                      <span>{formatDateTime(appointment.updated_at)}</span>
+                    <div className="flex items-center justify-between py-2 border-b border-border">
+                      <span className="font-medium text-muted-foreground">Last Updated:</span>
+                      <span className="text-foreground">{formatDateTime(appointment.updated_at)}</span>
                     </div>
-                    <div className="info-item">
-                      <strong>Urgency Level:</strong>
-                      <span className={`urgency-${appointment.urgency}`}>
-                        {appointment.urgency === 'standard' ? 'Standard (3 days)' :
-                         appointment.urgency === 'low' ? 'Flexible (1 week)' :
-                         appointment.urgency === 'high' ? 'Priority (24hrs)' : 'Urgent (ASAP)'}
+                    <div className="flex items-center justify-between py-2">
+                      <span className="font-medium text-muted-foreground">Appointment ID:</span>
+                      <span className="text-foreground font-mono text-sm">
+                        {appointment.appointment_id.split('-')[0]}...
                       </span>
                     </div>
                   </div>
-                </div>
-              </div>
-            )}
+                </CardContent>
+              </Card>
+            </div>
+          )}
 
-            {/* Form Views */}
-            {(currentView === 'accept' || currentView === 'decline' || currentView === 'quote') && (
+          {/* Form Views */}
+          {(currentView === 'accept' || currentView === 'decline' || currentView === 'quote') && (
+            <div className="p-6">
               <AppointmentInteractionForm
                 appointment={appointment}
                 action={currentView}
@@ -419,976 +435,84 @@ export default function AppointmentInformationModal({
                 onCancel={() => setCurrentView('details')}
                 loading={actionLoading}
               />
-            )}
-          </div>
-
-          {/* Modal Footer (only show for details view) */}
-          {currentView === 'details' && (
-            <div className="appointment-modal-footer">
-              <div className="footer-left">
-                <div className="appointment-id">
-                  ID: {appointment.appointment_id.split('-')[0]}...
-                </div>
-              </div>
-              
-              <div className="footer-actions">
-                {appointment.status === 'pending' && (
-                  <>
-                    <button
-                      className="btn btn-outline-info"
-                      onClick={() => setCurrentView('quote')}
-                      disabled={actionLoading}
-                    >
-                      <i className="flaticon-price-tag"></i>
-                      Send Quote
-                    </button>
-                    
-                    <button
-                      className="btn btn-outline-danger"
-                      onClick={() => setCurrentView('decline')}
-                      disabled={actionLoading}
-                    >
-                      <i className="flaticon-close"></i>
-                      Decline
-                    </button>
-                    
-                    <button
-                      className="btn btn-success"
-                      onClick={() => setCurrentView('accept')}
-                      disabled={actionLoading}
-                    >
-                      <i className="flaticon-check"></i>
-                      Accept
-                    </button>
-                  </>
-                )}
-                
-                {appointment.status === 'quoted' && (
-                  <>
-                    <button
-                      className="btn btn-outline-danger"
-                      onClick={() => setCurrentView('decline')}
-                      disabled={actionLoading}
-                    >
-                      <i className="flaticon-close"></i>
-                      Decline
-                    </button>
-                    
-                    <button
-                      className="btn btn-success"
-                      onClick={() => setCurrentView('accept')}
-                      disabled={actionLoading}
-                    >
-                      <i className="flaticon-check"></i>
-                      Accept Quote
-                    </button>
-                  </>
-                )}
-                
-                {['accepted', 'converted', 'declined'].includes(appointment.status) && (
-                  <div className="status-message">
-                    <i className={`flaticon-${appointment.status === 'declined' ? 'close' : 'check'}`}></i>
-                    This appointment has been {appointment.status}
-                  </div>
-                )}
-              </div>
             </div>
           )}
-        </div>
-      </div>
-
-      <style jsx>{`
-        .appointment-modal-overlay {
-          position: fixed;
-          top: 0;
-          left: 0;
-          right: 0;
-          bottom: 0;
-          z-index: 1050;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          padding: 1rem;
-        }
-
-        .appointment-modal-backdrop {
-          position: absolute;
-          top: 0;
-          left: 0;
-          right: 0;
-          bottom: 0;
-          background: linear-gradient(135deg, rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.6));
-          backdrop-filter: blur(3px);
-        }
-
-        .appointment-modal-container {
-          position: relative;
-          width: 100%;
-          max-width: 900px;
-          max-height: 90vh;
-          z-index: 1051;
-        }
-
-        .appointment-modal-content {
-          background: white;
-          border-radius: 16px;
-          box-shadow: 0 25px 50px rgba(0, 0, 0, 0.25);
-          overflow: hidden;
-          height: 100%;
-          display: flex;
-          flex-direction: column;
-          max-height: 90vh;
-        }
-
-        /* Modal Header */
-        .appointment-modal-header {
-          display: flex;
-          justify-content: space-between;
-          align-items: flex-start;
-          padding: 1.5rem;
-          background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-          border-bottom: 1px solid #dee2e6;
-          flex-shrink: 0;
-        }
-
-        .header-left h3 {
-          margin: 0 0 0.5rem 0;
-          font-size: 1.4rem;
-          font-weight: 600;
-          color: #333;
-        }
-
-        .appointment-status {
-          display: flex;
-          gap: 0.5rem;
-          align-items: center;
-        }
-
-        .status-badge {
-          padding: 0.25rem 0.75rem;
-          border-radius: 20px;
-          color: white;
-          font-size: 0.8rem;
-          font-weight: 600;
-          text-transform: uppercase;
-          letter-spacing: 0.5px;
-        }
-
-        .urgency-badge {
-          padding: 0.2rem 0.6rem;
-          border-radius: 15px;
-          font-size: 0.75rem;
-          font-weight: 500;
-          background: #f0f0f0;
-          color: #666;
-        }
-
-        .header-actions {
-          display: flex;
-          gap: 0.5rem;
-          align-items: center;
-        }
-
-        .btn-back {
-          background: #6c757d;
-          color: white;
-          border: none;
-          border-radius: 50%;
-          width: 40px;
-          height: 40px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          cursor: pointer;
-          transition: all 0.2s ease;
-        }
-
-        .btn-back:hover:not(:disabled) {
-          background: #5c636a;
-          transform: scale(1.1);
-        }
-
-        .btn-close {
-          background: none;
-          border: none;
-          font-size: 2rem;
-          color: #6c757d;
-          cursor: pointer;
-          padding: 0.25rem;
-          border-radius: 8px;
-          transition: all 0.2s ease;
-          width: 40px;
-          height: 40px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          line-height: 1;
-        }
-
-        .btn-close:hover:not(:disabled) {
-          background: rgba(0, 0, 0, 0.1);
-          color: #000;
-          transform: scale(1.1);
-        }
-
-        /* Modal Body */
-        .appointment-modal-body {
-          flex: 1;
-          overflow-y: auto;
-          padding: 0;
-        }
-
-        .appointment-details {
-          padding: 1.5rem;
-        }
-
-        .detail-section {
-          margin-bottom: 2rem;
-          padding-bottom: 1.5rem;
-          border-bottom: 1px solid #f1f3f4;
-        }
-
-        .detail-section:last-child {
-          border-bottom: none;
-          margin-bottom: 0;
-        }
-
-        .section-title {
-          display: flex;
-          align-items: center;
-          gap: 0.5rem;
-          margin-bottom: 1rem;
-          font-size: 1rem;
-          font-weight: 600;
-          color: #495057;
-        }
-
-        .section-title i {
-          color: #6c757d;
-          font-size: 1.1rem;
-        }
-
-        /* Customer Card */
-        .customer-card {
-          display: flex;
-          gap: 1rem;
-          align-items: center;
-          padding: 1rem;
-          background: #f8f9fa;
-          border-radius: 12px;
-        }
-
-        .customer-avatar {
-          width: 60px;
-          height: 60px;
-          border-radius: 50%;
-          overflow: hidden;
-          flex-shrink: 0;
-        }
-
-        .customer-avatar img {
-          width: 100%;
-          height: 100%;
-          object-fit: cover;
-        }
-
-        .avatar-initials {
-          width: 100%;
-          height: 100%;
-          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-          color: white;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          font-weight: 600;
-          font-size: 1.5rem;
-        }
-
-        .customer-info h5 {
-          margin: 0 0 0.5rem 0;
-          font-size: 1.2rem;
-          font-weight: 600;
-          color: #333;
-        }
-
-        .contact-info {
-          display: flex;
-          flex-direction: column;
-          gap: 0.25rem;
-        }
-
-        .contact-item {
-          display: flex;
-          align-items: center;
-          gap: 0.5rem;
-          font-size: 0.9rem;
-          color: #666;
-        }
-
-        .contact-item i {
-          color: #0d6efd;
-          font-size: 0.8rem;
-        }
-
-        /* Service Info */
-        .service-info h5 {
-          margin: 0 0 1rem 0;
-          font-size: 1.2rem;
-          font-weight: 600;
-          color: #333;
-        }
-
-        .service-description {
-          margin-bottom: 1rem;
-        }
-
-        .service-description strong {
-          display: block;
-          margin-bottom: 0.5rem;
-          color: #495057;
-        }
-
-        .service-description p {
-          margin: 0;
-          padding: 0.75rem;
-          background: #f8f9fa;
-          border-radius: 8px;
-          border-left: 3px solid #0d6efd;
-          color: #555;
-          line-height: 1.5;
-        }
-
-        .price-info {
-          color: #198754;
-          font-weight: 500;
-        }
-
-        /* Schedule Info */
-        .schedule-info,
-        .request-info {
-          display: flex;
-          flex-direction: column;
-          gap: 0.75rem;
-        }
-
-        .schedule-item,
-        .info-item {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          padding: 0.5rem 0;
-          border-bottom: 1px solid #f1f3f4;
-        }
-
-        .schedule-item:last-child,
-        .info-item:last-child {
-          border-bottom: none;
-        }
-
-        .schedule-item strong,
-        .info-item strong {
-          color: #495057;
-          font-weight: 600;
-        }
-
-        .schedule-item.deadline {
-          color: #dc3545;
-        }
-
-        .urgency-low { color: #0066cc; }
-        .urgency-standard { color: #666; }
-        .urgency-high { color: #cc6600; }
-        .urgency-urgent { color: #cc0000; }
-
-        /* Location Info */
-        .location-info {
-          padding: 1rem;
-          background: #f8f9fa;
-          border-radius: 8px;
-          font-size: 0.9rem;
-          color: #666;
-        }
-
-        .location-info > div {
-          margin-bottom: 0.25rem;
-        }
-
-        .location-info > div:last-child {
-          margin-bottom: 0;
-        }
-
-        .community {
-          font-style: italic;
-          color: #888;
-        }
-
-        .landmark {
-          color: #0d6efd;
-          font-weight: 500;
-        }
-
-        .rural-indicator {
-          display: flex;
-          align-items: center;
-          gap: 0.5rem;
-          color: #856404;
-          background: #fff3cd;
-          padding: 0.5rem;
-          border-radius: 6px;
-          margin-top: 0.5rem;
-        }
-
-        /* Customer Message */
-        .customer-message p {
-          margin: 0;
-          padding: 1rem;
-          background: #e3f2fd;
-          border-radius: 8px;
-          border-left: 3px solid #2196f3;
-          font-style: italic;
-          color: #555;
-          line-height: 1.5;
-        }
-
-        /* Modal Footer */
-        .appointment-modal-footer {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          padding: 1rem 1.5rem;
-          background: #f8f9fa;
-          border-top: 1px solid #e9ecef;
-          flex-shrink: 0;
-        }
-
-        .appointment-id {
-          font-size: 0.85rem;
-          color: #666;
-          font-family: monospace;
-        }
-
-        .footer-actions {
-          display: flex;
-          gap: 0.75rem;
-          align-items: center;
-        }
-
-        .status-message {
-          display: flex;
-          align-items: center;
-          gap: 0.5rem;
-          color: #666;
-          font-style: italic;
-        }
-
-        /* Buttons */
-        .btn {
-          padding: 0.6rem 1.2rem;
-          border: none;
-          border-radius: 8px;
-          font-weight: 600;
-          font-size: 0.9rem;
-          cursor: pointer;
-          transition: all 0.2s ease;
-          display: inline-flex;
-          align-items: center;
-          gap: 0.5rem;
-          text-decoration: none;
-        }
-
-        .btn:disabled {
-          opacity: 0.6;
-          cursor: not-allowed;
-          transform: none;
-        }
-
-        .btn:hover:not(:disabled) {
-          transform: translateY(-1px);
-        }
-
-        .btn-success {
-          background: #198754;
-          color: white;
-        }
-
-        .btn-success:hover:not(:disabled) {
-          background: #157347;
-        }
-
-        .btn-outline-danger {
-          background: transparent;
-          color: #dc3545;
-          border: 2px solid #dc3545;
-        }
-
-        .btn-outline-danger:hover:not(:disabled) {
-          background: #dc3545;
-          color: white;
-        }
-
-        .btn-outline-info {
-          background: transparent;
-          color: #0dcaf0;
-          border: 2px solid #0dcaf0;
-        }
-
-        .btn-outline-info:hover:not(:disabled) {
-          background: #0dcaf0;
-          color: white;
-        }
-
-        /* Mobile Responsive */
-        @media (max-width: 768px) {
-          .appointment-modal-container {
-            max-width: 95vw;
-            max-height: 95vh;
-          }
-
-          .appointment-modal-header {
-            padding: 1rem;
-          }
-
-          .header-left h3 {
-            font-size: 1.2rem;
-          }
-
-          .appointment-details {
-            padding: 1rem;
-          }
-
-          .customer-card {
-            flex-direction: column;
-            text-align: center;
-          }
-
-          .schedule-item,
-          .info-item {
-            flex-direction: column;
-            align-items: flex-start;
-            gap: 0.25rem;
-          }
-
-          .appointment-modal-footer {
-            flex-direction: column;
-            gap: 1rem;
-            padding: 1rem;
-          }
-
-          .footer-actions {
-            width: 100%;
-            justify-content: center;
-            flex-wrap: wrap;
-          }
-
-          .btn {
-            flex: 1;
-            min-width: 120px;
-            justify-content: center;
-          }
-        }
-
-        @media (max-width: 576px) {
-          .appointment-modal-container {
-            padding: 0.5rem;
-          }
-
-          .footer-actions {
-            flex-direction: column;
-            width: 100%;
-          }
-
-          .btn {
-            width: 100%;
-            min-width: auto;
-          }
-        }
-
-        /* Custom Scrollbar */
-        .appointment-modal-body::-webkit-scrollbar {
-          width: 6px;
-        }
-
-        .appointment-modal-body::-webkit-scrollbar-track {
-          background: #f1f1f1;
-          border-radius: 3px;
-        }
-
-        .appointment-modal-body::-webkit-scrollbar-thumb {
-          background: #c1c1c1;
-          border-radius: 3px;
-        }
-
-        .appointment-modal-body::-webkit-scrollbar-thumb:hover {
-          background: #a8a8a8;
-        }
-
-        /* Loading States */
-        .btn:disabled {
-          position: relative;
-        }
-
-        .btn:disabled::after {
-          content: '';
-          position: absolute;
-          top: 50%;
-          left: 50%;
-          width: 16px;
-          height: 16px;
-          margin: -8px 0 0 -8px;
-          border: 2px solid transparent;
-          border-top: 2px solid currentColor;
-          border-radius: 50%;
-          animation: spin 1s linear infinite;
-        }
-
-        @keyframes spin {
-          0% { transform: rotate(0deg); }
-          100% { transform: rotate(360deg); }
-        }
-
-        /* Accessibility */
-        @media (prefers-reduced-motion: reduce) {
-          .btn:hover:not(:disabled) {
-            transform: none;
-          }
-          
-          .btn-back:hover:not(:disabled),
-          .btn-close:hover:not(:disabled) {
-            transform: none;
-          }
-          
-          @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(0deg); }
-          }
-        }
-
-        /* Focus States */
-        .btn:focus,
-        .btn-back:focus,
-        .btn-close:focus {
-          outline: 2px solid #0d6efd;
-          outline-offset: 2px;
-        }
-
-        /* High Contrast Mode Support */
-        @media (prefers-contrast: high) {
-          .appointment-modal-content {
-            border: 2px solid;
-          }
-          
-          .status-badge,
-          .urgency-badge {
-            border: 1px solid;
-          }
-        }
-
-        /* Fix urgency badge template literal */
-        .urgency-badge.urgency-low {
-          background: #e7f3ff;
-          color: #0066cc;
-        }
-
-        .urgency-badge.urgency-standard {
-          background: #f0f0f0;
-          color: #666;
-        }
-
-        .urgency-badge.urgency-high {
-          background: #fff2e6;
-          color: #cc6600;
-        }
-
-        .urgency-badge.urgency-urgent {
-          background: #ffe6e6;
-          color: #cc0000;
-        }
-
-        /* Animation for modal entrance */
-        .appointment-modal-overlay {
-          animation: fadeIn 0.3s ease-out;
-        }
-
-        .appointment-modal-content {
-          animation: slideUp 0.3s ease-out;
-        }
-
-        @keyframes fadeIn {
-          from {
-            opacity: 0;
-          }
-          to {
-            opacity: 1;
-          }
-        }
-
-        @keyframes slideUp {
-          from {
-            opacity: 0;
-            transform: translateY(20px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-
-        /* Status badge animations */
-        .status-badge {
-          animation: pulse 2s infinite;
-        }
-
-        @keyframes pulse {
-          0% {
-            box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.4);
-          }
-          70% {
-            box-shadow: 0 0 0 8px rgba(255, 255, 255, 0);
-          }
-          100% {
-            box-shadow: 0 0 0 0 rgba(255, 255, 255, 0);
-          }
-        }
-
-        /* Smooth transitions for all interactive elements */
-        .customer-card,
-        .detail-section,
-        .service-description p,
-        .location-info,
-        .customer-message p {
-          transition: all 0.2s ease;
-        }
-
-        .customer-card:hover {
-          background: #f1f3f4;
-        }
-
-        /* Enhanced button states */
-        .btn {
-          position: relative;
-          overflow: hidden;
-        }
-
-        .btn::before {
-          content: '';
-          position: absolute;
-          top: 50%;
-          left: 50%;
-          width: 0;
-          height: 0;
-          border-radius: 50%;
-          background: rgba(255, 255, 255, 0.2);
-          transition: width 0.6s, height 0.6s, top 0.6s, left 0.6s;
-          transform: translate(-50%, -50%);
-        }
-
-        .btn:hover::before {
-          width: 300px;
-          height: 300px;
-          top: 50%;
-          left: 50%;
-        }
-
-        /* Print styles */
-        @media print {
-          .appointment-modal-overlay {
-            position: static;
-            background: none;
-            backdrop-filter: none;
-          }
-
-          .appointment-modal-backdrop {
-            display: none;
-          }
-
-          .appointment-modal-container {
-            max-width: 100%;
-            max-height: none;
-          }
-
-          .appointment-modal-content {
-            box-shadow: none;
-            border: 1px solid #000;
-          }
-
-          .header-actions,
-          .appointment-modal-footer {
-            display: none;
-          }
-
-          .appointment-modal-body {
-            overflow: visible;
-          }
-        }
-
-        /* Dark mode support (if implemented in the future) */
-        @media (prefers-color-scheme: dark) {
-          .appointment-modal-content {
-            background: #1a1a1a;
-            color: #ffffff;
-          }
-
-          .appointment-modal-header {
-            background: linear-gradient(135deg, #2d2d2d 0%, #1a1a1a 100%);
-            border-bottom-color: #404040;
-          }
-
-          .customer-card,
-          .location-info {
-            background: #2d2d2d;
-          }
-
-          .service-description p,
-          .customer-message p {
-            background: #2d2d2d;
-            color: #e0e0e0;
-          }
-
-          .detail-section {
-            border-bottom-color: #404040;
-          }
-
-          .appointment-modal-footer {
-            background: #2d2d2d;
-            border-top-color: #404040;
-          }
-        }
-
-        /* RTL Support */
-        [dir="rtl"] .appointment-modal-header {
-          flex-direction: row-reverse;
-        }
-
-        [dir="rtl"] .header-actions {
-          flex-direction: row-reverse;
-        }
-
-        [dir="rtl"] .customer-card {
-          flex-direction: row-reverse;
-        }
-
-        [dir="rtl"] .contact-item {
-          flex-direction: row-reverse;
-        }
-
-        [dir="rtl"] .service-description p {
-          border-left: none;
-          border-right: 3px solid #0d6efd;
-        }
-
-        [dir="rtl"] .customer-message p {
-          border-left: none;
-          border-right: 3px solid #2196f3;
-        }
-
-        /* Error states */
-        .error-state {
-          color: #dc3545;
-          background: #f8d7da;
-          border: 1px solid #f5c6cb;
-          border-radius: 8px;
-          padding: 1rem;
-          margin: 1rem 0;
-        }
-
-        .error-state i {
-          margin-right: 0.5rem;
-        }
-
-        /* Success states */
-        .success-state {
-          color: #155724;
-          background: #d4edda;
-          border: 1px solid #c3e6cb;
-          border-radius: 8px;
-          padding: 1rem;
-          margin: 1rem 0;
-        }
-
-        .success-state i {
-          margin-right: 0.5rem;
-        }:-webkit-scrollbar {
-          width: 6px;
-        }
-
-        .appointment-modal-body::-webkit-scrollbar-track {
-          background: #f1f1f1;
-          border-radius: 3px;
-        }
-
-        .appointment-modal-body::-webkit-scrollbar-thumb {
-          background: #c1c1c1;
-          border-radius: 3px;
-        }
-
-        .appointment-modal-body::-webkit-scrollbar-thumb:hover {
-          background: #a8a8a8;
-        }
-
-        /* Loading States */
-        .btn:disabled {
-          position: relative;
-        }
-
-        .btn:disabled::after {
-          content: '';
-          position: absolute;
-          top: 50%;
-          left: 50%;
-          width: 16px;
-          height: 16px;
-          margin: -8px 0 0 -8px;
-          border: 2px solid transparent;
-          border-top: 2px solid currentColor;
-          border-radius: 50%;
-          animation: spin 1s linear infinite;
-        }
-
-        @keyframes spin {
-          0% { transform: rotate(0deg); }
-          100% { transform: rotate(360deg); }
-        }
-
-        /* Accessibility */
-        @media (prefers-reduced-motion: reduce) {
-          .btn:hover:not(:disabled) {
-            transform: none;
-          }
-          
-          .btn-back:hover:not(:disabled),
-          .btn-close:hover:not(:disabled) {
-            transform: none;
-          }
-          
-          @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(0deg); }
-          }
-        }
-
-        /* Focus States */
-        .btn:focus,
-        .btn-back:focus,
-        .btn-close:focus {
-          outline: 2px solid #0d6efd;
-          outline-offset: 2px;
-        }
-
-        /* High Contrast Mode Support */
-        @media (prefers-contrast: high) {
-          .appointment-modal-content {
-            border: 2px solid;
-          }
-          
-          .status-badge,
-          .urgency-badge {
-            border: 1px solid;
-          }
-        }
-
-              `}</style>
-
-
-      </div>
+        </ScrollArea>
+
+        {/* Professional Modal Footer */}
+        {currentView === 'details' && (
+          <div className="flex items-center justify-between p-6 border-t border-border bg-muted/30">
+            <div className="text-sm text-muted-foreground font-mono">
+              ID: {appointment.appointment_id.split('-')[0]}...
+            </div>
+            
+            <div className="flex items-center gap-3">
+              {appointment.status === 'pending' && (
+                <>
+                  <Button
+                    variant="outline"
+                    onClick={() => setCurrentView('quote')}
+                    disabled={actionLoading}
+                    className="flex items-center gap-2 bg-background hover:bg-muted border-border"
+                  >
+                    <Building2 className="h-4 w-4" />
+                    Send Quote
+                  </Button>
+                  
+                  <Button
+                    variant="outline"
+                    onClick={() => setCurrentView('decline')}
+                    disabled={actionLoading}
+                    className="flex items-center gap-2 border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground"
+                  >
+                    <AlertCircle className="h-4 w-4" />
+                    Decline
+                  </Button>
+                  
+                  <Button
+                    onClick={() => setCurrentView('accept')}
+                    disabled={actionLoading}
+                    className="flex items-center gap-2 bg-primary text-primary-foreground hover:bg-primary/90"
+                  >
+                    <Calendar className="h-4 w-4" />
+                    Accept
+                  </Button>
+                </>
+              )}
+              
+              {appointment.status === 'quoted' && (
+                <>
+                  <Button
+                    variant="outline"
+                    onClick={() => setCurrentView('decline')}
+                    disabled={actionLoading}
+                    className="flex items-center gap-2 border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground"
+                  >
+                    <AlertCircle className="h-4 w-4" />
+                    Decline
+                  </Button>
+                  
+                  <Button
+                    onClick={() => setCurrentView('accept')}
+                    disabled={actionLoading}
+                    className="flex items-center gap-2 bg-primary text-primary-foreground hover:bg-primary/90"
+                  >
+                    <Calendar className="h-4 w-4" />
+                    Accept Quote
+                  </Button>
+                </>
+              )}
+              
+              {['accepted', 'converted', 'declined'].includes(appointment.status) && (
+                <div className="flex items-center gap-2 text-muted-foreground italic">
+                  <Calendar className="h-4 w-4" />
+                  This appointment has been {appointment.status}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+      </DialogContent>
+    </Dialog>
   )
 }

@@ -153,7 +153,7 @@ export default function DayChart({ hideEarnings, activeTimeline, dateRange, show
       {/* Steps Indicator */}
       <div className="flex items-center gap-4 flex-wrap justify-center">
         <div className="flex items-center gap-2">
-          <Badge variant="default" className="bg-green-500 hover:bg-green-500 gap-1">
+          <Badge variant="default" className="bg-primary hover:bg-primary gap-1">
             <CheckCircle className="h-3 w-3" />
             <span className="text-xs">Profile setup</span>
           </Badge>
@@ -232,13 +232,13 @@ export default function DayChart({ hideEarnings, activeTimeline, dateRange, show
           <div className="flex items-center gap-2">
             <CardTitle className="text-base">Daily Earnings</CardTitle>
             {showPreview && (
-              <Badge variant="secondary" className="bg-yellow-100 text-yellow-800 gap-1 text-xs">
+              <Badge variant="secondary" className="bg-secondary text-secondary-foreground gap-1 text-xs">
                 <Eye className="h-3 w-3" />
                 Preview Mode
               </Badge>
             )}
             {!hasBookings && (
-              <Badge variant="default" className="bg-blue-500 hover:bg-blue-500 gap-1 text-xs">
+              <Badge variant="default" className="bg-primary hover:bg-primary gap-1 text-xs">
                 <Beaker className="h-3 w-3" />
                 Beta
               </Badge>

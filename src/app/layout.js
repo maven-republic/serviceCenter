@@ -23,8 +23,8 @@ export default async function InterfaceFoundation({ children }) {
   } = await supabase.auth.getSession()
 
   return (
-    <html lang="en" suppressHydrationWarning> {/* ✅ REMOVED: className="dark" */}
-      <body className={`${dmSans.className}`}>
+    <html lang="en" className="dark" suppressHydrationWarning={true}>
+      <body className={`${dmSans.className} min-h-screen`}>
         <ClientProviders initialSession={session}>
           {children}
         </ClientProviders>

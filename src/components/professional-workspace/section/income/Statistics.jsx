@@ -22,7 +22,7 @@ export default function Statistics() {
       changeType: "positive",
       subtitle: hasBookings ? "This Month" : "Your first booking",
       icon: DollarSign,
-      iconColor: "text-green-600",
+      iconColor: "text-primary",
       iconBg: "bg-green-100",
     },
     {
@@ -32,7 +32,7 @@ export default function Statistics() {
       changeType: "positive",
       subtitle: hasBookings ? "vs Last Month" : "Initial transactions",
       icon: TrendingUp,
-      iconColor: "text-blue-600",
+      iconColor: "text-primary",
       iconBg: "bg-blue-100",
     },
     {
@@ -42,7 +42,7 @@ export default function Statistics() {
       changeType: "positive", 
       subtitle: hasBookings ? "Increase" : "After 3+ orders",
       icon: BarChart3,
-      iconColor: "text-purple-600",
+      iconColor: "text-primary",
       iconBg: "bg-purple-100",
     },
     {
@@ -52,7 +52,7 @@ export default function Statistics() {
       changeType: "neutral",
       subtitle: hasBookings ? "Platform Fee" : "First customer", 
       icon: Award,
-      iconColor: "text-orange-600",
+      iconColor: "text-primary",
       iconBg: "bg-orange-100",
     }
   ];
@@ -66,7 +66,7 @@ export default function Statistics() {
           return (
             <Card 
               key={index} 
-              className="border-2 border-dashed border-muted bg-gradient-to-br from-muted/20 to-muted/40 opacity-80 hover:opacity-90 transition-all duration-300"
+              className="border-2 border-dashed border-muted bg-muted from-muted/20 to-muted/40 opacity-80 hover:opacity-90 transition-all duration-300"
             >
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">

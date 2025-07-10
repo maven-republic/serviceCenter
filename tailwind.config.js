@@ -2,17 +2,14 @@
 module.exports = {
   darkMode: ["class"],
   content: [
-    './src/**/*.{js,jsx,ts,tsx}',
-    './src/aesthetics/**/*.css',
-    './pages/**/*.{js,ts,jsx,tsx,mdx}',
-    './components/**/*.{js,ts,jsx,tsx,mdx}',
-    './app/**/*.{js,ts,jsx,tsx,mdx}',
+    // Scan ALL files - unified system
+    './src/**/*.{js,ts,jsx,tsx,mdx}',
+    './src/app/**/*.{js,ts,jsx,tsx,mdx}',
+    './src/components/**/*.{js,ts,jsx,tsx,mdx}',
+    './src/artifacts/**/*.{js,ts,jsx,tsx,mdx}',
+    './src/primitives/**/*.{js,ts,jsx,tsx,mdx}',
   ],
   prefix: "",
-  corePlugins: {
-    preflight: true, // Keep this to avoid conflicts with Bootstrap
-  },
-  // Remove the important: '#tailwind-root' line - it's causing issues
   theme: {
     container: {
       center: true,
@@ -22,25 +19,11 @@ module.exports = {
       },
     },
     extend: {
-      // Your existing font families
-      fontFamily: {
-        heading: ['Georgia', 'serif'],
-        body: ['Inter', 'sans-serif'],
-        mono: ['Menlo', 'monospace']
-      },
-      // Merge your existing colors with shadcn/ui colors
       colors: {
-        // Your existing colors
-        neutral: {
-          50: '#f9f9f9',
-          200: '#e5e5e5',
-          500: '#737373',
-          800: '#1f1f1f',
+        blue: {
+          500: 'hsl(0 0% 14.9%)',
+          600: 'hsl(0 0% 14.9%)',
         },
-        accent: '#5bbb7b',
-        danger: '#e74c3c',
-        
-        // shadcn/ui required colors
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",
@@ -62,13 +45,27 @@ module.exports = {
           DEFAULT: "hsl(var(--muted))",
           foreground: "hsl(var(--muted-foreground))",
         },
-        card: {
-          DEFAULT: "hsl(var(--card))",
-          foreground: "hsl(var(--card-foreground))",
+        accent: {
+          DEFAULT: "hsl(var(--accent))",
+          foreground: "hsl(var(--accent-foreground))",
         },
         popover: {
           DEFAULT: "hsl(var(--popover))",
           foreground: "hsl(var(--popover-foreground))",
+        },
+        card: {
+          DEFAULT: "hsl(var(--card))",
+          foreground: "hsl(var(--card-foreground))",
+        },
+        sidebar: {
+          DEFAULT: "hsl(var(--sidebar-background))",
+          foreground: "hsl(var(--sidebar-foreground))",
+          primary: "hsl(var(--sidebar-primary))",
+          "primary-foreground": "hsl(var(--sidebar-primary-foreground))",
+          accent: "hsl(var(--sidebar-accent))",
+          "accent-foreground": "hsl(var(--sidebar-accent-foreground))",
+          border: "hsl(var(--sidebar-border))",
+          ring: "hsl(var(--sidebar-ring))",
         },
       },
       borderRadius: {
@@ -92,8 +89,5 @@ module.exports = {
       },
     },
   },
-  plugins: [
-    require('@tailwindcss/forms'),
-    require("tailwindcss-animate"),
-  ],
+  plugins: [require("tailwindcss-animate")],
 }

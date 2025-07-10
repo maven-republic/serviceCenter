@@ -17,7 +17,7 @@ export default function ClientProviders({ children, initialSession }) {
       <ThemeProvider
         attribute="class"
         defaultTheme="dark" // or "system" or "light"
-        enableSystem
+        enableSystem={false}
         disableTransitionOnChange
       >
         {children}

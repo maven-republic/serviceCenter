@@ -143,7 +143,7 @@ export default function ChartBase({
   }, []);
 
   return (
-    <Card className="bg-muted/30 border-0">
+<Card className="professional-workspace bg-muted/30 border-0">
       <CardContent className="p-5">
         {/* Chart Header */}
         <div className="flex justify-between items-center mb-5">
@@ -156,14 +156,14 @@ export default function ChartBase({
           
           <div className="flex items-center gap-2">
             {showPreview && (
-              <Badge variant="secondary" className="bg-yellow-100 text-yellow-800 gap-1 text-xs">
+              <Badge variant="secondary" className="bg-secondary text-secondary-foreground gap-1 text-xs">
                 <Eye className="h-3 w-3" />
                 Preview Mode
               </Badge>
             )}
             
             {!hasBookings && (
-              <Badge variant="default" className="bg-blue-500 hover:bg-blue-500 gap-1 text-xs">
+              <Badge variant="default" className="bg-primary hover:bg-primary gap-1 text-xs">
                 <Beaker className="h-3 w-3" />
                 Beta
               </Badge>

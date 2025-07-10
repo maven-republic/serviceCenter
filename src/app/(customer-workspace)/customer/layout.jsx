@@ -1,43 +1,38 @@
-import { redirect } from 'next/navigation'
-import { createClient } from '@/utils/supabase/server'
-import CustomerWorkspaceStructure from "@/components/customer-workspace/CustomerWorkspaceStructure"
-import MobileNavigation2 from "@/components/header/MobileNavigation2"
-import '../customer.css' // Bootstrap styles only for customers
+// src/app/(customer-workspace)/customer/layout.jsx
+'use client';
 
+import { useEffect } from 'react';
+import { useTheme } from '@/components/theme-provider';
+import CustomerWorkspaceStructure from '@/components/customer-workspace/CustomerWorkspaceStructure';
+import CustomerHeader from '@/components/customer-workspace/navigation/CustomerHeader';
 
-export const metadata = {
-  title: "Customer Workspace",
-};
+export default function CustomerWorkspaceLayout({ children }) {
+  const { theme, setTheme } = useTheme();
 
-export default async function WorkspaceLayout({ children }) {
-  const supabase = await createClient()
-  const { data, error } = await supabase.auth.getUser()
-  
-  if (error || !data?.user) {
-    redirect('/login')
-  }
-  
-  // Optional: Check if user has professional role
-  const { data: roleData } = await supabase
-    .from('account_role')
-    .select('role_type')
-    .eq('account_id', data.user.id)
-    .eq('is_primary', true)
-    .single()
-  
-  if (roleData?.role_type !== 'customer') {
-    redirect('/login')
-  }
+  // Force light theme for customer workspace
+  useEffect(() => {
+    // Force light theme for customer workspace
+    if (theme === 'dark') {
+      setTheme('light');
+    }
+    
+    // Ensure DOM classes are correct
+    const root = document.documentElement;
+    root.classList.remove('dark');
+    root.classList.add('light');
+    
+    return () => {
+      // Cleanup when leaving customer workspace
+      root.classList.remove('light');
+    };
+  }, [theme, setTheme]);
 
   return (
-    <>
-      {/* <MobileNavigation2 /> */}
-     <div className="customer-workspace"> {/* Apply customer-workspace class */}
-        <CustomerWorkspaceStructure>
-          {children}
-        </CustomerWorkspaceStructure>
-      </div>
-    </>
+    <div className="min-h-screen bg-background text-foreground">
+      <CustomerHeader />
+      <CustomerWorkspaceStructure>
+        {children}
+      </CustomerWorkspaceStructure>
+    </div>
   );
 }
-
