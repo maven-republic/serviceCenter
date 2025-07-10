@@ -2,7 +2,10 @@
 
 import { format } from 'date-fns'
 import { useState } from 'react'
-import { Modal, Button } from 'react-bootstrap'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
+import { Button } from "@/components/ui/button"
+import { Alert, AlertDescription } from "@/components/ui/alert"
+import { Plus, X, AlertCircle, RotateCcw } from "lucide-react"
 import { AVAILABILITY_RULES } from '@/config/availabilityRules'
 
 function hasDuplicateBlock(blocks) {
@@ -41,7 +44,13 @@ function generateNextTimeBlock(existingBlocks, increment = 60) {
   return { start_time: toTime(start), end_time: toTime(end) }
 }
 
-export default function SingleDateEditorModal({ date, existing = [], onSave, onReset, onClose, noShadow }) {
+export default function SingleDateEditorModal({ 
+  date, 
+  existing = [], 
+  onSave, 
+  onReset, 
+  onClose 
+}) {
   const [blocks, setBlocks] = useState(
     existing.length > 0 ? existing.map(b => ({ ...b })) : [{
       start_time: AVAILABILITY_RULES.DEFAULT_BLOCK_START,
@@ -69,79 +78,92 @@ export default function SingleDateEditorModal({ date, existing = [], onSave, onR
     onSave(blocks)
   }
 
-  return (
-    <Modal show onHide={onClose} centered contentClassName={noShadow ? 'no-shadow-modal' : ''}>
-      <Modal.Header closeButton>
-        <Modal.Title className="h6 fw-bold">
-          Edit Availability for {format(date, 'EEEE, MMM d, yyyy')}
-        </Modal.Title>
-      </Modal.Header>
+  const isDuplicate = hasDuplicateBlock(blocks)
 
-      <Modal.Body>
-        <div className="d-flex flex-column gap-3">
+  return (
+    <Dialog open onOpenChange={onClose}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle className="text-lg font-semibold">
+            Edit Availability for {format(date, 'EEEE, MMM d, yyyy')}
+          </DialogTitle>
+        </DialogHeader>
+
+        <div className="space-y-4 py-4">
           {blocks.map((block, index) => (
-            <div key={index} className="d-flex align-items-center gap-2">
+            <div key={index} className="flex items-center gap-3">
               <input
                 type="time"
-                className="form-control"
+                className="flex-1 px-3 py-2 text-sm border border-input rounded-md bg-background focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent"
                 value={block.start_time}
                 onChange={(e) => handleChange(index, 'start_time', e.target.value)}
               />
-              <span>to</span>
+              <span className="text-sm text-muted-foreground">to</span>
               <input
                 type="time"
-                className="form-control"
+                className="flex-1 px-3 py-2 text-sm border border-input rounded-md bg-background focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent"
                 value={block.end_time}
                 onChange={(e) => handleChange(index, 'end_time', e.target.value)}
               />
               <Button
-                variant="outline-danger"
+                type="button"
+                variant="outline"
                 size="sm"
                 onClick={() => handleRemove(index)}
+                className="h-9 w-9 p-0 flex-shrink-0"
                 title="Remove"
               >
-                ✕
+                <X className="h-4 w-4" />
               </Button>
             </div>
           ))}
 
           <Button
-            variant="outline-primary"
-            size="sm"
+            type="button"
+            variant="outline"
             onClick={handleAdd}
-            className="align-self-start"
+            className="w-full border-dashed"
+            disabled={!generateNextTimeBlock(blocks)}
           >
-            + Add Time Block
+            <Plus className="h-4 w-4 mr-2" />
+            Add Time Block
           </Button>
 
           {existing.length > 0 && (
             <Button
-              variant="outline-secondary"
-              size="sm"
+              type="button"
+              variant="outline"
               onClick={onReset}
-              className="align-self-start"
+              className="w-full"
             >
+              <RotateCcw className="h-4 w-4 mr-2" />
               Reset to Weekly Hours
             </Button>
           )}
 
-          {hasDuplicateBlock(blocks) && (
-            <div className="text-danger small mt-2">
-              Duplicate time block detected.
-            </div>
+          {isDuplicate && (
+            <Alert variant="destructive">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>
+                Duplicate time block detected. Please adjust the times.
+              </AlertDescription>
+            </Alert>
           )}
         </div>
-      </Modal.Body>
 
-      <Modal.Footer>
-        <Button variant="secondary" onClick={onClose}>
-          Cancel
-        </Button>
-        <Button variant="primary" onClick={handleSave} disabled={hasDuplicateBlock(blocks)}>
-          Apply
-        </Button>
-      </Modal.Footer>
-    </Modal>
+        <DialogFooter>
+          <Button type="button" variant="outline" onClick={onClose}>
+            Cancel
+          </Button>
+          <Button 
+            type="button" 
+            onClick={handleSave} 
+            disabled={isDuplicate}
+          >
+            Apply Changes
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   )
 }
-

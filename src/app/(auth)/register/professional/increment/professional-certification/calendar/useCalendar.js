@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 
 export function useCalendar(selectedDate) {
   // Initialize current date based on selected date or today
@@ -10,6 +10,14 @@ export function useCalendar(selectedDate) {
   }
 
   const [currentDate, setCurrentDate] = useState(getInitialDate)
+
+  // Update current date when selectedDate changes
+  useEffect(() => {
+    if (selectedDate) {
+      const newDate = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), 1)
+      setCurrentDate(newDate)
+    }
+  }, [selectedDate])
 
   // Format date for input value (ISO format)
   const formatDate = useCallback((date) => {
@@ -23,6 +31,17 @@ export function useCalendar(selectedDate) {
     return date.toLocaleDateString('en-US', {
       year: 'numeric',
       month: 'short',
+      day: 'numeric'
+    })
+  }, [])
+
+  // Format date for display in long format
+  const formatDisplayDateLong = useCallback((date) => {
+    if (!date) return ''
+    return date.toLocaleDateString('en-US', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
       day: 'numeric'
     })
   }, [])
@@ -77,11 +96,35 @@ export function useCalendar(selectedDate) {
     }
   }, [])
 
+  // Check if date is today
+  const isToday = useCallback((date) => {
+    if (!date) return false
+    const today = new Date()
+    return date.toDateString() === today.toDateString()
+  }, [])
+
+  // Check if date is selected
+  const isDateSelected = useCallback((date) => {
+    if (!date || !selectedDate) return false
+    return date.toDateString() === selectedDate.toDateString()
+  }, [selectedDate])
+
+  // Get today's date
+  const getToday = useCallback(() => {
+    return new Date()
+  }, [])
+
+  // Validate if date is valid
+  const isValidDate = useCallback((date) => {
+    return date instanceof Date && !isNaN(date.getTime())
+  }, [])
+
   return {
     currentDate,
     setCurrentDate,
     formatDate,
     formatDisplayDate,
+    formatDisplayDateLong,
     navigateToDate,
     navigateMonths,
     navigateYears,
@@ -89,6 +132,10 @@ export function useCalendar(selectedDate) {
     getCurrentYear,
     isInCurrentMonth,
     resetToToday,
-    goToSelectedDate
+    goToSelectedDate,
+    isToday,
+    isDateSelected,
+    getToday,
+    isValidDate
   }
 }

@@ -1,5 +1,6 @@
 'use client'
 
+import { cn } from "@/lib/utils"
 import CalendarHeader from './CalendarHeader'
 import CalendarGrid from './CalendarGrid'
 import CalendarFooter from './CalendarFooter'
@@ -21,82 +22,40 @@ export default function CalendarDropdown({
   onToggleYearDropdown
 }) {
 
-  const getCalendarPosition = () => {
-    if (!isMobile) return { left: '0' }
-    
-    // On mobile, center the calendar
-    return {
-      left: '50%',
-      transform: 'translateX(-50%)',
-      width: '280px'
-    }
-  }
-
   return (
-    <>
-      <style>{`
-        @keyframes fadeIn {
-          from { opacity: 0; transform: translateY(-10px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-        
-        @media (max-width: 768px) {
-          .calendar-mobile-touch {
-            min-height: 44px !important;
-            font-size: 14px !important;
-          }
-          
-          .calendar-mobile-nav {
-            min-height: 40px !important;
-            min-width: 40px !important;
-            font-size: 16px !important;
-          }
-          
-          .calendar-mobile-header {
-            font-size: 15px !important;
-          }
-          
-          .calendar-mobile-day-header {
-            font-size: 12px !important;
-          }
-        }
-      `}</style>
+    <div
+      className={cn(
+        "absolute z-50 bg-popover border rounded-lg shadow-lg mt-1",
+        "animate-in fade-in-0 zoom-in-95 slide-in-from-top-2",
+        isMobile ? "p-4 w-72 left-1/2 -translate-x-1/2" : "p-3 left-0",
+        !isMobile && "w-64"
+      )}
+    >
+      <CalendarHeader
+        currentDate={currentDate}
+        isMobile={isMobile}
+        showMonthDropdown={showMonthDropdown}
+        showYearDropdown={showYearDropdown}
+        onNavigateMonth={onNavigateMonth}
+        onNavigateYear={onNavigateYear}
+        onMonthChange={onMonthChange}
+        onYearChange={onYearChange}
+        onToggleMonthDropdown={onToggleMonthDropdown}
+        onToggleYearDropdown={onToggleYearDropdown}
+      />
 
-      <div
-        className="position-absolute bg-white border rounded-3 shadow-lg mt-1"
-        style={{
-          zIndex: 1000,
-          padding: isMobile ? '16px' : '8px',
-          animation: 'fadeIn 0.2s ease-out',
-          ...getCalendarPosition()
-        }}
-      >
-        <CalendarHeader
-          currentDate={currentDate}
-          isMobile={isMobile}
-          showMonthDropdown={showMonthDropdown}
-          showYearDropdown={showYearDropdown}
-          onNavigateMonth={onNavigateMonth}
-          onNavigateYear={onNavigateYear}
-          onMonthChange={onMonthChange}
-          onYearChange={onYearChange}
-          onToggleMonthDropdown={onToggleMonthDropdown}
-          onToggleYearDropdown={onToggleYearDropdown}
-        />
+      <CalendarGrid
+        currentDate={currentDate}
+        selectedDate={selectedDate}
+        isMobile={isMobile}
+        onDateSelect={onDateSelect}
+      />
 
-        <CalendarGrid
-          currentDate={currentDate}
-          selectedDate={selectedDate}
-          isMobile={isMobile}
-          onDateSelect={onDateSelect}
-        />
-
-        <CalendarFooter
-          isMobile={isMobile}
-          onTodayClick={onTodayClick}
-          onClearClick={onClearClick}
-        />
-      </div>
-    </>
+      <CalendarFooter
+        isMobile={isMobile}
+        onTodayClick={onTodayClick}
+        onClearClick={onClearClick}
+      />
+    </div>
   )
 }

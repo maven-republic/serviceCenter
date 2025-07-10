@@ -1,7 +1,14 @@
 'use client'
 
-import { useEffect, useRef, useMemo } from 'react';
-import serviceDESIGN from './Services.module.css'
+import { useEffect, useRef, useMemo, useState } from 'react';
+import { Input } from "@/components/ui/input"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Progress } from "@/components/ui/progress"
+import { Badge } from "@/components/ui/badge"
+import { Search, Loader2, ChevronDown, ChevronUp } from "lucide-react"
+import ServiceTag from './ServiceTag'
+import { cn } from "@/lib/utils"
 
 // Fisher-Yates shuffle algorithm
 const shuffleArray = (array) => {
@@ -28,7 +35,6 @@ export default function Services({
   updateFormData,
   errors
 }) {
-
   const dropdownRef = useRef(null);
 
   // Memoize randomized data to prevent re-shuffling on every render
@@ -48,7 +54,7 @@ export default function Services({
     };
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
+  }, [setDropdownOpen]);
 
   // Filter services for search
   const filteredServices = randomizedData.services.filter(service =>
@@ -56,114 +62,148 @@ export default function Services({
   );
 
   return (
-    <div>
-      <div className="mb-4">
-        <div className="progress mb-3" style={{ height: '4px' }}>
-          <div className="progress-bar" style={{ width: '66%' }} />
+    <div className="space-y-6">
+      {/* Progress Bar */}
+      <div className="space-y-2">
+        <div className="flex justify-between text-sm text-muted-foreground">
+          <span>Service Selection Progress</span>
+          <span>66%</span>
         </div>
+        <Progress value={66} className="h-2" />
       </div>
 
-      {/* Search bar */}
-      <div className="mb-4 position-relative dropdown-search">
-        <div className={serviceDESIGN.searchWrapper}>
-          <i className={`fas fa-search ${serviceDESIGN.searchIcon}`} />
-          <input
-            type="text"
-            placeholder="Search services..."
-            aria-label="Search services"
-            className={serviceDESIGN.searchInput}
-            value={searchTerm}
-            onClick={() => setDropdownOpen(true)}
-            onChange={(e) => {
-              setSearchTerm(e.target.value)
-              if (!dropdownOpen) setDropdownOpen(true)
-            }}
-          />
-        </div>
+      {/* Search Section */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Search className="h-5 w-5" />
+            Find Your Services
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          
+          {/* Search Input */}
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              type="text"
+              placeholder="Search services..."
+              value={searchTerm}
+              onChange={(e) => {
+                setSearchTerm(e.target.value)
+                if (!dropdownOpen) setDropdownOpen(true)
+              }}
+              onClick={() => setDropdownOpen(true)}
+              className="pl-10"
+            />
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={() => setDropdownOpen(!dropdownOpen)}
+              className="absolute right-2 top-1/2 transform -translate-y-1/2 h-6 w-6 p-0"
+            >
+              {dropdownOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+            </Button>
+          </div>
 
-        {/* Randomized dropdown */}
-        {dropdownOpen && (
-          <div className={serviceDESIGN.dropdownPanel} ref={dropdownRef}>
-            <div className={serviceDESIGN.scrollContainer}>
-              {loading ? (
-                <div className="text-center py-3">
-                  <div className="spinner-border spinner-border-sm text-primary" role="status">
-                    <span className="visually-hidden">Loading...</span>
-                  </div>
-                </div>
-              ) : (
-                <>
-                  {searchTerm && filteredServices.length === 0 && (
-                    <div className="text-muted small text-center py-3">
-                      No services match your search.
+          {/* Service Dropdown */}
+          {dropdownOpen && (
+            <Card className="border shadow-lg" ref={dropdownRef}>
+              <CardContent className="p-0">
+                <div className="max-h-96 overflow-y-auto">
+                  {loading ? (
+                    <div className="flex items-center justify-center py-8">
+                      <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                      <span className="ml-2 text-sm text-muted-foreground">Loading services...</span>
+                    </div>
+                  ) : (
+                    <div className="p-4 space-y-6">
+                      {searchTerm && filteredServices.length === 0 && (
+                        <div className="text-center py-8 text-muted-foreground">
+                          <Search className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                          <p className="text-sm">No services match your search.</p>
+                        </div>
+                      )}
+
+                      {randomizedData.verticals.map((vertical) => {
+                        // Get portfolios for this vertical (also randomized)
+                        const verticalPortfolios = randomizedData.portfolios.filter(
+                          (p) => p.vertical_id === vertical.vertical_id
+                        )
+
+                        if (!verticalPortfolios.length) return null
+
+                        return (
+                          <div key={vertical.vertical_id} className="space-y-4">
+                            <div className="border-b pb-2">
+                              <h3 className="font-semibold text-primary flex items-center gap-2">
+                                <Badge variant="outline" className="text-xs">
+                                  {vertical.name}
+                                </Badge>
+                              </h3>
+                            </div>
+
+                            {verticalPortfolios.map((portfolio) => {
+                              // Get services for this portfolio (also randomized)
+                              const portfolioServices = randomizedData.services.filter(
+                                (s) =>
+                                  s.portfolio_id === portfolio.portfolio_id &&
+                                  (!searchTerm ||
+                                    s.name.toLowerCase().includes(searchTerm.toLowerCase()))
+                              )
+
+                              if (!portfolioServices.length) return null
+
+                              return (
+                                <div key={portfolio.portfolio_id} className="space-y-3">
+                                  <div className="bg-muted/30 rounded-lg p-3">
+                                    <h4 className="font-medium text-sm text-foreground mb-3">
+                                      {portfolio.name}
+                                    </h4>
+                                    <div className="flex flex-wrap gap-2">
+                                      {portfolioServices.map((service) => {
+                                        const isSelected = selectedServices.includes(service.service_id)
+                                        return (
+                                          <ServiceTag
+                                            key={service.service_id}
+                                            service={service}
+                                            selected={isSelected}
+                                            onToggle={toggleService}
+                                          />
+                                        )
+                                      })}
+                                    </div>
+                                  </div>
+                                </div>
+                              )
+                            })}
+                          </div>
+                        )
+                      })}
                     </div>
                   )}
+                </div>
 
-                  {randomizedData.verticals.map((vertical) => {
-                    // Get portfolios for this vertical (also randomized)
-                    const verticalPortfolios = randomizedData.portfolios.filter(
-                      (p) => p.vertical_id === vertical.vertical_id
-                    )
+                <div className="border-t p-4 bg-muted/30">
+                  <div className="flex items-center justify-between">
+                    <div className="text-sm text-muted-foreground">
+                      {selectedServices.length} service{selectedServices.length !== 1 ? 's' : ''} selected
+                    </div>
+                    <Button 
+                      onClick={() => setDropdownOpen(false)}
+                      size="sm"
+                    >
+                      Confirm Services
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
-                    if (!verticalPortfolios.length) return null
-
-                    return (
-                      <div key={vertical.vertical_id} className="mb-4">
-                        <div className={serviceDESIGN.verticalHeader}>
-                          <h6 className="fw-semibold text-primary mb-2">{vertical.name}</h6>
-                        </div>
-
-                        {verticalPortfolios.map((portfolio) => {
-                          // Get services for this portfolio (also randomized)
-                          const portfolioServices = randomizedData.services.filter(
-                            (s) =>
-                              s.portfolio_id === portfolio.portfolio_id &&
-                              (!searchTerm ||
-                                s.name.toLowerCase().includes(searchTerm.toLowerCase()))
-                          )
-
-                          if (!portfolioServices.length) return null
-
-                          return (
-                            <div key={portfolio.portfolio_id} className={serviceDESIGN.categoryBlock}>
-                              <div className={serviceDESIGN.dropdownCategoryHeader}>
-                                {portfolio.name}
-                              </div>
-                              <div className={serviceDESIGN.dropdownServicesGrid}>
-                                {portfolioServices.map((service) => {
-                                  const isSelected = selectedServices.includes(service.service_id)
-                                  return (
-                                    <button
-                                      key={service.service_id}
-                                      type="button"
-                                      className={`${serviceDESIGN.serviceTag} ${isSelected ? serviceDESIGN.selected : ''}`}
-                                      onClick={() => toggleService(service.service_id)}
-                                      title={service.name}
-                                      aria-pressed={isSelected}
-                                    >
-                                      {service.name}
-                                    </button>
-                                  )
-                                })}
-                              </div>
-                            </div>
-                          )
-                        })}
-                      </div>
-                    )
-                  })}
-                </>
-              )}
-            </div>
-
-            <div className={serviceDESIGN.dropdownFooter}>
-              <button className="btn btn-primary" onClick={() => setDropdownOpen(false)}>
-                Confirm Services
-              </button>
-            </div>
-          </div>
-        )}
-      </div>
+        </CardContent>
+      </Card>
     </div>
   )
 }

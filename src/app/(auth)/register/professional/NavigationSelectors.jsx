@@ -1,98 +1,114 @@
 'use client'
 
+import { Button } from "@/components/ui/button"
+import { Progress } from "@/components/ui/progress"
+import { ArrowLeft, ArrowRight, Loader2 } from "lucide-react"
+import { cn } from "@/lib/utils"
+
 export default function NavigationSelectors({
   currentStep,
   nextStep,
   prevStep,
   totalSteps = 10,
   onSubmit,
-    loading = false
-
+  loading = false
 }) {
   const progressPercent = (currentStep / totalSteps) * 100
 
   return (
-    <div
-      className="position-fixed bottom-0 start-0 end-0 bg-white border-top py-3"
-      style={{ zIndex: 9999 }}
-    >
-      <div className="container">
-        <div className="row align-items-center gx-3 gy-2">
-
+    <div className="fixed bottom-0 left-0 right-0 bg-background/95 backdrop-blur-sm border-t z-50">
+      <div className="container mx-auto px-4 py-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-center max-w-4xl mx-auto">
+          
           {/* Back Button */}
-          <div className="col-12 col-md-4 text-md-start text-center">
-            {currentStep > 1 && (
-              <button
+          <div className="flex justify-center md:justify-start">
+            {currentStep > 1 ? (
+              <Button
                 type="button"
+                variant="outline"
                 onClick={prevStep}
-                className="rounded-pill border border-secondary text-secondary px-4 py-2 w-100 w-md-auto bg-transparent hover:bg-secondary-subtle hover:text-dark transition"
+                className="w-full md:w-auto transition-all duration-200 hover:bg-secondary/80"
               >
-                <i className="fas fa-arrow-left me-2" />
-                {/* Back */}
-              </button>
+                <ArrowLeft className="w-4 h-4 mr-2" />
+                Back
+              </Button>
+            ) : (
+              <div className="hidden md:block" /> // Spacer for alignment
             )}
           </div>
 
-          {/* Progress */}
-          <div className="col-12 col-md-4 text-center">
-            <div className="mx-auto" style={{ maxWidth: '240px' }}>
-              <div className="bg-light rounded-pill" style={{ height: '6px', overflow: 'hidden' }}>
-                <div
-                  className="bg-primary rounded-pill"
-                  style={{
-                    width: `${progressPercent}%`,
-                    height: '100%',
-                    transition: 'width 0.3s ease'
-                  }}
-                />
-              </div>
-              <div className="mt-1 small text-muted">
-                Step {currentStep} of {totalSteps}
-              </div>
+          {/* Progress Section */}
+          <div className="flex flex-col items-center space-y-2 order-first md:order-none">
+            <div className="w-full max-w-xs">
+              <Progress 
+                value={progressPercent} 
+                className="h-2 transition-all duration-500 ease-out"
+              />
+            </div>
+            <div className="text-sm text-muted-foreground font-medium">
+              Step {currentStep} of {totalSteps}
             </div>
           </div>
 
-          {/* Next / Submit Button */}
-          <div className="col-12 col-md-4 text-md-end text-center">
+          {/* Next/Submit Button */}
+          <div className="flex justify-center md:justify-end">
             {currentStep < totalSteps ? (
-              
-              <button
-  type="button"
-  onClick={nextStep}
-  className="rounded-pill bg-black text-white px-4 py-2 w-100 w-md-auto border-0 hover:opacity-90 transition"
->
-  Continue
-  <i className="fas fa-arrow-right ms-2" />
-</button>
-
-              
-              
-              
+              <Button
+                type="button"
+                onClick={nextStep}
+                className={cn(
+                  "w-full md:w-auto transition-all duration-200",
+                  "bg-primary hover:bg-primary/90 text-primary-foreground",
+                  "font-medium"
+                )}
+              >
+                Continue
+                <ArrowRight className="w-4 h-4 ml-2" />
+              </Button>
             ) : (
-              
-              
-          <button
-  type="button"
-  onClick={onSubmit}
-  disabled={loading}
-  className="rounded-pill bg-secondary text-light px-4 py-2 w-100 w-md-auto border-0 hover:opacity-90 transition d-flex align-items-center justify-content-center"
->
-  {loading ? (
-    <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true" />
-  ) : (
-    <>
-      Create Account
-    </>
-  )}
-</button>
-              
-              
+              <Button
+                type="button"
+                onClick={onSubmit}
+                disabled={loading}
+                className={cn(
+                  "w-full md:w-auto transition-all duration-200",
+                  "bg-primary hover:bg-primary/90 text-primary-foreground",
+                  "font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                )}
+              >
+                {loading ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Creating Account...
+                  </>
+                ) : (
+                  <>
+                    Create Account
+                    <ArrowRight className="w-4 h-4 ml-2" />
+                  </>
+                )}
+              </Button>
             )}
           </div>
+        </div>
 
+        {/* Mobile Step Indicator */}
+        <div className="md:hidden mt-3 pt-3 border-t">
+          <div className="flex justify-center">
+            <div className="flex space-x-1">
+              {Array.from({ length: totalSteps }, (_, idx) => (
+                <div
+                  key={idx}
+                  className={cn(
+                    "w-2 h-2 rounded-full transition-all duration-300",
+                    idx + 1 <= currentStep ? "bg-primary" : "bg-muted-foreground/30"
+                  )}
+                />
+              ))}
+            </div>
+          </div>
         </div>
       </div>
     </div>
   )
 }
-

@@ -1,5 +1,6 @@
 'use client'
 
+import { cn } from "@/lib/utils"
 import CalendarDay from './CalendarDay'
 import { getDaysInMonth } from './calendarUtils'
 
@@ -14,26 +15,28 @@ export default function CalendarGrid({
   const days = getDaysInMonth(currentDate)
 
   const DayHeader = ({ day }) => (
-    <div className="col text-center">
-      <small 
-        className="text-muted calendar-mobile-day-header" 
-        style={{ fontSize: isMobile ? '12px' : '11px' }}
+    <div className="flex justify-center p-1">
+      <span 
+        className={cn(
+          "text-xs font-medium text-muted-foreground",
+          isMobile && "text-sm"
+        )}
       >
         {day}
-      </small>
+      </span>
     </div>
   )
 
   const WeekRow = ({ weekIndex, days }) => (
-    <div key={weekIndex} className="row g-1 mb-1">
+    <div key={weekIndex} className="grid grid-cols-7 gap-1">
       {Array.from({ length: 7 }, (_, dayIndex) => {
         const dayObj = days[weekIndex * 7 + dayIndex]
         if (!dayObj) {
-          return <div key={dayIndex} className="col"></div>
+          return <div key={dayIndex} className="p-1"></div>
         }
         
         return (
-          <div key={dayIndex} className="col">
+          <div key={dayIndex} className="p-1">
             <CalendarDay
               dayObj={dayObj}
               selectedDate={selectedDate}
@@ -47,16 +50,16 @@ export default function CalendarGrid({
   )
 
   return (
-    <div>
+    <div className="space-y-2">
       {/* Days of week header */}
-      <div className={`row g-0 ${isMobile ? 'mb-2' : 'mb-1'}`}>
+      <div className="grid grid-cols-7">
         {daysOfWeek.map(day => (
           <DayHeader key={day} day={day} />
         ))}
       </div>
 
       {/* Calendar grid - 6 weeks */}
-      <div>
+      <div className="space-y-1">
         {Array.from({ length: 6 }, (_, weekIndex) => (
           <WeekRow 
             key={weekIndex} 

@@ -1,5 +1,8 @@
 'use client'
 
+import { Button } from "@/components/ui/button"
+import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, ChevronDown } from "lucide-react"
+import { cn } from "@/lib/utils"
 import MonthDropdown from './MonthDropdown'
 import YearDropdown from './YearDropdown'
 
@@ -16,33 +19,20 @@ export default function CalendarHeader({
   onToggleYearDropdown
 }) {
 
-  const handleNavigationHover = (e, isEntering) => {
-    if (isEntering) {
-      e.target.style.transform = 'scale(1.1)'
-      e.target.style.color = '#0d6efd'
-    } else {
-      e.target.style.transform = 'scale(1)'
-      e.target.style.color = '#6c757d'
-    }
-  }
-
-  const NavigationButton = ({ direction, onClick, children }) => (
-    <button
-      type="button"
-      className={`btn btn-sm border-0 calendar-mobile-nav ${isMobile ? 'px-3 py-2' : 'px-2 py-1'}`}
+  const NavigationButton = ({ direction, onClick, children, className }) => (
+    <Button
+      variant="ghost"
+      size={isMobile ? "default" : "sm"}
       onClick={onClick}
-      style={{ 
-        transition: 'all 0.2s ease',
-        fontSize: isMobile ? '16px' : '12px',
-        color: '#6c757d',
-        minHeight: isMobile ? '40px' : 'auto',
-        minWidth: isMobile ? '40px' : 'auto'
-      }}
-      onMouseEnter={(e) => handleNavigationHover(e, true)}
-      onMouseLeave={(e) => handleNavigationHover(e, false)}
+      className={cn(
+        "h-8 w-8 p-0 hover:bg-accent transition-all duration-200",
+        isMobile && "h-10 w-10",
+        "hover:scale-110",
+        className
+      )}
     >
       {children}
-    </button>
+    </Button>
   )
 
   const months = [
@@ -51,43 +41,45 @@ export default function CalendarHeader({
   ]
 
   return (
-    <div className={`d-flex justify-content-between align-items-center ${isMobile ? 'mb-3' : 'mb-2'}`}>
+    <div className={cn(
+      "flex justify-between items-center",
+      isMobile ? "mb-4" : "mb-3"
+    )}>
       {/* Left Navigation */}
-      <div className="d-flex gap-1">
+      <div className="flex gap-1">
         <NavigationButton 
           direction="prev-year" 
           onClick={() => onNavigateYear(-1)}
         >
-          <i className="fas fa-angle-double-left"></i>
+          <ChevronsLeft className={cn("h-4 w-4", isMobile && "h-5 w-5")} />
         </NavigationButton>
         
         <NavigationButton 
           direction="prev-month" 
           onClick={() => onNavigateMonth(-1)}
         >
-          <i className="fas fa-angle-left"></i>
+          <ChevronLeft className={cn("h-4 w-4", isMobile && "h-5 w-5")} />
         </NavigationButton>
       </div>
 
       {/* Center - Month/Year Dropdowns */}
-      <div className="d-flex gap-1 position-relative">
-        <div className="position-relative">
-          <button
-            type="button"
-            className="btn btn-link text-dark text-decoration-none border-0 calendar-mobile-header"
+      <div className="flex gap-1 relative">
+        <div className="relative">
+          <Button
+            variant="ghost"
             onClick={onToggleMonthDropdown}
-            style={{ 
-              transition: 'all 0.2s ease',
-              fontSize: isMobile ? '15px' : '13px',
-              fontWeight: 'normal',
-              padding: isMobile ? '8px 12px' : '4px 8px'
-            }}
-            onMouseEnter={(e) => e.target.style.color = '#0d6efd'}
-            onMouseLeave={(e) => e.target.style.color = '#212529'}
+            className={cn(
+              "font-normal text-sm hover:bg-accent transition-colors",
+              isMobile && "text-base h-10 px-3",
+              !isMobile && "text-xs h-8 px-2"
+            )}
           >
             {months[currentDate.getMonth()]}
-            <i className="fas fa-chevron-down ms-1" style={{ fontSize: isMobile ? '12px' : '10px' }}></i>
-          </button>
+            <ChevronDown className={cn(
+              "ml-1 h-3 w-3",
+              isMobile && "h-4 w-4"
+            )} />
+          </Button>
           
           <MonthDropdown
             isVisible={showMonthDropdown}
@@ -98,23 +90,22 @@ export default function CalendarHeader({
           />
         </div>
 
-        <div className="position-relative">
-          <button
-            type="button"
-            className="btn btn-link text-dark text-decoration-none border-0 calendar-mobile-header"
+        <div className="relative">
+          <Button
+            variant="ghost"
             onClick={onToggleYearDropdown}
-            style={{ 
-              transition: 'all 0.2s ease',
-              fontSize: isMobile ? '15px' : '13px',
-              fontWeight: 'normal',
-              padding: isMobile ? '8px 12px' : '4px 8px'
-            }}
-            onMouseEnter={(e) => e.target.style.color = '#0d6efd'}
-            onMouseLeave={(e) => e.target.style.color = '#212529'}
+            className={cn(
+              "font-normal text-sm hover:bg-accent transition-colors",
+              isMobile && "text-base h-10 px-3",
+              !isMobile && "text-xs h-8 px-2"
+            )}
           >
             {currentDate.getFullYear()}
-            <i className="fas fa-chevron-down ms-1" style={{ fontSize: isMobile ? '12px' : '10px' }}></i>
-          </button>
+            <ChevronDown className={cn(
+              "ml-1 h-3 w-3",
+              isMobile && "h-4 w-4"
+            )} />
+          </Button>
           
           <YearDropdown
             isVisible={showYearDropdown}
@@ -126,19 +117,19 @@ export default function CalendarHeader({
       </div>
 
       {/* Right Navigation */}
-      <div className="d-flex gap-1">
+      <div className="flex gap-1">
         <NavigationButton 
           direction="next-month" 
           onClick={() => onNavigateMonth(1)}
         >
-          <i className="fas fa-angle-right"></i>
+          <ChevronRight className={cn("h-4 w-4", isMobile && "h-5 w-5")} />
         </NavigationButton>
         
         <NavigationButton 
           direction="next-year" 
           onClick={() => onNavigateYear(1)}
         >
-          <i className="fas fa-angle-double-right"></i>
+          <ChevronsRight className={cn("h-4 w-4", isMobile && "h-5 w-5")} />
         </NavigationButton>
       </div>
     </div>

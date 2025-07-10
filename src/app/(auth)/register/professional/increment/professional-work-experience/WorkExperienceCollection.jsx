@@ -1,5 +1,7 @@
 'use client'
 
+import { Button } from "@/components/ui/button"
+import { Plus, Briefcase } from "lucide-react"
 import WorkExperience from './WorkExperience'
 
 export default function WorkExperienceCollection({ experienceList, onUpdate }) {
@@ -17,6 +19,7 @@ export default function WorkExperienceCollection({ experienceList, onUpdate }) {
 
   const addExperience = () => {
     const newEntry = {
+      id: Date.now(), // Add unique ID for better key management
       company_id: null,
       freeform_company_name: '',
       position: '',
@@ -28,21 +31,42 @@ export default function WorkExperienceCollection({ experienceList, onUpdate }) {
   }
 
   return (
-    <div>
-      {experienceList.map((exp, index) => (
-        <div key={index} className="border rounded p-3 mb-4">
-          <WorkExperience
-            data={exp}
-            onChange={(field, value) => handleChange(index, field, value)}
-            onRemove={() => handleRemove(index)}
-          />
+    <div className="space-y-6">
+      {/* Experience List */}
+      {experienceList && experienceList.length > 0 ? (
+        <div className="space-y-4">
+          {experienceList.map((exp, index) => (
+            <WorkExperience
+              key={exp.id || index}
+              data={exp}
+              onChange={(field, value) => handleChange(index, field, value)}
+              onRemove={() => handleRemove(index)}
+            />
+          ))}
         </div>
-      ))}
+      ) : (
+        /* Empty State */
+        <div className="text-center py-12 px-4 border-2 border-dashed border-muted-foreground/25 rounded-lg">
+          <Briefcase className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+          <h3 className="text-lg font-medium text-foreground mb-2">No work experience added yet</h3>
+          <p className="text-muted-foreground mb-6 max-w-sm mx-auto">
+            Add your professional experience to showcase your background and expertise to potential clients.
+          </p>
+        </div>
+      )}
 
-      <button type="button" className="btn btn-outline-primary" onClick={addExperience}>
-        + Add Experience
-      </button>
+      {/* Add Experience Button */}
+      <div className="flex justify-center">
+        <Button 
+          type="button" 
+          variant="outline" 
+          onClick={addExperience}
+          className="transition-all duration-200 hover:bg-primary hover:text-primary-foreground"
+        >
+          <Plus className="h-4 w-4 mr-2" />
+          Add Work Experience
+        </Button>
+      </div>
     </div>
   )
-} 
-
+}

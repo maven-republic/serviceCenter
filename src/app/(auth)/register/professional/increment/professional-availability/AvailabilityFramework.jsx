@@ -1,9 +1,10 @@
 'use client'
 
 import { useState } from 'react'
-import { Button } from 'react-bootstrap'
+import { Button } from "@/components/ui/button"
+import { Plus, Copy, X } from "lucide-react"
 import { AVAILABILITY_RULES } from '@/config/availabilityRules'
-import _AvailabilityFramework from './AvailabilityFramework.module.css'
+import { cn } from "@/lib/utils"
 
 const daysOfWeek = [
   { label: 'Sunday', value: 0 },
@@ -117,12 +118,13 @@ export default function AvailabilityFramework({ availability, setAvailability })
   }
 
   return (
-    <div className="container px-0">
-      <div className="mb-4">
-        <h5 className="fw-bold">Set Weekly Hours</h5>
+    <div className="w-full max-w-md">
+      <div className="mb-6">
+        <h5 className="text-lg font-semibold">Set Weekly Hours</h5>
+        <p className="text-sm text-muted-foreground">Define your regular availability for each day of the week.</p>
       </div>
 
-      <div className="d-flex flex-column gap-4">
+      <div className="space-y-4">
         {daysOfWeek.map(({ label, value }) => {
           const blocks = weeklySlots[value] || []
           const showDuplicateWarning = hasDuplicateBlock(blocks)
@@ -130,65 +132,62 @@ export default function AvailabilityFramework({ availability, setAvailability })
           return (
             <div
               key={value}
-              className="p-3 bg-white rounded-4  border d-flex flex-column"
+              className="p-4 bg-card rounded-lg border space-y-3"
             >
-              <div className="fw-semibold text-capitalize mb-2">{label}</div>
+              <div className="font-medium text-sm text-foreground">{label}</div>
 
               {blocks.map((block, index) => (
-                <div key={index} className="row g-2 align-items-center mb-3">
-                  <div className="col-auto">
-                    <input
-                      type="time"
-  className={`${_AvailabilityFramework.cleanTimeInput}`}
-                      value={block.start_time}
-                      onChange={e => handleTimeChange(value, index, 'start_time', e.target.value)}
-                    />
-                  </div>
-                  <div className="col-auto">
-                    <span className="fw-semibold">to</span>
-                  </div>
-                  <div className="col-auto">
-                    <input
-                      type="time"
-  className={`${_AvailabilityFramework.cleanTimeInput}`}
-                      value={block.end_time}
-                      onChange={e => handleTimeChange(value, index, 'end_time', e.target.value)}
-                    />
-                  </div>
+                <div key={index} className="flex items-center gap-2 flex-wrap">
+                  <input
+                    type="time"
+                    className="px-3 py-1.5 text-sm border border-input rounded-md bg-background focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent"
+                    value={block.start_time}
+                    onChange={e => handleTimeChange(value, index, 'start_time', e.target.value)}
+                  />
+                  <span className="text-sm font-medium text-muted-foreground">to</span>
+                  <input
+                    type="time"
+                    className="px-3 py-1.5 text-sm border border-input rounded-md bg-background focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent"
+                    value={block.end_time}
+                    onChange={e => handleTimeChange(value, index, 'end_time', e.target.value)}
+                  />
 
-                  <div className="col-auto d-flex gap-2 align-items-center">
-                    <div
-                      role="button"
+                  <div className="flex items-center gap-1">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
                       onClick={() => handleRemoveBlock(value, index)}
-                      className="d-flex align-items-center justify-content-center border rounded-circle bg-white "
-                      style={{ width: '30px', height: '30px', cursor: 'pointer' }}
-                      title="Remove"
+                      className="h-8 w-8 p-0"
+                      title="Remove time block"
                     >
-                      <span className="text-danger fw-bold">✕</span>
-                    </div>
+                      <X className="h-3 w-3" />
+                    </Button>
 
                     {index === 0 && (
                       <>
-                        <div
-                          role="button"
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
                           onClick={() => handleAddBlock(value)}
-                          className="d-flex align-items-center justify-content-center border rounded-circle bg-white "
-                          style={{ width: '30px', height: '30px', cursor: 'pointer' }}
+                          className="h-8 w-8 p-0"
                           title="Add time block"
                         >
-                          <span className="text-primary fw-bold">+</span>
-                        </div>
+                          <Plus className="h-3 w-3" />
+                        </Button>
 
                         {value !== 0 && (
-                          <div
-                            role="button"
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
                             onClick={() => handleCopyPrevious(value)}
-                            className="d-flex align-items-center justify-content-center border rounded-circle bg-white"
-                            style={{ width: '30px', height: '30px', cursor: 'pointer' }}
+                            className="h-8 w-8 p-0"
                             title="Copy previous day"
                           >
-                            <span className="text-secondary">📋</span>
-                          </div>
+                            <Copy className="h-3 w-3" />
+                          </Button>
                         )}
                       </>
                     )}
@@ -197,21 +196,19 @@ export default function AvailabilityFramework({ availability, setAvailability })
               ))}
 
               {blocks.length === 0 && (
-                <div
-                  role="button"
+                <Button
+                  type="button"
+                  variant="outline"
                   onClick={() => handleAddBlock(value)}
-                  className="d-flex align-items-center justify-content-center border rounded-circle bg-white mb-6"
-                  style={{ width: '40px', height: '40px', cursor: 'pointer' }}
-                  title="Add hours"
+                  className="w-full h-12 border-dashed"
                 >
-                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" className="text-primary" viewBox="0 0 24 24">
-                    <path d="M12 5v14m-7-7h14" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
-                </div>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add hours for {label}
+                </Button>
               )}
 
               {showDuplicateWarning && (
-                <div className="text-danger small mt-2">
+                <div className="text-destructive text-xs mt-2 p-2 bg-destructive/10 rounded">
                   Duplicate time block detected. Please adjust or remove.
                 </div>
               )}
@@ -222,4 +219,3 @@ export default function AvailabilityFramework({ availability, setAvailability })
     </div>
   )
 }
-

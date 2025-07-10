@@ -3,13 +3,16 @@
 import { useRouter } from 'next/navigation'
 import { useSupabaseClient } from '@supabase/auth-helpers-react'
 import { signupProfessional } from './actions'
+import { useState, useEffect } from 'react'
+
+import { Alert, AlertDescription } from "@/components/ui/alert"
+import { AlertCircle } from "lucide-react"
 
 import Account from './increment/Account'
 import Personal from './increment/Personal'
 import GeneralAddress from './increment/GeneralAddress'
 import Services from './increment/Services'
 import SelectedServices from './increment/SelectedServices'
-// import Education from './increment/Education'
 import CertificationInterface from './increment/professional-certification/CertificationInterface'
 import WorkExperienceInterface from './increment/professional-work-experience/WorkExperienceInterface'
 import AvailabilityInterface from './increment/professional-availability/AvailabilityInterface'
@@ -26,17 +29,16 @@ import {
   validateCity,
   validateParish,
   validatePhone,
-  // validateDegree,
-  // validateInstitutionId,
-  // validateFieldOfStudy,
-  // validateEndDate,
   validateWorkExperienceEntry
 } from '@/utils/validation'
 
-import designs from './ProfessionalForm.module.css'
-import { useState, useEffect } from 'react'
-
-export default function ProfessionalAccountCreation({ errorMessage, currentStep, setCurrentStep, nextStep, prevStep }) {
+export default function ProfessionalAccountCreation({ 
+  errorMessage, 
+  currentStep, 
+  setCurrentStep, 
+  nextStep, 
+  prevStep 
+}) {
   const router = useRouter()
   const supabase = useSupabaseClient()
 
@@ -63,7 +65,6 @@ export default function ProfessionalAccountCreation({ errorMessage, currentStep,
     dailyRate: '',
     serviceRadius: '',
     phone: '',
-    // education: [],
     certifications: [],
     workExperience: [],
     availability: [],
@@ -80,7 +81,7 @@ export default function ProfessionalAccountCreation({ errorMessage, currentStep,
 
   const [errors, setErrors] = useState({})
   
-  // ✅ Updated state for new architecture
+  // Updated state for new architecture
   const [verticals, setVerticals] = useState([])
   const [portfolios, setPortfolios] = useState([])
   const [servicesList, setServicesList] = useState([])
@@ -90,7 +91,7 @@ export default function ProfessionalAccountCreation({ errorMessage, currentStep,
   const [dropdownOpen, setDropdownOpen] = useState(false)
   const [isCheckingEmail, setIsCheckingEmail] = useState(false)
 
-  // ✅ Updated data fetching for new architecture
+  // Updated data fetching for new architecture
   useEffect(() => {
     async function loadData() {
       setLoading(true)
@@ -285,114 +286,121 @@ export default function ProfessionalAccountCreation({ errorMessage, currentStep,
   }
 
   return (
-    <form className={designs.outer}>
+    <div className="min-h-screen bg-background">
+      <div className="container mx-auto px-4 py-8 max-w-6xl">
+        <form className="space-y-8" onSubmit={handleSubmit}>
+          
+          {/* Error Messages */}
+          {errorMessage && (
+            <Alert variant="destructive">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>{errorMessage}</AlertDescription>
+            </Alert>
+          )}
+          
+          {errors.submit && (
+            <Alert variant="destructive">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>{errors.submit}</AlertDescription>
+            </Alert>
+          )}
 
-         {/* <form> */}
+          {/* Step Content */}
+          <div className="bg-card rounded-lg border shadow-sm">
+            {currentStep === 1 && (
+              <Account 
+                formData={formData} 
+                errors={errors} 
+                updateFormData={updateFormData} 
+                handleBlur={handleBlur} 
+                isCheckingEmail={isCheckingEmail} 
+              />
+            )}
 
-      {errorMessage && <div className="alert alert-danger mb-4">{errorMessage}</div>}
-      {errors.submit && <div className="alert alert-danger mb-4">{errors.submit}</div>}
+            {currentStep === 2 && (
+              <Personal 
+                formData={formData} 
+                errors={errors} 
+                updateFormData={updateFormData} 
+                handleBlur={handleBlur} 
+              />
+            )}
 
-      {currentStep === 1 && (
-        <Account 
-          formData={formData} 
-          errors={errors} 
-          updateFormData={updateFormData} 
-          handleBlur={handleBlur} 
-          isCheckingEmail={isCheckingEmail} 
-        />
-      )}
+            {currentStep === 3 && (
+              <GeneralAddress 
+                formData={formData} 
+                errors={errors} 
+                handleAddressSelect={handleAddressSelect} 
+                updateFormData={updateFormData} 
+              />
+            )}
 
-      {currentStep === 2 && (
-        <Personal 
-          formData={formData} 
-          errors={errors} 
-          updateFormData={updateFormData} 
-          handleBlur={handleBlur} 
-        />
-      )}
+            {currentStep === 4 && (
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 p-6">
+                <div className="lg:col-span-5">
+                  <Services 
+                    verticals={verticals}
+                    portfolios={portfolios}
+                    services={servicesList}
+                    loading={loading} 
+                    dropdownOpen={dropdownOpen} 
+                    searchTerm={searchTerm} 
+                    setSearchTerm={setSearchTerm} 
+                    setDropdownOpen={setDropdownOpen} 
+                    toggleService={toggleService} 
+                    selectedServices={formData.services} 
+                    formData={formData} 
+                    updateFormData={updateFormData} 
+                    errors={errors.services} 
+                  />
+                </div>
+                <div className="lg:col-span-7">
+                  <SelectedServices 
+                    selected={formData.services} 
+                    toggleService={toggleService} 
+                    services={servicesList} 
+                    formData={formData} 
+                    updateFormData={updateFormData} 
+                  />
+                </div>
+              </div>
+            )}
 
-      {currentStep === 3 && (
-        <GeneralAddress 
-          formData={formData} 
-          errors={errors} 
-          handleAddressSelect={handleAddressSelect} 
-          updateFormData={updateFormData} 
-        />
-      )}
+            {currentStep === 5 && (
+              <CertificationInterface 
+                formData={formData} 
+                updateFormData={updateFormData} 
+              />
+            )}
 
-      {currentStep === 4 && (
-        <div className="row">
-          <div className="col-md-5">
-            {/* ✅ Updated Services component with new props */}
-            <Services 
-              verticals={verticals}           // ✅ Changed from categories
-              portfolios={portfolios}         // ✅ New prop
-              services={servicesList}         // ✅ Keep existing
-              loading={loading} 
-              dropdownOpen={dropdownOpen} 
-              searchTerm={searchTerm} 
-              setSearchTerm={setSearchTerm} 
-              setDropdownOpen={setDropdownOpen} 
-              toggleService={toggleService} 
-              selectedServices={formData.services} 
-              formData={formData} 
-              updateFormData={updateFormData} 
-              errors={errors.services} 
-            />
+            {currentStep === 6 && (
+              <WorkExperienceInterface 
+                formData={formData} 
+                updateFormData={updateFormData} 
+              />
+            )}
+
+            {currentStep === 7 && (
+              <AvailabilityInterface 
+                formData={formData} 
+                updateFormData={updateFormData} 
+              />
+            )}
           </div>
-          <div className="col-md-7">
-            <SelectedServices 
-              selected={formData.services} 
-              toggleService={toggleService} 
-              services={servicesList} 
-              formData={formData} 
-              updateFormData={updateFormData} 
-            />
-          </div>
-        </div>
-      )}
 
-      {/* {currentStep === 5 && (
-        <Education 
-          formData={formData} 
-          errors={errors} 
-          updateFormData={updateFormData} 
-          handleBlur={handleBlur} 
-          allServices={servicesList} 
-        />
-      )} */}
+          {/* Spacer for fixed navigation */}
+          <div className="h-20" />
 
-      {currentStep === 5 && (
-        <CertificationInterface 
-          formData={formData} 
-          updateFormData={updateFormData} 
-        />
-      )}
-
-      {currentStep === 6 && (
-        <WorkExperienceInterface 
-          formData={formData} 
-          updateFormData={updateFormData} 
-        />
-      )}
-
-      {currentStep === 7 && (
-        <AvailabilityInterface 
-          formData={formData} 
-          updateFormData={updateFormData} 
-        />
-      )}
-
-      <div style={{ height: '80px' }} />
-
-      <NavigationSelectors
-        currentStep={currentStep}
-        nextStep={handleNextStep}
-        prevStep={handlePrevStep}
-        onSubmit={handleSubmit}
-        totalSteps={7}
-        loading={loading}
-      />
-    </form>
+          <NavigationSelectors
+            currentStep={currentStep}
+            nextStep={handleNextStep}
+            prevStep={handlePrevStep}
+            onSubmit={handleSubmit}
+            totalSteps={7}
+            loading={loading}
+          />
+        </form>
+      </div>
+    </div>
   )
 }
