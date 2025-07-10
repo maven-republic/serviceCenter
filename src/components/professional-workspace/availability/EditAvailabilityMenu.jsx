@@ -48,7 +48,7 @@ export default function EditAvailabilityMenu({
       />
       
       {/* Menu Card */}
-      <Card className="absolute top-2 left-2 z-50 min-w-48 shadow-lg border-border bg-background">
+<Card className="absolute top-2 left-2 z-50 min-w-48 shadow-lg border-border bg-background" data-professional="true">
         <CardContent className="p-2">
           {/* Header */}
           <div className="flex items-center justify-between px-2 py-1 mb-2">
@@ -76,7 +76,7 @@ export default function EditAvailabilityMenu({
               className="w-full justify-start h-8 px-2 text-sm font-normal"
               onClick={handleEditDate}
             >
-              <Calendar className="h-4 w-4 mr-2 text-blue-600" />
+              <Calendar className="h-4 w-4 mr-2 text-primary" />
               <div className="flex-1 text-left">
                 <div className="text-foreground">Edit this date</div>
                 <div className="text-xs text-muted-foreground">
@@ -92,7 +92,7 @@ export default function EditAvailabilityMenu({
               className="w-full justify-start h-8 px-2 text-sm font-normal"
               onClick={handleEditDay}
             >
-              <Repeat className="h-4 w-4 mr-2 text-purple-600" />
+              <Repeat className="h-4 w-4 mr-2 text-primary" />
               <div className="flex-1 text-left">
                 <div className="text-foreground">Edit all {weekday}s</div>
                 <div className="text-xs text-muted-foreground">

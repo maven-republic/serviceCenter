@@ -216,7 +216,7 @@ export default function AvailabilityCalendarView({
   }
 
   return (
-    <div className="max-w-7xl mx-auto p-6 space-y-6">
+    <div className="professional-workspace max-w-7xl mx-auto p-6 space-y-6">
       {/* Header Controls */}
       <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
         {/* Navigation */}
@@ -587,7 +587,7 @@ export default function AvailabilityCalendarView({
                 <div className="space-y-1 text-sm">
                   {override.length > 0 ? (
                     override.map((o, i) => (
-                      <div key={i} className={`flex items-center gap-2 ${o.is_available === false ? 'text-destructive' : 'text-green-600'}`}>
+                      <div key={i} className={`flex items-center gap-2 ${o.is_available === false ? 'text-destructive' : 'text-primary'}`}>
                         <Calendar className="h-3 w-3" />
                         {formatTime12(o.start_time)} – {formatTime12(o.end_time)}
                         {o.is_available === false && ' (Blocked)'}
@@ -595,7 +595,7 @@ export default function AvailabilityCalendarView({
                     ))
                   ) : recurring.length > 0 ? (
                     recurring.map((r, i) => (
-                      <div key={i} className="flex items-center gap-2 text-green-600">
+                      <div key={i} className="flex items-center gap-2 text-primary">
                         <Repeat className="h-3 w-3" />
                         {formatTime12(r.start_time)} – {formatTime12(r.end_time)}
                       </div>

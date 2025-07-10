@@ -223,13 +223,13 @@ export default function ProfessionalServices() {
                     {/* 🎯 SUPPORTING: Service Details */}
                     <div className="flex flex-col gap-2 mt-auto">
                       {service.customPrice && (
-                        <div className="flex items-center gap-1 text-xs text-green-600 font-medium">
+                        <div className="flex items-center gap-1 text-xs text-primary font-medium">
                           <DollarSign className="h-3 w-3" />
                           J$ {service.customPrice.toFixed(2)}
                         </div>
                       )}
                       {service.customDuration && (
-                        <div className="flex items-center gap-1 text-xs text-blue-600">
+                        <div className="flex items-center gap-1 text-xs text-primary">
                           <Clock className="h-3 w-3" />
                           {service.customDuration} min
                         </div>

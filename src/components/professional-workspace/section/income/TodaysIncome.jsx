@@ -31,7 +31,7 @@ export default function TodaysIncome({ hideEarnings }) {
   if (!hasBookings && !showPreview) {
     return (
       <div className="max-w-2xl">
-        <Card className="border-2 border-dashed border-muted bg-gradient-to-br from-muted/20 to-muted/40 transition-all duration-300 hover:border-muted-foreground/40">
+        <Card className="border-2 border-dashed border-muted bg-muted from-muted/20 to-muted/40 transition-all duration-300 hover:border-muted-foreground/40">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div className="space-y-2">
@@ -73,33 +73,33 @@ export default function TodaysIncome({ hideEarnings }) {
   // Preview or Live Mode
   return (
     <div className="max-w-2xl">
-      <Card className={`bg-gradient-to-br transition-all duration-300 border-0 ${
+      <Card className={`bg-muted transition-all duration-300 border-0 ${
         showPreview 
-          ? 'from-slate-600 to-slate-700 opacity-80' 
-          : 'from-gray-900 to-gray-800'
+          ? 'bg-muted opacity-80' 
+          : 'bg-card'
       }`}>
         <CardContent className="p-6">
           <div className="flex items-center justify-between">
             <div className="space-y-2">
               <div className="flex items-center gap-2">
-                <p className="text-sm font-medium text-white">
+                <p className="text-sm font-medium text-popover-foreground">
                   {showPreview ? "Today's Earnings (Preview)" : "Today's Earnings"}
                 </p>
                 {showPreview && (
-                  <Badge variant="secondary" className="bg-yellow-100 text-yellow-800 text-xs">
+                  <Badge variant="secondary" className="bg-secondary text-secondary-foreground text-xs">
                     Preview Mode
                   </Badge>
                 )}
               </div>
               
               <div className="flex items-center gap-2">
-                <p className="text-2xl font-bold text-white">
+                <p className="text-2xl font-bold text-popover-foreground">
                   {showPreview ? `Sample: ${formatEarnings(currentEarnings)}` : formatEarnings(currentEarnings)}
                 </p>
-                <DollarSign className="h-5 w-5 text-white/80" />
+                <DollarSign className="h-5 w-5 text-popover-foreground/80" />
               </div>
               
-              <div className="flex items-center gap-1 text-white/90">
+              <div className="flex items-center gap-1 text-popover-foreground/90">
                 <TrendingUp className="h-3 w-3" />
                 <p className="text-sm">
                   {showPreview ? "Sample data +12%" : "+12% from yesterday"}
@@ -108,10 +108,10 @@ export default function TodaysIncome({ hideEarnings }) {
             </div>
             
             <div className="text-right space-y-2">
-              <p className="text-sm font-medium text-white">Active Hours</p>
+              <p className="text-sm font-medium text-popover-foreground">Active Hours</p>
               <div className="flex items-center gap-2 justify-end">
-                <Clock className="h-5 w-5 text-white/80" />
-                <p className="text-2xl font-bold text-white">
+                <Clock className="h-5 w-5 text-popover-foreground/80" />
+                <p className="text-2xl font-bold text-popover-foreground">
                   {showPreview ? "Demo" : "6.5h"}
                 </p>
               </div>

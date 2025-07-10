@@ -5,46 +5,46 @@ import CustomerWorkspaceNavigation from "./sidebar/CustomerWorkspaceNavigation "
 import { useUserStore } from "@/store/userStore";
 import { createClient } from '@/utils/supabase/client';
 import { useEffect } from "react";
-import GlobalSearch from "@/components/customer-workspace/element/GlobalSearch";
-import Link from 'next/link';
-import { Bell, User } from 'lucide-react';
-import Axis from "./header/Axis";
+import { cn } from "@/lib/utils";
 
-export default function CustomerWorkspaceLayout({ children }) {
+export default function CustomerWorkspaceStructure({ children }) {
   const isActive = toggleStore((state) => state.isDasboardSidebarActive); 
-  const { user, fetchUser } = useUserStore()
+  const { user, fetchUser } = useUserStore();
 
   useEffect(() => {    
     async function setUser() {
-      const supabase = createClient() // ✅ Create supabase client
-      const { data: { session } } = await supabase.auth.getSession() // ✅ Get session properly
+      const supabase = createClient();
+      const { data: { session } } = await supabase.auth.getSession();
       
       if (session?.user) {
         console.log("session.user: ", session.user);
-        await fetchUser(session.user, supabase) // ✅ Pass both parameters
+        await fetchUser(session.user, supabase);
       }
     }  
 
     if (user === null) {
-      setUser()  
+      setUser();
     }
-  }, [user, fetchUser]) // ✅ Add fetchUser to dependencies
+  }, [user, fetchUser]);
 
   return (
-    <div className="dashboard_content_wrapper">
-      <div
-        className={`dashboard dashboard_wrapper ${
-          isActive ? "dsh_board_sidebar_hidden" : ""
-        }`}
-      >
+    <div className="min-h-screen bg-background">
+      <div className="flex h-screen">
         {/* Sidebar */}
-        <CustomerWorkspaceNavigation />
+        <div className={cn(
+          "transition-all duration-300 ease-in-out",
+          isActive ? "w-0 overflow-hidden" : "w-64"
+        )}>
+          <CustomerWorkspaceNavigation />
+        </div>
         
         {/* Main Content Area */}
-        <div className="dashboard__main pl0-md">
+        <div className="flex-1 flex flex-col overflow-hidden">
           {/* Main Content */}
-          <main className="p-4">
-            {children}
+          <main className="flex-1 overflow-auto p-6">
+            <div className="max-w-7xl mx-auto">
+              {children}
+            </div>
           </main>
         </div>
       </div>

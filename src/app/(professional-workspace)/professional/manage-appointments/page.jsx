@@ -3,35 +3,17 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { useUserStore } from '@/store/userStore'
-import { 
-  Calendar, 
-  Clock, 
-  CheckCircle, 
-  XCircle, 
-  DollarSign, 
-  Search, 
-  Filter, 
-  AlertCircle,
-  RefreshCw,
-  Eye,
-  Check,
-  X,
-  ChevronLeft,
-  ChevronRight
-} from 'lucide-react'
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card"
-import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
-import { Input } from '@/components/ui/input'
-import { Alert, AlertDescription } from '@/components/ui/alert'
+import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import AppointmentInformationTable from '@/components/professional-workspace/table/AppointmentInformationTable'
-import AppointmentInformationModal from '@/components/professional-workspace/modal/AppointmentInformationModal'
+import AppointmentInformationView from '@/components/sheet/AppointmentInformationView'
+import AppointmentStatistics from '@/components/professional-workspace/appointments/AppointmentStatistics'
+import AppointmentSearch from '@/components/professional-workspace/appointments/AppointmentSearch'
+import AppointmentEmptyState from '@/components/professional-workspace/appointments/AppointmentEmptyState'
+import AppointmentLoadingState from '@/components/professional-workspace/appointments/AppointmentLoadingState'
+import AppointmentPagination from '@/components/professional-workspace/appointments/AppointmentPagination'
+import AppointmentErrorState from '@/components/professional-workspace/appointments/AppointmentErrorState'
+import AppointmentProfileIncomplete from '@/components/professional-workspace/appointments/AppointmentProfileIncomplete'
+
 
 export default function ManageAppointments() {
   const { user } = useUserStore()
@@ -39,7 +21,7 @@ export default function ManageAppointments() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [selectedAppointment, setSelectedAppointment] = useState(null)
-  const [showModal, setShowModal] = useState(false)
+  const [showSheet, setShowSheet] = useState(false)
   const [filters, setFilters] = useState({
     status: 'all',
     search: ''
@@ -50,69 +32,6 @@ export default function ManageAppointments() {
     total: 0,
     totalPages: 0
   })
-
-  // Calculate stats with proper error handling and fallbacks
-  const calculateStats = () => {
-    const safeAppointments = Array.isArray(appointments) ? appointments : [];
-    
-    return {
-      pending: safeAppointments.filter(a => a?.status === 'pending').length,
-      accepted: safeAppointments.filter(a => a?.status === 'accepted' || a?.status === 'converted').length,
-      quoted: safeAppointments.filter(a => a?.status === 'quoted').length,
-      declined: safeAppointments.filter(a => a?.status === 'declined').length,
-      total: safeAppointments.length
-    };
-  };
-
-  const statsData = calculateStats();
-
-  // Analytics-style stats configuration (black, white, grey theme)
-  const statsConfig = [
-    {
-      title: 'Pending',
-      value: statsData.pending,
-      icon: Clock,
-      description: 'Awaiting response',
-      bgColor: 'bg-card',
-      iconColor: 'text-muted-foreground',
-      valueColor: 'text-foreground',
-      borderColor: 'border',
-      isActive: statsData.pending > 0
-    },
-    {
-      title: 'Accepted',
-      value: statsData.accepted,
-      icon: CheckCircle,
-      description: 'Confirmed bookings',
-      bgColor: 'bg-card',
-      iconColor: 'text-muted-foreground',
-      valueColor: 'text-foreground',
-      borderColor: 'border',
-      isActive: statsData.accepted > 0
-    },
-    {
-      title: 'Quoted',
-      value: statsData.quoted,
-      icon: DollarSign,
-      description: 'Quotes provided',
-      bgColor: 'bg-card',
-      iconColor: 'text-muted-foreground',
-      valueColor: 'text-foreground',
-      borderColor: 'border',
-      isActive: statsData.quoted > 0
-    },
-    {
-      title: 'Declined',
-      value: statsData.declined,
-      icon: XCircle,
-      description: 'Not proceeded',
-      bgColor: 'bg-card',
-      iconColor: 'text-muted-foreground',
-      valueColor: 'text-foreground',
-      borderColor: 'border',
-      isActive: statsData.declined > 0
-    }
-  ];
 
   // Fetch appointments from API
   const fetchAppointments = useCallback(async (page = 1) => {
@@ -205,20 +124,22 @@ export default function ManageAppointments() {
         )
       )
 
-      // Close modal if open
-      if (showModal) {
-        setShowModal(false)
+      // Close sheet if open
+      if (showSheet) {
+        setShowSheet(false)
         setSelectedAppointment(null)
       }
 
-      // Show success message
-      // TODO: Add toast notification
+      // TODO: Add toast notification instead of alert
+      // toast.success(`Appointment ${action}ed successfully!`)
 
     } catch (err) {
       console.error(`❌ Error ${action}ing appointment:`, err)
       setError(err.message)
+      // TODO: Add toast notification instead of alert
+      // toast.error(`Error: ${err.message}`)
     }
-  }, [showModal])
+  }, [showSheet])
 
   // Handle view appointment details
   const handleViewAppointment = useCallback(async (appointmentId) => {
@@ -233,7 +154,7 @@ export default function ManageAppointments() {
       }
 
       setSelectedAppointment(data.appointment)
-      setShowModal(true)
+      setShowSheet(true)
 
     } catch (err) {
       console.error('❌ Error fetching appointment details:', err)
@@ -256,328 +177,116 @@ export default function ManageAppointments() {
   })
 
   // Handle status filter change
-  const handleStatusFilter = (status) => {
+  const handleStatusFilter = useCallback((status) => {
     setFilters(prev => ({ ...prev, status }))
     setPagination(prev => ({ ...prev, page: 1 }))
-  }
+  }, [])
 
   // Handle search
-  const handleSearch = (searchTerm) => {
+  const handleSearch = useCallback((searchTerm) => {
     setFilters(prev => ({ ...prev, search: searchTerm }))
-  }
+  }, [])
 
   // Handle pagination
-  const handlePageChange = (newPage) => {
+  const handlePageChange = useCallback((newPage) => {
     if (newPage >= 1 && newPage <= pagination.totalPages) {
       fetchAppointments(newPage)
     }
-  }
+  }, [fetchAppointments, pagination.totalPages])
 
-  // Filter options
-  const filterOptions = [
-    { key: 'all', label: 'All Appointments', count: appointments.length },
-    { key: 'pending', label: 'Pending', count: appointments.filter(a => a.status === 'pending').length },
-    { key: 'quoted', label: 'Quoted', count: appointments.filter(a => a.status === 'quoted').length },
-    { key: 'accepted', label: 'Accepted', count: appointments.filter(a => a.status === 'accepted').length },
-    { key: 'converted', label: 'Converted', count: appointments.filter(a => a.status === 'converted').length }
-  ]
+  // Handle clear all filters
+  const handleClearAllFilters = useCallback(() => {
+    handleStatusFilter('all')
+    handleSearch('')
+  }, [handleStatusFilter, handleSearch])
 
+  // Handle retry
+  const handleRetry = useCallback(() => {
+    fetchAppointments(pagination.page)
+  }, [fetchAppointments, pagination.page])
+
+  // Early return for incomplete profile
   if (!user?.profile?.professional_id) {
-    return (
-      <div className="space-y-6">
-        <div>
-          <h1 className="text-2xl font-bold text-foreground">Manage Appointments</h1>
-          <p className="text-muted-foreground">Please complete your professional profile to view appointments.</p>
-        </div>
-        <Card>
-          <CardContent className="p-8 text-center">
-            <Calendar className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-            <h3 className="text-lg font-semibold mb-2">Complete Your Profile</h3>
-            <p className="text-muted-foreground">You need to complete your professional profile before you can view and manage appointments.</p>
-          </CardContent>
-        </Card>
-      </div>
-    )
+    return <AppointmentProfileIncomplete />
   }
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div>
-        <h1 className="text-2xl font-bold text-foreground">Manage Appointments</h1>
-        <p className="text-muted-foreground">Review and respond to appointment requests from customers.</p>
+    <div className="space-y-3 p-6 bg-background min-h-screen">
+      {/* Professional Header */}
+      <div className="space-y-2">
+        <h1 className="text-3xl font-bold tracking-tight text-foreground">
+          Manage Appointments
+        </h1>
+        <p className="text-muted-foreground leading-relaxed">
+          Review and respond to appointment requests from customers. 
+          Keep track of your schedule and manage your professional services.
+        </p>
       </div>
 
-      {/* Stats Cards - Analytics Style */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        {statsConfig.map((stat) => {
-          const IconComponent = stat.icon;
-          return (
-            <Card 
-              key={stat.title} 
-              className={`${stat.bgColor} border-${stat.borderColor} hover:shadow-sm transition-shadow duration-200`}
-            >
-              <CardContent className="p-6">
-                {/* Header */}
-                <div className="flex items-center justify-between mb-4">
-                  <div className="space-y-1">
-                    <p className="text-sm font-medium text-muted-foreground">
-                      {stat.title}
-                    </p>
-                    <div className="flex items-baseline gap-2">
-                      <span className={`text-3xl font-bold ${stat.valueColor}`}>
-                        {stat.value || 0}
-                      </span>
-                    </div>
-                  </div>
-                  <div className={`p-3 rounded-full bg-muted/30 ${stat.iconColor}`}>
-                    <IconComponent className="h-6 w-6" />
-                  </div>
-                </div>
-                
-                {/* Description */}
-                <p className="text-xs text-muted-foreground">
-                  {stat.description}
-                </p>
-                
-                {/* Progress indicator */}
-                <div className="mt-4">
-                  <div className="w-full bg-muted/50 rounded-full h-1">
-                    <div 
-                      className={`h-1 rounded-full transition-all duration-300 ${
-                        stat.isActive ? 'bg-foreground' : 'bg-muted'
-                      }`}
-                      style={{
-                        width: statsData.total > 0 ? `${(stat.value / statsData.total) * 100}%` : '0%'
-                      }}
-                    ></div>
-                  </div>
-                  <p className="text-xs text-muted-foreground mt-2">
-                    {statsData.total > 0 ? Math.round((stat.value / statsData.total) * 100) : 0}% of total appointments
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
-          );
-        })}
-      </div>
-
-      {/* Summary Card - Analytics Style */}
-      <Card className="bg-card border">
-        <CardHeader className="pb-3">
-          <CardTitle className="text-lg font-semibold text-foreground">Overview</CardTitle>
-          <CardDescription className="text-muted-foreground">
-            Key metrics for your appointment management
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-            <div className="text-center space-y-2">
-              <div className="text-2xl font-bold text-foreground">{statsData.total}</div>
-              <div className="text-sm text-muted-foreground">Total Requests</div>
-            </div>
-            <div className="text-center space-y-2">
-              <div className="text-2xl font-bold text-foreground">
-                {statsData.total > 0 ? Math.round(((statsData.accepted + statsData.quoted) / statsData.total) * 100) : 0}%
-              </div>
-              <div className="text-sm text-muted-foreground">Success Rate</div>
-            </div>
-            <div className="text-center space-y-2">
-              <div className="text-2xl font-bold text-foreground">
-                {statsData.pending}
-              </div>
-              <div className="text-sm text-muted-foreground">Need Action</div>
-            </div>
-            <div className="text-center space-y-2">
-              <div className="text-2xl font-bold text-foreground">
-                {statsData.quoted}
-              </div>
-              <div className="text-sm text-muted-foreground">In Progress</div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Filters and Search */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Filter className="h-5 w-5" />
-            Filters
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {/* Status Filters */}
-          <div className="flex flex-wrap gap-2">
-            {filterOptions.map(filter => (
-              <Button
-                key={filter.key}
-                variant={filters.status === filter.key ? "default" : "outline"}
-                size="sm"
-                onClick={() => handleStatusFilter(filter.key)}
-                className="h-8"
-              >
-                {filter.label} ({filter.count})
-              </Button>
-            ))}
-          </div>
-
-          {/* Search */}
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Search appointments..."
-              value={filters.search}
-              onChange={(e) => handleSearch(e.target.value)}
-              className="pl-10"
-            />
-          </div>
-        </CardContent>
-      </Card>
+      {/* Statistics Overview */}
+      <AppointmentStatistics appointments={appointments} />
 
       {/* Error State */}
       {error && (
-        <Alert variant="destructive">
-          <AlertCircle className="h-4 w-4" />
-          <AlertDescription className="flex items-center justify-between">
-            <span>Error: {error}</span>
-            <Button 
-              variant="outline" 
-              size="sm"
-              onClick={() => fetchAppointments(pagination.page)}
-              className="ml-2"
-            >
-              <RefreshCw className="h-3 w-3 mr-1" />
-              Retry
-            </Button>
-          </AlertDescription>
-        </Alert>
-      )}
-
-      {/* Loading State */}
-      {loading && (
-        <Card>
-          <CardContent className="p-8">
-            <div className="flex flex-col items-center justify-center space-y-4">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-              <p className="text-muted-foreground">Loading your appointments...</p>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Appointments List */}
-      {!loading && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Calendar className="h-5 w-5" />
-              Appointments
-            </CardTitle>
-            <CardDescription>
-              {filteredAppointments.length} appointment{filteredAppointments.length !== 1 ? 's' : ''} found
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            {filteredAppointments.length === 0 ? (
-              <div className="text-center py-12">
-                <Calendar className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                <h3 className="text-lg font-semibold mb-2">No appointments found</h3>
-                <p className="text-muted-foreground">
-                  {filters.status === 'all' 
-                    ? "You don't have any appointment requests yet." 
-                    : `No ${filters.status} appointments found.`
-                  }
-                </p>
-              </div>
-            ) : (
-              <AppointmentInformationTable
-                appointments={filteredAppointments}
-                onView={handleViewAppointment}
-                onAccept={(id) => handleAppointmentAction(id, 'accept')}
-                onDecline={(id) => handleAppointmentAction(id, 'decline')}
-                loading={loading}
-              />
-            )}
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Pagination */}
-      {pagination.totalPages > 1 && !loading && (
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex flex-col sm:flex-row items-center justify-between space-y-4 sm:space-y-0">
-              <p className="text-sm text-muted-foreground">
-                Showing {((pagination.page - 1) * pagination.limit) + 1} to {Math.min(pagination.page * pagination.limit, pagination.total)} of {pagination.total} appointments
-              </p>
-              
-              <div className="flex items-center space-x-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handlePageChange(pagination.page - 1)}
-                  disabled={pagination.page === 1}
-                >
-                  <ChevronLeft className="h-4 w-4 mr-1" />
-                  Previous
-                </Button>
-                
-                <div className="flex items-center space-x-1">
-                  {[...Array(Math.min(5, pagination.totalPages))].map((_, index) => {
-                    let pageNum
-                    if (pagination.totalPages <= 5) {
-                      pageNum = index + 1
-                    } else if (pagination.page <= 3) {
-                      pageNum = index + 1
-                    } else if (pagination.page >= pagination.totalPages - 2) {
-                      pageNum = pagination.totalPages - 4 + index
-                    } else {
-                      pageNum = pagination.page - 2 + index
-                    }
-                    
-                    return (
-                      <Button
-                        key={pageNum}
-                        variant={pagination.page === pageNum ? "default" : "outline"}
-                        size="sm"
-                        onClick={() => handlePageChange(pageNum)}
-                        className="w-8 h-8 p-0"
-                      >
-                        {pageNum}
-                      </Button>
-                    )
-                  })}
-                </div>
-                
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handlePageChange(pagination.page + 1)}
-                  disabled={pagination.page === pagination.totalPages}
-                >
-                  Next
-                  <ChevronRight className="h-4 w-4 ml-1" />
-                </Button>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Appointment Detail Modal */}
-      {showModal && selectedAppointment && (
-        <AppointmentInformationModal
-          isOpen={showModal}
-          onClose={() => {
-            setShowModal(false)
-            setSelectedAppointment(null)
-          }}
-          appointment={selectedAppointment}
-          onAccept={() => handleAppointmentAction(selectedAppointment.appointment_id, 'accept')}
-          onDecline={() => handleAppointmentAction(selectedAppointment.appointment_id, 'decline')}
+        <AppointmentErrorState 
+          error={error} 
+          onRetry={handleRetry}
         />
       )}
+
+      {/* Main Content Area - MINIMAL SPACING */}
+      <div className="space-y-1">
+        
+        {/* Search and Filters */}
+        <AppointmentSearch
+          filters={filters}
+          appointments={appointments}
+          onStatusFilter={handleStatusFilter}
+          onSearch={handleSearch}
+        />
+
+        {/* Appointments Content - TIGHT PLACEMENT */}
+        {loading ? (
+          <AppointmentLoadingState />
+        ) : filteredAppointments.length === 0 ? (
+          <AppointmentEmptyState
+            filters={filters}
+            onClearFilters={handleClearAllFilters}
+          />
+        ) : (
+          <AppointmentInformationTable
+            appointments={filteredAppointments}
+            onView={handleViewAppointment}
+            onAccept={(id) => handleAppointmentAction(id, 'accept')}
+            onDecline={(id) => handleAppointmentAction(id, 'decline')}
+            loading={loading}
+            pagination={pagination}
+            onPageChange={handlePageChange}
+          />
+        )}
+
+        {/* Pagination */}
+        {!loading && filteredAppointments.length > 0 && (
+          <AppointmentPagination
+            pagination={pagination}
+            onPageChange={handlePageChange}
+          />
+        )}
+      </div>
+
+      {/* Appointment Detail Sheet */}
+      <AppointmentInformationView
+        open={showSheet}
+        onOpenChange={(open) => {
+          setShowSheet(open)
+          if (!open) {
+            setSelectedAppointment(null)
+          }
+        }}
+        appointment={selectedAppointment}
+        onAccept={() => handleAppointmentAction(selectedAppointment?.appointment_id, 'accept')}
+        onDecline={() => handleAppointmentAction(selectedAppointment?.appointment_id, 'decline')}
+      />
     </div>
   )
 }

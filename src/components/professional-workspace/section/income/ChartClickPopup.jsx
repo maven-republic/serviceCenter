@@ -33,10 +33,10 @@ export default function ChartClickPopup({ selectedBarData, setSelectedBarData, h
   }
 
   return (
-    <div className="absolute top-5 right-5 min-w-[200px] z-50 bg-gradient-to-br from-blue-500 to-blue-900 text-white p-4 rounded-md shadow-lg animate-fade-in">
+    <div className="absolute top-5 right-5 min-w-[200px] z-50 bg-muted bg-popover border border-border text-popover-foreground p-4 rounded-md shadow-lg animate-fade-in">
       <div className="flex justify-between items-start">
         <div>
-          <div className="text-xs text-white/70">
+          <div className="text-xs text-popover-foreground/70">
             {selectedBarData.type === 'daily' && 'Daily Earnings'}
             {selectedBarData.type === 'hourly' && 'Hourly Average'}
             {selectedBarData.type === 'weekly' && 'Weekly Total'}
@@ -46,13 +46,13 @@ export default function ChartClickPopup({ selectedBarData, setSelectedBarData, h
         </div>
         <button
           onClick={() => setSelectedBarData(null)}
-          className="text-white/60 hover:text-white transition text-sm"
+          className="text-popover-foreground/60 hover:text-popover-foreground transition text-sm"
         >
           ✕
         </button>
       </div>
 
-      <div className="mt-2 text-xs text-white/70">
+      <div className="mt-2 text-xs text-popover-foreground/70">
         {getContextMessage()}
       </div>
     </div>

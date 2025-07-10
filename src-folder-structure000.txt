@@ -1,4 +1,3 @@
-C:\Users\adrom\Downloads\serviceCenter\src\aesthetics
 C:\Users\adrom\Downloads\serviceCenter\src\app
 C:\Users\adrom\Downloads\serviceCenter\src\artifacts
 C:\Users\adrom\Downloads\serviceCenter\src\components
@@ -7,8 +6,8 @@ C:\Users\adrom\Downloads\serviceCenter\src\data
 C:\Users\adrom\Downloads\serviceCenter\src\lib
 C:\Users\adrom\Downloads\serviceCenter\src\primitives
 C:\Users\adrom\Downloads\serviceCenter\src\store
+C:\Users\adrom\Downloads\serviceCenter\src\test-cva.js
 C:\Users\adrom\Downloads\serviceCenter\src\utils
-C:\Users\adrom\Downloads\serviceCenter\src\aesthetics\theme.css
 C:\Users\adrom\Downloads\serviceCenter\src\app\(about)
 C:\Users\adrom\Downloads\serviceCenter\src\app\(api)
 C:\Users\adrom\Downloads\serviceCenter\src\app\(auth)
@@ -153,7 +152,6 @@ C:\Users\adrom\Downloads\serviceCenter\src\app\(blog)\blog-single\page.jsx
 C:\Users\adrom\Downloads\serviceCenter\src\app\(blog)\blog-single\[id]
 C:\Users\adrom\Downloads\serviceCenter\src\app\(blog)\blog-single\[id]\page.jsx
 C:\Users\adrom\Downloads\serviceCenter\src\app\(customer-workspace)\customer
-C:\Users\adrom\Downloads\serviceCenter\src\app\(customer-workspace)\customer.css
 C:\Users\adrom\Downloads\serviceCenter\src\app\(customer-workspace)\search
 C:\Users\adrom\Downloads\serviceCenter\src\app\(customer-workspace)\customer\account-information
 C:\Users\adrom\Downloads\serviceCenter\src\app\(customer-workspace)\customer\address
@@ -439,6 +437,7 @@ C:\Users\adrom\Downloads\serviceCenter\src\components\professional-workspace
 C:\Users\adrom\Downloads\serviceCenter\src\components\ProfessionalManifest.jsx
 C:\Users\adrom\Downloads\serviceCenter\src\components\quantification
 C:\Users\adrom\Downloads\serviceCenter\src\components\section
+C:\Users\adrom\Downloads\serviceCenter\src\components\sheet
 C:\Users\adrom\Downloads\serviceCenter\src\components\sidebar
 C:\Users\adrom\Downloads\serviceCenter\src\components\SupabaseProvider.jsx
 C:\Users\adrom\Downloads\serviceCenter\src\components\theme-provider.jsx
@@ -705,6 +704,7 @@ C:\Users\adrom\Downloads\serviceCenter\src\components\option\ProjectTypeOption2.
 C:\Users\adrom\Downloads\serviceCenter\src\components\option\SortOption1.jsx
 C:\Users\adrom\Downloads\serviceCenter\src\components\option\SortOptions2.jsx
 C:\Users\adrom\Downloads\serviceCenter\src\components\option\SpeakOption1.jsx
+C:\Users\adrom\Downloads\serviceCenter\src\components\professional-workspace\appointments
 C:\Users\adrom\Downloads\serviceCenter\src\components\professional-workspace\availability
 C:\Users\adrom\Downloads\serviceCenter\src\components\professional-workspace\card
 C:\Users\adrom\Downloads\serviceCenter\src\components\professional-workspace\chart
@@ -719,6 +719,13 @@ C:\Users\adrom\Downloads\serviceCenter\src\components\professional-workspace\Pro
 C:\Users\adrom\Downloads\serviceCenter\src\components\professional-workspace\section
 C:\Users\adrom\Downloads\serviceCenter\src\components\professional-workspace\sidebar
 C:\Users\adrom\Downloads\serviceCenter\src\components\professional-workspace\table
+C:\Users\adrom\Downloads\serviceCenter\src\components\professional-workspace\appointments\AppointmentEmptyState.jsx
+C:\Users\adrom\Downloads\serviceCenter\src\components\professional-workspace\appointments\AppointmentErrorState.jsx
+C:\Users\adrom\Downloads\serviceCenter\src\components\professional-workspace\appointments\AppointmentLoadingState.jsx
+C:\Users\adrom\Downloads\serviceCenter\src\components\professional-workspace\appointments\AppointmentPagination.jsx
+C:\Users\adrom\Downloads\serviceCenter\src\components\professional-workspace\appointments\AppointmentProfileIncomplete.jsx
+C:\Users\adrom\Downloads\serviceCenter\src\components\professional-workspace\appointments\AppointmentSearch.jsx
+C:\Users\adrom\Downloads\serviceCenter\src\components\professional-workspace\appointments\AppointmentStatistics.jsx
 C:\Users\adrom\Downloads\serviceCenter\src\components\professional-workspace\availability\AvailabilityCalendar.jsx
 C:\Users\adrom\Downloads\serviceCenter\src\components\professional-workspace\availability\AvailabilityCalendarView.jsx
 C:\Users\adrom\Downloads\serviceCenter\src\components\professional-workspace\availability\AvailabilityFramework.jsx
@@ -808,12 +815,14 @@ C:\Users\adrom\Downloads\serviceCenter\src\components\professional-workspace\sec
 C:\Users\adrom\Downloads\serviceCenter\src\components\professional-workspace\section\income\TimelineSelector.jsx
 C:\Users\adrom\Downloads\serviceCenter\src\components\professional-workspace\section\income\TodaysIncome.jsx
 C:\Users\adrom\Downloads\serviceCenter\src\components\professional-workspace\section\income\calendar\AnalyticsCalendar.jsx
+C:\Users\adrom\Downloads\serviceCenter\src\components\professional-workspace\section\income\calendar\Calendar.jsx
 C:\Users\adrom\Downloads\serviceCenter\src\components\professional-workspace\section\income\calendar\CalendarHeader.jsx
 C:\Users\adrom\Downloads\serviceCenter\src\components\professional-workspace\section\income\calendar\CalendarIcon.jsx
 C:\Users\adrom\Downloads\serviceCenter\src\components\professional-workspace\section\income\calendar\CalendarSlot.jsx
 C:\Users\adrom\Downloads\serviceCenter\src\components\professional-workspace\section\income\calendar\CalendarUtils.js
 C:\Users\adrom\Downloads\serviceCenter\src\components\professional-workspace\section\income\calendar\EndDate.jsx
 C:\Users\adrom\Downloads\serviceCenter\src\components\professional-workspace\section\income\calendar\StartDate.jsx
+C:\Users\adrom\Downloads\serviceCenter\src\components\professional-workspace\section\income\calendar\TimelineInterface.jsx
 C:\Users\adrom\Downloads\serviceCenter\src\components\professional-workspace\section\income\charts\ChartContainer.jsx
 C:\Users\adrom\Downloads\serviceCenter\src\components\professional-workspace\section\income\charts\DayChart.jsx
 C:\Users\adrom\Downloads\serviceCenter\src\components\professional-workspace\section\income\charts\HourChart.jsx
@@ -1033,6 +1042,7 @@ C:\Users\adrom\Downloads\serviceCenter\src\components\section\TrendingService4.j
 C:\Users\adrom\Downloads\serviceCenter\src\components\section\TrendingService5.jsx
 C:\Users\adrom\Downloads\serviceCenter\src\components\section\TrendingService6.jsx
 C:\Users\adrom\Downloads\serviceCenter\src\components\section\UiElement.jsx
+C:\Users\adrom\Downloads\serviceCenter\src\components\sheet\AppointmentInformationView.jsx
 C:\Users\adrom\Downloads\serviceCenter\src\components\sidebar\ListingSidebar1.jsx
 C:\Users\adrom\Downloads\serviceCenter\src\components\sidebar\ListingSidebar2.jsx
 C:\Users\adrom\Downloads\serviceCenter\src\components\sidebar\ListingSidebar3.jsx
@@ -1050,14 +1060,20 @@ C:\Users\adrom\Downloads\serviceCenter\src\components\ui\button.jsx
 C:\Users\adrom\Downloads\serviceCenter\src\components\ui\card.jsx
 C:\Users\adrom\Downloads\serviceCenter\src\components\ui\chart.jsx
 C:\Users\adrom\Downloads\serviceCenter\src\components\ui\checkbox.jsx
+C:\Users\adrom\Downloads\serviceCenter\src\components\ui\dialog.jsx
 C:\Users\adrom\Downloads\serviceCenter\src\components\ui\dropdown-menu.jsx
 C:\Users\adrom\Downloads\serviceCenter\src\components\ui\input.jsx
 C:\Users\adrom\Downloads\serviceCenter\src\components\ui\label.jsx
+C:\Users\adrom\Downloads\serviceCenter\src\components\ui\progress.jsx
 C:\Users\adrom\Downloads\serviceCenter\src\components\ui\select.jsx
 C:\Users\adrom\Downloads\serviceCenter\src\components\ui\separator.jsx
 C:\Users\adrom\Downloads\serviceCenter\src\components\ui\sheet.jsx
+C:\Users\adrom\Downloads\serviceCenter\src\components\ui\sidebar.jsx
 C:\Users\adrom\Downloads\serviceCenter\src\components\ui\skeleton.jsx
+C:\Users\adrom\Downloads\serviceCenter\src\components\ui\slider.jsx
 C:\Users\adrom\Downloads\serviceCenter\src\components\ui\table.jsx
+C:\Users\adrom\Downloads\serviceCenter\src\components\ui\tabs.jsx
+C:\Users\adrom\Downloads\serviceCenter\src\components\ui\textarea.jsx
 C:\Users\adrom\Downloads\serviceCenter\src\components\ui\tooltip.jsx
 C:\Users\adrom\Downloads\serviceCenter\src\components\ui-elements\Accordion1.jsx
 C:\Users\adrom\Downloads\serviceCenter\src\components\ui-elements\Alert1.jsx
@@ -1100,6 +1116,7 @@ C:\Users\adrom\Downloads\serviceCenter\src\data\project.js
 C:\Users\adrom\Downloads\serviceCenter\src\data\steps.js
 C:\Users\adrom\Downloads\serviceCenter\src\data\testimonials.js
 C:\Users\adrom\Downloads\serviceCenter\src\lib\utils.js
+C:\Users\adrom\Downloads\serviceCenter\src\primitives\use-mobile.js
 C:\Users\adrom\Downloads\serviceCenter\src\primitives\useAddressSelection.js
 C:\Users\adrom\Downloads\serviceCenter\src\primitives\useAppointmentNotifications.js
 C:\Users\adrom\Downloads\serviceCenter\src\primitives\useAttributeQuantification.js

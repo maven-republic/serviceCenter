@@ -8,17 +8,20 @@ export const revalidate = 0
 
 export async function GET(request, { params }) {
   console.log('🔥 API Route called!')
-  console.log('🔥 Params:', params)
-  console.log('🔥 Request URL:', request.url)
   
   try {
+    // ✅ Fix: Await params for Next.js 15+
+    const resolvedParams = await params
+    const { id: professionalId } = resolvedParams
+    
+    console.log('🔥 Params:', resolvedParams)
+    console.log('🔥 Request URL:', request.url)
+    console.log('🔥 Professional ID:', professionalId)
+    
     console.log('🔥 Creating Supabase client...')
     
     const supabase = await createClient()
     console.log('🔥 Supabase client created successfully')
-    
-    const { id: professionalId } = params
-    console.log('🔥 Professional ID:', professionalId)
     
     const { searchParams } = new URL(request.url)
     console.log('🔥 Search params:', Object.fromEntries(searchParams))

@@ -163,7 +163,7 @@ export default function AvailabilityFramework({ availability = [], setAvailabili
   }
 
   return (
-    <div className="max-w-4xl mx-auto p-6 space-y-6">
+    <div className="professional-workspace max-w-4xl mx-auto p-6 space-y-6">
       {/* Header */}
       <div className="space-y-2">
         <div className="flex items-center gap-2">
@@ -295,7 +295,7 @@ export default function AvailabilityFramework({ availability = [], setAvailabili
                       <div key={index} className="flex items-center gap-3 p-3 bg-card border rounded-lg">
                         <div className="flex items-center gap-2 flex-1">
                           <Label htmlFor={`${value}-${index}-start`} className="text-sm font-medium min-w-12">
-                            From:
+                            from:
                           </Label>
                           <Input
                             id={`${value}-${index}-start`}
@@ -305,10 +305,9 @@ export default function AvailabilityFramework({ availability = [], setAvailabili
                             className="w-32"
                           />
                           
-                          <span className="text-muted-foreground mx-2">to</span>
                           
                           <Label htmlFor={`${value}-${index}-end`} className="text-sm font-medium min-w-8">
-                            To:
+                            to:
                           </Label>
                           <Input
                             id={`${value}-${index}-end`}

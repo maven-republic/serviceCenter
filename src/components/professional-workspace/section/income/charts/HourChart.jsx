@@ -81,7 +81,7 @@ export default function HourChart({ hideEarnings, activeTimeline, dateRange, sho
       {/* Steps Indicator */}
       <div className="flex items-center gap-4 flex-wrap justify-center">
         <div className="flex items-center gap-2">
-          <Badge variant="default" className="bg-green-500 hover:bg-green-500 gap-1">
+          <Badge variant="default" className="bg-primary hover:bg-primary gap-1">
             <CheckCircle className="h-3 w-3" />
             <span className="text-xs">Profile setup</span>
           </Badge>

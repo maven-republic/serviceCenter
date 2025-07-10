@@ -1,21 +1,45 @@
 "use client";
+
 import { useState, useEffect } from 'react';
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { 
+  Loader2, 
+  AlertCircle, 
+  RefreshCw, 
+  Search,
+  Filter,
+  Grid3X3,
+  List
+} from "lucide-react";
+
 import listingStore from "@/store/listingStore";
-import Sift from "../element/Sift";
-import ListingSidebarModal1 from "../modal/ListingSidebarModal1";
-import Pagination1 from "./Pagination1";
 import priceStore from "@/store/priceStore";
-import PopularServiceSlideCard1 from "../card/PopularServiceSlideCard1";
+import Sift from "../element/Sift";
+import Pagination1 from "./Pagination1";
 import Manifest from "../card/Manifest";
-import ListingMap1 from "../element/ListingMap1";
+import { cn } from "@/lib/utils";
 
 export default function Collection() {
   const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(12);
   const [loading, setLoading] = useState(true);
   const [services, setServices] = useState([]);
   const [error, setError] = useState(null);
-  const itemsPerPage = 12; // Increased from 4 to 12 for full-width layout
+  const [viewMode, setViewMode] = useState('grid'); // 'grid' or 'list'
+  const [sortBy, setSortBy] = useState('recommended');
   
+  // Store state
   const getDeliveryTime = listingStore((state) => state.getDeliveryTime);
   const getPriceRange = priceStore((state) => state.priceRange);
   const getLevel = listingStore((state) => state.getLevel);
@@ -31,11 +55,9 @@ export default function Collection() {
   useEffect(() => {
     const fetchServices = async () => {
       try {
-        console.log("Fetching services...");
         setLoading(true);
         setError(null);
 
-        // Fetch from the main services API endpoint
         const response = await fetch('/api/services', {
           method: 'GET',
           headers: {
@@ -44,28 +66,19 @@ export default function Collection() {
           }
         });
 
-        console.log("Response received:", response.status);
-
-        // Check the content type
         const contentType = response.headers.get('content-type');
-        console.log("Content type:", contentType);
 
         if (!contentType || !contentType.includes('application/json')) {
           const text = await response.text();
-          console.error("Non-JSON response:", text);
           throw new Error(`Expected JSON, got ${contentType}: ${text}`);
         }
 
         if (!response.ok) {
           const errorText = await response.text();
-          console.error("Error response:", errorText);
-          
-          // If it's a 400 error about professional ID, try a different approach
           if (response.status === 400 && errorText.includes('Professional ID')) {
             throw new Error('API_REQUIRES_PROFESSIONAL_ID');
           }
-          
-          throw new Error(`Failed to fetch: ${response.status} ${response.statusText} - ${errorText}`);
+          throw new Error(`Failed to fetch: ${response.status} ${response.statusText}`);
         }
 
         const data = await response.json();
@@ -78,30 +91,24 @@ export default function Collection() {
         } else if (data.data && Array.isArray(data.data)) {
           setServices(data.data);
         } else {
-          console.warn("Unexpected data format:", data);
           setServices([]);
         }
 
       } catch (error) {
-        console.error('Detailed error fetching services:', {
-          name: error.name,
-          message: error.message,
-          stack: error.stack
-        });
-        
+        console.error('Error fetching services:', error);
         setError(error.message);
         
-        // Fallback to using static data if API fails
+        // Fallback to static data
         try {
           const module = await import("@/data/product");
           if (module.service && Array.isArray(module.service)) {
             setServices(module.service);
-            setError(null); // Clear error if fallback works
+            setError(null);
           } else {
             setServices([]);
           }
         } catch (fallbackError) {
-          console.error('Fallback data also failed:', fallbackError);
+          console.error('Fallback data failed:', fallbackError);
           setServices([]);
         }
       } finally {
@@ -113,7 +120,7 @@ export default function Collection() {
     resetAllFilters();
   }, [resetAllFilters]);
 
-  // Filter functions remain the same
+  // Filter functions
   const deliveryFilter = (item) =>
     getDeliveryTime === "" || getDeliveryTime === "anytime"
       ? item
@@ -138,7 +145,7 @@ export default function Collection() {
       ? (item.title?.toLowerCase().includes(getSearch.toLowerCase()) || 
          item.category?.toLowerCase().includes(getSearch.toLowerCase()) ||
          item.description?.toLowerCase().includes(getSearch.toLowerCase()) ||
-         item.name?.toLowerCase().includes(getSearch.toLowerCase())) // Added name field
+         item.name?.toLowerCase().includes(getSearch.toLowerCase()))
       : item;
 
   const sortByFilter = (item) =>
@@ -150,8 +157,8 @@ export default function Collection() {
   const speakFilter = (item) =>
     getSpeak?.length !== 0 ? getSpeak.includes(item.language) : item;
 
-  // Apply all filters
-  const filteredServices = services
+  // Apply all filters and sorting
+  let filteredServices = services
     .filter(getDeliveryTime ? deliveryFilter : () => true)
     .filter(getPriceRange.min !== 0 || getPriceRange.max !== 100000 ? priceFilter : () => true)
     .filter(getLevel?.length !== 0 ? levelFilter : () => true)
@@ -160,7 +167,27 @@ export default function Collection() {
     .filter(getBestSeller !== "" ? sortByFilter : () => true)
     .filter(getDesginTool?.length !== 0 ? designToolFilter : () => true)
     .filter(getSpeak?.length !== 0 ? speakFilter : () => true)
-    .filter(getCategory?.length !== 0 ? categoryFilter : () => true); 
+    .filter(getCategory?.length !== 0 ? categoryFilter : () => true);
+
+  // Apply sorting
+  if (sortBy) {
+    filteredServices = [...filteredServices].sort((a, b) => {
+      switch (sortBy) {
+        case 'price-low':
+          return (a.price || 0) - (b.price || 0);
+        case 'price-high':
+          return (b.price || 0) - (a.price || 0);
+        case 'rating':
+          return (b.rating || 0) - (a.rating || 0);
+        case 'newest':
+          return new Date(b.createdAt || 0) - new Date(a.createdAt || 0);
+        case 'popular':
+          return (b.reviews || 0) - (a.reviews || 0);
+        default:
+          return 0;
+      }
+    });
+  }
 
   // Calculate pagination
   const indexOfLastItem = currentPage * itemsPerPage;
@@ -170,161 +197,193 @@ export default function Collection() {
   // Handle page change
   const handlePageChange = (pageNumber) => {
     setCurrentPage(pageNumber);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  // Loading state
-  if (loading) {
-    return (
-      <div className="d-flex justify-content-center align-items-center" style={{ height: '400px' }}>
-        <div className="spinner-border text-primary" role="status">
-          <span className="visually-hidden">Loading...</span>
-        </div>
-      </div>
-    );
-  }
+  // Handle items per page change
+  const handleItemsPerPageChange = (value) => {
+    setItemsPerPage(parseInt(value));
+    setCurrentPage(1);
+  };
+
+  // Retry function
+  const retryFetch = () => {
+    window.location.reload();
+  };
+
+  // Loading skeleton
+  const LoadingSkeleton = () => (
+    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4 2xl:grid-cols-6 gap-6">
+      {[...Array(12)].map((_, i) => (
+        <Card key={i} className="h-80">
+          <Skeleton className="h-52 w-full" />
+          <CardContent className="p-4 space-y-3">
+            <Skeleton className="h-4 w-3/4" />
+            <div className="flex justify-between items-center">
+              <Skeleton className="h-3 w-16" />
+              <Skeleton className="h-5 w-12" />
+            </div>
+            <Skeleton className="h-3 w-full" />
+            <Skeleton className="h-3 w-2/3" />
+          </CardContent>
+        </Card>
+      ))}
+    </div>
+  );
 
   // Error state
   if (error && services.length === 0) {
     return (
-      <div className="d-flex justify-content-center align-items-center flex-column" style={{ height: '400px' }}>
-        <div className="alert alert-warning text-center">
-          <h5>Unable to load services</h5>
-          <p>{error}</p>
-          <button 
-            className="btn btn-primary mt-2" 
-            onClick={() => window.location.reload()}
-          >
-            Retry
-          </button>
-        </div>
+      <div className="container max-w-7xl mx-auto px-4 py-8">
+        <Alert className="max-w-lg mx-auto">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription className="space-y-4">
+            <div>
+              <h5 className="font-semibold mb-2">Unable to load services</h5>
+              <p className="text-sm text-muted-foreground">{error}</p>
+            </div>
+            <Button onClick={retryFetch} className="gap-2">
+              <RefreshCw className="h-4 w-4" />
+              Retry
+            </Button>
+          </AlertDescription>
+        </Alert>
       </div>
     );
   }
 
   return (
-    <>
-      <section className="p-0">
-        <div className="container-fluid px-4"> {/* Added horizontal padding */}
-          <div className="row wow fadeInUp" data-wow-delay="300ms">
-            
-            {/* FULL WIDTH - Changed from col-xl-7 to col-12 */}
-            <div className="col-12">
-              <div className="services_listing_area ">
+    <div className="min-h-screen bg-background">
+      <div className="container max-w-7xl mx-auto px-4 py-6">
+        
+        {/* Header Section */}
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-6">
+          <div>
+            <h1 className="text-2xl font-bold text-foreground mb-2">
+              Explore               {error && (
                 
-                {/* Enhanced Header Section */}
-                <div className="d-flex justify-content-between align-items-center mb-4">
-                  <div>
-                    <h4 className="fw700 mb-1">
-                      {/* Services  */}
-                      {error && <small className="text-warning ms-2">(Using cached data)</small>}
-                    </h4>
-                    <p className="text-muted mb-0">
-                      {/* {filteredServices.length} service{filteredServices.length !== 1 ? 's' : ''} found */}
-                    </p>
-                  </div>
-                  
-                  {/* Results summary */}
-                  {/* {currentItems.length > 0 && (
-                    <div className="results-summary text-muted">
-                      Showing {indexOfFirstItem + 1}-{Math.min(indexOfLastItem, filteredServices.length)} of {filteredServices.length}
-                    </div>
-                  )} */}
-                </div>
-                
-                {/* Filters Section */}
-                {/* <Sift /> */}
-                
-                {/* Services Grid - Pinterest Style Responsive Grid */}
-                <div className="row g-3 mb-4"> {/* g-3 adds consistent 16px gaps */}
-                  {currentItems.length > 0 ? currentItems.map((item, i) => (
-                    <div 
-                      key={item.id || i} 
-                      className="col-12 col-sm-6 col-md-4 col-lg-3 col-xl-3 col-xxl-2" 
-                      // Pinterest-style responsive breakdown:
-                      // Mobile (xs): 1 column (col-12)
-                      // Small tablet (sm): 2 columns (col-sm-6) 
-                      // Medium tablet (md): 3 columns (col-md-4)
-                      // Desktop (lg): 4 columns (col-lg-3)
-                      // Large desktop (xl): 4 columns (col-xl-3)
-                      // Extra large (xxl): 6 columns (col-xxl-2)
-                    >
-                      {/* Always use Manifest for Pinterest-style cards */}
-                      <Manifest data={item} />
-                    </div>
-                  )) : (
-                    <div className="col-12">
-                      <div className="text-center py-5">
-                        <div className="empty-state">
-                          <div className="mb-4">
-                            <i className="fas fa-search fa-4x text-muted opacity-50"></i>
-                          </div>
-                          <h4 className="fw600 mb-3">No services found</h4>
-                          <p className="text-muted mb-4">
-                            We couldn't find any services matching your criteria.<br />
-                            Try adjusting your filters or search terms.
-                          </p>
-                          <button 
-                            className="btn btn-thm px-4 py-2" 
-                            onClick={resetAllFilters}
-                          >
-                            <i className="fas fa-refresh me-2"></i>
-                            Clear All Filters
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </div>
-                
-                {/* Pagination Section */}
-                {filteredServices.length > 0 && (
-                  <div className="pagination-wrapper">
-                    <div className="d-flex justify-content-between align-items-center">
-                      
-                      {/* Results info */}
-                      <div className="pagination-info text-muted">
-                        Page {currentPage} of {Math.ceil(filteredServices.length / itemsPerPage)}
-                      </div>
-                      
-                      {/* Pagination component */}
-                      <Pagination1 
-                        totalItems={filteredServices.length} 
-                        itemsPerPage={itemsPerPage}
-                        onPageChange={handlePageChange}
-                        currentPage={currentPage}
-                      />
-                      
-                      {/* Items per page selector (optional) */}
-                      <div className="items-per-page">
-                        <select 
-                          className="form-select form-select-sm"
-                          value={itemsPerPage}
-                          onChange={(e) => {
-                            setItemsPerPage(parseInt(e.target.value));
-                            setCurrentPage(1); // Reset to first page
-                          }}
-                          style={{ width: 'auto', minWidth: '80px' }}
-                        >
-                          <option value={8}>8 per page</option>
-                          <option value={12}>12 per page</option>
-                          <option value={16}>16 per page</option>
-                          <option value={24}>24 per page</option>
-                        </select>
-                      </div>
-                      
-                    </div>
-                  </div>
-                )}
-                
-              </div>
+                <Badge variant="secondary" className="ml-3">
+                  Using cached data
+                </Badge>
+              )}
+            </h1>
+            {/* <p className="text-muted-foreground">
+              {loading ? (
+                <Skeleton className="h-4 w-48" />
+              ) : (
+                `${filteredServices.length} service${filteredServices.length !== 1 ? 's' : ''} found`
+              )}
+            </p> */}
+          </div>
+          
+          {/* View Controls */}
+          <div className="flex items-center gap-3">
+            {/* View Mode Toggle */}
+            <div className="hidden sm:flex bg-muted rounded-lg p-1">
+              <Button
+                variant={viewMode === 'grid' ? 'default' : 'ghost'}
+                size="sm"
+                onClick={() => setViewMode('grid')}
+                className="gap-2"
+              >
+                <Grid3X3 className="h-4 w-4" />
+                Grid
+              </Button>
+              <Button
+                variant={viewMode === 'list' ? 'default' : 'ghost'}
+                size="sm"
+                onClick={() => setViewMode('list')}
+                className="gap-2"
+              >
+                <List className="h-4 w-4" />
+                List
+              </Button>
             </div>
-            
-            {/* Map section is completely removed */}
-            
+
+            {/* Items per page */}
+            <Select value={itemsPerPage.toString()} onValueChange={handleItemsPerPageChange}>
+              <SelectTrigger className="w-36">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="8">8 per page</SelectItem>
+                <SelectItem value="12">12 per page</SelectItem>
+                <SelectItem value="16">16 per page</SelectItem>
+                <SelectItem value="24">24 per page</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
         </div>
-      </section>
-      
-         </>
+
+        {/* Filters Section */}
+        <div className="mb-6">
+          <Sift />
+        </div>
+
+        {/* Results Summary */}
+        {!loading && currentItems.length > 0 && (
+          <div className="flex justify-between items-center mb-4 text-sm text-muted-foreground">
+            <span>
+              Showing {indexOfFirstItem + 1}-{Math.min(indexOfLastItem, filteredServices.length)} of {filteredServices.length}
+            </span>
+          </div>
+        )}
+
+        {/* Loading State */}
+        {loading && <LoadingSkeleton />}
+
+        {/* Services Grid */}
+        {!loading && (
+          <>
+            {currentItems.length > 0 ? (
+              <div className={cn(
+                "gap-6 mb-8",
+                viewMode === 'grid' 
+                  ? "grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4 2xl:grid-cols-6"
+                  : "flex flex-col space-y-4"
+              )}>
+                {currentItems.map((item, i) => (
+                  <div key={item.id || i} className={cn(
+                    viewMode === 'list' && "max-w-none"
+                  )}>
+                    <Manifest data={item} />
+                  </div>
+                ))}
+              </div>
+            ) : (
+              // Empty State
+              <Card className="text-center py-12">
+                <CardContent className="space-y-4">
+                  <div className="mx-auto w-16 h-16 bg-muted rounded-full flex items-center justify-center">
+                    <Search className="h-8 w-8 text-muted-foreground" />
+                  </div>
+                  <h3 className="text-lg font-semibold">No services found</h3>
+                  <p className="text-muted-foreground max-w-md mx-auto">
+                    We couldn't find any services matching your criteria. Try adjusting your filters or search terms.
+                  </p>
+                  <Button onClick={resetAllFilters} className="gap-2">
+                    <RefreshCw className="h-4 w-4" />
+                    Clear All Filters
+                  </Button>
+                </CardContent>
+              </Card>
+            )}
+          </>
+        )}
+
+        {/* Pagination */}
+        {!loading && filteredServices.length > 0 && (
+          <div className="mt-8">
+            <Pagination1 
+              totalItems={filteredServices.length} 
+              itemsPerPage={itemsPerPage}
+              onPageChange={handlePageChange}
+              currentPage={currentPage}
+            />
+          </div>
+        )}
+
+      </div>
+    </div>
   );
 }

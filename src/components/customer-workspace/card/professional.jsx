@@ -69,7 +69,7 @@ export default function ProviderCard({ provider, view = 'grid', isAuthenticated 
           <h3 className="font-medium text-lg text-center">{displayName}</h3>
           
           {isVerified && (
-            <div className="flex items-center text-green-600 text-sm mt-1">
+            <div className="flex items-center text-primary text-sm mt-1">
               <CheckCircle size={14} className="mr-1" />
               <span>Verified Professional</span>
             </div>
@@ -148,8 +148,8 @@ export default function ProviderCard({ provider, view = 'grid', isAuthenticated 
               {isVerified && (
                 <>
                   <span className="mx-2">•</span>
-                  <CheckCircle size={14} className="mr-1 text-green-600" />
-                  <span className="text-green-600">Verified</span>
+                  <CheckCircle size={14} className="mr-1 text-primary" />
+                  <span className="text-primary">Verified</span>
                 </>
               )}
             </div>

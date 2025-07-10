@@ -15,33 +15,33 @@ export default function ChartTabs({ activeChart, setActiveChart }) {
       label: 'Day', 
       icon: BarChart3, 
       description: 'Daily trends',
-      color: 'text-blue-600'
+      color: 'text-primary'
     },
     { 
       key: 'hourly', 
       label: 'Hour', 
       icon: Clock, 
       description: 'Peak hours',
-      color: 'text-green-600'
+      color: 'text-primary'
     },
     { 
       key: 'weekly', 
       label: 'Week', 
       icon: TrendingUp, 
       description: 'Weekly view',
-      color: 'text-purple-600'
+      color: 'text-primary'
     },
     { 
       key: 'monthly', 
       label: 'Month', 
       icon: Calendar, 
       description: 'Monthly stats',
-      color: 'text-orange-600'
+      color: 'text-primary'
     }
   ];
 
   return (
-    <div className="bg-gradient-to-br from-muted/50 to-muted/30 rounded-xl p-1.5 mb-6 shadow-sm border border-border">
+    <div className=" bg-muted/50 rounded-xl p-1.5 mb-6 shadow-sm border border-border">
       <div className="flex gap-1 w-full">
         {tabs.map((tab) => {
           const IconComponent = tab.icon;

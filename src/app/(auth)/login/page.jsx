@@ -24,7 +24,7 @@ function LoginInner() {
       <section className="our-login">
         <LoginForm errorMessage={errorMessage} />
       </section>
-      <Footer />
+      {/* <Footer /> */}
     </div>
   )
 }

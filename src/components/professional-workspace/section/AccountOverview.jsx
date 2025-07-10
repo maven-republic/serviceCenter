@@ -128,7 +128,7 @@ export default function AccountOverview() {
               onChange={(e) => setFirstName(e.target.value)}
               onFocus={(e) => e.target.select()}
               onKeyDown={handleKeyDown}
-              className="transition-colors focus:ring-2 focus:ring-primary/20"
+              className="transition-colors  /20"
               placeholder="Enter your first name"
             />
           </div>
@@ -144,7 +144,7 @@ export default function AccountOverview() {
               onChange={(e) => setLastName(e.target.value)}
               onFocus={(e) => e.target.select()}
               onKeyDown={handleKeyDown}
-              className="transition-colors focus:ring-2 focus:ring-primary/20"
+              className="transition-colors /20"
               placeholder="Enter your last name"
             />
           </div>
@@ -160,7 +160,7 @@ export default function AccountOverview() {
               onChange={(e) => setEmail(e.target.value)}
               onFocus={(e) => e.target.select()}
               onKeyDown={handleKeyDown}
-              className="transition-colors focus:ring-2 focus:ring-primary/20"
+              className="transition-colors  /20"
               placeholder="Enter your email address"
             />
           </div>
@@ -177,7 +177,7 @@ export default function AccountOverview() {
               onFocus={(e) => e.target.select()}
               onKeyDown={handleKeyDown}
               disabled={phoneLoading}
-              className="transition-colors focus:ring-2 focus:ring-primary/20"
+              className="transition-colors  /20"
               placeholder="Enter your phone number"
             />
           </div>

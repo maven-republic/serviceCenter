@@ -50,28 +50,28 @@ export default function InteractiveChart({ activeChart, hideEarnings, activeTime
       title: 'Day to Day Analytics',
       description: 'Track daily income patterns and trends',
       icon: BarChart3,
-      color: 'text-blue-600',
+      color: 'text-primary',
       borderColor: 'border-blue-200'
     },
     hourly: {
       title: 'Hourly Breakdown',
       description: 'Identify peak earning hours throughout the day',
       icon: Clock,
-      color: 'text-green-600',
+      color: 'text-primary',
       borderColor: 'border-green-200'
     },
     weekly: {
       title: 'Weekly Overview',
       description: 'Monitor weekly performance and growth trends',
       icon: TrendingUp,
-      color: 'text-purple-600',
+      color: 'text-primary',
       borderColor: 'border-purple-200'
     },
     monthly: {
       title: 'Monthly Summary',
       description: 'Review monthly earnings and seasonal patterns',
       icon: Calendar,
-      color: 'text-orange-600',
+      color: 'text-primary',
       borderColor: 'border-orange-200'
     }
   };

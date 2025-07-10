@@ -1,16 +1,36 @@
 "use client";
+
 import Image from "next/image";
 import { useState, useCallback } from "react";
-import { Star, MapPin, Clock, Shield, Calendar, MessageCircle, Phone, X, Linkedin, Mail } from "lucide-react";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Separator } from "@/components/ui/separator";
+import { 
+  Star, 
+  MapPin, 
+  Clock, 
+  Shield, 
+  Calendar, 
+  MessageCircle, 
+  Phone, 
+  Mail,
+  User,
+  DollarSign,
+  Award,
+  Timer
+} from "lucide-react";
 import AppointmentModal from "@/components/modal/AppointmentModal";
 import { useUserStore } from "@/store/userStore";
 import useSearchStore from "@/store/searchStore";
+import { cn } from "@/lib/utils";
 
 export default function ProfessionalManifest({ data, serviceInformation }) {
   const [showFullBio, setShowFullBio] = useState(false);
   const [isAppointmentModalOpen, setIsAppointmentModalOpen] = useState(false);
   const { user } = useUserStore();
-const confirmedAddress = useSearchStore((state) => state.confirmedAddress);
+  const confirmedAddress = useSearchStore((state) => state.confirmedAddress);
 
   const {
     professional_id,
@@ -30,44 +50,40 @@ const confirmedAddress = useSearchStore((state) => state.confirmedAddress);
     distance_km,
     response_time = "2 hours",
     completion_rate = 95,
-    account, // Added to access account data
+    account,
   } = data;
 
   const full_name = `${first_name ?? ''} ${last_name ?? ''}`.trim();
 
   // Get customer's confirmed address with fallback to URL coordinates
-const getCustomerLocation = useCallback(() => {
-  console.log('🔍 DEBUG: confirmedAddress from store:', confirmedAddress);
-
-  if (confirmedAddress) {
-    return confirmedAddress;
-  }
-
-  if (typeof window !== 'undefined') {
-    const urlParams = new URLSearchParams(window.location.search);
-    const lat = urlParams.get('lat');
-    const lng = urlParams.get('lng');
-
-    if (lat && lng) {
-      console.log('⚠️ Fallback to URL coordinates:', { lat, lng });
-      return {
-        latitude: parseFloat(lat),
-        longitude: parseFloat(lng),
-        street_address: '',
-        city: '',
-        parish: '',
-        community: '',
-        landmark: '',
-        is_rural: false,
-        formatted_address: `Location: ${lat}, ${lng}`,
-        place_id: null,
-      };
+  const getCustomerLocation = useCallback(() => {
+    if (confirmedAddress) {
+      return confirmedAddress;
     }
-  }
 
-  return null;
-}, [confirmedAddress]);
+    if (typeof window !== 'undefined') {
+      const urlParams = new URLSearchParams(window.location.search);
+      const lat = urlParams.get('lat');
+      const lng = urlParams.get('lng');
 
+      if (lat && lng) {
+        return {
+          latitude: parseFloat(lat),
+          longitude: parseFloat(lng),
+          street_address: '',
+          city: '',
+          parish: '',
+          community: '',
+          landmark: '',
+          is_rural: false,
+          formatted_address: `Location: ${lat}, ${lng}`,
+          place_id: null,
+        };
+      }
+    }
+
+    return null;
+  }, [confirmedAddress]);
 
   // Format pricing display
   const getPricingDisplay = () => {
@@ -78,7 +94,7 @@ const getCustomerLocation = useCallback(() => {
     } else if (daily_rate) {
       return `$${daily_rate}/day`;
     } else {
-      return "Custom pricing";
+      return "Estimate";
     }
   };
 
@@ -103,26 +119,22 @@ const getCustomerLocation = useCallback(() => {
 
   // Handle booking button click
   const handleBookingClick = useCallback(() => {
-    // Check if user is logged in
     if (!user) {
       alert('Please log in to book services');
       return;
     }
 
-    // Check if user is a customer
     if (user.primaryRole !== 'customer') {
       alert('Only customers can book services');
       return;
     }
 
-    // Check if customer location is available
     const customerLocation = getCustomerLocation();
     if (!customerLocation) {
       alert('Unable to determine service location. Please refresh and try again.');
       return;
     }
 
-    // Open booking modal
     setIsAppointmentModalOpen(true);
   }, [user, getCustomerLocation]);
 
@@ -146,222 +158,118 @@ const getCustomerLocation = useCallback(() => {
     experience
   };
 
+  // Truncate bio text
+  const bioText = getBioText();
+  const truncatedBio = bioText.length > 120 ? bioText.slice(0, 120) + "..." : bioText;
+
   return (
     <>
-      <div className="professional-card">
-        {/* Profile Image */}
-        <div className="profile-image-container">
-          {profile_picture_url ? (
-            <Image
-              src={profile_picture_url}
-              alt={full_name}
-              width={100}
-              height={100}
-              className="profile-image"
-            />
-          ) : (
-            <div className="profile-image profile-image-placeholder">
-              {full_name?.substring(0, 2).toUpperCase()}
+      <Card className="group h-full hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
+        <CardHeader className="text-center space-y-4 pb-4">
+          {/* Profile Avatar */}
+          <div className="flex justify-center">
+            <Avatar className="h-20 w-20 ring-2 ring-background shadow-lg">
+              <AvatarImage src={profile_picture_url} alt={full_name} />
+              <AvatarFallback className="bg-primary text-primary-foreground text-lg font-semibold">
+                {full_name?.substring(0, 2).toUpperCase() || 'PR'}
+              </AvatarFallback>
+            </Avatar>
+          </div>
+
+          {/* Name and Verification */}
+          <div className="space-y-1">
+            <div className="flex items-center justify-center gap-2">
+              <h3 className="font-semibold text-lg text-foreground">
+                {full_name}
+              </h3>
+              {verification_status === "verified" && (
+                <Badge variant="secondary" className="gap-1 text-xs">
+                  <Shield className="h-3 w-3 text-green-600" />
+                  Verified
+                </Badge>
+              )}
+            </div>
+           
+          </div>
+
+          {/* Quick Actions */}
+          <div className="flex justify-center gap-2">
+            <Button
+              variant="outline"
+              size="icon"
+              className="h-8 w-8 rounded-full"
+              asChild
+            >
+              <a href={`/call/${professional_id}`} title="Call">
+                <Phone className="h-4 w-4" />
+              </a>
+            </Button>
+            <Button
+              variant="outline"
+              size="icon"
+              className="h-8 w-8 rounded-full"
+              asChild
+            >
+              <a href={`/messages/${professional_id}`} title="Message">
+                <MessageCircle className="h-4 w-4" />
+              </a>
+            </Button>
+            <Button
+              variant="outline"
+              size="icon"
+              className="h-8 w-8 rounded-full"
+              asChild
+            >
+              <a href={`/professional/${professional_id}`} title="View Profile">
+                <User className="h-4 w-4" />
+              </a>
+            </Button>
+          </div>
+        </CardHeader>
+
+        <CardContent className="space-y-4 pb-6">
+          
+
+           {/* Pricing */}
+          <div className="text-center p-3 bg-primary/5 rounded-lg">
+            <div className="flex items-center justify-center gap-1 text-primary font-semibold">
+              <DollarSign className="h-4 w-4" />
+              <span>{getPricingDisplay()}</span>
+            </div>
+          </div>
+
+        
+
+          {/* Specialties */}
+          {specialties.length > 0 && (
+            <div className="space-y-2">
+              <h4 className="text-xs font-medium text-muted-foreground">Specialties</h4>
+              <div className="flex flex-wrap gap-1">
+                {specialties.slice(0, 3).map((specialty, index) => (
+                  <Badge key={index} variant="outline" className="text-xs">
+                    {specialty}
+                  </Badge>
+                ))}
+                {specialties.length > 3 && (
+                  <Badge variant="outline" className="text-xs">
+                    +{specialties.length - 3} more
+                  </Badge>
+                )}
+              </div>
             </div>
           )}
-        </div>
 
-        {/* Social Icons */}
-        <div className="social-icons">
-          <a href={`/call/${professional_id}`} className="social-icon" title="Call">
-            <Phone size={16} />
-          </a>
-          <a href={`/messages/${professional_id}`} className="social-icon" title="Message">
-            <Mail size={16} />
-          </a>
-          <a href={`/professional/${professional_id}`} className="social-icon" title="View Profile">
-            <Linkedin size={16} />
-          </a>
-        </div>
-
-        {/* Name and Title */}
-        <div className="professional-info">
-          <h3 className="professional-name">
-            {full_name}
-            {verification_status === "verified" && (
-              <Shield size={16} className="verification-badge" title="Verified Professional" />
-            )}
-          </h3>
-        </div>
-
-        {/* Book Button */}
-        <button 
-          className="book-button"
-          onClick={handleBookingClick}
-        >
-          <Calendar size={16} />
-          Set an appointment
-        </button>
-
-        <style jsx>{`
-          .professional-card {
-            background: white;
-            border: 1px solid #e5e7eb;
-            border-radius: 12px;
-            padding: 32px 24px;
-            text-align: center;
-            transition: all 0.2s ease;
-            height: 100%;
-            display: flex;
-            flex-direction: column;
-            position: relative;
-          }
-
-          .professional-card:hover {
-            border-color: #3b82f6;
-            box-shadow: 0 8px 25px rgba(59, 130, 246, 0.1);
-            transform: translateY(-2px);
-          }
-
-          .profile-image-container {
-            margin: 0 auto 16px;
-            position: relative;
-          }
-
-          .profile-image {
-            width: 100px;
-            height: 100px;
-            border-radius: 50%;
-            object-fit: cover;
-            border: 3px solid #f3f4f6;
-          }
-
-          .profile-image-placeholder {
-            background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
-            color: white;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 600;
-            font-size: 24px;
-          }
-
-          .social-icons {
-            display: flex;
-            justify-content: center;
-            gap: 12px;
-            margin-bottom: 20px;
-          }
-
-          .social-icon {
-            width: 32px;
-            height: 32px;
-            border-radius: 50%;
-            background: #f3f4f6;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: #6b7280;
-            text-decoration: none;
-            transition: all 0.2s ease;
-          }
-
-          .social-icon:hover {
-            background: #3b82f6;
-            color: white;
-            transform: translateY(-1px);
-          }
-
-          .professional-info {
-            margin-bottom: 16px;
-          }
-
-          .professional-name {
-            font-size: 20px;
-            font-weight: 600;
-            color: #111827;
-            margin: 0 0 4px 0;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-          }
-
-          .verification-badge {
-            color: #10b981;
-          }
-
-          .professional-title {
-            font-size: 14px;
-            color: #6b7280;
-            margin: 0;
-            font-weight: 500;
-          }
-
-          .professional-bio {
-            margin-bottom: 24px;
-            flex-grow: 1;
-          }
-
-          .professional-bio p {
-            font-size: 14px;
-            line-height: 1.5;
-            color: #6b7280;
-            margin: 0;
-          }
-
-          .book-button {
-            background: #3b82f6;
-            color: white;
-            border: none;
-            border-radius: 8px;
-            padding: 12px 24px;
-            font-size: 14px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            width: 100%;
-          }
-
-          .book-button:hover {
-            background: #2563eb;
-            transform: translateY(-1px);
-            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
-          }
-
-          .book-button:active {
-            transform: translateY(0);
-          }
-
-          .book-button:disabled {
-            background: #9ca3af;
-            cursor: not-allowed;
-            transform: none;
-            box-shadow: none;
-          }
-
-          @media (max-width: 768px) {
-            .professional-card {
-              padding: 24px 16px;
-            }
-            
-            .professional-stats {
-              flex-direction: column;
-              gap: 12px;
-            }
-            
-            .stat-item {
-              display: flex;
-              justify-content: space-between;
-              align-items: center;
-              text-align: left;
-            }
-            
-            .stat-value {
-              justify-content: flex-end;
-            }
-          }
-        `}</style>
-      </div>
+          {/* Book Button */}
+          <Button 
+            onClick={handleBookingClick}
+            className="w-full gap-2 group-hover:shadow-md transition-all duration-200"
+            size="lg"
+          >
+            <Calendar className="h-4 w-4" />
+            Book Appointment
+          </Button>
+        </CardContent>
+      </Card>
 
       {/* Booking Modal */}
       <AppointmentModal
@@ -369,7 +277,7 @@ const getCustomerLocation = useCallback(() => {
         onClose={handleCloseModal}
         professional={professionalForBooking}
         serviceInformation={serviceInformation}
-        location={getCustomerLocation()} // ← Now passes full address data
+        location={getCustomerLocation()}
       />
     </>
   );

@@ -1,6 +1,24 @@
 'use client'
 
 import { useState, useEffect, useCallback, useMemo } from 'react'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
+import { Skeleton } from '@/components/ui/skeleton'
+import { Alert, AlertDescription } from '@/components/ui/alert'
+import { 
+  ChevronLeft, 
+  ChevronRight, 
+  Calendar as CalendarIcon,
+  Clock,
+  AlertCircle,
+  CheckCircle,
+  Users,
+  RefreshCw
+} from 'lucide-react'
+import { cn } from '@/lib/utils'
+
+const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 
 export default function CustomerAvailabilityCalendar({ 
   professionalId, 
@@ -11,10 +29,10 @@ export default function CustomerAvailabilityCalendar({
   const [availableSlots, setAvailableSlots] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
-  const [currentMonth, setCurrentMonth] = useState(new Date()) // Changed from currentWeekStart
+  const [currentMonth, setCurrentMonth] = useState(new Date())
   const [selectedDate, setSelectedDate] = useState(null)
 
-  // Fetch available slots from API (keeping your existing logic)
+  // Fetch available slots from API
   const fetchAvailableSlots = useCallback(async (startDate, endDate) => {
     if (!professionalId) {
       console.error('❌ No professionalId provided')
@@ -26,38 +44,20 @@ export default function CustomerAvailabilityCalendar({
 
     try {
       const url = `/api/professionals/${professionalId}/appointment-availability?start_date=${startDate}&end_date=${endDate}&slot_duration=60`
-      console.log('🔍 Fetching from URL:', url)
       
       const response = await fetch(url)
       
       if (!response.ok) {
         const errorText = await response.text()
-        console.error('❌ API Error Response:', errorText)
         throw new Error(`HTTP ${response.status}: ${errorText}`)
       }
 
       const contentType = response.headers.get('content-type')
       if (!contentType || !contentType.includes('application/json')) {
-        const responseText = await response.text()
-        console.error('❌ Expected JSON but got HTML:', responseText.substring(0, 500))
         throw new Error('API returned HTML instead of JSON - check server logs')
       }
 
-     const data = await response.json()
-console.log('🔍 FULL API RESPONSE:', JSON.stringify(data, null, 2))
-console.log('🔍 DEBUG INFO:', data.debug)
-      
-      // Additional debugging
-      console.log('🕐 Current time:', new Date().toISOString())
-      console.log('🕐 Jamaica time:', new Date().toLocaleString('en-US', { timeZone: 'America/Jamaica' }))
-      console.log('📊 Slots by date breakdown:')
-      const slotsByDateDebug = {}
-      data.available_slots?.forEach(slot => {
-        if (!slotsByDateDebug[slot.date]) slotsByDateDebug[slot.date] = 0
-        slotsByDateDebug[slot.date]++
-      })
-      console.log(slotsByDateDebug)
-      
+      const data = await response.json()
       setAvailableSlots(data.available_slots || [])
     } catch (err) {
       console.error('❌ Error fetching availability:', err)
@@ -69,54 +69,37 @@ console.log('🔍 DEBUG INFO:', data.debug)
 
   // Load slots when component mounts or month changes
   useEffect(() => {
-    // ✅ FIXED: Fetch data for the entire calendar view (6 weeks)
     const year = currentMonth.getFullYear()
     const month = currentMonth.getMonth()
     
+    // Get full calendar view range (6 weeks)
     const firstDayOfMonth = new Date(year, month, 1)
-    const lastDayOfMonth = new Date(year, month + 1, 0)
-    
-    // Start from the first Sunday shown in calendar
     const calendarStart = new Date(firstDayOfMonth)
     calendarStart.setDate(calendarStart.getDate() - firstDayOfMonth.getDay())
     
-    // End at the last Saturday shown in calendar (6 weeks later)
     const calendarEnd = new Date(calendarStart)
-    calendarEnd.setDate(calendarEnd.getDate() + 41) // 6 weeks = 42 days - 1
+    calendarEnd.setDate(calendarEnd.getDate() + 41) // 6 weeks
     
     const startDateStr = formatDate(calendarStart)
     const endDateStr = formatDate(calendarEnd)
-    
-    console.log('📅 OLD RANGE:', formatDate(firstDayOfMonth), 'to', formatDate(lastDayOfMonth))
-    console.log('📅 NEW RANGE:', startDateStr, 'to', endDateStr)
-    console.log('📅 Calendar shows days from:', calendarStart.toDateString(), 'to', calendarEnd.toDateString())
     
     fetchAvailableSlots(startDateStr, endDateStr)
   }, [fetchAvailableSlots, currentMonth])
 
   // Group slots by date
-  // Around line 82, add console logs:
-const slotsByDate = useMemo(() => {
-  const grouped = {}
-  console.log('🔍 RAW AVAILABLE SLOTS:', availableSlots)
-  
-  availableSlots.forEach(slot => {
-    const date = slot.date
-    console.log(`🔍 Processing slot: ${slot.datetime} for date: ${date}`)
-    if (!grouped[date]) grouped[date] = []
-    grouped[date].push(slot)
-  })
-  
-  console.log('🔍 GROUPED SLOTS BY DATE:', grouped)
-  console.log('🔍 Saturday 2024-12-21 slots:', grouped['2024-12-21'])
-  return grouped
-}, [availableSlots])
+  const slotsByDate = useMemo(() => {
+    const grouped = {}
+    availableSlots.forEach(slot => {
+      const date = slot.date
+      if (!grouped[date]) grouped[date] = []
+      grouped[date].push(slot)
+    })
+    return grouped
+  }, [availableSlots])
 
-  // Get available dates for the current month
+  // Get available dates
   const availableDates = useMemo(() => {
-    const dates = Object.keys(slotsByDate).filter(date => slotsByDate[date].length > 0)
-    console.log('🔍 AVAILABLE DATES:', dates)
-    return dates
+    return Object.keys(slotsByDate).filter(date => slotsByDate[date].length > 0)
   }, [slotsByDate])
 
   // Get time slots for selected date
@@ -124,20 +107,18 @@ const slotsByDate = useMemo(() => {
     return selectedDate ? slotsByDate[selectedDate] || [] : []
   }, [selectedDate, slotsByDate])
 
-  // Generate calendar days for current month
+  // Generate calendar days
   const calendarDays = useMemo(() => {
     const year = currentMonth.getFullYear()
     const month = currentMonth.getMonth()
     
     const firstDay = new Date(year, month, 1)
-    const lastDay = new Date(year, month + 1, 0)
     const startDate = new Date(firstDay)
-    startDate.setDate(startDate.getDate() - firstDay.getDay()) // Start from Sunday
+    startDate.setDate(startDate.getDate() - firstDay.getDay())
     
     const days = []
     const current = new Date(startDate)
     
-    // Generate 6 weeks of days (42 days)
     for (let week = 0; week < 6; week++) {
       for (let day = 0; day < 7; day++) {
         const date = new Date(current)
@@ -155,13 +136,7 @@ const slotsByDate = useMemo(() => {
           isToday: isTodayDate,
           isPast: isPastDate,
           isSelected: selectedDate === dateStr,
-          // ✅ DEBUG: Add debug info
-          debugInfo: {
-            dateStr,
-            isInAvailableDates: availableDates.includes(dateStr),
-            availableDatesCount: availableDates.length,
-            slotsForDate: slotsByDate[dateStr]?.length || 0
-          }
+          slotsCount: slotsByDate[dateStr]?.length || 0
         })
         
         current.setDate(current.getDate() + 1)
@@ -169,25 +144,9 @@ const slotsByDate = useMemo(() => {
     }
     
     return days
-  }, [currentMonth, availableDates, selectedDate])
+  }, [currentMonth, availableDates, selectedDate, slotsByDate])
 
-  
-
-  // Handle date selection
-const handleDateSelect = useCallback((dateStr, isAvailable) => {
-  if (isAvailable && !loading) {  // Added !loading check
-    setSelectedDate(selectedDate === dateStr ? null : dateStr)
-  }
-}, [selectedDate, loading])  // Added loading dependency
-
-
-  // Handle slot selection
-  const handleSlotSelect = useCallback((slot) => {
-    console.log('🔘 Slot selected:', slot)
-    onSlotSelect?.(slot.datetime)
-  }, [onSlotSelect])
-
-  // Navigate months
+  // Navigation handlers
   const goToPreviousMonth = useCallback(() => {
     setCurrentMonth(prev => new Date(prev.getFullYear(), prev.getMonth() - 1, 1))
     setSelectedDate(null)
@@ -203,815 +162,235 @@ const handleDateSelect = useCallback((dateStr, isAvailable) => {
     setSelectedDate(null)
   }, [])
 
-  // Format month name for display
+  // Event handlers
+  const handleDateSelect = useCallback((dateStr, isAvailable) => {
+    if (isAvailable && !loading) {
+      setSelectedDate(selectedDate === dateStr ? null : dateStr)
+    }
+  }, [selectedDate, loading])
+
+  const handleSlotSelect = useCallback((slot) => {
+    onSlotSelect?.(slot.datetime)
+  }, [onSlotSelect])
+
+  const handleRetry = useCallback(() => {
+    const year = currentMonth.getFullYear()
+    const month = currentMonth.getMonth()
+    const firstDayOfMonth = new Date(year, month, 1)
+    const calendarStart = new Date(firstDayOfMonth)
+    calendarStart.setDate(calendarStart.getDate() - firstDayOfMonth.getDay())
+    const calendarEnd = new Date(calendarStart)
+    calendarEnd.setDate(calendarEnd.getDate() + 41)
+    fetchAvailableSlots(formatDate(calendarStart), formatDate(calendarEnd))
+  }, [currentMonth, fetchAvailableSlots])
+
+  // Format month name
   const monthName = currentMonth.toLocaleDateString('en-US', {
     month: 'long',
     year: 'numeric'
   })
 
-  
-
+  // Error state
   if (error) {
     return (
-      <div className={`calendly-calendar ${className}`}>
-        <div className="calendar-error">
-          <span className="error-icon">⚠️</span>
-          <span>Unable to load availability: {error}</span>
-          <button onClick={() => {
-            const startOfMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), 1)
-            const endOfMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 0)
-            fetchAvailableSlots(formatDate(startOfMonth), formatDate(endOfMonth))
-          }} className="retry-btn">
+      <Card className={cn("h-full", className)}>
+        <CardContent className="flex flex-col items-center justify-center h-96 space-y-4">
+          <AlertCircle className="h-12 w-12 text-destructive" />
+          <div className="text-center space-y-2">
+            <h3 className="font-semibold">Unable to load availability</h3>
+            <p className="text-sm text-muted-foreground max-w-sm">
+              {error}
+            </p>
+          </div>
+          <Button onClick={handleRetry} variant="outline" className="gap-2">
+            <RefreshCw className="h-4 w-4" />
             Try Again
-          </button>
-        </div>
-      </div>
+          </Button>
+        </CardContent>
+      </Card>
     )
   }
 
   return (
-    <div className={`calendly-calendar ${className}`}>
-      {/* Two-Column Layout */}
-      <div className="booking-layout">
-        
-        {/* Left Side - Date Picker */}
-        <div className="date-picker-section">
-          <div className="calendar-header">
-            <div className="month-navigation">
-              <button 
-  onClick={goToPreviousMonth}
-  className={`nav-btn ${loading ? 'loading' : ''}`}
-  disabled={loading}
->
-{loading ? <div className="nav-skeleton"></div> : '<'}
-</button>
-
-<h3 className={`month-title ${loading ? 'loading' : ''}`}>
-  {loading ? (
-    <div className="month-skeleton"></div>
-  ) : (
-    monthName
-  )}
-</h3>
-
-<button 
-  onClick={goToNextMonth}
-  className={`nav-btn ${loading ? 'loading' : ''}`}
-  disabled={loading}
->
-{loading ? <div className="nav-skeleton"></div> : '>'}
-
-</button>
-            </div>
-            
-            <button onClick={goToToday} className="today-btn">
-              Today
-            </button>
-          </div>
-
-          {/* Calendar Grid */}
-          <div className="calendar-grid">
-            {/* Day headers */}
-            <div className="day-headers">
-              {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
-                <div key={day} className="day-header">{day}</div>
-              ))}
-            </div>
-
-            {/* Calendar days */}
-            <div className="calendar-days">
-              {calendarDays.map((day, index) => (
-                <button
-
-                key={day.date}
-  className={`calendar-day ${
-    !day.isCurrentMonth ? 'other-month' : ''
-  } ${
-    day.isAvailable && !loading ? 'available' : ''
-  } ${
-    day.isSelected && !loading ? 'selected' : ''
-  } ${
-    loading ? 'skeleton-loading' : ''
-  }`}
-  onClick={() => handleDateSelect(day.date, day.isAvailable)}
-  disabled={loading || day.isPast || (!day.isAvailable && !loading)}
->
-  {loading ? '' : day.dayNumber}
-</button>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        {/* Right Side - Time Slots */}
-        <div className="time-slots-section">
-  {selectedDate && !loading ? (
-    // Real time slots when data is loaded
-    <>
-      <div className="selected-date-header">
-        <h4>{formatSelectedDate(selectedDate)}</h4>
-        <span className="slot-count">{timeSlotsForSelectedDate.length} available times</span>
-      </div>
-      <div className="time-slots-list">
-  {timeSlotsForSelectedDate.map((slot, index) => (
-    <button 
-      key={index} 
-      className={`time-slot-btn ${selectedSlot === slot.datetime ? 'selected' : ''}`}
-      onClick={() => handleSlotSelect(slot)}
-    >
-      {slot.time}
-    </button>
-  ))}
-</div>
-    </>
-  ) : loading ? (
-    // Skeleton loading state
-    <div className="time-slots-skeleton">
-      <div className="skeleton-header">
-        <div className="skeleton-title"></div>
-        <div className="skeleton-count"></div>
-      </div>
-      <div className="skeleton-slots">
-        {[...Array(6)].map((_, index) => (
-          <div key={index} className="skeleton-slot"></div>
-        ))}
-      </div>
-    </div>
-  ) : (
-    // Empty state - select a date
-    <div className="select-date-prompt">
-      <div className="prompt-icon">📅</div>
-      <h4>Select a date</h4>
-    </div>
-  )}
-</div>
-      </div>
-
+    <div className={cn("h-full flex flex-col lg:flex-row gap-6", className)}>
       
-<style jsx>{`
-        .calendly-calendar {
-          background: white;
-          border-radius: 0;  /* Remove border radius for full modal */
-          border: none;      /* Remove border for seamless integration */
-          overflow: hidden;
-          height: 100%;      /* Take full available height */
-          display: flex;
-          flex-direction: column;
-        }
-
-        .calendar-error {
-          padding: 2rem;
-          text-align: center;
-          color: #dc2626;
-          flex: 1;
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          justify-content: center;
-        }
-
-        .error-icon {
-          font-size: 2rem;
-          margin-bottom: 1rem;
-        }
-
-        .retry-btn {
-          margin-top: 1rem;
-          padding: 0.5rem 1rem;
-          background: #3b82f6;
-          color: white;
-          border: none;
-          border-radius: 6px;
-          cursor: pointer;
-        }
-
-        .retry-btn:hover {
-          background: #2563eb;
-        }
-
-        /* Skeleton Loading Animations */
-        @keyframes skeleton-shimmer {
-          0% {
-            background-position: -200px 0;
-          }
-          100% {
-            background-position: calc(200px + 100%) 0;
-          }
-        }
-
-        @keyframes button-spin {
-          0% { transform: rotate(0deg); }
-          100% { transform: rotate(360deg); }
-        }
-
-        /* Full Height Layout - No Scrollbars */
-        .booking-layout {
-          display: grid;
-          grid-template-columns: 2fr 3fr;
-          height: 100%;          /* Take full calendar height */
-          min-height: 0;         /* Allow shrinking */
-        }
-
-        /* Left Side - Date Picker (Compact) */
-        .date-picker-section {
-          padding: 0.5rem;         /* Reduced from 2rem */
-          border-right: 1px solid #e5e7eb;
-          background: white;
-          display: flex;
-          flex-direction: column;
-          min-height: 0;         /* Allow shrinking */
-        }
-
-        .calendar-header {
-         margin-bottom: 0.25rem;
-          flex-shrink: 0;       
-        }
-
-        .month-navigation {
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          margin-bottom: 0.25rem;
-        }
-
-        .month-title {
-          margin: 0;
-          font-size: 18px;       /* Slightly smaller */
-          font-weight: 600;
-          color: #111827;
-          transition: opacity 0.2s ease;
-        }
-
-        .month-title.loading {
-          opacity: 0.7;
-        }
-
-        .month-skeleton {
-  height: 24px;           /* Matches text height */
-  width: 140px;           /* Approximate width of "July 2025" */
-  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
-  background-size: 200px 100%;
-  animation: skeleton-shimmer 1.5s infinite linear;
-  border-radius: 6px;     /* Rounded corners */
-  margin: 0 auto;         /* Center it */
-}
-
-        .loading-text {
-          background: linear-gradient(90deg, #d0d0d0 25%, #c0c0c0 50%, #d0d0d0 75%);
-          background-size: 200px 100%;
-          animation: skeleton-shimmer 1.5s infinite linear;
-          -webkit-background-clip: text;
-          -webkit-text-fill-color: transparent;
-          background-clip: text;
-          color: transparent;
-        }
-
-        .nav-btn {
-          width: 36px;           /* Slightly smaller */
-          height: 36px;
-          border: none;
-          border-radius: 50%;
-          background: transparent;
-          color: #6b7280;
-          font-size: 16px;       /* Slightly smaller */
-          cursor: pointer;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          transition: all 0.2s ease;
-        }
-
-        .nav-skeleton {
-  width: 16px;
-  height: 16px;
-  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
-  background-size: 200px 100%;
-  animation: skeleton-shimmer 1.5s infinite linear;
-  border-radius: 50%;        /* Makes it circular */
-}
-
-
-        .nav-btn:hover:not(:disabled) {
-          background: #f3f4f6;
-          color: #374151;
-        }
-
-        .nav-btn.loading {
-          opacity: 1;
-          cursor: not-allowed;
-        }
-
-        .nav-btn:disabled {
-          cursor: not-allowed;
-          opacity: 0.6;
-        }
-
-        .today-btn {
-          display: none;
-        }
-
-        .calendar-grid {
-          flex: 1;               /* Take remaining space */
-          display: flex;
-          flex-direction: column;
-          min-height: 0;         /* Allow shrinking */
-        }
-
-        .day-headers {
-          display: grid;
-          grid-template-columns: repeat(7, 1fr);
-          gap: 4px;              /* Slightly reduced */
-          margin-bottom: 0.5rem; /* Reduced from 1rem */
-          flex-shrink: 0;        /* Keep header size */
-        }
-
-        .day-header {
-          padding: 0.5rem 0;     /* Reduced padding */
-          text-align: center;
-          font-size: 12px;       /* Slightly smaller */
-          font-weight: 500;
-          color: #6b7280;
-          text-transform: uppercase;
-        }
-
-        .calendar-days {
-          display: grid;
-          grid-template-columns: repeat(7, 1fr);
-          gap: 2px;              /* Reduced from 6px */
-          flex: 1;               /* Take remaining space */
-          align-content: start;  /* Align to top */
-        }
-
-        /* Optimized Calendar Days for Space */
-        .calendar-day {
-          width: 100%;
-          aspect-ratio: 1;       /* Square aspect ratio - responsive height */
-          min-height: 40px;      /* Minimum touch target */
-          border: 1px solid #e5e7eb;
-          background: transparent;
-          color: #374151;
-          font-size: 13px;       /* Slightly smaller */
-          font-weight: 400;
-          cursor: pointer;
-          transition: all 0.2s ease;
-          border-radius: 6px;    /* Slightly smaller radius */
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          justify-content: center;
-          position: relative;
-          padding: 1px;          /* Reduced padding */
-          gap: 1px;              /* Reduced gap */
-        }
-
-        .calendar-day:hover:not(:disabled):not(.skeleton-loading) {
-          background: #f3f4f6;
-          border-color: #d1d5db;
-          transform: translateY(-1px);
-          box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-        }
-
-        .calendar-day.other-month {
-          color: #d1d5db;
-          background: #fafafa;
-        }
-
-        .calendar-day.today {
-          background: #2563eb;
-          color: white;
-          font-weight: 600;
-          border-color: #1d4ed8;
-        }
-
-        .calendar-day.past {
-          color: #d1d5db;
-          cursor: not-allowed;
-          background: #f9fafb;
-        }
-
-        .calendar-day.available {
-          color: #2563eb;
-          font-weight: 500;
-          background: #eff6ff;
-          border-color: #bfdbfe;
-        }
-
-        .calendar-day.available:hover:not(.skeleton-loading) {
-          background: #dbeafe;
-          color: #1d4ed8;
-          border-color: #93c5fd;
-        }
-
-        .calendar-day.selected {
-          background: #2563eb;
-          color: white;
-          font-weight: 600;
-          border-color: #1d4ed8;
-          box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2);
-        }
-
-        .calendar-day:disabled {
-          cursor: not-allowed;
-          opacity: 0.4;
-        }
-
-        /* Optimized Calendar Day Content */
-        .day-number {
-          font-size: 14px;       /* Slightly smaller */
-          font-weight: 600;
-          line-height: 1;
-        }
-
-        .day-indicator {
-          font-size: 9px;        /* Smaller for space */
-          line-height: 1;
-          opacity: 0.8;
-        }
-
-        .available-indicator {
-          color: #059669;
-          font-weight: 500;
-        }
-
-        .slots-count {
-          font-size: 8px;        /* Smaller for space */
-          color: #6b7280;
-          font-weight: 400;
-        }
-
-        /* Skeleton Loading for Calendar Days */
-        .calendar-day.skeleton-loading {
-          background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
-          background-size: 200px 100%;
-          animation: skeleton-shimmer 1.5s infinite linear;
-          color: transparent;
-          cursor: not-allowed;
-          border-color: #e0e0e0;
-        }
-
-        .calendar-day.skeleton-loading::before {
-          content: '';
-          position: absolute;
-          top: 4px;
-          right: 4px;
-          width: 4px;
-          height: 4px;
-          background: #d0d0d0;
-          border-radius: 50%;
-          animation: skeleton-shimmer 1.5s infinite linear;
-        }
-
-        .calendar-day.skeleton-loading::after {
-          content: '';
-          position: absolute;
-          bottom: 4px;
-          left: 50%;
-          transform: translateX(-50%);
-          width: 16px;
-          height: 1px;
-          background: #d0d0d0;
-          border-radius: 1px;
-          animation: skeleton-shimmer 1.5s infinite linear;
-        }
-
-        .calendar-day.skeleton-loading:hover {
-          background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
-          background-size: 200px 100%;
-          animation: skeleton-shimmer 1.5s infinite linear;
-          transform: none;
-          box-shadow: none;
-        }
-
-        /* Right Side - Time Slots (Full Height) */
-        .time-slots-section {
-          padding: 0.5rem;         /* Reduced from 1.5rem */
-          background: white;
-          display: flex;
-          flex-direction: column;
-          height: 100%;
-          min-height: 0;         /* Allow shrinking */
-        }
-
-        .selected-date-header {
-          margin-bottom: 1rem;   /* Reduced from 1.5rem */
-          padding-bottom: 0.75rem; /* Reduced padding */
-          border-bottom: 1px solid #e5e7eb;
-          flex-shrink: 0;        /* Keep header size */
-        }
-
-        .selected-date-header h4 {
-          margin: 0 0 0.25rem 0; /* Reduced margin */
-          font-size: 16px;       /* Slightly smaller */
-          font-weight: 600;
-          color: #111827;
-        }
-
-        .slot-count {
-          font-size: 13px;       /* Slightly smaller */
-          color: #6b7280;
-        }
-
-        .time-slots-list {
-          display: grid;
-          gap: 0.375rem;         /* Slightly reduced */
-          flex: 1;               /* Take remaining space */
-          overflow-y: auto;      /* Allow scrolling if needed */
-          align-content: start;  /* Align to top */
-          padding-right: 4px;    /* Space for scrollbar */
-        }
-
-        .time-slot-btn {
-          padding: 0.625rem 0.875rem; /* Slightly reduced */
-          border: 1px solid #d1d5db;
-          border-radius: 6px;    /* Slightly smaller */
-          background: white;
-          color: #374151;
-          font-size: 13px;       /* Slightly smaller */
-          font-weight: 500;
-          cursor: pointer;
-          transition: all 0.2s ease;
-          text-align: center;
-        }
-
-        .time-slot-btn:hover {
-          border-color: #3b82f6;
-          background: #f0f9ff;
-          transform: translateY(-1px);
-        }
-
-        .time-slot-btn.selected {
-          background: #3b82f6;
-          color: white;
-          border-color: #2563eb;
-        }
-
-        /* Skeleton Time Slots */
-        .time-slots-skeleton {
-          flex: 1;
-          display: flex;
-          flex-direction: column;
-        }
-
-        .skeleton-header {
-          margin-bottom: 1rem;
-          padding-bottom: 0.75rem;
-          border-bottom: 1px solid #e5e7eb;
-          flex-shrink: 0;
-        }
-
-        .skeleton-title {
-          height: 20px;          /* Slightly smaller */
-          width: 70%;
-          background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
-          background-size: 200px 100%;
-          animation: skeleton-shimmer 1.5s infinite linear;
-          border-radius: 4px;
-          margin-bottom: 6px;    /* Reduced */
-        }
-
-        .skeleton-count {
-          height: 14px;          /* Slightly smaller */
-          width: 40%;
-          background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
-          background-size: 200px 100%;
-          animation: skeleton-shimmer 1.5s infinite linear;
-          border-radius: 4px;
-        }
-
-        .skeleton-slots {
-          display: grid;
-          gap: 0.375rem;         /* Reduced */
-          flex: 1;
-          align-content: start;
-        }
-
-        .skeleton-slot {
-          height: 38px;          /* Smaller to match reduced time-slot-btn */
-          background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
-          background-size: 200px 100%;
-          animation: skeleton-shimmer 1.5s infinite linear;
-          border-radius: 6px;
-          border: 1px solid #e0e0e0;
-        }
-
-        /* Staggered animation delays */
-        .skeleton-slot:nth-child(1) { animation-delay: 0s; }
-        .skeleton-slot:nth-child(2) { animation-delay: 0.1s; }
-        .skeleton-slot:nth-child(3) { animation-delay: 0.2s; }
-        .skeleton-slot:nth-child(4) { animation-delay: 0.3s; }
-        .skeleton-slot:nth-child(5) { animation-delay: 0.4s; }
-        .skeleton-slot:nth-child(6) { animation-delay: 0.5s; }
-
-        .select-date-prompt {
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          justify-content: center;
-          flex: 1;               /* Take full height */
-          text-align: center;
-          color: #6b7280;
-        }
-
-        .prompt-icon {
-          font-size: 2.5rem;     /* Slightly smaller */
-          margin-bottom: 0.75rem; /* Reduced */
-        }
-
-        .select-date-prompt h4 {
-          margin: 0 0 0.375rem 0; /* Reduced */
-          font-size: 16px;       /* Slightly smaller */
-          font-weight: 600;
-          color: #374151;
-        }
-
-        .select-date-prompt p {
-          margin: 0;
-          font-size: 13px;       /* Slightly smaller */
-          line-height: 1.5;
-        }
-
-        /* Assessment Info - Compact */
-        .assessment-info {
-          padding: 1rem;         /* Reduced from 1.5rem */
-          background: #f0f9ff;
-          border-top: 1px solid #e5e7eb;
-          flex-shrink: 0;        /* Don't shrink */
-        }
-
-        .info-header {
-          display: flex;
-          align-items: center;
-          gap: 0.375rem;         /* Reduced */
-          margin-bottom: 0.75rem; /* Reduced */
-        }
-
-        .info-header h6 {
-          margin: 0;
-          font-size: 13px;       /* Slightly smaller */
-          font-weight: 600;
-          color: #1e40af;
-        }
-
-        .info-icon {
-          font-size: 14px;       /* Slightly smaller */
-        }
-
-        .info-list {
-          margin: 0;
-          padding-left: 1rem;    /* Reduced */
-          color: #374151;
-        }
-
-        .info-list li {
-          font-size: 12px;       /* Smaller for space */
-          line-height: 1.3;      /* Tighter line height */
-          margin-bottom: 0.125rem; /* Reduced */
-        }
-
-        /* Accessibility - Reduced motion */
-        @media (prefers-reduced-motion: reduce) {
-          .skeleton-loading,
-          .skeleton-title,
-          .skeleton-count,
-          .skeleton-slot {
-            animation: none;
-            background: #e0e0e0;
-          }
-          
-          .nav-btn.loading {
-            animation: none;
-          }
-          
-          .loading-text {
-            animation: none;
-            background: #c0c0c0;
-          }
-        }
-
-        /* Mobile Responsive - Space Optimized */
-        @media (max-width: 768px) {
-          .booking-layout {
-            grid-template-columns: 1fr;
-            grid-template-rows: auto 1fr; /* Calendar on top, time slots below */
-          }
-
-          .date-picker-section {
-            border-right: none;
-            border-bottom: 1px solid #e5e7eb;
-            padding: 0.75rem;    /* Further reduced */
-          }
-
-          .calendar-header {
-            margin-bottom: 0.5rem;
-          }
-
-          .calendar-day {
-            min-height: 40px;    /* Smaller on mobile */
-            font-size: 12px;
-          }
-
-          .day-number {
-            font-size: 13px;
-          }
-
-          .day-indicator {
-            font-size: 8px;
-          }
-
-          .slots-count {
-            font-size: 7px;
-          }
-
-          .calendar-day.skeleton-loading::before {
-            width: 3px;
-            height: 3px;
-            top: 3px;
-            right: 3px;
-          }
-
-          .calendar-day.skeleton-loading::after {
-            width: 12px;
-            height: 1px;
-            bottom: 3px;
-          }
-
-          .time-slots-section {
-            padding: 0.75rem;
-          }
-
-          .time-slots-list {
-            grid-template-columns: repeat(2, 1fr);
-          }
-
-          .time-slot-btn {
-            padding: 0.5rem;
-            font-size: 12px;
-          }
-
-          .assessment-info {
-            padding: 0.75rem;
-          }
-        }
-
-        @media (max-width: 576px) {
-          .date-picker-section {
-            padding: 0.5rem;
-          }
-
-          .month-navigation {
-            margin-bottom: 0.5rem;
-          }
-
-          .calendar-day {
-            min-height: 36px;    /* Even smaller on small mobile */
-            font-size: 11px;
-          }
-
-          .day-number {
-            font-size: 12px;
-          }
-
-          .calendar-days {
-            gap: 2px;           
-          }
-
-          .time-slots-list {
-            grid-template-columns: 1fr;
-          }
-
-          .time-slots-section {
-            padding: 0.5rem;
-          }
-
-          .assessment-info {
-            padding: 0.5rem;
-          }
-        }
-
-        /* Custom scrollbar for time slots */
-        .time-slots-list::-webkit-scrollbar {
-          width: 4px;
-        }
-
-        .time-slots-list::-webkit-scrollbar-track {
-          background: #f1f1f1;
-          border-radius: 2px;
-        }
-
-        .time-slots-list::-webkit-scrollbar-thumb {
-          background: #c1c1c1;
-          border-radius: 2px;
-        }
-
-        .time-slots-list::-webkit-scrollbar-thumb:hover {
-          background: #a8a8a8;
-        }
-      `}</style>
+      {/* Calendar Section */}
+      <Card className="flex-1 min-h-0">
+        <CardHeader className="pb-4">
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-lg font-semibold">
+              {loading ? (
+                <Skeleton className="h-6 w-32" />
+              ) : (
+                monthName
+              )}
+            </CardTitle>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={goToPreviousMonth}
+                disabled={loading}
+                className="h-8 w-8"
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={goToToday}
+                disabled={loading}
+                className="hidden sm:flex"
+              >
+                Today
+              </Button>
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={goToNextMonth}
+                disabled={loading}
+                className="h-8 w-8"
+              >
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+        </CardHeader>
+
+        <CardContent className="pb-6">
+          {/* Calendar Grid */}
+          <div className="space-y-4">
+            
+            {/* Weekday Headers */}
+            <div className="grid grid-cols-7 gap-1">
+              {WEEKDAYS.map(day => (
+                <div key={day} className="p-2 text-center text-sm font-medium text-muted-foreground">
+                  {day}
+                </div>
+              ))}
+            </div>
+
+            {/* Calendar Days */}
+            <div className="grid grid-cols-7 gap-1">
+              {calendarDays.map((day, index) => (
+                <Button
+                  key={day.date}
+                  variant="ghost"
+                  className={cn(
+                    "h-12 p-0 font-normal relative transition-all duration-200",
+                    !day.isCurrentMonth && "text-muted-foreground/40",
+                    day.isToday && "bg-primary text-primary-foreground hover:bg-primary/90",
+                    day.isPast && "text-muted-foreground/30 cursor-not-allowed",
+                    day.isAvailable && !day.isPast && !day.isToday && "text-primary font-medium hover:bg-primary/10",
+                    day.isSelected && "bg-primary text-primary-foreground hover:bg-primary/90",
+                    loading && "cursor-not-allowed opacity-50"
+                  )}
+                  onClick={() => handleDateSelect(day.date, day.isAvailable)}
+                  disabled={loading || day.isPast || !day.isAvailable}
+                >
+                  <div className="flex flex-col items-center justify-center h-full w-full">
+                    {loading ? (
+                      <Skeleton className="h-4 w-4 rounded" />
+                    ) : (
+                      <>
+                        <span className="text-sm">{day.dayNumber}</span>
+                        {day.isAvailable && day.slotsCount > 0 && (
+                          <div className="w-1 h-1 bg-current rounded-full mt-0.5" />
+                        )}
+                      </>
+                    )}
+                  </div>
+                </Button>
+              ))}
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Time Slots Section */}
+      <Card className="lg:w-80 min-h-0">
+        <CardHeader className="pb-4">
+          <CardTitle className="flex items-center gap-2 text-lg">
+            <Clock className="h-5 w-5" />
+            Available Times
+          </CardTitle>
+        </CardHeader>
+
+        <CardContent className="pb-6">
+          {loading ? (
+            // Loading skeleton
+            <div className="space-y-3">
+              <div className="space-y-2">
+                <Skeleton className="h-5 w-32" />
+                <Skeleton className="h-4 w-24" />
+              </div>
+              <div className="space-y-2">
+                {[...Array(6)].map((_, i) => (
+                  <Skeleton key={i} className="h-10 w-full" />
+                ))}
+              </div>
+            </div>
+          ) : selectedDate ? (
+            // Selected date with time slots
+            <div className="space-y-4">
+              <div className="space-y-1">
+                <h4 className="font-medium">
+                  {formatSelectedDate(selectedDate)}
+                </h4>
+                <div className="flex items-center gap-2">
+                  <Badge variant="secondary" className="text-xs">
+                    {timeSlotsForSelectedDate.length} available
+                  </Badge>
+                  {timeSlotsForSelectedDate.length > 0 && (
+                    <span className="text-xs text-muted-foreground">
+                      Select a time slot
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              {timeSlotsForSelectedDate.length > 0 ? (
+                <div className="space-y-2 max-h-80 overflow-y-auto">
+                  {timeSlotsForSelectedDate.map((slot, index) => (
+                    <Button
+                      key={index}
+                      variant={selectedSlot === slot.datetime ? "default" : "outline"}
+                      className="w-full justify-start text-sm h-10"
+                      onClick={() => handleSlotSelect(slot)}
+                    >
+                      <Clock className="h-4 w-4 mr-2" />
+                      {slot.time}
+                    </Button>
+                  ))}
+                </div>
+              ) : (
+                <Alert>
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertDescription>
+                    No time slots available for this date.
+                  </AlertDescription>
+                </Alert>
+              )}
+            </div>
+          ) : (
+            // No date selected
+            <div className="flex flex-col items-center justify-center h-64 text-center space-y-3">
+              <CalendarIcon className="h-12 w-12 text-muted-foreground/50" />
+              <div className="space-y-1">
+                <h4 className="font-medium text-muted-foreground">Select a Date</h4>
+                <p className="text-sm text-muted-foreground">
+                  Choose an available date from the calendar to see time slots
+                </p>
+              </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </div>
   )
 }
 
-// Helper functions (keeping your existing ones)
+// Helper functions
 function formatDate(date) {
   return date.toISOString().split('T')[0]
 }

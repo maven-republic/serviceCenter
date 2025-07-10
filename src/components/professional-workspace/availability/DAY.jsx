@@ -93,7 +93,7 @@ export default function Day({
             <div className="flex items-center gap-1">
               <Circle className="h-2 w-2 fill-green-500 text-green-500" />
               {size !== 'sm' && (
-                <span className="text-xs text-green-600 font-medium">
+                <span className="text-xs text-primary font-medium">
                   {slots.length}
                 </span>
               )}
@@ -128,8 +128,8 @@ export default function Day({
             ) : (
               // Show availability indicator
               <div className="text-center">
-                <CheckCircle className="h-4 w-4 text-green-600 mx-auto mb-1" />
-                <div className="text-xs text-green-600 font-medium">
+                <CheckCircle className="h-4 w-4 text-primary mx-auto mb-1" />
+                <div className="text-xs text-primary font-medium">
                   Available
                 </div>
                 {size === 'lg' && (

@@ -4,6 +4,8 @@ import { useRouter } from 'next/navigation'
 import { useUserStore } from '@/store/userStore'
 import { useSession } from '@supabase/auth-helpers-react'
 import AnalyticsInterface from '@/components/professional-workspace/section/AnalyticsInterface'
+import { Button } from "@/components/ui/button"
+
 
 export default function WorkspaceInterface() {
   const { user } = useUserStore()
@@ -36,5 +38,11 @@ export default function WorkspaceInterface() {
     return null
   }
 
-  return <AnalyticsInterface />
+  return ( <> 
+  <AnalyticsInterface />
+
+{/* <Button>Test Button</Button> */}
+
+</>
+   )
 }

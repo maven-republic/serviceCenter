@@ -127,16 +127,15 @@ export const navigateMonth = (currentDate, direction) => {
 // Weekday names for calendar header
 export const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
-// Calendar color constants
 export const CALENDAR_COLORS = {
-  primary: '#000000',        // Black for selected dates
-  secondary: '#64748b',      // Gray for secondary text
-  background: '#ffffff',     // White background
-  muted: '#e5e7eb',         // Light gray for muted elements
-  today: '#0ea5e9',         // Blue for today indicator
-  todayBg: '#e0f2fe',       // Light blue background for today
-  range: '#f1f5f9',         // Light gray for range selection
-  rangeActive: '#fef3c7',   // Yellow for active range selection
-  past: '#94a3b8',          // Muted gray for past dates
-  otherMonth: '#cbd5e1'     // Light gray for other month dates
-};
+  primary: 'hsl(var(--foreground))',
+  secondary: 'hsl(var(--muted-foreground))',
+  background: 'hsl(var(--background))',
+  muted: 'hsl(var(--muted))',
+  border: 'hsl(var(--border))',
+  today: 'hsl(var(--primary))',
+  todayBg: 'hsl(var(--primary/10))',
+  range: 'hsl(var(--muted))',
+  past: 'hsl(var(--muted-foreground))',
+  otherMonth: 'hsl(var(--muted-foreground))'
+}

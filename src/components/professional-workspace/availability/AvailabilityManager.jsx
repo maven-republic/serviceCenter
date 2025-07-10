@@ -188,7 +188,7 @@ export default function AvailabilityManager({
   const tabCounts = getTabCounts()
 
   return (
-    <div className="max-w-7xl mx-auto p-6 space-y-6">
+    <div className=" professional-workspace max-w-7xl mx-auto p-6 space-y-6">
       {/* Header */}
       <div className="space-y-2">
         <div className="flex items-center justify-between">
@@ -266,7 +266,7 @@ export default function AvailabilityManager({
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-blue-100 text-blue-600">
+              <div className="p-2 rounded-lg bg-blue-100 text-primary">
                 <Calendar className="h-4 w-4" />
               </div>
               <div>
@@ -296,7 +296,7 @@ export default function AvailabilityManager({
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-green-100 text-green-600">
+              <div className="p-2 rounded-lg bg-green-100 text-primary">
                 <Settings className="h-4 w-4" />
               </div>
               <div>

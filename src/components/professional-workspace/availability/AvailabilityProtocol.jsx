@@ -114,8 +114,8 @@ export default function AvailabilityProtocol({ rules, setRules, onSave, isSaving
   const currentSettings = getCurrentSettingsDisplay()
 
   return (
-    <div className="max-w-7xl mx-auto p-6 space-y-6">
-      {/* Header */}
+<div className="professional-workspace max-w-7xl mx-auto p-6 space-y-6">
+        {/* Header */}
       <div className="space-y-2">
         <div className="flex items-center gap-2">
           <Settings className="h-5 w-5 text-muted-foreground" />
@@ -126,7 +126,7 @@ export default function AvailabilityProtocol({ rules, setRules, onSave, isSaving
         </p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="professional-workspace grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Main Settings Panel */}
         <div className="lg:col-span-2 space-y-6">
           <Card>

@@ -179,10 +179,10 @@ export default function SingleDateEditorModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
+<DialogContent className="professional-workspace max-w-md max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <Calendar className="h-5 w-5 text-blue-600" />
+            <Calendar className="h-5 w-5 text-primary" />
             Edit Availability for {date && formatDate(date)}
           </DialogTitle>
           <DialogDescription>
@@ -222,7 +222,7 @@ export default function SingleDateEditorModal({
                 {blocks.length} block{blocks.length !== 1 ? 's' : ''}
               </Badge>
               {isOverride && (
-                <Badge variant="secondary" className="bg-amber-100 text-amber-700">
+                <Badge variant="secondary" className="bg-card text-card-foreground">
                   Override
                 </Badge>
               )}
