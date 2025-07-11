@@ -14,9 +14,9 @@ export default function Personal({
   handleBlur
 }) {
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
+<div className="grid grid-cols-1 lg:grid-cols-5 gap-4 min-h-[70vh]">
       
-      {/* Left column: Explanatory content */}
+      {/* Left column: Explanation */}
       <div className="lg:col-span-2 space-y-3">
         <div className="space-y-2">
           <div className="flex items-center gap-2">

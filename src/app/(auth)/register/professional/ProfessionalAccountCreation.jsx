@@ -287,7 +287,8 @@ export default function ProfessionalAccountCreation({
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="container mx-auto px-4 py-4 max-w-6xl">
+      {/* Reduced container padding for availability step */}
+      <div className={`mx-auto py-4 max-w-7xl ${currentStep === 7 ? 'px-2' : 'container px-1'}`}>
         <form className="space-y-4" onSubmit={handleSubmit}>
           
           {/* Error Messages */}
@@ -305,8 +306,8 @@ export default function ProfessionalAccountCreation({
             </Alert>
           )}
 
-          {/* Step Content */}
-          <div className="bg-card rounded-lg border shadow-sm">
+          {/* Step Content - Minimal padding for availability */}
+          <div className={`bg-card rounded-lg border shadow-sm ${currentStep === 7 ? 'p-2 md:p-3' : 'p-6 md:p-8'}`}>
             {currentStep === 1 && (
               <Account 
                 formData={formData} 
@@ -336,7 +337,7 @@ export default function ProfessionalAccountCreation({
             )}
 
             {currentStep === 4 && (
-              <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 p-4">
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
                 <div className="lg:col-span-5">
                   <Services 
                     verticals={verticals}

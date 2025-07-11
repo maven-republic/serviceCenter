@@ -7,13 +7,13 @@ import { AVAILABILITY_RULES } from '@/config/availabilityRules'
 import { cn } from "@/lib/utils"
 
 const daysOfWeek = [
-  { label: 'Sunday', value: 0 },
-  { label: 'Monday', value: 1 },
-  { label: 'Tuesday', value: 2 },
-  { label: 'Wednesday', value: 3 },
-  { label: 'Thursday', value: 4 },
-  { label: 'Friday', value: 5 },
-  { label: 'Saturday', value: 6 }
+  { label: 'Sun', value: 0 },
+  { label: 'Mon', value: 1 },
+  { label: 'Tue', value: 2 },
+  { label: 'Wed', value: 3 },
+  { label: 'Thu', value: 4 },
+  { label: 'Fri', value: 5 },
+  { label: 'Sat', value: 6 }
 ]
 
 function hasDuplicateBlock(blocks) {
@@ -118,13 +118,8 @@ export default function AvailabilityFramework({ availability, setAvailability })
   }
 
   return (
-    <div className="w-full max-w-md">
-      <div className="mb-6">
-        <h5 className="text-lg font-semibold">Set Weekly Hours</h5>
-        <p className="text-sm text-muted-foreground">Define your regular availability for each day of the week.</p>
-      </div>
-
-      <div className="space-y-4">
+    <div className="w-full">
+      <div className="space-y-2">
         {daysOfWeek.map(({ label, value }) => {
           const blocks = weeklySlots[value] || []
           const showDuplicateWarning = hasDuplicateBlock(blocks)
@@ -132,34 +127,34 @@ export default function AvailabilityFramework({ availability, setAvailability })
           return (
             <div
               key={value}
-              className="p-4 bg-card rounded-lg border space-y-3"
+              className="p-2 bg-card rounded border space-y-2"
             >
-              <div className="font-medium text-sm text-foreground">{label}</div>
+              <div className="font-medium text-xs text-foreground">{label}</div>
 
               {blocks.map((block, index) => (
-                <div key={index} className="flex items-center gap-2 flex-wrap">
+                <div key={index} className="flex items-center gap-1 flex-wrap">
                   <input
                     type="time"
-                    className="px-3 py-1.5 text-sm border border-input rounded-md bg-background focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent"
+                    className="px-2 py-1 text-xs border border-input rounded bg-background focus:outline-none focus:ring-1 focus:ring-ring focus:border-transparent flex-1 min-w-[70px]"
                     value={block.start_time}
                     onChange={e => handleTimeChange(value, index, 'start_time', e.target.value)}
                   />
-                  <span className="text-sm font-medium text-muted-foreground">to</span>
+                  <span className="text-xs font-medium text-muted-foreground">to</span>
                   <input
                     type="time"
-                    className="px-3 py-1.5 text-sm border border-input rounded-md bg-background focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent"
+                    className="px-2 py-1 text-xs border border-input rounded bg-background focus:outline-none focus:ring-1 focus:ring-ring focus:border-transparent flex-1 min-w-[70px]"
                     value={block.end_time}
                     onChange={e => handleTimeChange(value, index, 'end_time', e.target.value)}
                   />
 
-                  <div className="flex items-center gap-1">
+                  <div className="flex items-center gap-0.5">
                     <Button
                       type="button"
                       variant="outline"
                       size="sm"
                       onClick={() => handleRemoveBlock(value, index)}
-                      className="h-8 w-8 p-0"
-                      title="Remove time block"
+                      className="h-6 w-6 p-0"
+                      title="Remove"
                     >
                       <X className="h-3 w-3" />
                     </Button>
@@ -171,8 +166,8 @@ export default function AvailabilityFramework({ availability, setAvailability })
                           variant="outline"
                           size="sm"
                           onClick={() => handleAddBlock(value)}
-                          className="h-8 w-8 p-0"
-                          title="Add time block"
+                          className="h-6 w-6 p-0"
+                          title="Add time"
                         >
                           <Plus className="h-3 w-3" />
                         </Button>
@@ -183,8 +178,8 @@ export default function AvailabilityFramework({ availability, setAvailability })
                             variant="outline"
                             size="sm"
                             onClick={() => handleCopyPrevious(value)}
-                            className="h-8 w-8 p-0"
-                            title="Copy previous day"
+                            className="h-6 w-6 p-0"
+                            title="Copy previous"
                           >
                             <Copy className="h-3 w-3" />
                           </Button>
@@ -200,16 +195,16 @@ export default function AvailabilityFramework({ availability, setAvailability })
                   type="button"
                   variant="outline"
                   onClick={() => handleAddBlock(value)}
-                  className="w-full h-12 border-dashed"
+                  className="w-full h-8 border-dashed text-xs"
                 >
-                  <Plus className="h-4 w-4 mr-2" />
-                  Add hours for {label}
+                  <Plus className="h-3 w-3 mr-1" />
+                  Add hours
                 </Button>
               )}
 
               {showDuplicateWarning && (
-                <div className="text-destructive text-xs mt-2 p-2 bg-destructive/10 rounded">
-                  Duplicate time block detected. Please adjust or remove.
+                <div className="text-destructive text-xs p-1 bg-destructive/10 rounded">
+                  Duplicate time detected
                 </div>
               )}
             </div>

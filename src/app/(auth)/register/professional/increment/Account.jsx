@@ -8,7 +8,7 @@ import { Card, CardContent } from "@/components/ui/card"
 
 export default function Account({ formData, updateFormData, errors, handleBlur }) {
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 min-h-[70vh]">
       
       {/* Left column: Visual/Brand Section */}
       <div className="hidden lg:flex items-center justify-center relative p-4 bg-gradient-to-br from-primary/10 via-primary/5 to-background rounded-lg">
