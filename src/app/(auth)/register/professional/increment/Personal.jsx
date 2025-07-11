@@ -14,35 +14,30 @@ export default function Personal({
   handleBlur
 }) {
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
+    <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
       
       {/* Left column: Explanatory content */}
-      <div className="lg:col-span-2 space-y-4">
-        <div className="space-y-3">
+      <div className="lg:col-span-2 space-y-3">
+        <div className="space-y-2">
           <div className="flex items-center gap-2">
-            <User className="h-5 w-5 text-primary" />
-            <h2 className="text-xl font-semibold">Personal Information</h2>
+            <User className="h-4 w-4 text-primary" />
+            <h2 className="text-lg font-semibold">Personal Information</h2>
           </div>
           
-          <div className="space-y-3 text-muted-foreground">
-            <p>
-              Tell clients about yourself. Your personal information helps establish your identity on the platform and builds trust with potential clients.
-            </p>
-            <p>
-              Your experience level is important as clients often look for professionals with specific levels of expertise for their projects.
-            </p>
-          </div>
+          <p className="text-sm text-muted-foreground">
+            Tell clients about yourself. Your personal information helps establish your identity and builds trust with potential clients.
+          </p>
         </div>
 
-        {/* Info Card */}
+        {/* Compact Info Card */}
         <Card className="bg-muted/30">
-          <CardContent className="p-4">
-            <div className="flex items-start gap-3">
-              <CheckCircle className="h-5 w-5 text-green-600 mt-0.5 flex-shrink-0" />
+          <CardContent className="p-3">
+            <div className="flex items-start gap-2">
+              <CheckCircle className="h-4 w-4 text-green-600 mt-0.5 flex-shrink-0" />
               <div className="space-y-1">
-                <p className="text-sm font-medium">Why this matters</p>
+                <p className="text-xs font-medium">Why this matters</p>
                 <p className="text-xs text-muted-foreground">
-                  Complete profiles receive 3x more client inquiries than incomplete ones.
+                  Complete profiles receive 3x more client inquiries.
                 </p>
               </div>
             </div>
@@ -53,16 +48,16 @@ export default function Personal({
       {/* Right column: Form fields */}
       <div className="lg:col-span-3">
         <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Mail className="h-5 w-5" />
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center gap-2 text-lg">
+              <Mail className="h-4 w-4" />
               Contact Details
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-6">
+          <CardContent className="space-y-4">
             
             {/* Email */}
-            <div className="space-y-2">
+            <div className="space-y-1">
               <Label htmlFor="email" className="text-sm font-medium">
                 Email Address
               </Label>
@@ -79,18 +74,18 @@ export default function Personal({
                 )}
               />
               {errors.email && (
-                <Alert variant="destructive">
-                  <AlertCircle className="h-4 w-4" />
-                  <AlertDescription>{errors.email}</AlertDescription>
-                </Alert>
+                <p className="text-sm text-destructive flex items-center gap-1">
+                  <AlertCircle className="h-3 w-3" />
+                  {errors.email}
+                </p>
               )}
             </div>
 
             {/* Name Fields Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               
               {/* First Name */}
-              <div className="space-y-2">
+              <div className="space-y-1">
                 <Label htmlFor="firstName" className="text-sm font-medium">
                   First Name
                 </Label>
@@ -108,13 +103,13 @@ export default function Personal({
                   )}
                 />
                 {errors.firstName && (
-                  <p className="text-sm text-destructive flex items-center gap-1">
+                  <p className="text-xs text-destructive flex items-center gap-1">
                     <AlertCircle className="h-3 w-3" />
                     {errors.firstName}
                   </p>
                 )}
                 {formData.firstName && !errors.firstName && (
-                  <p className="text-sm text-green-600 flex items-center gap-1">
+                  <p className="text-xs text-green-600 flex items-center gap-1">
                     <CheckCircle className="h-3 w-3" />
                     Looks good!
                   </p>
@@ -122,7 +117,7 @@ export default function Personal({
               </div>
 
               {/* Last Name */}
-              <div className="space-y-2">
+              <div className="space-y-1">
                 <Label htmlFor="lastName" className="text-sm font-medium">
                   Last Name
                 </Label>
@@ -140,13 +135,13 @@ export default function Personal({
                   )}
                 />
                 {errors.lastName && (
-                  <p className="text-sm text-destructive flex items-center gap-1">
+                  <p className="text-xs text-destructive flex items-center gap-1">
                     <AlertCircle className="h-3 w-3" />
                     {errors.lastName}
                   </p>
                 )}
                 {formData.lastName && !errors.lastName && (
-                  <p className="text-sm text-green-600 flex items-center gap-1">
+                  <p className="text-xs text-green-600 flex items-center gap-1">
                     <CheckCircle className="h-3 w-3" />
                     Looks good!
                   </p>
@@ -155,18 +150,18 @@ export default function Personal({
 
             </div>
 
-            {/* Progress indicator */}
-            <div className="pt-4 border-t">
-              <div className="flex items-center justify-between text-sm">
+            {/* Compact Progress indicator */}
+            <div className="pt-3 border-t">
+              <div className="flex items-center justify-between text-xs">
                 <span className="text-muted-foreground">Profile completion</span>
                 <span className="font-medium">
                   {[formData.email, formData.firstName, formData.lastName]
                     .filter(Boolean).length} / 3
                 </span>
               </div>
-              <div className="mt-2 w-full bg-muted rounded-full h-2">
+              <div className="mt-1 w-full bg-muted rounded-full h-1.5">
                 <div 
-                  className="bg-primary h-2 rounded-full transition-all duration-300"
+                  className="bg-primary h-1.5 rounded-full transition-all duration-300"
                   style={{ 
                     width: `${([formData.email, formData.firstName, formData.lastName]
                       .filter(Boolean).length / 3) * 100}%` 

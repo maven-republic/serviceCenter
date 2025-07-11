@@ -4,19 +4,26 @@ import { useState } from 'react'
 import Header from '@/components/header/Header20'
 import Footer from '@/components/footer/Footer'
 import ProfessionalAccountCreation from './ProfessionalAccountCreation'
+import ProgressionIndicator from './ProgressionIndicator'
 
 export default function ProfessionalAccountCreationInterface({ searchParams }) {
   const [currentStep, setCurrentStep] = useState(1)
 
-const nextStep = () => setCurrentStep(prev => Math.min(prev + 1, 7)) // Changed from 8 to 7
+  const nextStep = () => setCurrentStep(prev => Math.min(prev + 1, 7))
   const prevStep = () => setCurrentStep(prev => Math.max(prev - 1, 1))
 
   const errorMessage = searchParams?.error || null
 
   return (
-    <div>
+    <div className="min-h-screen flex flex-col">
       {/* <Header /> */}
-      <section>
+      
+      {/* Main Content */}
+      <main className="flex-1">
+        {/* Progression Indicator */}
+        {/* <ProgressionIndicator currentStep={currentStep} /> */}
+        
+        {/* Registration Form */}
         <ProfessionalAccountCreation
           errorMessage={errorMessage}
           currentStep={currentStep}
@@ -24,9 +31,9 @@ const nextStep = () => setCurrentStep(prev => Math.min(prev + 1, 7)) // Changed 
           nextStep={nextStep}
           prevStep={prevStep}
         />
-      </section>
+      </main>
+      
       {/* <Footer /> */}
     </div>
   )
 }
-

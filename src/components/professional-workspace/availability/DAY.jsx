@@ -163,8 +163,21 @@ export default function Day({
   )
 }
 
-// Preset variants for common use cases
-Day.Small = (props) => <Day {...props} size="sm" />
-Day.Large = (props) => <Day {...props} size="lg" showTimes />
-Day.Interactive = (props) => <Day {...props} onClick={props.onClick || (() => {})} />
-Day.ReadOnly = (props) => <Day {...props} onClick={undefined} />
+// Preset variants for common use cases - FIXED with proper display names
+const DaySmall = (props) => <Day {...props} size="sm" />
+DaySmall.displayName = 'Day.Small'
+
+const DayLarge = (props) => <Day {...props} size="lg" showTimes />
+DayLarge.displayName = 'Day.Large'
+
+const DayInteractive = (props) => <Day {...props} onClick={props.onClick || (() => {})} />
+DayInteractive.displayName = 'Day.Interactive'
+
+const DayReadOnly = (props) => <Day {...props} onClick={undefined} />
+DayReadOnly.displayName = 'Day.ReadOnly'
+
+// Attach the variants to the main component
+Day.Small = DaySmall
+Day.Large = DayLarge
+Day.Interactive = DayInteractive
+Day.ReadOnly = DayReadOnly

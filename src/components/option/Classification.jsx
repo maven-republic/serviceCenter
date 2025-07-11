@@ -93,25 +93,22 @@ export default function Classification() {
         console.error('Error fetching categories:', error);
         setError(error.message);
         
-        // Fallback to static data if API fails
+        // Fallback to static data if API fails - FIXED: Remove dynamic import that might cause module assignment
         try {
-          const module = await import("@/data/listing");
-          if (module.category && Array.isArray(module.category)) {
-            setCategories(module.category);
-            setError(null);
-          } else {
-            // Final fallback with hardcoded categories
-            setCategories([
-              { title: "Web Development", total: 45 },
-              { title: "Mobile Development", total: 32 },
-              { title: "Design", total: 67 },
-              { title: "Marketing", total: 28 },
-              { title: "Writing", total: 19 },
-              { title: "Business", total: 41 },
-              { title: "Technology", total: 53 },
-              { title: "Creative", total: 34 }
-            ]);
-          }
+          // Use static fallback instead of dynamic import to avoid module assignment issues
+          const fallbackCategories = [
+            { title: "Web Development", total: 45 },
+            { title: "Mobile Development", total: 32 },
+            { title: "Design", total: 67 },
+            { title: "Marketing", total: 28 },
+            { title: "Writing", total: 19 },
+            { title: "Business", total: 41 },
+            { title: "Technology", total: 53 },
+            { title: "Creative", total: 34 }
+          ];
+          
+          setCategories(fallbackCategories);
+          setError(null);
         } catch (fallbackError) {
           console.error('Fallback data also failed:', fallbackError);
           setCategories([

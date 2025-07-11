@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/card";
 import { Separator } from '@/components/ui/separator';
 import { 
-  Calendar as CalendarIcon,
+  Calendar, // ← FIXED: Use original name instead of renaming
   DollarSign,
   Target,
   Clock,
@@ -93,7 +93,7 @@ export default function CalendarIcon({
     <Card className="professional-workspace mt-4">
       <CardHeader className={cn("pb-3", compact && "pb-2")}>
         <div className="flex items-center gap-2">
-          <CalendarIcon className="h-4 w-4 text-muted-foreground" />
+          <Calendar className="h-4 w-4 text-muted-foreground" />
           <CardTitle className={cn("text-sm", compact && "text-xs")}>
             Calendar Legend
           </CardTitle>
@@ -262,7 +262,7 @@ export default function CalendarIcon({
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Badge variant="outline" className="text-xs">
-                  <CalendarIcon className="h-3 w-3 mr-1" />
+                  <Calendar className="h-3 w-3 mr-1" />
                   Interactive
                 </Badge>
                 {showEarningsLegend && (

@@ -2,7 +2,6 @@
 
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Phone, CheckCircle, AlertCircle } from "lucide-react"
 import { cn } from "@/lib/utils"
 
@@ -13,7 +12,7 @@ export default function Contact({
   handleBlur
 }) {
   return (
-    <div className="space-y-2">
+    <div className="space-y-1">
       <Label htmlFor="phone" className="text-sm font-medium flex items-center gap-2">
         <Phone className="h-4 w-4" />
         Phone Number
@@ -33,14 +32,14 @@ export default function Contact({
       />
       
       {errors.phone && (
-        <Alert variant="destructive">
-          <AlertCircle className="h-4 w-4" />
-          <AlertDescription>{errors.phone}</AlertDescription>
-        </Alert>
+        <p className="text-xs text-destructive flex items-center gap-1">
+          <AlertCircle className="h-3 w-3" />
+          {errors.phone}
+        </p>
       )}
       
       {formData.phone && !errors.phone && (
-        <p className="text-sm text-green-600 flex items-center gap-1">
+        <p className="text-xs text-green-600 flex items-center gap-1">
           <CheckCircle className="h-3 w-3" />
           Valid phone number
         </p>

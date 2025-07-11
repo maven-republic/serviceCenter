@@ -287,8 +287,8 @@ export default function ProfessionalAccountCreation({
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="container mx-auto px-4 py-8 max-w-6xl">
-        <form className="space-y-8" onSubmit={handleSubmit}>
+      <div className="container mx-auto px-4 py-4 max-w-6xl">
+        <form className="space-y-4" onSubmit={handleSubmit}>
           
           {/* Error Messages */}
           {errorMessage && (
@@ -336,7 +336,7 @@ export default function ProfessionalAccountCreation({
             )}
 
             {currentStep === 4 && (
-              <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 p-6">
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 p-4">
                 <div className="lg:col-span-5">
                   <Services 
                     verticals={verticals}
@@ -389,7 +389,7 @@ export default function ProfessionalAccountCreation({
           </div>
 
           {/* Spacer for fixed navigation */}
-          <div className="h-20" />
+          <div className="h-16" />
 
           <NavigationSelectors
             currentStep={currentStep}
