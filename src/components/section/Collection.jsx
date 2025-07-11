@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -25,6 +26,7 @@ import {
 
 import listingStore from "@/store/listingStore";
 import priceStore from "@/store/priceStore";
+import useSearchStore from "@/store/searchStore";
 import Sift from "../element/Sift";
 import Pagination1 from "./Pagination1";
 import Manifest from "../card/Manifest";
@@ -36,8 +38,14 @@ export default function Collection() {
   const [loading, setLoading] = useState(true);
   const [services, setServices] = useState([]);
   const [error, setError] = useState(null);
-  const [viewMode, setViewMode] = useState('grid'); // 'grid' or 'list'
+  const [viewMode, setViewMode] = useState('grid');
   const [sortBy, setSortBy] = useState('recommended');
+  
+  // URL search params
+  const searchParams = useSearchParams();
+  const urlQuery = searchParams.get('q');
+  const urlType = searchParams.get('type');
+  const urlCategory = searchParams.get('category');
   
   // Store state
   const getDeliveryTime = listingStore((state) => state.getDeliveryTime);
@@ -50,15 +58,38 @@ export default function Collection() {
   const getSearch = listingStore((state) => state.getSearch);
   const resetAllFilters = listingStore((state) => state.resetAllFilters);
   const getCategory = listingStore((state) => state.getCategory);
+  
+  // Search store
+  const { searchQuery, setSearchQuery } = useSearchStore();
 
-  // Fetch services from API
+  // Fetch services/search results
   useEffect(() => {
-    const fetchServices = async () => {
+    const fetchData = async () => {
       try {
         setLoading(true);
         setError(null);
 
-        const response = await fetch('/api/services', {
+        let apiUrl;
+        let isSearchQuery = urlQuery || searchQuery || getSearch;
+        
+        if (isSearchQuery) {
+          // Use search API
+          apiUrl = new URL('/api/search', window.location.origin);
+          apiUrl.searchParams.set('q', isSearchQuery);
+          apiUrl.searchParams.set('type', urlType || 'all');
+          apiUrl.searchParams.set('limit', itemsPerPage.toString());
+          apiUrl.searchParams.set('offset', ((currentPage - 1) * itemsPerPage).toString());
+          
+          // Add filters
+          if (urlCategory) apiUrl.searchParams.set('category', urlCategory);
+          if (getPriceRange.min > 0) apiUrl.searchParams.set('min_price', getPriceRange.min.toString());
+          if (getPriceRange.max < 100000) apiUrl.searchParams.set('max_price', getPriceRange.max.toString());
+        } else {
+          // Use regular services API
+          apiUrl = '/api/services';
+        }
+
+        const response = await fetch(apiUrl.toString(), {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
@@ -66,85 +97,52 @@ export default function Collection() {
           }
         });
 
-        const contentType = response.headers.get('content-type');
-
-        if (!contentType || !contentType.includes('application/json')) {
-          const text = await response.text();
-          throw new Error(`Expected JSON, got ${contentType}: ${text}`);
-        }
-
         if (!response.ok) {
-          const errorText = await response.text();
-          if (response.status === 400 && errorText.includes('Professional ID')) {
-            throw new Error('API_REQUIRES_PROFESSIONAL_ID');
-          }
           throw new Error(`Failed to fetch: ${response.status} ${response.statusText}`);
         }
 
         const data = await response.json();
         
-        // Handle different response formats
-        if (Array.isArray(data)) {
-          setServices(data);
-        } else if (data.services && Array.isArray(data.services)) {
-          setServices(data.services);
-        } else if (data.data && Array.isArray(data.data)) {
-          setServices(data.data);
+        if (isSearchQuery) {
+          // Handle search API response
+          if (data.results && Array.isArray(data.results)) {
+            // Filter only services from search results
+            const serviceResults = data.results.filter(result => result.type === 'service');
+            setServices(serviceResults);
+          } else {
+            setServices([]);
+          }
         } else {
-          setServices([]);
+          // Handle services API response
+          if (Array.isArray(data)) {
+            setServices(data);
+          } else if (data.services && Array.isArray(data.services)) {
+            setServices(data.services);
+          } else if (data.data && Array.isArray(data.data)) {
+            setServices(data.data);
+          } else {
+            setServices([]);
+          }
+        }
+
+        // Update search store if URL has query
+        if (urlQuery && urlQuery !== searchQuery) {
+          setSearchQuery(urlQuery);
         }
 
       } catch (error) {
-        console.error('Error fetching services:', error);
+        console.error('Error fetching data:', error);
         setError(error.message);
         
-        // Fallback to static data - FIXED: Remove dynamic import that causes module assignment error
+        // Fallback to static data
         try {
-          // Use static fallback instead of dynamic import to avoid module assignment issues
-          const fallbackServices = [
-            {
-              id: 1,
-              title: "Professional Web Development",
-              category: "Web Development",
-              price: 299,
-              rating: 4.8,
-              reviews: 45,
-              deliveryTime: "3 days",
-              level: "Expert",
-              location: "Remote",
-              description: "Custom website development with modern technologies",
-              createdAt: new Date().toISOString()
-            },
-            {
-              id: 2,
-              title: "Mobile App Design",
-              category: "Design",
-              price: 199,
-              rating: 4.9,
-              reviews: 32,
-              deliveryTime: "5 days",
-              level: "Professional",
-              location: "Remote",
-              description: "Beautiful mobile app UI/UX design",
-              createdAt: new Date().toISOString()
-            },
-            {
-              id: 3,
-              title: "Digital Marketing Strategy",
-              category: "Marketing",
-              price: 149,
-              rating: 4.7,
-              reviews: 28,
-              deliveryTime: "2 days",
-              level: "Expert",
-              location: "Remote",
-              description: "Comprehensive digital marketing solutions",
-              createdAt: new Date().toISOString()
-            }
-          ];
-          
-          setServices(fallbackServices);
-          setError(null);
+          const module = await import("@/data/product");
+          if (module.service && Array.isArray(module.service)) {
+            setServices(module.service);
+            setError(null);
+          } else {
+            setServices([]);
+          }
         } catch (fallbackError) {
           console.error('Fallback data failed:', fallbackError);
           setServices([]);
@@ -154,11 +152,26 @@ export default function Collection() {
       }
     };
     
-    fetchServices();
+    fetchData();
+  }, [
+    urlQuery, 
+    urlType, 
+    urlCategory, 
+    searchQuery, 
+    getSearch, 
+    currentPage, 
+    itemsPerPage,
+    getPriceRange.min,
+    getPriceRange.max,
+    setSearchQuery
+  ]);
+
+  // Reset filters when component mounts
+  useEffect(() => {
     resetAllFilters();
   }, [resetAllFilters]);
 
-  // Filter functions
+  // Filter functions (for local filtering)
   const deliveryFilter = (item) =>
     getDeliveryTime === "" || getDeliveryTime === "anytime"
       ? item
@@ -170,7 +183,8 @@ export default function Collection() {
       : item;
 
   const priceFilter = (item) =>
-    getPriceRange.min <= item.price && getPriceRange.max >= item.price;
+    getPriceRange.min <= (item.price || item.base_price || 0) && 
+    getPriceRange.max >= (item.price || item.base_price || 0);
 
   const levelFilter = (item) =>
     getLevel?.length !== 0 ? getLevel.includes(item.level) : item;
@@ -181,9 +195,9 @@ export default function Collection() {
   const searchFilter = (item) =>
     getSearch !== ""
       ? (item.title?.toLowerCase().includes(getSearch.toLowerCase()) || 
+         item.name?.toLowerCase().includes(getSearch.toLowerCase()) ||
          item.category?.toLowerCase().includes(getSearch.toLowerCase()) ||
-         item.description?.toLowerCase().includes(getSearch.toLowerCase()) ||
-         item.name?.toLowerCase().includes(getSearch.toLowerCase()))
+         item.description?.toLowerCase().includes(getSearch.toLowerCase()))
       : item;
 
   const sortByFilter = (item) =>
@@ -212,15 +226,15 @@ export default function Collection() {
     filteredServices = [...filteredServices].sort((a, b) => {
       switch (sortBy) {
         case 'price-low':
-          return (a.price || 0) - (b.price || 0);
+          return (a.price || a.base_price || 0) - (b.price || b.base_price || 0);
         case 'price-high':
-          return (b.price || 0) - (a.price || 0);
+          return (b.price || b.base_price || 0) - (a.price || a.base_price || 0);
         case 'rating':
           return (b.rating || 0) - (a.rating || 0);
         case 'newest':
-          return new Date(b.createdAt || 0) - new Date(a.createdAt || 0);
+          return new Date(b.createdAt || b.created_at || 0) - new Date(a.createdAt || a.created_at || 0);
         case 'popular':
-          return (b.reviews || 0) - (a.reviews || 0);
+          return (b.reviews || b.review_count || 0) - (a.reviews || a.review_count || 0);
         default:
           return 0;
       }
@@ -298,20 +312,26 @@ export default function Collection() {
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-6">
           <div>
             <h1 className="text-2xl font-bold text-foreground mb-2">
-              Explore               {error && (
-                
+              {urlQuery || searchQuery ? (
+                <>Search Results for "{urlQuery || searchQuery}"</>
+              ) : urlCategory ? (
+                <>Category: {urlCategory}</>
+              ) : (
+                <>Explore Services</>
+              )}
+              {error && (
                 <Badge variant="secondary" className="ml-3">
                   Using cached data
                 </Badge>
               )}
             </h1>
-            {/* <p className="text-muted-foreground">
+            <p className="text-muted-foreground">
               {loading ? (
                 <Skeleton className="h-4 w-48" />
               ) : (
                 `${filteredServices.length} service${filteredServices.length !== 1 ? 's' : ''} found`
               )}
-            </p> */}
+            </p>
           </div>
           
           {/* View Controls */}
@@ -381,7 +401,7 @@ export default function Collection() {
                   : "flex flex-col space-y-4"
               )}>
                 {currentItems.map((item, i) => (
-                  <div key={item.id || i} className={cn(
+                  <div key={item.id || item.service_id || i} className={cn(
                     viewMode === 'list' && "max-w-none"
                   )}>
                     <Manifest data={item} />

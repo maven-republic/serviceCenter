@@ -108,9 +108,7 @@ C:\Users\adrom\Downloads\serviceCenter\src\app\(auth)\register\professional\incr
 C:\Users\adrom\Downloads\serviceCenter\src\app\(auth)\register\professional\increment\ServiceTag.jsx
 C:\Users\adrom\Downloads\serviceCenter\src\app\(auth)\register\professional\increment\ServiceTag.module.css
 C:\Users\adrom\Downloads\serviceCenter\src\app\(auth)\register\professional\increment\professional-availability\AvailabilityCalendarView.jsx
-C:\Users\adrom\Downloads\serviceCenter\src\app\(auth)\register\professional\increment\professional-availability\AvailabilityCalendarView.module.css
 C:\Users\adrom\Downloads\serviceCenter\src\app\(auth)\register\professional\increment\professional-availability\AvailabilityFramework.jsx
-C:\Users\adrom\Downloads\serviceCenter\src\app\(auth)\register\professional\increment\professional-availability\AvailabilityFramework.module.css
 C:\Users\adrom\Downloads\serviceCenter\src\app\(auth)\register\professional\increment\professional-availability\AvailabilityInterface.jsx
 C:\Users\adrom\Downloads\serviceCenter\src\app\(auth)\register\professional\increment\professional-availability\AvailabilityManagement.jsx
 C:\Users\adrom\Downloads\serviceCenter\src\app\(auth)\register\professional\increment\professional-availability\AvailabilityProtocol.jsx
@@ -528,6 +526,7 @@ C:\Users\adrom\Downloads\serviceCenter\src\components\customer-workspace\custome
 C:\Users\adrom\Downloads\serviceCenter\src\components\customer-workspace\element\Filter.jsx
 C:\Users\adrom\Downloads\serviceCenter\src\components\customer-workspace\element\GlobalSearch.jsx
 C:\Users\adrom\Downloads\serviceCenter\src\components\customer-workspace\element\Search.jsx
+C:\Users\adrom\Downloads\serviceCenter\src\components\customer-workspace\element\UniversalSearch.jsx
 C:\Users\adrom\Downloads\serviceCenter\src\components\customer-workspace\header\Axis.jsx
 C:\Users\adrom\Downloads\serviceCenter\src\components\customer-workspace\navigation\CustomerHeader.jsx
 C:\Users\adrom\Downloads\serviceCenter\src\components\customer-workspace\navigation\CustomerNavigation.jsx
@@ -1060,6 +1059,7 @@ C:\Users\adrom\Downloads\serviceCenter\src\components\ui\button.jsx
 C:\Users\adrom\Downloads\serviceCenter\src\components\ui\card.jsx
 C:\Users\adrom\Downloads\serviceCenter\src\components\ui\chart.jsx
 C:\Users\adrom\Downloads\serviceCenter\src\components\ui\checkbox.jsx
+C:\Users\adrom\Downloads\serviceCenter\src\components\ui\command.jsx
 C:\Users\adrom\Downloads\serviceCenter\src\components\ui\dialog.jsx
 C:\Users\adrom\Downloads\serviceCenter\src\components\ui\dropdown-menu.jsx
 C:\Users\adrom\Downloads\serviceCenter\src\components\ui\input.jsx

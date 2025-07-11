@@ -35,7 +35,10 @@ export default function AddressConfirmation({
   const [selectedAddress, setSelectedAddress] = useState(null)
   const [showAddressOptions, setShowAddressOptions] = useState(false)
 
-  const { setConfirmedAddress } = useSearchStore()
+  // FIXED: Get the entire store and extract the function safely
+  const searchStore = useSearchStore()
+  const setConfirmedAddress = searchStore?.setConfirmedAddress
+
   const supabase = createClient()
   const addressRef = useRef(null)
 
@@ -47,9 +50,10 @@ export default function AddressConfirmation({
       isEditing,
       selectedAddress,
       homeAddress,
-      showAddressOptions
+      showAddressOptions,
+      setConfirmedAddressExists: typeof setConfirmedAddress === 'function'
     })
-  }, [accountId, loadingAddress, isEditing, selectedAddress, homeAddress, showAddressOptions])
+  }, [accountId, loadingAddress, isEditing, selectedAddress, homeAddress, showAddressOptions, setConfirmedAddress])
 
   useEffect(() => {
     async function fetchHomeAddress() {
@@ -132,9 +136,17 @@ export default function AddressConfirmation({
     setSelectedAddress(homeAddress)
     setShowAddressOptions(false)
     
-    // Store the address in searchStore
-    setConfirmedAddress(homeAddress)
-    console.log('🔍 Home address stored as service location')
+    // FIXED: Store the address in searchStore with error handling
+    if (setConfirmedAddress && typeof setConfirmedAddress === 'function') {
+      try {
+        setConfirmedAddress(homeAddress)
+        console.log('🔍 Home address stored as service location')
+      } catch (error) {
+        console.error('❌ Error storing confirmed address:', error)
+      }
+    } else {
+      console.warn('⚠️ setConfirmedAddress function not available')
+    }
   }
 
   const handleUseDifferentAddress = () => {
@@ -214,9 +226,17 @@ export default function AddressConfirmation({
     setAddressError(null)
     setIsEditing(false)
     
-    // Store the full address in searchStore
-    setConfirmedAddress(parsedAddress)
-    console.log('🔍 Service address stored in search store')
+    // FIXED: Store the full address in searchStore with error handling
+    if (setConfirmedAddress && typeof setConfirmedAddress === 'function') {
+      try {
+        setConfirmedAddress(parsedAddress)
+        console.log('🔍 Service address stored in search store')
+      } catch (error) {
+        console.error('❌ Error storing confirmed address:', error)
+      }
+    } else {
+      console.warn('⚠️ setConfirmedAddress function not available')
+    }
   }
 
   const handleConfirmAddress = () => {

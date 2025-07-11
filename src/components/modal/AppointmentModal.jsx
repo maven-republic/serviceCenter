@@ -42,19 +42,26 @@ export default function AppointmentModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-<DialogContent className="max-w-5xl max-h-[95vh] overflow-hidden flex flex-col p-0 gap-0">        
-
+      <DialogContent className="max-w-5xl max-h-[95vh] overflow-hidden flex flex-col p-0 gap-0">
+        
+        {/* Add the required DialogHeader with DialogTitle */}
+        <DialogHeader className="sr-only">
+          <DialogTitle>Book Appointment with {professionalName}</DialogTitle>
+          <DialogDescription>
+            Schedule your appointment and provide service details
+          </DialogDescription>
+        </DialogHeader>
 
         {/* Modal Body - Appointment Form */}
         <div className="flex-1 overflow-y-auto">
-     <Appointment
-       professional={professional}
-       serviceInformation={serviceInformation}
-       location={location}
-       onSuccess={handleAppointmentSuccess}
-       onCancel={onClose}
-     />
-   </div>
+          <Appointment
+            professional={professional}
+            serviceInformation={serviceInformation}
+            location={location}
+            onSuccess={handleAppointmentSuccess}
+            onCancel={onClose}
+          />
+        </div>
       </DialogContent>
     </Dialog>
   )

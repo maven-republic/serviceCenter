@@ -3,16 +3,16 @@ export const customerNavigation = {
   workspace: [
     {
       id: 1,
-      name: 'Search',
+      name: 'Explore',
       icon: 'flaticon-search',
       path: "/customer/workspace",
     },
-    {
-      id: 4,
-      name: "Explore",
-      icon: "flaticon-rocket",
-      path: "/customer/explore",
-    }
+    // {
+    //   id: 4,
+    //   name: "Explore",
+    //   icon: "flaticon-rocket",
+    //   path: "/customer/explore",
+    // }
   ],
   account: [
     {
