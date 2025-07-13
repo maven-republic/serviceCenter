@@ -21,7 +21,9 @@ import {
   Search,
   Filter,
   Grid3X3,
-  List
+  List,
+  Zap,
+  TrendingUp
 } from "lucide-react";
 
 import listingStore from "@/store/listingStore";
@@ -40,6 +42,7 @@ export default function Collection() {
   const [error, setError] = useState(null);
   const [viewMode, setViewMode] = useState('grid');
   const [sortBy, setSortBy] = useState('recommended');
+  const [totalResults, setTotalResults] = useState(0);
   
   // URL search params
   const searchParams = useSearchParams();
@@ -62,97 +65,132 @@ export default function Collection() {
   // Search store
   const { searchQuery, setSearchQuery } = useSearchStore();
 
-  // Fetch services/search results
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setLoading(true);
-        setError(null);
+  // 🔧 FIXED: Async data fetching with proper error handling
+  const fetchServices = async () => {
+    try {
+      setLoading(true);
+      setError(null);
 
-        let apiUrl;
-        let isSearchQuery = urlQuery || searchQuery || getSearch;
+      const isSearchQuery = urlQuery || searchQuery || getSearch;
+      let apiUrl;
+      let requestOptions = {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Cache-Control': 'no-store'
+        }
+      };
+
+      if (isSearchQuery) {
+        // Search API
+        apiUrl = new URL('/api/search', window.location.origin);
+        apiUrl.searchParams.set('q', isSearchQuery);
+        apiUrl.searchParams.set('type', urlType || 'all');
+        apiUrl.searchParams.set('limit', itemsPerPage.toString());
+        apiUrl.searchParams.set('offset', ((currentPage - 1) * itemsPerPage).toString());
         
-        if (isSearchQuery) {
-          // Use search API
-          apiUrl = new URL('/api/search', window.location.origin);
-          apiUrl.searchParams.set('q', isSearchQuery);
-          apiUrl.searchParams.set('type', urlType || 'all');
-          apiUrl.searchParams.set('limit', itemsPerPage.toString());
-          apiUrl.searchParams.set('offset', ((currentPage - 1) * itemsPerPage).toString());
-          
-          // Add filters
-          if (urlCategory) apiUrl.searchParams.set('category', urlCategory);
-          if (getPriceRange.min > 0) apiUrl.searchParams.set('min_price', getPriceRange.min.toString());
-          if (getPriceRange.max < 100000) apiUrl.searchParams.set('max_price', getPriceRange.max.toString());
-        } else {
-          // Use regular services API
-          apiUrl = '/api/services';
-        }
-
-        const response = await fetch(apiUrl.toString(), {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-            'Cache-Control': 'no-store'
-          }
-        });
-
-        if (!response.ok) {
-          throw new Error(`Failed to fetch: ${response.status} ${response.statusText}`);
-        }
-
-        const data = await response.json();
-        
-        if (isSearchQuery) {
-          // Handle search API response
-          if (data.results && Array.isArray(data.results)) {
-            // Filter only services from search results
-            const serviceResults = data.results.filter(result => result.type === 'service');
-            setServices(serviceResults);
-          } else {
-            setServices([]);
-          }
-        } else {
-          // Handle services API response
-          if (Array.isArray(data)) {
-            setServices(data);
-          } else if (data.services && Array.isArray(data.services)) {
-            setServices(data.services);
-          } else if (data.data && Array.isArray(data.data)) {
-            setServices(data.data);
-          } else {
-            setServices([]);
-          }
-        }
-
-        // Update search store if URL has query
-        if (urlQuery && urlQuery !== searchQuery) {
-          setSearchQuery(urlQuery);
-        }
-
-      } catch (error) {
-        console.error('Error fetching data:', error);
-        setError(error.message);
-        
-        // Fallback to static data
-        try {
-          const module = await import("@/data/product");
-          if (module.service && Array.isArray(module.service)) {
-            setServices(module.service);
-            setError(null);
-          } else {
-            setServices([]);
-          }
-        } catch (fallbackError) {
-          console.error('Fallback data failed:', fallbackError);
-          setServices([]);
-        }
-      } finally {
-        setLoading(false);
+        // Add filters
+        if (urlCategory) apiUrl.searchParams.set('category', urlCategory);
+        if (getPriceRange.min > 0) apiUrl.searchParams.set('min_price', getPriceRange.min.toString());
+        if (getPriceRange.max < 100000) apiUrl.searchParams.set('max_price', getPriceRange.max.toString());
+      } else {
+        // Services API
+        apiUrl = new URL('/api/services', window.location.origin);
+        apiUrl.searchParams.set('limit', itemsPerPage.toString());
+        apiUrl.searchParams.set('offset', ((currentPage - 1) * itemsPerPage).toString());
       }
-    };
-    
-    fetchData();
+
+      console.log('🔍 Fetching from:', apiUrl.toString());
+      
+      const response = await fetch(apiUrl.toString(), requestOptions);
+
+      if (!response.ok) {
+        throw new Error(`API Error: ${response.status} ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      console.log('📊 API Response:', data);
+      
+      // Process response based on API type
+      let serviceResults = [];
+      let totalCount = 0;
+
+      if (isSearchQuery) {
+        // Search API response
+        if (data.results && Array.isArray(data.results)) {
+          serviceResults = data.results.filter(result => result.type === 'service');
+          totalCount = data.total || serviceResults.length;
+        }
+      } else {
+        // Services API response
+        if (Array.isArray(data)) {
+          serviceResults = data;
+          totalCount = data.length;
+        } else if (data.services && Array.isArray(data.services)) {
+          serviceResults = data.services;
+          totalCount = data.total || data.services.length;
+        } else if (data.data && Array.isArray(data.data)) {
+          serviceResults = data.data;
+          totalCount = data.total || data.data.length;
+        }
+      }
+
+      setServices(serviceResults);
+      setTotalResults(totalCount);
+
+      // Update search store if URL has query
+      if (urlQuery && urlQuery !== searchQuery) {
+        setSearchQuery(urlQuery);
+      }
+
+      console.log(`✅ Loaded ${serviceResults.length} services`);
+
+    } catch (error) {
+      console.error('❌ API Error:', error);
+      setError(error.message);
+      
+      // 🔧 FIXED: Fallback data loading (this was the problematic line 139)
+      await loadFallbackData();
+      
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // 🔧 FIXED: Separate fallback data function
+  const loadFallbackData = async () => {
+    try {
+      console.log('🔄 Loading fallback data...');
+      
+      // 🚨 FIXED: Changed 'module' to 'productData' to avoid ESLint error
+      const productData = await import("@/data/product");
+      
+      if (productData.service && Array.isArray(productData.service)) {
+        setServices(productData.service);
+        setTotalResults(productData.service.length);
+        setError(null);
+        console.log('✅ Fallback data loaded successfully');
+      } else if (productData.default?.service && Array.isArray(productData.default.service)) {
+        setServices(productData.default.service);
+        setTotalResults(productData.default.service.length);
+        setError(null);
+        console.log('✅ Fallback data (default export) loaded successfully');
+      } else {
+        console.warn('⚠️ Fallback data structure unexpected:', productData);
+        setServices([]);
+        setTotalResults(0);
+      }
+    } catch (fallbackError) {
+      console.error('❌ Fallback data failed:', fallbackError);
+      setServices([]);
+      setTotalResults(0);
+      setError('Unable to load services data');
+    }
+  };
+
+  // Fetch data effect
+  useEffect(() => {
+    fetchServices();
   }, [
     urlQuery, 
     urlType, 
@@ -171,72 +209,103 @@ export default function Collection() {
     resetAllFilters();
   }, [resetAllFilters]);
 
-  // Filter functions (for local filtering)
-  const deliveryFilter = (item) =>
-    getDeliveryTime === "" || getDeliveryTime === "anytime"
-      ? item
-      : item.deliveryTime === getDeliveryTime;
+  // 🔧 ENHANCED: Filter functions with better error handling
+  const createFilter = (filterFn, fallback = true) => (item) => {
+    try {
+      return filterFn(item);
+    } catch (err) {
+      console.warn('Filter error:', err);
+      return fallback;
+    }
+  };
 
-  const categoryFilter = (item) =>
+  const deliveryFilter = createFilter((item) =>
+    getDeliveryTime === "" || getDeliveryTime === "anytime"
+      ? true
+      : item.deliveryTime === getDeliveryTime
+  );
+
+  const categoryFilter = createFilter((item) =>
     getCategory?.length !== 0 
       ? getCategory.includes(item.category) 
-      : item;
+      : true
+  );
 
-  const priceFilter = (item) =>
-    getPriceRange.min <= (item.price || item.base_price || 0) && 
-    getPriceRange.max >= (item.price || item.base_price || 0);
+  const priceFilter = createFilter((item) => {
+    const price = item.price || item.base_price || 0;
+    return getPriceRange.min <= price && getPriceRange.max >= price;
+  });
 
-  const levelFilter = (item) =>
-    getLevel?.length !== 0 ? getLevel.includes(item.level) : item;
+  const levelFilter = createFilter((item) =>
+    getLevel?.length !== 0 ? getLevel.includes(item.level) : true
+  );
 
-  const locationFilter = (item) =>
-    getLocation?.length !== 0 ? getLocation.includes(item.location) : item;
+  const locationFilter = createFilter((item) =>
+    getLocation?.length !== 0 ? getLocation.includes(item.location) : true
+  );
 
-  const searchFilter = (item) =>
-    getSearch !== ""
-      ? (item.title?.toLowerCase().includes(getSearch.toLowerCase()) || 
-         item.name?.toLowerCase().includes(getSearch.toLowerCase()) ||
-         item.category?.toLowerCase().includes(getSearch.toLowerCase()) ||
-         item.description?.toLowerCase().includes(getSearch.toLowerCase()))
-      : item;
+  const searchFilter = createFilter((item) => {
+    if (getSearch === "") return true;
+    
+    const searchTerm = getSearch.toLowerCase();
+    const searchableFields = [
+      item.title,
+      item.name,
+      item.category,
+      item.description,
+      item.tags?.join(' ')
+    ].filter(Boolean);
+    
+    return searchableFields.some(field => 
+      field.toLowerCase().includes(searchTerm)
+    );
+  });
 
-  const sortByFilter = (item) =>
-    getBestSeller === "" ? item : (getBestSeller === "best-seller" ? item : item.sort === getBestSeller);
+  const sortByFilter = createFilter((item) =>
+    getBestSeller === "" ? true : (getBestSeller === "best-seller" ? true : item.sort === getBestSeller)
+  );
 
-  const designToolFilter = (item) =>
-    getDesginTool?.length !== 0 ? getDesginTool.includes(item.tool) : item;
+  const designToolFilter = createFilter((item) =>
+    getDesginTool?.length !== 0 ? getDesginTool.includes(item.tool) : true
+  );
 
-  const speakFilter = (item) =>
-    getSpeak?.length !== 0 ? getSpeak.includes(item.language) : item;
+  const speakFilter = createFilter((item) =>
+    getSpeak?.length !== 0 ? getSpeak.includes(item.language) : true
+  );
 
   // Apply all filters and sorting
   let filteredServices = services
-    .filter(getDeliveryTime ? deliveryFilter : () => true)
-    .filter(getPriceRange.min !== 0 || getPriceRange.max !== 100000 ? priceFilter : () => true)
-    .filter(getLevel?.length !== 0 ? levelFilter : () => true)
-    .filter(getLocation?.length !== 0 ? locationFilter : () => true)
-    .filter(getSearch !== "" ? searchFilter : () => true)
-    .filter(getBestSeller !== "" ? sortByFilter : () => true)
-    .filter(getDesginTool?.length !== 0 ? designToolFilter : () => true)
-    .filter(getSpeak?.length !== 0 ? speakFilter : () => true)
-    .filter(getCategory?.length !== 0 ? categoryFilter : () => true);
+    .filter(deliveryFilter)
+    .filter(priceFilter)
+    .filter(levelFilter)
+    .filter(locationFilter)
+    .filter(searchFilter)
+    .filter(sortByFilter)
+    .filter(designToolFilter)
+    .filter(speakFilter)
+    .filter(categoryFilter);
 
-  // Apply sorting
-  if (sortBy) {
+  // 🔧 ENHANCED: Improved sorting with error handling
+  if (sortBy && filteredServices.length > 0) {
     filteredServices = [...filteredServices].sort((a, b) => {
-      switch (sortBy) {
-        case 'price-low':
-          return (a.price || a.base_price || 0) - (b.price || b.base_price || 0);
-        case 'price-high':
-          return (b.price || b.base_price || 0) - (a.price || a.base_price || 0);
-        case 'rating':
-          return (b.rating || 0) - (a.rating || 0);
-        case 'newest':
-          return new Date(b.createdAt || b.created_at || 0) - new Date(a.createdAt || a.created_at || 0);
-        case 'popular':
-          return (b.reviews || b.review_count || 0) - (a.reviews || a.review_count || 0);
-        default:
-          return 0;
+      try {
+        switch (sortBy) {
+          case 'price-low':
+            return (a.price || a.base_price || 0) - (b.price || b.base_price || 0);
+          case 'price-high':
+            return (b.price || b.base_price || 0) - (a.price || a.base_price || 0);
+          case 'rating':
+            return (b.rating || 0) - (a.rating || 0);
+          case 'newest':
+            return new Date(b.createdAt || b.created_at || 0) - new Date(a.createdAt || a.created_at || 0);
+          case 'popular':
+            return (b.reviews || b.review_count || 0) - (a.reviews || a.review_count || 0);
+          default:
+            return 0;
+        }
+      } catch (err) {
+        console.warn('Sort error:', err);
+        return 0;
       }
     });
   }
@@ -260,15 +329,50 @@ export default function Collection() {
 
   // Retry function
   const retryFetch = () => {
-    window.location.reload();
+    fetchServices();
   };
 
-  // Loading skeleton
+  // Get display title
+  const getDisplayTitle = () => {
+    if (urlQuery || searchQuery) {
+      return `Search Results for "${urlQuery || searchQuery}"`;
+    } else if (urlCategory) {
+      return `Category: ${urlCategory}`;
+    } else {
+      return 'Explore Services';
+    }
+  };
+
+  // Get results summary
+  const getResultsSummary = () => {
+    const hasActiveFilters = [
+      getDeliveryTime,
+      getLevel?.length > 0,
+      getLocation?.length > 0,
+      getSearch,
+      getBestSeller,
+      getDesginTool?.length > 0,
+      getSpeak?.length > 0,
+      getCategory?.length > 0,
+      getPriceRange.min > 0,
+      getPriceRange.max < 100000
+    ].some(Boolean);
+
+    if (loading) return 'Loading services...';
+    
+    if (filteredServices.length === 0 && services.length > 0) {
+      return hasActiveFilters ? 'No services match your filters' : 'No services found';
+    }
+    
+    return `${filteredServices.length} service${filteredServices.length !== 1 ? 's' : ''} found`;
+  };
+
+  // 🔧 ENHANCED: Loading skeleton component
   const LoadingSkeleton = () => (
     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4 2xl:grid-cols-6 gap-6">
-      {[...Array(12)].map((_, i) => (
-        <Card key={i} className="h-80">
-          <Skeleton className="h-52 w-full" />
+      {[...Array(itemsPerPage)].map((_, i) => (
+        <Card key={i} className="h-80 animate-pulse">
+          <Skeleton className="h-52 w-full rounded-t-lg" />
           <CardContent className="p-4 space-y-3">
             <Skeleton className="h-4 w-3/4" />
             <div className="flex justify-between items-center">
@@ -283,21 +387,33 @@ export default function Collection() {
     </div>
   );
 
-  // Error state
-  if (error && services.length === 0) {
+  // 🔧 ENHANCED: Error state with better UX
+  if (error && services.length === 0 && !loading) {
     return (
       <div className="container max-w-7xl mx-auto px-4 py-8">
-        <Alert className="max-w-lg mx-auto">
+        <Alert className="max-w-lg mx-auto border-destructive/50">
           <AlertCircle className="h-4 w-4" />
           <AlertDescription className="space-y-4">
             <div>
-              <h5 className="font-semibold mb-2">Unable to load services</h5>
+              <h5 className="font-semibold mb-2 text-destructive">Unable to load services</h5>
               <p className="text-sm text-muted-foreground">{error}</p>
+              <p className="text-xs text-muted-foreground mt-2">
+                This might be a temporary connectivity issue. Please try again.
+              </p>
             </div>
-            <Button onClick={retryFetch} className="gap-2">
-              <RefreshCw className="h-4 w-4" />
-              Retry
-            </Button>
+            <div className="flex gap-2">
+              <Button onClick={retryFetch} size="sm" className="gap-2">
+                <RefreshCw className="h-4 w-4" />
+                Retry
+              </Button>
+              <Button 
+                onClick={() => window.location.reload()} 
+                variant="outline" 
+                size="sm"
+              >
+                Refresh Page
+              </Button>
+            </div>
           </AlertDescription>
         </Alert>
       </div>
@@ -308,41 +424,64 @@ export default function Collection() {
     <div className="min-h-screen bg-background">
       <div className="container max-w-7xl mx-auto px-4 py-6">
         
-        {/* Header Section */}
+        {/* 🔧 ENHANCED: Header Section */}
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-6">
-          <div>
-            <h1 className="text-2xl font-bold text-foreground mb-2">
-              {urlQuery || searchQuery ? (
-                <>Search Results for "{urlQuery || searchQuery}"</>
-              ) : urlCategory ? (
-                <>Category: {urlCategory}</>
-              ) : (
-                <>Explore Services</>
-              )}
-              {error && (
-                <Badge variant="secondary" className="ml-3">
+          <div className="space-y-2">
+            <div className="flex items-center gap-3">
+              <h1 className="text-2xl font-bold text-foreground">
+                {getDisplayTitle()}
+              </h1>
+              
+              {error && services.length > 0 && (
+                <Badge variant="secondary" className="gap-1">
+                  <Zap className="h-3 w-3" />
                   Using cached data
                 </Badge>
               )}
-            </h1>
-            <p className="text-muted-foreground">
-              {loading ? (
-                <Skeleton className="h-4 w-48" />
-              ) : (
-                `${filteredServices.length} service${filteredServices.length !== 1 ? 's' : ''} found`
+            </div>
+            
+            <div className="flex items-center gap-4 text-sm text-muted-foreground">
+              <span>{getResultsSummary()}</span>
+              
+              {totalResults > filteredServices.length && (
+                <Badge variant="outline" className="text-xs">
+                  {totalResults} total available
+                </Badge>
               )}
-            </p>
+              
+              {urlQuery && (
+                <Badge variant="default" className="text-xs gap-1">
+                  <Search className="h-3 w-3" />
+                  Search Active
+                </Badge>
+              )}
+            </div>
           </div>
           
-          {/* View Controls */}
+          {/* 🔧 ENHANCED: View Controls */}
           <div className="flex items-center gap-3">
+            {/* Sort Dropdown */}
+            <Select value={sortBy} onValueChange={setSortBy}>
+              <SelectTrigger className="w-40">
+                <SelectValue placeholder="Sort by" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="recommended">Recommended</SelectItem>
+                <SelectItem value="price-low">Price: Low to High</SelectItem>
+                <SelectItem value="price-high">Price: High to Low</SelectItem>
+                <SelectItem value="rating">Highest Rated</SelectItem>
+                <SelectItem value="popular">Most Popular</SelectItem>
+                <SelectItem value="newest">Newest First</SelectItem>
+              </SelectContent>
+            </Select>
+
             {/* View Mode Toggle */}
             <div className="hidden sm:flex bg-muted rounded-lg p-1">
               <Button
                 variant={viewMode === 'grid' ? 'default' : 'ghost'}
                 size="sm"
                 onClick={() => setViewMode('grid')}
-                className="gap-2"
+                className="gap-2 h-8"
               >
                 <Grid3X3 className="h-4 w-4" />
                 Grid
@@ -351,7 +490,7 @@ export default function Collection() {
                 variant={viewMode === 'list' ? 'default' : 'ghost'}
                 size="sm"
                 onClick={() => setViewMode('list')}
-                className="gap-2"
+                className="gap-2 h-8"
               >
                 <List className="h-4 w-4" />
                 List
@@ -368,6 +507,7 @@ export default function Collection() {
                 <SelectItem value="12">12 per page</SelectItem>
                 <SelectItem value="16">16 per page</SelectItem>
                 <SelectItem value="24">24 per page</SelectItem>
+                <SelectItem value="48">48 per page</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -378,19 +518,40 @@ export default function Collection() {
           <Sift />
         </div>
 
-        {/* Results Summary */}
+        {/* 🔧 ENHANCED: Results Summary Bar */}
         {!loading && currentItems.length > 0 && (
-          <div className="flex justify-between items-center mb-4 text-sm text-muted-foreground">
-            <span>
-              Showing {indexOfFirstItem + 1}-{Math.min(indexOfLastItem, filteredServices.length)} of {filteredServices.length}
-            </span>
+          <div className="flex justify-between items-center mb-4 p-3 bg-muted/50 rounded-lg">
+            <div className="flex items-center gap-4 text-sm">
+              <span className="text-muted-foreground">
+                Showing {indexOfFirstItem + 1}-{Math.min(indexOfLastItem, filteredServices.length)} of {filteredServices.length}
+              </span>
+              
+              {sortBy !== 'recommended' && (
+                <Badge variant="outline" className="text-xs gap-1">
+                  <TrendingUp className="h-3 w-3" />
+                  Sorted by {sortBy.replace('-', ' ')}
+                </Badge>
+              )}
+            </div>
+            
+            {currentItems.length !== services.length && (
+              <Button 
+                onClick={resetAllFilters} 
+                variant="ghost" 
+                size="sm" 
+                className="gap-2 text-xs"
+              >
+                <Filter className="h-3 w-3" />
+                Clear Filters
+              </Button>
+            )}
           </div>
         )}
 
         {/* Loading State */}
         {loading && <LoadingSkeleton />}
 
-        {/* Services Grid */}
+        {/* Services Grid/List */}
         {!loading && (
           <>
             {currentItems.length > 0 ? (
@@ -401,28 +562,45 @@ export default function Collection() {
                   : "flex flex-col space-y-4"
               )}>
                 {currentItems.map((item, i) => (
-                  <div key={item.id || item.service_id || i} className={cn(
+                  <div key={item.id || item.service_id || `service-${i}`} className={cn(
+                    "transition-all duration-200 hover:scale-[1.02]",
                     viewMode === 'list' && "max-w-none"
                   )}>
-                    <Manifest data={item} />
+                    <Manifest data={item} viewMode={viewMode} />
                   </div>
                 ))}
               </div>
             ) : (
-              // Empty State
-              <Card className="text-center py-12">
-                <CardContent className="space-y-4">
-                  <div className="mx-auto w-16 h-16 bg-muted rounded-full flex items-center justify-center">
-                    <Search className="h-8 w-8 text-muted-foreground" />
+              // 🔧 ENHANCED: Empty State
+              <Card className="text-center py-16">
+                <CardContent className="space-y-6">
+                  <div className="mx-auto w-20 h-20 bg-muted rounded-full flex items-center justify-center">
+                    <Search className="h-10 w-10 text-muted-foreground" />
                   </div>
-                  <h3 className="text-lg font-semibold">No services found</h3>
-                  <p className="text-muted-foreground max-w-md mx-auto">
-                    We couldn't find any services matching your criteria. Try adjusting your filters or search terms.
-                  </p>
-                  <Button onClick={resetAllFilters} className="gap-2">
-                    <RefreshCw className="h-4 w-4" />
-                    Clear All Filters
-                  </Button>
+                  
+                  <div className="space-y-2">
+                    <h3 className="text-xl font-semibold">No services found</h3>
+                    <p className="text-muted-foreground max-w-md mx-auto">
+                      {services.length === 0 
+                        ? "We couldn't find any services at the moment. Please try again later."
+                        : "We couldn't find any services matching your criteria. Try adjusting your filters or search terms."
+                      }
+                    </p>
+                  </div>
+                  
+                  <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                    {services.length > 0 && (
+                      <Button onClick={resetAllFilters} className="gap-2">
+                        <RefreshCw className="h-4 w-4" />
+                        Clear All Filters
+                      </Button>
+                    )}
+                    
+                    <Button onClick={retryFetch} variant="outline" className="gap-2">
+                      <Search className="h-4 w-4" />
+                      Search Again
+                    </Button>
+                  </div>
                 </CardContent>
               </Card>
             )}
@@ -430,7 +608,7 @@ export default function Collection() {
         )}
 
         {/* Pagination */}
-        {!loading && filteredServices.length > 0 && (
+        {!loading && filteredServices.length > itemsPerPage && (
           <div className="mt-8">
             <Pagination1 
               totalItems={filteredServices.length} 
@@ -438,6 +616,25 @@ export default function Collection() {
               onPageChange={handlePageChange}
               currentPage={currentPage}
             />
+          </div>
+        )}
+
+        {/* 🔧 NEW: Debug info in development */}
+        {process.env.NODE_ENV === 'development' && (
+          <div className="mt-8 p-4 bg-muted/50 rounded-lg text-xs text-muted-foreground">
+            <details>
+              <summary className="cursor-pointer font-medium">Debug Info</summary>
+              <div className="mt-2 space-y-1">
+                <div>Total services loaded: {services.length}</div>
+                <div>Filtered services: {filteredServices.length}</div>
+                <div>Current page: {currentPage}</div>
+                <div>Items per page: {itemsPerPage}</div>
+                <div>View mode: {viewMode}</div>
+                <div>Sort by: {sortBy}</div>
+                <div>Error: {error || 'None'}</div>
+                <div>Loading: {loading ? 'Yes' : 'No'}</div>
+              </div>
+            </details>
           </div>
         )}
 
