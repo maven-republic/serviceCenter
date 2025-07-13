@@ -18,13 +18,14 @@ export async function POST(request) {
       professional_id,
       service_id,
       address_id,
-      description,       // NEW: Customer's project description
-      deadline,          // NEW: Customer's project deadline
+      description,       // Customer's project description
+      deadline,          // Customer's project deadline
       preferred_start,
       preferred_end,
       urgency,
       customer_message,
-      service_location, // New address data if customer provides different location
+      service_location,  // New address data if customer provides different location
+      attachment_ids     // NEW: Array of {asset_id, purpose} objects
     } = body
 
     // Validate required fields - added description
@@ -81,6 +82,50 @@ export async function POST(request) {
         { error: 'Service not found' },
         { status: 404 }
       )
+    }
+
+    // Validate attachments if provided
+    if (attachment_ids && attachment_ids.length > 0) {
+      console.log('📎 Validating', attachment_ids.length, 'attachments')
+      
+      // Check all assets exist and belong to the customer
+      const assetIds = attachment_ids.map(att => att.asset_id)
+      const { data: assets, error: assetError } = await supabase
+        .from('asset')
+        .select('id, uploader, filename')
+        .in('id', assetIds)
+
+      if (assetError) {
+        console.error('❌ Error validating assets:', assetError)
+        return NextResponse.json(
+          { error: 'Failed to validate attachments' },
+          { status: 500 }
+        )
+      }
+
+      // Check if all assets exist
+      if (assets.length !== assetIds.length) {
+        const foundIds = assets.map(a => a.id)
+        const missingIds = assetIds.filter(id => !foundIds.includes(id))
+        console.error('❌ Missing assets:', missingIds)
+        return NextResponse.json(
+          { error: 'Some attachments not found' },
+          { status: 400 }
+        )
+      }
+
+      // Check if all assets belong to the customer
+      const customerAccountId = customer.account_id
+      const invalidAssets = assets.filter(asset => asset.uploader !== customerAccountId)
+      if (invalidAssets.length > 0) {
+        console.error('❌ Invalid asset ownership:', invalidAssets.map(a => a.id))
+        return NextResponse.json(
+          { error: 'You can only attach files you uploaded' },
+          { status: 403 }
+        )
+      }
+
+      console.log('✅ All attachments validated')
     }
 
     let finalAddressId = address_id
@@ -198,8 +243,34 @@ export async function POST(request) {
 
     console.log('✅ appointment created successfully:', appointment.appointment_id)
 
+    // Handle file attachments
+    if (attachment_ids && attachment_ids.length > 0) {
+      console.log('📎 Creating attachment records for appointment:', appointment.appointment_id)
+      
+      const attachmentRecords = attachment_ids.map((attachment, index) => ({
+        appointment_id: appointment.appointment_id,
+        asset_id: attachment.asset_id,
+        purpose: attachment.purpose || 'reference',
+        position: index,
+        required: false
+      }))
+
+      const { data: createdAttachments, error: attachmentError } = await supabase
+        .from('attachment')
+        .insert(attachmentRecords)
+        .select('*')
+
+      if (attachmentError) {
+        console.error('❌ Failed to create attachments:', attachmentError)
+        // Don't fail the appointment, just log the error
+        console.warn('⚠️ Appointment created but attachments failed')
+      } else {
+        console.log('✅ Created', createdAttachments.length, 'attachment records')
+      }
+    }
+
     // Get related data separately to avoid relationship conflicts
-    const [serviceData, customerData, professionalData, addressData] = await Promise.all([
+    const [serviceData, customerData, professionalData, addressData, attachmentData] = await Promise.all([
       // Get service
       supabase
         .from('service')
@@ -244,7 +315,27 @@ export async function POST(request) {
         .from('address')
         .select('address_id, formatted_address, street_address, city, parish, latitude, longitude')
         .eq('address_id', finalAddressId)
-        .single() : { data: null }
+        .single() : { data: null },
+
+      // Get attachments with asset details
+      supabase
+        .from('attachment')
+        .select(`
+          id,
+          purpose,
+          position,
+          asset:asset_id (
+            id,
+            filename,
+            original,
+            path,
+            size,
+            type,
+            created
+          )
+        `)
+        .eq('appointment_id', appointment.appointment_id)
+        .order('position')
     ])
 
     // Combine the results
@@ -253,7 +344,8 @@ export async function POST(request) {
       service: serviceData.data,
       customer: customerData.data,
       professional: professionalData.data,
-      address: addressData.data
+      address: addressData.data,
+      attachments: attachmentData.data || []
     }
 
     // TODO: Send notification to professional(s)
@@ -324,10 +416,10 @@ export async function GET(request) {
       )
     }
 
-    // Enrich each request with related data
+    // Enrich each request with related data including attachments
     const enrichedAppointments = await Promise.all(
       (requests || []).map(async (request) => {
-        const [serviceData, customerData, professionalData, addressData] = await Promise.all([
+        const [serviceData, customerData, professionalData, addressData, attachmentData] = await Promise.all([
           // Service data
           supabase
             .from('service')
@@ -372,7 +464,27 @@ export async function GET(request) {
             .from('address')
             .select('address_id, formatted_address, street_address, city, parish, latitude, longitude')
             .eq('address_id', request.address_id)
-            .single() : { data: null }
+            .single() : { data: null },
+
+          // Attachment data with asset details
+          supabase
+            .from('attachment')
+            .select(`
+              id,
+              purpose,
+              position,
+              asset:asset_id (
+                id,
+                filename,
+                original,
+                path,
+                size,
+                type,
+                created
+              )
+            `)
+            .eq('appointment_id', request.appointment_id)
+            .order('position')
         ])
 
         return {
@@ -380,7 +492,8 @@ export async function GET(request) {
           service: serviceData.data,
           customer: customerData.data,
           professional: professionalData.data,
-          address: addressData.data
+          address: addressData.data,
+          attachments: attachmentData.data || []
         }
       })
     )

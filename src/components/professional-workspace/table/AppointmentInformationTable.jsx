@@ -53,7 +53,10 @@ import {
   Edit,
   Trash2,
   MessageSquare,
-  Building2
+  Building2,
+  Paperclip,
+  Image,
+  FileText
 } from 'lucide-react'
 
 export default function AppointmentInformationTable({
@@ -61,6 +64,7 @@ export default function AppointmentInformationTable({
   onView,
   onAccept,
   onDecline,
+  onViewAttachments,
   loading = false,
   pagination,
   onPageChange
@@ -294,7 +298,7 @@ export default function AppointmentInformationTable({
   // Professional loading skeleton
   const LoadingSkeleton = () => (
     <Card className="w-full bg-card border-border">
-<CardHeader className="py-2 px-4 bg-muted/30 border-b border-border">
+      <CardHeader className="py-2 px-4 bg-muted/30 border-b border-border">
         <div className="flex items-center justify-between">
           <Skeleton className="h-6 w-32 bg-muted" />
           <Skeleton className="h-8 w-24 bg-muted" />
@@ -443,6 +447,12 @@ export default function AppointmentInformationTable({
                       {getSortIcon('status')}
                     </div>
                   </TableHead>
+                  
+                  {/* Files Column */}
+                  <TableHead className="py-4 bg-background/95 text-muted-foreground font-medium">
+                    Files
+                  </TableHead>
+                  
                   <TableHead 
                     className="cursor-pointer select-none hover:bg-muted/50 transition-colors py-4 bg-background/95 text-muted-foreground"
                     onClick={() => handleSort('urgency')}
@@ -473,6 +483,7 @@ export default function AppointmentInformationTable({
                   const statusConfig = getStatusConfig(appointment.status)
                   const priorityConfig = getPriorityConfig(appointment.urgency)
                   const isSelected = selectedRows.has(appointment.appointment_id)
+                  const attachments = appointment.attachments || []
                   
                   return (
                     <TableRow 
@@ -581,6 +592,24 @@ export default function AppointmentInformationTable({
                         </Tooltip>
                       </TableCell>
 
+                      {/* Files Column */}
+                      <TableCell className="py-6">
+                        {attachments.length === 0 ? (
+                          <span className="text-muted-foreground text-sm">No files</span>
+                        ) : (
+                          <div className="flex items-center gap-1">
+                            <Paperclip className="h-3 w-3 text-muted-foreground" />
+                            <span className="text-sm">{attachments.length}</span>
+                            {attachments.some(att => att.asset?.type === 'image') && (
+                              <Image className="h-3 w-3 text-blue-600" />
+                            )}
+                            {attachments.some(att => att.asset?.type === 'document') && (
+                              <FileText className="h-3 w-3 text-green-600" />
+                            )}
+                          </div>
+                        )}
+                      </TableCell>
+
                       {/* Priority */}
                       <TableCell className="py-6">
                         <Tooltip>
@@ -635,6 +664,16 @@ export default function AppointmentInformationTable({
                               <Eye className="mr-2 h-4 w-4" />
                               View Details
                             </DropdownMenuItem>
+
+                            {/* View Customer Files */}
+                            <DropdownMenuItem 
+                              onClick={() => onViewAttachments(appointment)}
+                              disabled={!appointment.attachments || appointment.attachments.length === 0}
+                              className="cursor-pointer hover:bg-muted hover:text-accent-foreground"
+                            >
+                              <Eye className="h-4 w-4 mr-2" />
+                              View Customer Files
+                            </DropdownMenuItem>
                             
                             {appointment.status === 'pending' && (
                               <>
@@ -665,18 +704,6 @@ export default function AppointmentInformationTable({
                             )}
                             
                             <DropdownMenuSeparator className="bg-border" />
-                            <DropdownMenuItem className="cursor-pointer hover:bg-muted hover:text-accent-foreground">
-                              <MessageSquare className="mr-2 h-4 w-4" />
-                              Send Message
-                            </DropdownMenuItem>
-                            <DropdownMenuItem className="cursor-pointer hover:bg-muted hover:text-accent-foreground">
-                              <Phone className="mr-2 h-4 w-4" />
-                              Call Customer
-                            </DropdownMenuItem>
-                            <DropdownMenuItem className="cursor-pointer hover:bg-muted hover:text-accent-foreground">
-                              <Edit className="mr-2 h-4 w-4" />
-                              Edit Details
-                            </DropdownMenuItem>
                             <DropdownMenuItem className="cursor-pointer hover:bg-muted hover:text-accent-foreground">
                               <Calendar className="mr-2 h-4 w-4" />
                               Reschedule
@@ -743,5 +770,4 @@ export default function AppointmentInformationTable({
       </Card>
     </TooltipProvider>
   )
-
 }

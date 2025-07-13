@@ -8,9 +8,18 @@ import { Badge } from "@/components/ui/badge"
 import { cn } from '@/lib/utils'
 
 export function AppointmentPagination({ pagination, onPageChange }) {
-  if (!pagination || pagination.totalPages <= 1) return null
+  // 🚨 ADD THIS CRITICAL SAFETY CHECK 🚨
+  if (!pagination || !pagination.totalPages || pagination.totalPages <= 1) {
+    return null
+  }
 
-  const { page, limit, total, totalPages } = pagination
+  // Destructure with defaults to prevent undefined errors
+  const { 
+    page = 1, 
+    limit = 10, 
+    total = 0, 
+    totalPages = 0 
+  } = pagination
   
   // Calculate display range
   const startItem = ((page - 1) * limit) + 1

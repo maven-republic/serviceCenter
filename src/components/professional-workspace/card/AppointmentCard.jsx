@@ -19,7 +19,10 @@ import {
   Eye,
   Check,
   X,
-  Loader2
+  Loader2,
+  Paperclip,
+  Image,
+  FileText
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -27,7 +30,8 @@ export default function AppointmentCard({
   appointment, 
   onView, 
   onAccept, 
-  onDecline 
+  onDecline,
+  onViewAttachments
 }) {
   const [actionLoading, setActionLoading] = useState(null)
 
@@ -261,6 +265,46 @@ export default function AppointmentCard({
             </>
           )}
 
+          {/* Customer Attachments Section */}
+          {appointment.attachments && appointment.attachments.length > 0 && (
+            <>
+              <Separator className="bg-border" />
+              <div className="flex items-start gap-3">
+                <div className="flex-shrink-0 w-8 h-8 bg-muted rounded-full flex items-center justify-center">
+                  <Paperclip className="h-4 w-4 text-muted-foreground" />
+                </div>
+                <div className="flex-1">
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="text-sm font-medium text-foreground">Customer Files ({appointment.attachments.length})</span>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {appointment.attachments.slice(0, 3).map((attachment, index) => {
+                      const isImage = attachment.asset?.type === 'image'
+                      const IconComponent = isImage ? Image : FileText
+                      
+                      return (
+                        <div key={attachment.id} className="flex items-center gap-1 bg-muted/50 rounded px-2 py-1">
+                          <IconComponent className="h-3 w-3" />
+                          <span className="text-xs truncate max-w-[100px]">
+                            {attachment.asset?.original || 'File'}
+                          </span>
+                          <Badge variant="secondary" className="text-xs">
+                            {attachment.purpose}
+                          </Badge>
+                        </div>
+                      )
+                    })}
+                    {appointment.attachments.length > 3 && (
+                      <span className="text-xs text-muted-foreground">
+                        +{appointment.attachments.length - 3} more
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </>
+          )}
+
           {/* Customer Message */}
           {appointment.customer_message && (
             <>
@@ -303,6 +347,18 @@ export default function AppointmentCard({
             >
               <Eye className="h-3 w-3" />
               View
+            </Button>
+
+            {/* View Files Button */}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => onViewAttachments(appointment)}
+              className="gap-2"
+              disabled={!appointment.attachments || appointment.attachments.length === 0}
+            >
+              <Eye className="h-3 w-3" />
+              View Files ({appointment.attachments?.length || 0})
             </Button>
             
             {appointment.status === 'pending' && (

@@ -1,4 +1,4 @@
-// ============ InteractiveChart.jsx - Tailwind + shadcn/ui Version ============
+// ============ InteractiveChart.jsx - FIXED with consistent prop passing ============
 import React, { useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -15,7 +15,16 @@ import HourChart from './charts/HourChart';
 import WeekChart from './charts/WeekChart';
 import MonthChart from './charts/MonthChart';
 
-export default function InteractiveChart({ activeChart, hideEarnings, activeTimeline, dateRange }) {
+// 🔧 UPDATED: Accept real data props
+export default function InteractiveChart({ 
+  activeChart, 
+  hideEarnings, 
+  activeTimeline, 
+  dateRange,
+  vector = null,
+  currencyService = null,
+  professionalProfile = null
+}) {
   // Each chart type needs its own preview state
   const [previewStates, setPreviewStates] = useState({
     daily: false,
@@ -35,13 +44,16 @@ export default function InteractiveChart({ activeChart, hideEarnings, activeTime
     }));
   };
 
-  // Common props to pass to all chart components
+  // 🆕 NEW: Common props to pass to all chart components (with real data)
   const commonProps = {
     hideEarnings,
     activeTimeline,
     dateRange,
     showPreview,
-    setShowPreview
+    setShowPreview,
+    vector,
+    currencyService,
+    professionalProfile
   };
 
   // Chart type metadata for header display
@@ -80,7 +92,7 @@ export default function InteractiveChart({ activeChart, hideEarnings, activeTime
   const currentChart = chartMetadata[activeChart] || chartMetadata.daily;
   const IconComponent = currentChart.icon;
 
-  // Render the appropriate chart component based on activeChart
+  // 🔧 FIXED: Render the appropriate chart component with consistent props
   const renderChart = () => {
     switch(activeChart) {
       case 'daily':
@@ -142,6 +154,16 @@ export default function InteractiveChart({ activeChart, hideEarnings, activeTime
               </Badge>
             )}
             
+            {/* 🆕 NEW: Show data type indicator */}
+            {vector && (
+              <Badge variant="default" className="text-xs">
+                {vector.isPreview ? 
+                  `${professionalProfile?.address?.country || 'Sample'} Preview` : 
+                  'Live Data'
+                }
+              </Badge>
+            )}
+            
             <Badge variant="default" className="text-xs capitalize">
               {activeTimeline || 'last30days'}
             </Badge>
@@ -163,11 +185,22 @@ export default function InteractiveChart({ activeChart, hideEarnings, activeTime
                   Range: {dateRange.startDate?.toLocaleDateString()} - {dateRange.endDate?.toLocaleDateString()}
                 </span>
               )}
+              {/* 🆕 NEW: Show data source */}
+              {vector && (
+                <span>
+                  Source: {vector.isPreview ? 'Sample Data' : 'Real Bookings'}
+                  {!vector.isPreview && vector.totalBookings && (
+                    ` (${vector.totalBookings} bookings)`
+                  )}
+                </span>
+              )}
             </div>
             
             <div className="flex items-center gap-1">
               <BarChart3 className="h-3 w-3" />
-              <span>Interactive Analytics</span>
+              <span>
+                {vector?.isPreview ? 'Preview' : 'Live'} Analytics
+              </span>
             </div>
           </div>
         </div>

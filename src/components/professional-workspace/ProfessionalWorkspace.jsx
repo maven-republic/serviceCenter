@@ -2,14 +2,65 @@
 
 import { useEffect, useState, useRef } from 'react'
 import { useSession, useSupabaseClient } from '@supabase/auth-helpers-react'
-import toggleStore from '@/store/toggleStore'
-import ProfessionalAxis from './header/ProfessionalAxis'
-import DashboardSidebar from './sidebar/DashboardSidebar'
-import DashboardFooter from './footer/DashboardFooter'
 import { useUserStore } from '@/store/userStore'
+import { Card, CardContent } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
+import { Alert, AlertDescription } from "@/components/ui/alert"
+import { Skeleton } from "@/components/ui/skeleton"
+import { AlertCircle, Briefcase, User, RefreshCw } from 'lucide-react'
+import { cn } from '@/lib/utils'
+import DashboardSidebar from './sidebar/DashboardSidebar'
+
+// Modern loading component
+const ModernAuthLoading = ({ message, submessage }) => (
+  <div className="min-h-screen bg-background flex items-center justify-center p-6">
+    <Card className="w-full max-w-md">
+      <CardContent className="pt-6">
+        <div className="flex flex-col items-center space-y-4 text-center">
+          <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center">
+            <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary-foreground border-t-transparent" />
+          </div>
+          <div className="space-y-2">
+            <h3 className="font-semibold text-foreground">{message}</h3>
+            {submessage && (
+              <p className="text-sm text-muted-foreground">{submessage}</p>
+            )}
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  </div>
+)
+
+// Modern error component
+const ModernAuthError = ({ title, description, action, onRetry }) => (
+  <div className="min-h-screen bg-background flex items-center justify-center p-6">
+    <Card className="w-full max-w-md">
+      <CardContent className="pt-6">
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription className="space-y-3">
+            <div>
+              <div className="font-medium">{title}</div>
+              <div className="text-sm mt-1">{description}</div>
+            </div>
+            <div className="flex flex-col space-y-2">
+              {action}
+              {onRetry && (
+                <Button variant="outline" onClick={onRetry} className="w-full">
+                  <RefreshCw className="mr-2 h-4 w-4" />
+                  Try Again
+                </Button>
+              )}
+            </div>
+          </AlertDescription>
+        </Alert>
+      </CardContent>
+    </Card>
+  </div>
+)
 
 export default function ProfessionalWorkspace({ children }) {
-  const isActive = toggleStore((state) => state.isDasboardSidebarActive)
   const { user, fetchUser, isLoading } = useUserStore()
   const session = useSession()
   const supabase = useSupabaseClient()
@@ -17,13 +68,14 @@ export default function ProfessionalWorkspace({ children }) {
   const [authState, setAuthState] = useState({
     isAuthenticating: true,
     sessionRestored: false,
-    error: null
+    error: null,
+    retryCount: 0
   })
   
   const fetchAttempted = useRef(false)
   const recoveryAttempted = useRef(false)
 
-  // 🔄 Force session recovery on mount with rate limiting protection
+  // 🔄 Enhanced session recovery with modern error handling
   useEffect(() => {
     let mounted = true
     
@@ -34,12 +86,10 @@ export default function ProfessionalWorkspace({ children }) {
       try {
         console.log('🔧 Ensuring authentication...')
         
-        // 1. Try to get session from server (this should work even after quick reloads)
         const { data: { session: serverSession }, error } = await supabase.auth.getSession()
         
         if (error) {
           console.warn('⚠️ Error getting session:', error)
-          // Don't throw on auth errors, just continue
         }
         
         if (serverSession) {
@@ -48,21 +98,17 @@ export default function ProfessionalWorkspace({ children }) {
             expiresAt: serverSession.expires_at
           })
           
-          // Session exists on server, force client sync
           if (mounted) {
             setAuthState({ 
               isAuthenticating: false, 
               sessionRestored: true, 
-              error: null 
+              error: null,
+              retryCount: 0
             })
           }
           return
         }
         
-        // 2. No server session - DON'T attempt refresh to avoid rate limiting
-        console.log('⚠️ No server session found, checking if on protected route...')
-        
-        // 3. Check if we're on a protected route but have no session
         const currentPath = window.location.pathname
         const isProtectedRoute = 
           currentPath.startsWith('/professional/') ||
@@ -71,7 +117,6 @@ export default function ProfessionalWorkspace({ children }) {
         
         if (isProtectedRoute) {
           console.log('⚠️ No valid session found on protected route, redirecting to login')
-          // User should be logged in but isn't - redirect to login
           window.location.href = '/login?redirectTo=' + encodeURIComponent(currentPath)
           return
         }
@@ -80,14 +125,14 @@ export default function ProfessionalWorkspace({ children }) {
           setAuthState({ 
             isAuthenticating: false, 
             sessionRestored: false, 
-            error: 'No session found' 
+            error: 'No session found',
+            retryCount: 0
           })
         }
         
       } catch (error) {
         console.error('❌ Authentication error:', error)
         
-        // Handle rate limiting specifically
         if (error.message?.includes('rate limit')) {
           console.log('⚠️ Rate limited, waiting before redirect...')
           setTimeout(() => {
@@ -102,13 +147,13 @@ export default function ProfessionalWorkspace({ children }) {
           setAuthState({ 
             isAuthenticating: false, 
             sessionRestored: false, 
-            error: error.message 
+            error: error.message,
+            retryCount: 0
           })
         }
       }
     }
     
-    // Run immediately
     ensureAuthentication()
     
     return () => {
@@ -116,7 +161,7 @@ export default function ProfessionalWorkspace({ children }) {
     }
   }, [supabase])
 
-  // 🎯 Monitor session state changes with timeout
+  // 🎯 Monitor session state changes
   useEffect(() => {
     if (session) {
       console.log('📡 Session state updated:', {
@@ -131,12 +176,10 @@ export default function ProfessionalWorkspace({ children }) {
         sessionRestored: true,
         error: null
       }))
-    } else {
-      console.log('📡 Session is null/undefined')
     }
   }, [session])
 
-  // 🔧 Add timeout for stuck syncing with retry
+  // 🔧 Timeout handling with retry capability
   useEffect(() => {
     if (authState.sessionRestored && !session) {
       console.log('⏳ Session restored but client session not ready, starting timeout...')
@@ -145,7 +188,6 @@ export default function ProfessionalWorkspace({ children }) {
         if (authState.retryCount < 1) {
           console.warn('⚠️ Sync timeout! Attempting one retry before redirect...')
           
-          // Try ONE more time with a full reset
           setAuthState(prev => ({
             isAuthenticating: true,
             sessionRestored: false,
@@ -153,14 +195,13 @@ export default function ProfessionalWorkspace({ children }) {
             retryCount: prev.retryCount + 1
           }))
           
-          // Reset recovery attempt flag
           recoveryAttempted.current = false
         } else {
           console.warn('🚨 Sync failed after retry, redirecting to login')
           const currentPath = window.location.pathname
           window.location.href = `/login?redirectTo=${encodeURIComponent(currentPath)}`
         }
-      }, 3000) // Reduced to 3 seconds
+      }, 3000)
       
       return () => clearTimeout(timeout)
     }
@@ -183,93 +224,98 @@ export default function ProfessionalWorkspace({ children }) {
     fetchAttempted.current = false
   }, [session?.user?.email])
 
-  // 🎨 Render states
+  // Retry function for errors
+  const handleRetry = () => {
+    setAuthState({
+      isAuthenticating: true,
+      sessionRestored: false,
+      error: null,
+      retryCount: 0
+    })
+    recoveryAttempted.current = false
+  }
 
-  // Still authenticating
+  // 🎨 Modern render states
   if (authState.isAuthenticating) {
     return (
-      <div className="text-center p-5">
-        <div className="spinner-border text-primary" role="status" />
-        <p className="mt-2">Authenticating...</p>
-        <small className="text-muted">Ensuring you stay logged in...</small>
-      </div>
+      <ModernAuthLoading 
+        message="Authenticating..." 
+        submessage="Ensuring you stay logged in..."
+      />
     )
   }
 
-  // Authentication failed
   if (authState.error && !authState.sessionRestored) {
     return (
-      <div className="text-center p-5">
-        <div className="alert alert-warning">
-          <h5>Authentication Required</h5>
-          <p>Please log in to continue.</p>
-          <button 
+      <ModernAuthError
+        title="Authentication Required"
+        description="Please log in to continue."
+        action={
+          <Button 
             onClick={() => window.location.href = '/login'}
-            className="btn btn-primary"
+            className="w-full"
           >
+            <User className="mr-2 h-4 w-4" />
             Go to Login
-          </button>
-        </div>
-      </div>
+          </Button>
+        }
+        onRetry={handleRetry}
+      />
     )
   }
 
-  // Session restored but client session not ready yet
   if (authState.sessionRestored && !session) {
     return (
-      <div className="text-center p-5">
-        <div className="spinner-border text-success" role="status" />
-        <p className="mt-2">Session restored, syncing...</p>
-        <small className="text-muted d-block mt-2">
-          If this takes more than a few seconds, try refreshing the page
-        </small>
-      </div>
+      <ModernAuthLoading 
+        message="Session restored, syncing..." 
+        submessage="If this takes more than a few seconds, try refreshing the page"
+      />
     )
   }
 
-  // Session exists but no authenticated user
   if (session && !session.user) {
     return (
-      <div className="text-center p-5">
-        <div className="alert alert-warning">
-          <p>Session found but user is missing. Please log in again.</p>
-          <button 
+      <ModernAuthError
+        title="Session Error"
+        description="Session found but user is missing. Please log in again."
+        action={
+          <Button 
             onClick={() => window.location.href = '/login'}
-            className="btn btn-primary"
+            className="w-full"
           >
+            <User className="mr-2 h-4 w-4" />
             Go to Login
-          </button>
-        </div>
-      </div>
+          </Button>
+        }
+      />
     )
   }
 
-  // User data still loading
   if (isLoading || !user || !user.account?.account_id) {
     return (
-      <div className="text-center p-5">
-        <div className="spinner-border text-primary" role="status" />
-        <p className="mt-2">Loading your dashboard...</p>
-        <small className="text-muted">Setting up your workspace...</small>
-      </div>
+      <ModernAuthLoading 
+        message="Loading your dashboard..." 
+        submessage="Setting up your workspace..."
+      />
     )
   }
 
-  // In ProfessionalWorkspace.jsx - replace the return statement
-return (
-  <div className="min-h-screen bg-background">
-    <div className={`flex ${isActive ? 'dashboard-sidebar-hidden' : ''}`}>
-      {/* Sidebar with fixed width */}
-      <DashboardSidebar />
-      
-      {/* Main content with proper offset */}
-      <div className="flex-1 ml-[300px] transition-all duration-300 ease-in-out">
-        <div className="p-6">
-          {children}
-        </div>
-        {/* <DashboardFooter /> */}
+  // ✅ Modern layout with proper styling
+  return (
+    <div className="min-h-screen bg-background text-foreground">
+      <div className="flex h-screen overflow-hidden">
+        {/* Sidebar */}
+        <aside className="w-[280px] flex-shrink-0 border-r border-border bg-card">
+          <DashboardSidebar />
+        </aside>
+        
+        {/* Main Content */}
+        <main className="flex-1 overflow-y-auto">
+          <div className="container mx-auto p-6 space-y-6 max-w-7xl">
+            {children}
+          </div>
+        </main>
       </div>
     </div>
-  </div>
-)
+  )
 }

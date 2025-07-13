@@ -5,6 +5,7 @@ import { useUserStore } from '@/store/userStore';
 import { createClient } from '@/utils/supabase/client';
 import AppointmentAddressSelector from '@/components/forms/AppointmentAddressSelector';
 import CustomerAvailabilityCalendar from '@/components/forms/CustomerAvailabilityCalendar';
+import AppointmentFileUpload from '@/components/forms/AppointmentFileUpload';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -25,7 +26,9 @@ import {
  Loader2,
  AlertCircle,
  FileText,
- MessageSquare
+ MessageSquare,
+ Upload,
+ Image
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -41,14 +44,16 @@ export default function Appointment({
  const [errors, setErrors] = useState({});
  const [currentStep, setCurrentStep] = useState(1);
  
+ // 5-step flow with dedicated file upload step
  const steps = useMemo(() => [
    { id: 1, title: 'Project', icon: FileText, description: 'Describe your needs' },
-   { id: 2, title: 'Schedule', icon: Calendar, description: 'Pick a time' },
-   { id: 3, title: 'Location', icon: MapPin, description: 'Service address' },
-   { id: 4, title: 'Review', icon: CheckCircle, description: 'Confirm details' }
+   { id: 2, title: 'Files', icon: Upload, description: 'Upload references' },
+   { id: 3, title: 'Schedule', icon: Calendar, description: 'Pick a time' },
+   { id: 4, title: 'Location', icon: MapPin, description: 'Service address' },
+   { id: 5, title: 'Review', icon: CheckCircle, description: 'Confirm details' }
  ], []);
 
- // Form state
+ // Form state with file attachments
  const [formData, setFormData] = useState({
    title: serviceInformation?.name || '',
    description: '',
@@ -56,6 +61,7 @@ export default function Appointment({
    preferred_start: '',
    urgency: 'standard',
    customer_message: '',
+   attachments: [], // File attachments array
    use_different_address: false,
    service_location: location || {
      street_address: '',
@@ -71,10 +77,10 @@ export default function Appointment({
    }
  });
 
- // 🔥 DEBUG: Track component mount/unmount
+ // Debug component lifecycle
  useEffect(() => {
    console.log('🔥 APPOINTMENT FORM MOUNTED');
-   return () => console.log('🔥 APPOINTMENT FORM UNMOUNTED - This should NOT happen during normal use');
+   return () => console.log('🔥 APPOINTMENT FORM UNMOUNTED');
  }, []);
 
  // Update form data when props change
@@ -90,7 +96,7 @@ export default function Appointment({
    }
  }, [serviceInformation?.name]);
 
- // Urgency options with pricing
+ // Urgency options with pricing multipliers
  const urgencyOptions = useMemo(() => [
    { value: 'low', label: 'Flexible (1 week)', priceMultiplier: 0.9, badge: '-10%', color: 'bg-green-100 text-green-800' },
    { value: 'standard', label: 'Standard (3 days)', priceMultiplier: 1.0, badge: '', color: 'bg-blue-100 text-blue-800' },
@@ -113,14 +119,22 @@ export default function Appointment({
    }
  }, [errors]);
 
+ // Handle file upload changes
+ const handleFilesChange = useCallback((files) => {
+   setFormData(prev => ({ ...prev, attachments: files }));
+   console.log('📎 Files updated:', files.length, 'files');
+ }, []);
+
  // Form validation
  const validateForm = useCallback(() => {
    const newErrors = {};
    
+   // Step 1 validation - Project description required
    if (!formData.description.trim()) {
      newErrors.description = 'Project description is required';
    }
    
+   // Step 3 validation - Schedule required
    if (!formData.preferred_start) {
      newErrors.preferred_start = 'Please select your preferred start time';
    } else {
@@ -130,6 +144,7 @@ export default function Appointment({
      }
    }
 
+   // Step 4 validation - Address if using different location
    if (formData.use_different_address) {
      if (!formData.service_location.street_address) {
        newErrors.street_address = 'Street address is required';
@@ -146,7 +161,7 @@ export default function Appointment({
    return Object.keys(newErrors).length === 0;
  }, [formData]);
 
- // Submit form
+ // Submit appointment with file uploads
  const handleSubmit = useCallback(async () => {
    if (currentStep !== steps.length) return false;
    if (!validateForm()) return;
@@ -161,6 +176,7 @@ export default function Appointment({
      const supabase = createClient();
      let addressId = null;
      
+     // Get customer address if not using different address
      if (!formData.use_different_address) {
        const { data: customerAddress } = await supabase
          .from('address')
@@ -172,6 +188,45 @@ export default function Appointment({
        addressId = customerAddress?.address_id;
      }
 
+     // Upload files first if any exist
+     let attachmentIds = [];
+     if (formData.attachments && formData.attachments.length > 0) {
+       console.log('📤 Uploading', formData.attachments.length, 'files...');
+       
+       for (const fileData of formData.attachments) {
+         if (!fileData.uploaded && fileData.file) {
+           try {
+             const uploadData = new FormData();
+             uploadData.append('file', fileData.file);
+             
+             const uploadResponse = await fetch('/api/assets/upload', {
+               method: 'POST',
+               body: uploadData
+             });
+             
+             const uploadResult = await uploadResponse.json();
+             
+             if (uploadResponse.ok) {
+               attachmentIds.push({
+                 asset_id: uploadResult.asset.id,
+                 purpose: fileData.purpose
+               });
+               console.log('✅ Uploaded:', fileData.name);
+             } else {
+               console.error('❌ Upload failed for', fileData.name, ':', uploadResult.error);
+               // Continue with other files, don't fail entire process
+             }
+           } catch (error) {
+             console.error('❌ Upload error for', fileData.name, ':', error);
+             // Continue with other files
+           }
+         }
+       }
+       
+       console.log('📎 Total attachments ready:', attachmentIds.length);
+     }
+
+     // Create appointment request with attachments
      const requestData = {
        customer_id: user.profile.customer_id,
        professional_id: professional?.professional_id || null,
@@ -182,6 +237,7 @@ export default function Appointment({
        preferred_start: formData.preferred_start,
        urgency: formData.urgency,
        customer_message: formData.customer_message || null,
+       attachment_ids: attachmentIds, // Include attachment IDs
        service_location: formData.use_different_address ? {
          ...formData.service_location,
          latitude: location?.lat,
@@ -189,6 +245,11 @@ export default function Appointment({
          formatted_address: `${formData.service_location.street_address}, ${formData.service_location.city}, ${formData.service_location.parish}`
        } : null
      };
+
+     console.log('📋 Submitting appointment with data:', {
+       ...requestData,
+       attachment_count: attachmentIds.length
+     });
 
      const response = await fetch('/api/appointments', {
        method: 'POST',
@@ -202,17 +263,18 @@ export default function Appointment({
        throw new Error(result.error || 'Failed to create appointment request');
      }
 
+     console.log('✅ Appointment created successfully with', result.appointment.attachments?.length || 0, 'attachments');
      onSuccess?.(result.appointment);
 
    } catch (error) {
-     console.error('Appointment request error:', error);
+     console.error('❌ Appointment request error:', error);
      setErrors({ general: error.message });
    } finally {
      setLoading(false);
    }
  }, [formData, validateForm, user, professional, serviceInformation, location, onSuccess, currentStep, steps.length]);
 
- // Step navigation
+ // Step navigation functions
  const nextStep = useCallback(() => {
    if (currentStep < steps.length) {
      setCurrentStep(prev => prev + 1);
@@ -231,17 +293,18 @@ export default function Appointment({
    }
  }, [steps.length]);
 
- // Check if step is valid for navigation
+ // Step validation for navigation
  const isStepValid = useCallback((step) => {
    switch (step) {
      case 1: return formData.description.trim() !== '';
-     case 2: return formData.preferred_start !== '';
-     case 3: return !formData.use_different_address || (
+     case 2: return true; // File upload is optional
+     case 3: return formData.preferred_start !== '';
+     case 4: return !formData.use_different_address || (
        formData.service_location.street_address &&
        formData.service_location.city &&
        formData.service_location.parish
      );
-     case 4: return true;
+     case 5: return true;
      default: return false;
    }
  }, [formData]);
@@ -251,7 +314,7 @@ export default function Appointment({
    return ((currentStep - 1) / (steps.length - 1)) * 100;
  }, [currentStep, steps.length]);
 
- // Get step status
+ // Get step status for styling
  const getStepStatus = useCallback((stepId) => {
    if (currentStep > stepId) return 'completed';
    if (currentStep === stepId) return 'active';
@@ -267,7 +330,7 @@ export default function Appointment({
  return (
    <div className="flex flex-col h-full max-h-[95vh]">
      
-     {/* 🔧 FIX: Fixed Header with Progress */}
+     {/* Fixed Header with Progress and Step Navigation */}
      <div className="flex-shrink-0 bg-background border-b p-6">
        <div className="w-full max-w-4xl mx-auto space-y-6">
          {/* Progress Bar */}
@@ -276,12 +339,15 @@ export default function Appointment({
              <span className="text-sm text-muted-foreground">
                Step {currentStep} of {steps.length}
              </span>
+             <span className="text-sm text-muted-foreground">
+               {Math.round(calculateProgress())}% Complete
+             </span>
            </div>
            <Progress value={calculateProgress()} className="h-2" />
          </div>
 
          {/* Step Navigation */}
-         <div className="grid grid-cols-4 gap-2">
+         <div className="grid grid-cols-5 gap-2">
            {steps.map((step) => {
              const status = getStepStatus(step.id);
              const StepIcon = step.icon;
@@ -312,12 +378,12 @@ export default function Appointment({
        </div>
      </div>
 
-     {/* 🔧 FIX: Scrollable Content Area */}
+     {/* Scrollable Content Area */}
      <div className="flex-1 overflow-y-auto">
        <div className="w-full max-w-4xl mx-auto p-6">
          <div className="space-y-6">
            
-           {/* Step 1: Project Details */}
+           {/* Step 1: Project Description */}
            {currentStep === 1 && (
              <Card>
                <CardHeader>
@@ -334,7 +400,7 @@ export default function Appointment({
                    <Label htmlFor="description">What do you need done? *</Label>
                    <Textarea
                      id="description"
-                     rows={4}
+                     rows={5}
                      value={formData.description}
                      onChange={(e) => handleChange('description', e.target.value)}
                      placeholder="Describe your project in detail. Include any specific requirements, materials needed, or preferences you have..."
@@ -346,6 +412,9 @@ export default function Appointment({
                        {errors.description}
                      </p>
                    )}
+                   <p className="text-xs text-muted-foreground">
+                     Minimum 20 characters. Be specific about what you need to get better quotes.
+                   </p>
                  </div>
 
                  <div className="space-y-2">
@@ -362,53 +431,81 @@ export default function Appointment({
                      When would you like the work to be completed?
                    </p>
                  </div>
-
-                 {/* Urgency Selection
-                 <div className="space-y-3">
-                   <Label>How quickly do you need this done?</Label>
-                   <div className="grid gap-3 sm:grid-cols-2">
-                     {urgencyOptions.map((option) => (
-                       <label
-                         key={option.value}
-                         className={cn(
-                           "flex items-center justify-between p-3 border rounded-lg cursor-pointer transition-all",
-                           formData.urgency === option.value 
-                             ? "border-primary bg-primary/5" 
-                             : "border-border hover:border-primary/50"
-                         )}
-                       >
-                         <input
-                           type="radio"
-                           name="urgency"
-                           value={option.value}
-                           checked={formData.urgency === option.value}
-                           onChange={(e) => handleChange('urgency', e.target.value)}
-                           className="sr-only"
-                         />
-                         <div className="flex items-center gap-2">
-                           <div className={cn("w-3 h-3 rounded-full border-2", 
-                             formData.urgency === option.value ? "bg-primary border-primary" : "border-muted-foreground"
-                           )} />
-                           <span className="font-medium">{option.label}</span>
-                         </div>
-                         {option.badge && (
-                           <Badge variant="secondary" className={option.color}>
-                             {option.badge}
-                           </Badge>
-                         )}
-                       </label>
-                     ))}
-                   </div>
-                 </div> */}
                </CardContent>
              </Card>
            )}
 
-           {/* Step 2: Calendar */}
+           {/* Step 2: File Upload */}
            {currentStep === 2 && (
+             <Card>
+               <CardHeader>
+                 <CardTitle className="flex items-center gap-2">
+                   <Upload className="h-5 w-5" />
+                   Upload Project Files
+                 </CardTitle>
+                 <p className="text-sm text-muted-foreground">
+                   Share photos, measurements, specifications, or any other files that will help the professional understand your project better.
+                 </p>
+               </CardHeader>
+               <CardContent className="space-y-6">
+                 
+                 {/* Benefits callout */}
+                 {/* <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                   <div className="flex items-start gap-3">
+                     <Image className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
+                     <div>
+                       <h4 className="font-medium text-blue-900 mb-2">Why upload files?</h4>
+                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm text-blue-700">
+                         <div className="flex items-center gap-2">
+                           <CheckCircle className="h-3 w-3" />
+                           <span>Get more accurate quotes</span>
+                         </div>
+                         <div className="flex items-center gap-2">
+                           <CheckCircle className="h-3 w-3" />
+                           <span>Reduce communication time</span>
+                         </div>
+                         <div className="flex items-center gap-2">
+                           <CheckCircle className="h-3 w-3" />
+                           <span>Faster professional responses</span>
+                         </div>
+                         <div className="flex items-center gap-2">
+                           <CheckCircle className="h-3 w-3" />
+                           <span>Show specific requirements</span>
+                         </div>
+                       </div>
+                     </div>
+                   </div>
+                 </div> */}
+
+                 {/* File upload component */}
+                 <AppointmentFileUpload 
+                   onFilesChange={handleFilesChange}
+                   initialFiles={formData.attachments}
+                   maxFiles={10}
+                 />
+
+                 {/* Optional step notice */}
+                 {formData.attachments.length === 0 && (
+                   <Alert>
+                     <AlertCircle className="h-4 w-4" />
+                     <AlertDescription>
+                       <strong>Optional Step:</strong> You can skip this step if you don't have files to upload. 
+                       You can always share files later through messages with your professional.
+                     </AlertDescription>
+                   </Alert>
+                 )}
+               </CardContent>
+             </Card>
+           )}
+
+           {/* Step 3: Schedule Selection */}
+           {currentStep === 3 && (
              <Card className="overflow-hidden">
                <CardHeader className="border-b bg-muted/30">
-                 <CardTitle className="text-lg">Select Assessment Time</CardTitle>
+                 <CardTitle className="text-lg flex items-center gap-2">
+                   <Calendar className="h-5 w-5" />
+                   Select Assessment Time
+                 </CardTitle>
                  <p className="text-sm text-muted-foreground">
                    Choose when you'd like the professional to assess your project
                  </p>
@@ -431,8 +528,8 @@ export default function Appointment({
              </Card>
            )}
 
-           {/* Step 3: Location */}
-           {currentStep === 3 && (
+           {/* Step 4: Service Location */}
+           {currentStep === 4 && (
              <Card>
                <CardHeader>
                  <CardTitle className="flex items-center gap-2">
@@ -487,8 +584,8 @@ export default function Appointment({
              </Card>
            )}
 
-           {/* Step 4: Review & Confirm */}
-           {currentStep === 4 && (
+           {/* Step 5: Review & Confirm */}
+           {currentStep === 5 && (
              <Card>
                <CardHeader>
                  <CardTitle className="flex items-center gap-2">
@@ -500,25 +597,27 @@ export default function Appointment({
                  </p>
                </CardHeader>
                <CardContent className="space-y-6">
+                 
                  {/* Service Summary */}
                  <div className="space-y-4 p-4 bg-muted/30 rounded-lg">
                    <div className="flex items-start justify-between">
-                     <div>
+                     <div className="flex-1">
                        <h4 className="font-semibold">{serviceInformation?.name}</h4>
                        <p className="text-sm text-muted-foreground mt-1">
-                         {formData.description.substring(0, 100)}
-                         {formData.description.length > 100 && '...'}
+                         {formData.description.substring(0, 150)}
+                         {formData.description.length > 150 && '...'}
                        </p>
                      </div>
-                     <Badge variant="outline" className="text-lg font-semibold">
+                     <Badge variant="outline" className="text-lg font-semibold ml-4">
                        JMD ${estimatedPrice}
                      </Badge>
                    </div>
 
                    <Separator />
 
-                   <div className="grid gap-3 sm:grid-cols-2">
-                     <div className="flex items-center gap-2">
+                   {/* Appointment Details Grid */}
+                   <div className="grid gap-4 sm:grid-cols-2">
+                     <div className="flex items-center gap-3">
                        <Calendar className="h-4 w-4 text-muted-foreground" />
                        <div>
                          <div className="font-medium">Assessment Date</div>
@@ -533,7 +632,7 @@ export default function Appointment({
                        </div>
                      </div>
 
-                     <div className="flex items-center gap-2">
+                     <div className="flex items-center gap-3">
                        <Clock className="h-4 w-4 text-muted-foreground" />
                        <div>
                          <div className="font-medium">Time</div>
@@ -547,29 +646,57 @@ export default function Appointment({
                        </div>
                      </div>
 
-                     <div className="flex items-center gap-2">
+                     {formData.deadline && (
+                       <div className="flex items-center gap-3">
+                         <CheckCircle className="h-4 w-4 text-muted-foreground" />
+                         <div>
+                           <div className="font-medium">Complete by</div>
+                           <div className="text-sm text-muted-foreground">
+                             {new Date(formData.deadline).toLocaleDateString()}
+                           </div>
+                         </div>
+                       </div>
+                     )}
+
+                     <div className="flex items-center gap-3">
                        <Badge 
                          variant="secondary" 
-                         className={urgencyOptions.find(opt => opt.value === formData.urgency)?.color}
+                         className={cn("text-sm", urgencyOptions.find(opt => opt.value === formData.urgency)?.color)}
                        >
                          {urgencyOptions.find(opt => opt.value === formData.urgency)?.label}
                        </Badge>
                      </div>
-
-                     {formData.deadline && (
-                       <div className="flex items-center gap-2">
-                         <div className="font-medium">Complete by:</div>
-                         <div className="text-sm text-muted-foreground">
-                           {new Date(formData.deadline).toLocaleDateString()}
-                         </div>
-                       </div>
-                     )}
                    </div>
 
+                   {/* Attached Files */}
+                   {formData.attachments && formData.attachments.length > 0 && (
+                     <>
+                       <Separator />
+                       <div className="space-y-3">
+                         <div className="flex items-center gap-2">
+                           <Upload className="h-4 w-4 text-muted-foreground" />
+                           <div className="font-medium">Attached Files ({formData.attachments.length})</div>
+                         </div>
+                         <div className="grid gap-2 sm:grid-cols-2">
+                           {formData.attachments.map((file, index) => (
+                             <div key={file.id || index} className="flex items-center gap-2 p-2 bg-background rounded border">
+                               <FileText className="h-3 w-3 text-muted-foreground" />
+                               <span className="text-sm truncate flex-1">{file.name}</span>
+                               <Badge variant="secondary" className="text-xs">
+                                 {file.purpose}
+                               </Badge>
+                             </div>
+                           ))}
+                         </div>
+                       </div>
+                     </>
+                   )}
+
+                   {/* Service Location */}
                    {formData.use_different_address && formData.service_location.street_address && (
                      <>
                        <Separator />
-                       <div className="flex items-start gap-2">
+                       <div className="flex items-start gap-3">
                          <MapPin className="h-4 w-4 text-muted-foreground mt-0.5" />
                          <div>
                            <div className="font-medium">Service Location</div>
@@ -619,7 +746,7 @@ export default function Appointment({
        </div>
      </div>
 
-     {/* 🔧 FIX: Fixed Footer with Action Buttons - ALWAYS VISIBLE */}
+     {/* Fixed Footer with Action Buttons */}
      <div className="flex-shrink-0 bg-background border-t shadow-lg">
        <div className="w-full max-w-4xl mx-auto p-6">
          <div className="flex justify-between items-center">
@@ -649,6 +776,31 @@ export default function Appointment({
              )}
            </div>
 
+           {/* Show file count indicator on file step */}
+           {currentStep === 2 && formData.attachments.length > 0 && (
+             <div className="flex items-center gap-2 text-sm text-muted-foreground">
+               <Upload className="h-4 w-4" />
+               <span>{formData.attachments.length} file{formData.attachments.length !== 1 ? 's' : ''} selected</span>
+             </div>
+           )}
+
+           {/* Show selected time on schedule step */}
+           {currentStep === 3 && formData.preferred_start && (
+             <div className="flex items-center gap-2 text-sm text-muted-foreground">
+               <Calendar className="h-4 w-4" />
+               <span>
+                 {new Date(formData.preferred_start).toLocaleDateString('en-US', {
+                   month: 'short',
+                   day: 'numeric',
+                   hour: 'numeric',
+                   minute: '2-digit',
+                   hour12: true
+                 })}
+               </span>
+             </div>
+           )}
+
+           {/* Continue/Submit buttons */}
            {currentStep < steps.length ? (
              <Button 
                type="button"
@@ -656,7 +808,7 @@ export default function Appointment({
                disabled={!isStepValid(currentStep) || loading}
                className="gap-2"
              >
-               Continue
+               {currentStep === 2 && formData.attachments.length === 0 ? 'Skip Files' : 'Continue'}
                <ArrowRight className="h-4 w-4" />
              </Button>
            ) : (

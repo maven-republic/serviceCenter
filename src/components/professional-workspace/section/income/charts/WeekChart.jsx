@@ -1,48 +1,112 @@
-// ============ WeekChart.jsx ============
 import React from 'react';
 import { Badge } from '@/components/ui/badge';
 import { CheckCircle, Clock, TrendingUp } from 'lucide-react';
 import ChartBase from './shared/ChartBase';
-import { generateEarnings, calculateDaysDiff, getBaseChartOptions, COLORS } from './shared/ChartUtils';
+import { getBaseChartOptions, COLORS } from './shared/ChartUtils';
 
-export default function WeekChart({ hideEarnings, activeTimeline, dateRange, showPreview, setShowPreview }) {
-  const hasBookings = false; // This would come from your app state/API
+export default function WeekChart({ 
+  hideEarnings, 
+  activeTimeline, 
+  dateRange, 
+  showPreview, 
+  setShowPreview,
+  vector,
+  currencyService,
+  professionalProfile
+}) {
+  // Check if professional has real bookings
+  const hasBookings = vector?.bookings?.length > 0;
 
-  // Generate weekly chart data
-  const generateWeeklyData = () => {
-    if (!dateRange) {
-      // Default data - current month weeks
+  // Get weekly earnings data from real analytics
+  const getWeeklyData = () => {
+    // If no real data, show preview/sample data
+    if (!vector?.weeklyData || showPreview) {
       return {
         labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4'],
         earnings: [3200, 2800, 4100, 3650],
-        colors: [COLORS.muted, COLORS.primary, COLORS.muted, COLORS.primary]
+        bookings: [12, 10, 16, 14],
+        colors: [COLORS.muted, COLORS.primary, COLORS.muted, COLORS.primary],
+        isPreview: true
       };
     }
 
-    const daysDiff = calculateDaysDiff(dateRange.startDate, dateRange.endDate);
-    
-    if (daysDiff <= 7) {
-      // Single week view
-      return {
-        labels: ['This Week'],
-        earnings: [5950],
-        colors: [COLORS.primary]
-      };
-    } else {
-      // Multiple weeks
-      const weekCount = Math.ceil(daysDiff / 7);
-      const labels = Array.from({ length: Math.min(weekCount, 12) }, (_, i) => `Week ${i + 1}`);
-      const colors = labels.map((_, i) => i % 2 === 0 ? COLORS.primary : COLORS.muted);
+    // Process real weekly data
+    const weeklyStats = vector.weeklyData;
+    const labels = [];
+    const earnings = [];
+    const bookings = [];
+    const colors = [];
+
+    // Process each week from the data
+    weeklyStats.forEach((week, index) => {
+      // Format week labels
+      if (week.weekNumber) {
+        labels.push(`Week ${week.weekNumber}`);
+      } else if (week.startDate) {
+        const startDate = new Date(week.startDate);
+        const endDate = new Date(week.endDate);
+        labels.push(`${startDate.getDate()}/${startDate.getMonth() + 1} - ${endDate.getDate()}/${endDate.getMonth() + 1}`);
+      } else {
+        labels.push(`Week ${index + 1}`);
+      }
+
+      earnings.push(week.earnings || 0);
+      bookings.push(week.bookings || 0);
       
-      return {
-        labels,
-        earnings: generateEarnings(labels.length, 3000),
-        colors
-      };
-    }
+      // Highlight high-performing weeks
+      const isHighPerforming = week.earnings > (vector.averageWeeklyEarnings || 0);
+      colors.push(isHighPerforming ? COLORS.primary : COLORS.muted);
+    });
+
+    return {
+      labels,
+      earnings,
+      bookings,
+      colors,
+      isPreview: false
+    };
   };
 
-  const chartData = generateWeeklyData();
+  const chartData = getWeeklyData();
+
+  // Format currency values for display
+  const formatCurrency = (amount) => {
+    if (!currencyService) return `$${amount}`;
+    return currencyService.formatCurrency(amount);
+  };
+
+  // Calculate weekly insights
+  const getWeeklyInsights = () => {
+    if (chartData.isPreview) {
+      return {
+        bestWeek: 'Week 3',
+        bestEarnings: formatCurrency(4100),
+        totalBookings: 52,
+        averagePerWeek: formatCurrency(3437),
+        growthTrend: '+12%'
+      };
+    }
+
+    const maxIndex = chartData.earnings.indexOf(Math.max(...chartData.earnings));
+    const totalEarnings = chartData.earnings.reduce((sum, val) => sum + val, 0);
+    const totalBookings = chartData.bookings.reduce((sum, val) => sum + val, 0);
+    const averageEarnings = totalEarnings / chartData.earnings.length;
+    
+    // Calculate simple growth trend (last week vs first week)
+    const firstWeek = chartData.earnings[0] || 0;
+    const lastWeek = chartData.earnings[chartData.earnings.length - 1] || 0;
+    const growth = firstWeek > 0 ? Math.round(((lastWeek - firstWeek) / firstWeek) * 100) : 0;
+    
+    return {
+      bestWeek: chartData.labels[maxIndex],
+      bestEarnings: formatCurrency(chartData.earnings[maxIndex]),
+      totalBookings,
+      averagePerWeek: formatCurrency(averageEarnings),
+      growthTrend: growth >= 0 ? `+${growth}%` : `${growth}%`
+    };
+  };
+
+  const insights = getWeeklyInsights();
 
   // Weekly chart configuration (line chart)
   const chartConfig = {
@@ -50,12 +114,12 @@ export default function WeekChart({ hideEarnings, activeTimeline, dateRange, sho
     data: {
       labels: chartData.labels,
       datasets: [{
-        data: chartData.earnings,
-        borderColor: showPreview ? COLORS.preview : COLORS.primary,
-        backgroundColor: showPreview ? 'rgba(148, 163, 184, 0.1)' : 'rgba(0, 0, 0, 0.1)',
+        data: hideEarnings ? chartData.bookings : chartData.earnings,
+        borderColor: chartData.isPreview ? COLORS.preview : COLORS.primary,
+        backgroundColor: chartData.isPreview ? 'rgba(148, 163, 184, 0.1)' : 'rgba(0, 0, 0, 0.1)',
         borderWidth: 3,
-        borderDash: showPreview ? [5, 5] : [],
-        pointBackgroundColor: showPreview ? COLORS.preview : COLORS.primary,
+        borderDash: chartData.isPreview ? [5, 5] : [],
+        pointBackgroundColor: chartData.isPreview ? COLORS.preview : COLORS.primary,
         pointBorderColor: COLORS.background,
         pointBorderWidth: 2,
         pointRadius: 6,
@@ -64,10 +128,37 @@ export default function WeekChart({ hideEarnings, activeTimeline, dateRange, sho
         tension: 0.4
       }]
     },
-    options: getBaseChartOptions()
+    options: {
+      ...getBaseChartOptions(),
+      plugins: {
+        ...getBaseChartOptions().plugins,
+        tooltip: {
+          callbacks: {
+            title: function(context) {
+              return context[0].label;
+            },
+            label: function(context) {
+              const index = context.dataIndex;
+              const earnings = chartData.earnings[index];
+              const bookingCount = chartData.bookings[index];
+              
+              if (hideEarnings) {
+                return `${bookingCount} bookings this week`;
+              }
+              
+              return [
+                `Earnings: ${formatCurrency(earnings)}`,
+                `Bookings: ${bookingCount}`,
+                `Avg per day: ${formatCurrency(earnings / 7)}`
+              ];
+            }
+          }
+        }
+      }
+    }
   };
 
-  // Beta Empty State
+  // Enhanced Empty State for new professionals
   const emptyStateComponent = (
     <div className="flex flex-col items-center justify-center text-center min-h-[280px]">
       {/* Animated Chart Placeholder */}
@@ -110,11 +201,19 @@ export default function WeekChart({ hideEarnings, activeTimeline, dateRange, sho
 
       {/* Main Message */}
       <h3 className="text-lg font-semibold text-muted-foreground mb-2">
-        Your weekly overview chart is ready! 📅
+        Track Your Weekly Progress! 📅
       </h3>
-      <p className="text-sm text-muted-foreground mb-6 max-w-sm">
-        Monitor weekly progress and growth patterns
+      <p className="text-sm text-muted-foreground mb-4 max-w-sm">
+        Once you have bookings, this chart will show your weekly growth patterns
       </p>
+      
+      {/* Preview Option */}
+      <button
+        onClick={() => setShowPreview(!showPreview)}
+        className="mb-6 px-4 py-2 text-sm bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 transition-colors"
+      >
+        {showPreview ? 'Hide Preview' : 'Show Weekly Preview'}
+      </button>
 
       {/* Steps Indicator */}
       <div className="flex items-center gap-4 flex-wrap justify-center">
@@ -135,24 +234,69 @@ export default function WeekChart({ hideEarnings, activeTimeline, dateRange, sho
         <div className="flex items-center gap-2">
           <Badge variant="outline" className="gap-1">
             <span className="text-xs font-bold">3</span>
-            <span className="text-xs">Watch earnings grow</span>
+            <span className="text-xs">Track growth</span>
           </Badge>
         </div>
       </div>
     </div>
   );
 
-  return (
-    <ChartBase
-      chartType="weekly"
-      chartData={chartData}
-      chartConfig={chartConfig}
-      hideEarnings={hideEarnings}
-      showPreview={showPreview}
-      setShowPreview={setShowPreview}
-      hasBookings={hasBookings}
-      dateRange={dateRange}
-      emptyStateComponent={emptyStateComponent}
-    />
+  // Chart with insights when data exists
+  const chartWithInsights = (
+    <div className="space-y-4">
+      <ChartBase
+        chartType="weekly"
+        chartData={chartData}
+        chartConfig={chartConfig}
+        hideEarnings={hideEarnings}
+        showPreview={showPreview}
+        setShowPreview={setShowPreview}
+        hasBookings={hasBookings}
+        dateRange={dateRange}
+        emptyStateComponent={null}
+      />
+      
+      {/* Weekly Insights */}
+      {(hasBookings || showPreview) && (
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
+          <div className="text-center p-3 bg-gray-50 rounded-lg">
+            <div className="text-sm text-muted-foreground">Best Week</div>
+            <div className="text-lg font-semibold text-primary">{insights.bestWeek}</div>
+          </div>
+          <div className="text-center p-3 bg-gray-50 rounded-lg">
+            <div className="text-sm text-muted-foreground">Peak Earnings</div>
+            <div className="text-lg font-semibold text-green-600">
+              {hideEarnings ? '***' : insights.bestEarnings}
+            </div>
+          </div>
+          <div className="text-center p-3 bg-gray-50 rounded-lg">
+            <div className="text-sm text-muted-foreground">Total Bookings</div>
+            <div className="text-lg font-semibold">{insights.totalBookings}</div>
+          </div>
+          <div className="text-center p-3 bg-gray-50 rounded-lg">
+            <div className="text-sm text-muted-foreground">Growth Trend</div>
+            <div className={`text-lg font-semibold ${insights.growthTrend.startsWith('+') ? 'text-green-600' : 'text-red-600'}`}>
+              {insights.growthTrend}
+            </div>
+          </div>
+        </div>
+      )}
+      
+      {/* Preview indicator */}
+      {showPreview && (
+        <div className="text-center">
+          <Badge variant="outline" className="text-blue-600 border-blue-200">
+            Preview Mode - Sample Weekly Data
+          </Badge>
+        </div>
+      )}
+    </div>
   );
+
+  // Return appropriate component based on data state
+  if (!hasBookings && !showPreview) {
+    return emptyStateComponent;
+  }
+
+  return chartWithInsights;
 }

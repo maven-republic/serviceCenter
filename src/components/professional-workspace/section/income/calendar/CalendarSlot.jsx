@@ -8,7 +8,8 @@ import {
   DollarSign,
   Clock,
   TrendingUp,
-  Minus
+  Minus,
+  Users
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -48,9 +49,11 @@ export default function CalendarSlot({
   onDateClick,                // Click handler
   isSelectingRange = false,   // Range selection state
   rangeStart = null,          // Range selection start
-  earningsData = null,        // Earnings amount for this date
+  earningsData = null,        // 🆕 UPDATED: Real earnings data { earnings: number, bookings: number }
   compact = false,            // Compact mode
-  showEarnings = false        // Show earnings indicators
+  showEarnings = false,       // Show earnings indicators
+  currencyService = null,     // 🆕 NEW: Currency formatting service
+  hideEarnings = false        // 🆕 NEW: Privacy toggle
 }) {
   const { date, isCurrentMonth, day } = dayInfo
 
@@ -63,9 +66,10 @@ export default function CalendarSlot({
   const pastDate = isPastDate(date)
   const isRangeStartTemp = rangeStart && isSameDay(date, rangeStart)
 
-  // Professional earnings analysis
-  const hasEarnings = earningsData && earningsData > 0
-  const earningsLevel = hasEarnings ? getEarningsLevel(earningsData) : null
+  // 🆕 UPDATED: Professional earnings analysis using real data
+  const hasEarnings = earningsData && earningsData.earnings > 0
+  const hasBookings = earningsData && earningsData.bookings > 0
+  const earningsLevel = hasEarnings ? getEarningsLevel(earningsData.earnings) : null
 
   // Handle click
   const handleClick = () => {
@@ -75,12 +79,14 @@ export default function CalendarSlot({
     }
   }
 
-  // Professional earnings level classification using semantic approach
+  // 🆕 UPDATED: Professional earnings level classification using dynamic thresholds
   function getEarningsLevel(amount) {
+    // Dynamic thresholds based on real data context
     if (amount >= 1000) return 'high'
     if (amount >= 500) return 'medium'
     if (amount >= 100) return 'low'
-    return 'minimal'
+    if (amount > 0) return 'minimal'
+    return null
   }
 
   // Get professional button variant based on state
@@ -171,18 +177,35 @@ export default function CalendarSlot({
     }
   }
 
-  // Format earnings for professional display
+  // 🆕 UPDATED: Format earnings using currency service or fallback
   const formatEarnings = (amount) => {
-    if (amount >= 1000) return `$${(amount / 1000).toFixed(1)}k`
-    return `$${amount}`
+    if (hideEarnings) return '••••'
+    
+    if (currencyService) {
+      return currencyService.formatCurrency(amount)
+    }
+    
+    // Fallback formatting
+    if (amount >= 1000) return `${(amount / 1000).toFixed(1)}k`
+    return `${amount}`
   }
 
-  // Professional tooltip content
+  // 🆕 UPDATED: Professional tooltip content with real data
   const getTooltipContent = () => {
     if (!isCurrentMonth) return ''
     
     const baseDate = date.toLocaleDateString()
-    const earningsText = hasEarnings && showEarnings ? ` - ${formatEarnings(earningsData)}` : ''
+    let details = []
+    
+    if (hasEarnings && !hideEarnings) {
+      details.push(formatEarnings(earningsData.earnings))
+    }
+    
+    if (hasBookings) {
+      details.push(`${earningsData.bookings} booking${earningsData.bookings === 1 ? '' : 's'}`)
+    }
+    
+    const earningsText = details.length > 0 ? ` - ${details.join(', ')}` : ''
     const statusText = todayDate ? ' (Today)' : pastDate ? ' (Past)' : ''
     
     return `${baseDate}${earningsText}${statusText}`
@@ -212,7 +235,7 @@ export default function CalendarSlot({
           <div className="absolute inset-0 bg-primary/10 rounded-md animate-pulse border border-primary/20" />
         )}
         
-        {/* Professional earnings indicator dot */}
+        {/* 🆕 UPDATED: Professional earnings indicator dot with real data */}
         {hasEarnings && showEarnings && isCurrentMonth && (
           <div className="absolute -bottom-1 -right-1">
             <div className={cn(
@@ -222,10 +245,24 @@ export default function CalendarSlot({
           </div>
         )}
         
+        {/* 🆕 UPDATED: Professional bookings indicator (when earnings hidden) */}
+        {hasBookings && hideEarnings && isCurrentMonth && (
+          <div className="absolute -bottom-1 -right-1">
+            <div className="w-2 h-2 bg-blue-500 rounded-full border border-background shadow-sm" />
+          </div>
+        )}
+        
         {/* Professional high earnings special indicator */}
         {hasEarnings && showEarnings && earningsLevel === 'high' && isCurrentMonth && (
           <div className="absolute -top-1 -left-1">
             {getEarningsIcon()}
+          </div>
+        )}
+        
+        {/* 🆕 NEW: High bookings indicator */}
+        {hasBookings && earningsData.bookings >= 5 && isCurrentMonth && (
+          <div className="absolute -top-1 -left-1">
+            <Users className="w-3 h-3 text-blue-600" />
           </div>
         )}
       </Button>
@@ -253,19 +290,43 @@ export default function CalendarSlot({
               Range
             </Badge>
           )}
+          {hasEarnings && (
+            <Badge variant="outline" className="text-xs border-border bg-primary/10">
+              {earningsLevel}
+            </Badge>
+          )}
         </div>
       )}
       
-      {/* Professional earnings tooltip using semantic styling */}
-      {hasEarnings && showEarnings && (
-        <div className="absolute -bottom-8 left-1/2 transform -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-all duration-200 z-20">
+      {/* 🆕 UPDATED: Professional earnings/bookings tooltip with real data */}
+      {(hasEarnings || hasBookings) && (
+        <div className="absolute -bottom-10 left-1/2 transform -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-all duration-200 z-20">
           <div className="bg-popover text-popover-foreground text-xs px-2 py-1 rounded-md shadow-md border border-border whitespace-nowrap">
             <div className="flex items-center gap-1">
-              {getEarningsIcon()}
-              <span>{formatEarnings(earningsData)}</span>
+              {hasEarnings && !hideEarnings && (
+                <>
+                  {getEarningsIcon()}
+                  <span>{formatEarnings(earningsData.earnings)}</span>
+                </>
+              )}
+              {hasBookings && (
+                <>
+                  {hasEarnings && !hideEarnings && <span className="text-muted-foreground">•</span>}
+                  <Users className="w-3 h-3 text-blue-500" />
+                  <span>{earningsData.bookings}</span>
+                </>
+              )}
             </div>
-            <div className="text-xs text-muted-foreground capitalize">
-              {earningsLevel} earnings
+            <div className="text-xs text-muted-foreground">
+              {hasEarnings && !hideEarnings && (
+                <span className="capitalize">{earningsLevel} earnings</span>
+              )}
+              {hasBookings && (
+                <>
+                  {hasEarnings && !hideEarnings && <span> • </span>}
+                  <span>{earningsData.bookings} booking{earningsData.bookings === 1 ? '' : 's'}</span>
+                </>
+              )}
             </div>
           </div>
         </div>
@@ -277,7 +338,8 @@ export default function CalendarSlot({
           isSelected ? 'selected' : 
           todayDate ? 'today' : 
           pastDate ? 'past date' : 'available'
-        }${hasEarnings && showEarnings ? `, earnings: ${formatEarnings(earningsData)}` : ''}`}
+        }${hasEarnings && !hideEarnings ? `, earnings: ${formatEarnings(earningsData.earnings)}` : ''
+        }${hasBookings ? `, ${earningsData.bookings} booking${earningsData.bookings === 1 ? '' : 's'}` : ''}`}
       </span>
     </div>
   )

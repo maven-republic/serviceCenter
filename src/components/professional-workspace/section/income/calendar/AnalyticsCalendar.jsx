@@ -13,7 +13,10 @@ import {
   Target,
   CheckCircle,
   BarChart3,
-  Info
+  Info,
+  Beaker,
+  Eye,
+  EyeOff
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import CalendarHeader from './CalendarHeader'
@@ -111,12 +114,91 @@ export default function AnalyticsCalendar({
   compact = false,
   showRangeSelection = true,
   showLegend = true,
-  earningsData = null,
-  showEarnings = false
+  // 🆕 NEW: Real data props
+  vector = null,              // Real analytics data
+  currencyService = null,     // Currency formatting service
+  hideEarnings = false,       // Privacy toggle
+  professionalProfile = null  // User context
 }) {
   const [currentMonth, setCurrentMonth] = useState(new Date())
   const [isSelectingRange, setIsSelectingRange] = useState(false)
   const [rangeStart, setRangeStart] = useState(null)
+
+  // 🆕 NEW: Transform vector data into calendar format
+  const getCalendarEarningsData = () => {
+    if (!vector?.dailyData || hideEarnings) return {}
+    
+    const calendarData = {}
+    
+    vector.dailyData.forEach(dayData => {
+      // Handle different date formats
+      let dateKey
+      if (dayData.date) {
+        dateKey = new Date(dayData.date).toDateString()
+      } else if (dayData.day) {
+        // If day is a date string or Day name, convert appropriately
+        const dayDate = new Date(dayData.day)
+        dateKey = dayDate.toDateString()
+      } else {
+        return // Skip if no valid date
+      }
+      
+      calendarData[dateKey] = {
+        earnings: dayData.earnings || 0,
+        bookings: dayData.bookings || 0
+      }
+    })
+    
+    return calendarData
+  }
+
+  // 🆕 NEW: Get preview data for new professionals
+  const getPreviewEarningsData = () => {
+    if (!vector?.isPreview || hideEarnings) return {}
+    
+    const previewData = {}
+    const today = new Date()
+    
+    // Generate some preview earnings for demonstration
+    for (let i = -10; i <= 5; i++) {
+      const date = new Date(today)
+      date.setDate(today.getDate() + i)
+      
+      const dateKey = date.toDateString()
+      const earnings = Math.random() > 0.7 ? Math.floor(Math.random() * 800) + 200 : 0
+      const bookings = earnings > 0 ? Math.floor(earnings / 200) + 1 : 0
+      
+      if (earnings > 0) {
+        previewData[dateKey] = { earnings, bookings }
+      }
+    }
+    
+    return previewData
+  }
+
+  // 🆕 NEW: Get earnings data based on data availability
+  const earningsData = vector?.isPreview ? getPreviewEarningsData() : getCalendarEarningsData()
+
+  // 🆕 NEW: Get calendar statistics
+  const getCalendarStats = () => {
+    const data = Object.values(earningsData)
+    if (data.length === 0) return null
+    
+    const totalEarnings = data.reduce((sum, day) => sum + day.earnings, 0)
+    const totalBookings = data.reduce((sum, day) => sum + day.bookings, 0)
+    const activeDays = data.filter(day => day.earnings > 0).length
+    const averagePerDay = activeDays > 0 ? totalEarnings / activeDays : 0
+    
+    return {
+      totalEarnings,
+      totalBookings,
+      activeDays,
+      averagePerDay,
+      bestDay: data.reduce((max, day) => day.earnings > max.earnings ? day : max, { earnings: 0 })
+    }
+  }
+
+  const calendarStats = getCalendarStats()
 
   // Professional date click handler with enhanced logic
   const handleDateClick = (date, isCurrentMonth) => {
@@ -217,6 +299,23 @@ export default function AnalyticsCalendar({
           </div>
           
           <div className="flex items-center gap-2">
+            {/* 🆕 NEW: Data mode indicator */}
+            {vector && (
+              <Badge variant="outline" className="text-xs bg-background border-border">
+                {vector.isPreview ? (
+                  <>
+                    <Beaker className="h-3 w-3 mr-1" />
+                    Preview
+                  </>
+                ) : (
+                  <>
+                    <BarChart3 className="h-3 w-3 mr-1" />
+                    Live Data
+                  </>
+                )}
+              </Badge>
+            )}
+            
             {/* Professional mode indicator */}
             <Badge variant="outline" className="text-xs bg-background border-border">
               {showRangeSelection ? (
@@ -252,11 +351,50 @@ export default function AnalyticsCalendar({
               ? 'Click start date, then end date to select analytics range' 
               : 'Click any date to select for analysis'
             }
+            {!hideEarnings && Object.keys(earningsData).length > 0 && (
+              <span className="text-primary"> • Dots show earnings days</span>
+            )}
           </p>
         )}
       </CardHeader>
       
       <CardContent className="space-y-4 p-6">
+        
+        {/* 🆕 NEW: Calendar Statistics */}
+        {calendarStats && !hideEarnings && !compact && (
+          <Card className="bg-primary/5 border-primary/20">
+            <CardContent className="p-3">
+              <div className="grid grid-cols-2 gap-3 text-xs">
+                <div>
+                  <span className="text-muted-foreground">Active Days</span>
+                  <div className="font-medium text-foreground">{calendarStats.activeDays}</div>
+                </div>
+                <div>
+                  <span className="text-muted-foreground">Total Bookings</span>
+                  <div className="font-medium text-foreground">{calendarStats.totalBookings}</div>
+                </div>
+                <div>
+                  <span className="text-muted-foreground">Avg/Day</span>
+                  <div className="font-medium text-foreground">
+                    {currencyService ? 
+                      currencyService.formatCurrency(calendarStats.averagePerDay) : 
+                      `$${calendarStats.averagePerDay.toFixed(0)}`
+                    }
+                  </div>
+                </div>
+                <div>
+                  <span className="text-muted-foreground">Best Day</span>
+                  <div className="font-medium text-foreground">
+                    {currencyService ? 
+                      currencyService.formatCurrency(calendarStats.bestDay.earnings) : 
+                      `$${calendarStats.bestDay.earnings.toFixed(0)}`
+                    }
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
         
         {/* Professional Month Navigation */}
         <CalendarHeader
@@ -291,9 +429,11 @@ export default function AnalyticsCalendar({
               onDateClick={() => handleDateClick(dayInfo.date, dayInfo.isCurrentMonth)}
               isSelectingRange={isSelectingRange}
               rangeStart={rangeStart}
-              earningsData={earningsData?.[dayInfo.date.toDateString()]}
+              earningsData={earningsData[dayInfo.date.toDateString()]}
               compact={compact}
-              showEarnings={showEarnings}
+              showEarnings={!hideEarnings && Object.keys(earningsData).length > 0}
+              currencyService={currencyService}
+              hideEarnings={hideEarnings}
             />
           ))}
         </div>
@@ -415,7 +555,7 @@ export default function AnalyticsCalendar({
                       <span className="text-muted-foreground">Other month</span>
                     </div>
                     
-                    {showEarnings && (
+                    {!hideEarnings && Object.keys(earningsData).length > 0 && (
                       <>
                         <div className="flex items-center gap-2">
                           <div className="w-2 h-2 bg-primary rounded-full" />
@@ -434,8 +574,23 @@ export default function AnalyticsCalendar({
           </>
         )}
 
+        {/* 🆕 NEW: No Data State */}
+        {!vector && analysis.isEmpty && !isSelectingRange && (
+          <Card className="bg-muted/30 border-border">
+            <CardContent className="p-4 text-center">
+              <CalendarIcon className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
+              <p className="text-sm font-medium text-foreground mb-1">
+                No Analytics Data
+              </p>
+              <p className="text-xs text-muted-foreground">
+                Calendar will show earnings indicators once you have booking data.
+              </p>
+            </CardContent>
+          </Card>
+        )}
+
         {/* Professional Empty State */}
-        {analysis.isEmpty && !isSelectingRange && (
+        {vector && analysis.isEmpty && !isSelectingRange && (
           <Card className="bg-muted/30 border-border">
             <CardContent className="p-4 text-center">
               <CalendarIcon className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
@@ -448,6 +603,11 @@ export default function AnalyticsCalendar({
                   : 'Click on any date to select it for analysis'
                 }
               </p>
+              {!hideEarnings && Object.keys(earningsData).length > 0 && (
+                <p className="text-xs text-primary mt-1">
+                  Dots indicate days with earnings
+                </p>
+              )}
             </CardContent>
           </Card>
         )}

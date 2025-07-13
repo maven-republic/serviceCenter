@@ -1,71 +1,152 @@
-// ============ MonthChart.jsx ============
 import React from 'react';
 import { Badge } from '@/components/ui/badge';
 import { CheckCircle, Clock, TrendingUp } from 'lucide-react';
 import ChartBase from './shared/ChartBase';
-import { generateEarnings, calculateDaysDiff, getBaseChartOptions, COLORS } from './shared/ChartUtils';
+import { getBaseChartOptions, COLORS } from './shared/ChartUtils';
 
-export default function MonthChart({ hideEarnings, activeTimeline, dateRange, showPreview, setShowPreview }) {
-  const hasBookings = false; // This would come from your app state/API
+export default function MonthChart({ 
+  hideEarnings, 
+  activeTimeline, 
+  dateRange, 
+  showPreview, 
+  setShowPreview,
+  vector,
+  currencyService,
+  professionalProfile
+}) {
+  // Check if professional has real bookings
+  const hasBookings = vector?.bookings?.length > 0;
 
-  // Generate monthly chart data
-  const generateMonthlyData = () => {
-    if (!dateRange) {
-      // Default data - full year
+  // Get monthly earnings data from real analytics
+  const getMonthlyData = () => {
+    // If no real data, show preview/sample data
+    if (!vector?.monthlyData || showPreview) {
       return {
         labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
         earnings: [8500, 7200, 9800, 11200, 8900, 10500, 12300, 9700, 8800, 10900, 11800, 13200],
-        colors: ['#e5e7eb', '#e5e7eb', '#000000', '#e5e7eb', '#e5e7eb', '#000000', '#e5e7eb', '#e5e7eb', '#000000', '#e5e7eb', '#e5e7eb', '#000000']
+        bookings: [34, 28, 42, 48, 36, 45, 52, 41, 38, 47, 50, 56],
+        colors: ['#e5e7eb', '#e5e7eb', '#000000', '#e5e7eb', '#e5e7eb', '#000000', '#e5e7eb', '#e5e7eb', '#000000', '#e5e7eb', '#e5e7eb', '#000000'],
+        isPreview: true
       };
     }
 
-    const daysDiff = calculateDaysDiff(dateRange.startDate, dateRange.endDate);
-    
-    if (daysDiff <= 31) {
-      // Single month view
-      const monthName = dateRange.startDate.toLocaleDateString('en-US', { month: 'short' });
-      return {
-        labels: [monthName],
-        earnings: [daysDiff * 400 + Math.random() * 2000],
-        colors: [COLORS.primary]
-      };
-    } else {
-      // Multiple months
-      const startMonth = dateRange.startDate.getMonth();
-      const startYear = dateRange.startDate.getFullYear();
-      const monthsDiff = Math.ceil(daysDiff / 30);
-      
-      const labels = [];
-      const colors = [];
-      
-      for (let i = 0; i < Math.min(monthsDiff, 12); i++) {
-        const monthDate = new Date(startYear, startMonth + i, 1);
-        labels.push(monthDate.toLocaleDateString('en-US', { month: 'short' }));
-        colors.push(i % 3 === 0 ? COLORS.primary : COLORS.muted);
+    // Process real monthly data
+    const monthlyStats = vector.monthlyData;
+    const labels = [];
+    const earnings = [];
+    const bookings = [];
+    const colors = [];
+
+    // Process each month from the data
+    monthlyStats.forEach((month, index) => {
+      // Format month labels
+      if (month.monthName) {
+        labels.push(month.monthName);
+      } else if (month.date) {
+        const date = new Date(month.date);
+        labels.push(date.toLocaleDateString('en-US', { month: 'short' }));
+      } else if (month.year && month.month) {
+        const date = new Date(month.year, month.month - 1, 1);
+        labels.push(date.toLocaleDateString('en-US', { month: 'short' }));
+      } else {
+        // Fallback to index-based months
+        const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        labels.push(monthNames[index % 12]);
       }
+
+      earnings.push(month.earnings || 0);
+      bookings.push(month.bookings || 0);
       
-      return {
-        labels,
-        earnings: generateEarnings(labels.length, 10000),
-        colors
-      };
-    }
+      // Highlight high-performing months (above average)
+      const isHighPerforming = month.earnings > (vector.averageMonthlyEarnings || 0);
+      colors.push(isHighPerforming ? COLORS.primary : COLORS.muted);
+    });
+
+    return {
+      labels,
+      earnings,
+      bookings,
+      colors,
+      isPreview: false
+    };
   };
 
-  const chartData = generateMonthlyData();
+  const chartData = getMonthlyData();
 
-  // Monthly chart configuration (line chart)
+  // Format currency values for display
+  const formatCurrency = (amount) => {
+    if (!currencyService) return `$${amount}`;
+    return currencyService.formatCurrency(amount);
+  };
+
+  // Calculate monthly insights
+  const getMonthlyInsights = () => {
+    if (chartData.isPreview) {
+      return {
+        bestMonth: 'December',
+        bestEarnings: formatCurrency(13200),
+        totalBookings: 517,
+        averagePerMonth: formatCurrency(10250),
+        yearOverYear: '+22%',
+        seasonalTrend: 'Peak: Dec-Jan'
+      };
+    }
+
+    const maxIndex = chartData.earnings.indexOf(Math.max(...chartData.earnings));
+    const totalEarnings = chartData.earnings.reduce((sum, val) => sum + val, 0);
+    const totalBookings = chartData.bookings.reduce((sum, val) => sum + val, 0);
+    const averageEarnings = totalEarnings / chartData.earnings.length;
+    
+    // Calculate year-over-year growth if we have enough data
+    let yearOverYear = 'N/A';
+    if (chartData.earnings.length >= 12) {
+      const firstHalf = chartData.earnings.slice(0, 6).reduce((sum, val) => sum + val, 0);
+      const secondHalf = chartData.earnings.slice(-6).reduce((sum, val) => sum + val, 0);
+      if (firstHalf > 0) {
+        const growth = Math.round(((secondHalf - firstHalf) / firstHalf) * 100);
+        yearOverYear = growth >= 0 ? `+${growth}%` : `${growth}%`;
+      }
+    }
+
+    // Identify seasonal trend (find quarter with highest average)
+    const getSeasonalTrend = () => {
+      if (chartData.earnings.length < 12) return 'Analyzing...';
+      
+      const quarters = {
+        'Q1 (Jan-Mar)': chartData.earnings.slice(0, 3).reduce((sum, val) => sum + val, 0) / 3,
+        'Q2 (Apr-Jun)': chartData.earnings.slice(3, 6).reduce((sum, val) => sum + val, 0) / 3,
+        'Q3 (Jul-Sep)': chartData.earnings.slice(6, 9).reduce((sum, val) => sum + val, 0) / 3,
+        'Q4 (Oct-Dec)': chartData.earnings.slice(9, 12).reduce((sum, val) => sum + val, 0) / 3
+      };
+      
+      const bestQuarter = Object.keys(quarters).reduce((a, b) => quarters[a] > quarters[b] ? a : b);
+      return `Peak: ${bestQuarter}`;
+    };
+    
+    return {
+      bestMonth: chartData.labels[maxIndex],
+      bestEarnings: formatCurrency(chartData.earnings[maxIndex]),
+      totalBookings,
+      averagePerMonth: formatCurrency(averageEarnings),
+      yearOverYear,
+      seasonalTrend: getSeasonalTrend()
+    };
+  };
+
+  const insights = getMonthlyInsights();
+
+  // Monthly chart configuration (line chart with area fill)
   const chartConfig = {
     type: 'line',
     data: {
       labels: chartData.labels,
       datasets: [{
-        data: chartData.earnings,
-        borderColor: showPreview ? COLORS.preview : COLORS.primary,
-        backgroundColor: showPreview ? 'rgba(148, 163, 184, 0.1)' : 'rgba(0, 0, 0, 0.1)',
+        data: hideEarnings ? chartData.bookings : chartData.earnings,
+        borderColor: chartData.isPreview ? COLORS.preview : COLORS.primary,
+        backgroundColor: chartData.isPreview ? 'rgba(148, 163, 184, 0.1)' : 'rgba(0, 0, 0, 0.1)',
         borderWidth: 4,
-        borderDash: showPreview ? [5, 5] : [],
-        pointBackgroundColor: showPreview ? COLORS.preview : COLORS.primary,
+        borderDash: chartData.isPreview ? [5, 5] : [],
+        pointBackgroundColor: chartData.isPreview ? COLORS.preview : COLORS.primary,
         pointBorderColor: COLORS.background,
         pointBorderWidth: 2,
         pointRadius: 8,
@@ -74,16 +155,44 @@ export default function MonthChart({ hideEarnings, activeTimeline, dateRange, sh
         tension: 0.4
       }]
     },
-    options: getBaseChartOptions()
+    options: {
+      ...getBaseChartOptions(),
+      plugins: {
+        ...getBaseChartOptions().plugins,
+        tooltip: {
+          callbacks: {
+            title: function(context) {
+              return context[0].label;
+            },
+            label: function(context) {
+              const index = context.dataIndex;
+              const earnings = chartData.earnings[index];
+              const bookingCount = chartData.bookings[index];
+              
+              if (hideEarnings) {
+                return `${bookingCount} bookings this month`;
+              }
+              
+              return [
+                `Earnings: ${formatCurrency(earnings)}`,
+                `Bookings: ${bookingCount}`,
+                `Avg per day: ${formatCurrency(earnings / 30)}`,
+                `Avg per booking: ${formatCurrency(bookingCount > 0 ? earnings / bookingCount : 0)}`
+              ];
+            }
+          }
+        }
+      }
+    }
   };
 
-  // Beta Empty State
+  // Enhanced Empty State for new professionals
   const emptyStateComponent = (
     <div className="flex flex-col items-center justify-center text-center min-h-[280px]">
       {/* Animated Chart Placeholder */}
       <div className="mb-4">
         <svg width="120" height="80" viewBox="0 0 120 80" className="opacity-70">
-          {/* Line chart simulation */}
+          {/* Monthly trend line simulation */}
           <polyline
             points="10,60 25,45 40,50 55,30 70,35 85,20 100,25"
             fill="none"
@@ -117,11 +226,19 @@ export default function MonthChart({ hideEarnings, activeTimeline, dateRange, sh
 
       {/* Main Message */}
       <h3 className="text-lg font-semibold text-muted-foreground mb-2">
-        Your monthly earnings chart is ready! 📈
+        Track Your Monthly Growth! 📈
       </h3>
-      <p className="text-sm text-muted-foreground mb-6 max-w-sm">
-        Analyze monthly revenue patterns and year-over-year growth
+      <p className="text-sm text-muted-foreground mb-4 max-w-sm">
+        Monitor monthly revenue patterns and seasonal trends once you have booking history
       </p>
+      
+      {/* Preview Option */}
+      <button
+        onClick={() => setShowPreview(!showPreview)}
+        className="mb-6 px-4 py-2 text-sm bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 transition-colors"
+      >
+        {showPreview ? 'Hide Preview' : 'Show Monthly Preview'}
+      </button>
 
       {/* Steps Indicator */}
       <div className="flex items-center gap-4 flex-wrap justify-center">
@@ -142,24 +259,79 @@ export default function MonthChart({ hideEarnings, activeTimeline, dateRange, sh
         <div className="flex items-center gap-2">
           <Badge variant="outline" className="gap-1">
             <span className="text-xs font-bold">3</span>
-            <span className="text-xs">Watch earnings grow</span>
+            <span className="text-xs">Build history</span>
           </Badge>
         </div>
       </div>
     </div>
   );
 
-  return (
-    <ChartBase
-      chartType="monthly"
-      chartData={chartData}
-      chartConfig={chartConfig}
-      hideEarnings={hideEarnings}
-      showPreview={showPreview}
-      setShowPreview={setShowPreview}
-      hasBookings={hasBookings}
-      dateRange={dateRange}
-      emptyStateComponent={emptyStateComponent}
-    />
+  // Chart with insights when data exists
+  const chartWithInsights = (
+    <div className="space-y-4">
+      <ChartBase
+        chartType="monthly"
+        chartData={chartData}
+        chartConfig={chartConfig}
+        hideEarnings={hideEarnings}
+        showPreview={showPreview}
+        setShowPreview={setShowPreview}
+        hasBookings={hasBookings}
+        dateRange={dateRange}
+        emptyStateComponent={null}
+      />
+      
+      {/* Monthly Insights */}
+      {(hasBookings || showPreview) && (
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mt-4">
+          <div className="text-center p-3 bg-gray-50 rounded-lg">
+            <div className="text-sm text-muted-foreground">Best Month</div>
+            <div className="text-lg font-semibold text-primary">{insights.bestMonth}</div>
+          </div>
+          <div className="text-center p-3 bg-gray-50 rounded-lg">
+            <div className="text-sm text-muted-foreground">Peak Earnings</div>
+            <div className="text-lg font-semibold text-green-600">
+              {hideEarnings ? '***' : insights.bestEarnings}
+            </div>
+          </div>
+          <div className="text-center p-3 bg-gray-50 rounded-lg">
+            <div className="text-sm text-muted-foreground">Total Bookings</div>
+            <div className="text-lg font-semibold">{insights.totalBookings}</div>
+          </div>
+          <div className="text-center p-3 bg-gray-50 rounded-lg">
+            <div className="text-sm text-muted-foreground">Monthly Average</div>
+            <div className="text-lg font-semibold text-blue-600">
+              {hideEarnings ? '***' : insights.averagePerMonth}
+            </div>
+          </div>
+          <div className="text-center p-3 bg-gray-50 rounded-lg">
+            <div className="text-sm text-muted-foreground">Growth Trend</div>
+            <div className={`text-lg font-semibold ${insights.yearOverYear.startsWith('+') ? 'text-green-600' : insights.yearOverYear.startsWith('-') ? 'text-red-600' : 'text-gray-600'}`}>
+              {insights.yearOverYear}
+            </div>
+          </div>
+          <div className="text-center p-3 bg-gray-50 rounded-lg">
+            <div className="text-sm text-muted-foreground">Seasonal Pattern</div>
+            <div className="text-sm font-medium text-purple-600">{insights.seasonalTrend}</div>
+          </div>
+        </div>
+      )}
+      
+      {/* Preview indicator */}
+      {showPreview && (
+        <div className="text-center">
+          <Badge variant="outline" className="text-blue-600 border-blue-200">
+            Preview Mode - Sample Monthly Data
+          </Badge>
+        </div>
+      )}
+    </div>
   );
+
+  // Return appropriate component based on data state
+  if (!hasBookings && !showPreview) {
+    return emptyStateComponent;
+  }
+
+  return chartWithInsights;
 }

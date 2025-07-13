@@ -1,4 +1,4 @@
-// ============ CalendarDropdown.jsx - Right-aligned Analytics Calendar Dropdown ============
+// ============ Updated TimelineInterface.jsx - Real Data Integration ============
 import React, { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -20,20 +20,26 @@ import {
   X,
   Target,
   Clock,
-  ArrowRight
+  ArrowRight,
+  Beaker,
+  BarChart3
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import AnalyticsCalendar from './AnalyticsCalendar';
 import StartDate from './StartDate';
 import EndDate from './EndDate';
-// import CalendarIcon from './CalendarIcon';
 
 export default function TimelineInterface({
   selectedRange = null,
   onRangeSelect = null,
   onDateRangeChange = null,
   className = "",
-  placeholder = "Select dates"
+  placeholder = "Select dates",
+  // 🆕 NEW: Real data props
+  vector = null,              // Real analytics data
+  currencyService = null,     // Currency formatting service
+  hideEarnings = false,       // Privacy toggle
+  professionalProfile = null  // User context
 }) {
   const [isOpen, setIsOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('calendar');
@@ -128,6 +134,15 @@ export default function TimelineInterface({
   const hasValidTempRange = tempStartDate && tempEndDate && tempStartDate <= tempEndDate;
   const tempDays = calculateDays(tempStartDate, tempEndDate);
 
+  // 🆕 NEW: Get data availability status
+  const getDataStatus = () => {
+    if (!vector) return { hasData: false, type: 'none' };
+    if (vector.isPreview) return { hasData: true, type: 'preview' };
+    return { hasData: true, type: 'live' };
+  };
+
+  const dataStatus = getDataStatus();
+
   return (
     <div className={cn("professional-workspace", className)}>
       <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
@@ -145,6 +160,21 @@ export default function TimelineInterface({
             </div>
             
             <div className="flex items-center gap-1">
+              {/* 🆕 NEW: Data availability indicator */}
+              {dataStatus.hasData && (
+                <Badge 
+                  variant={dataStatus.type === 'live' ? 'default' : 'secondary'} 
+                  className="text-xs"
+                >
+                  {dataStatus.type === 'live' ? (
+                    <BarChart3 className="h-2 w-2 mr-1" />
+                  ) : (
+                    <Beaker className="h-2 w-2 mr-1" />
+                  )}
+                  {dataStatus.type === 'live' ? 'Data' : 'Preview'}
+                </Badge>
+              )}
+              
               {selectedRange?.startDate && selectedRange?.endDate && (
                 <Badge variant="secondary" className="text-xs">
                   {calculateDays(selectedRange.startDate, selectedRange.endDate)} days
@@ -166,6 +196,26 @@ export default function TimelineInterface({
                 <div className="flex items-center gap-2">
                   <CalendarIcon className="h-4 w-4 text-muted-foreground" />
                   <CardTitle className="text-sm">Select Date Range</CardTitle>
+                  
+                  {/* 🆕 NEW: Data mode indicator in header */}
+                  {dataStatus.hasData && (
+                    <Badge 
+                      variant="outline" 
+                      className="text-xs bg-background border-border"
+                    >
+                      {dataStatus.type === 'live' ? (
+                        <>
+                          <BarChart3 className="h-3 w-3 mr-1" />
+                          Live Analytics
+                        </>
+                      ) : (
+                        <>
+                          <Beaker className="h-3 w-3 mr-1" />
+                          Preview Mode
+                        </>
+                      )}
+                    </Badge>
+                  )}
                 </div>
                 <Button 
                   variant="ghost" 
@@ -176,6 +226,16 @@ export default function TimelineInterface({
                   <X className="h-3 w-3" />
                 </Button>
               </div>
+              
+              {/* 🆕 NEW: Data context description */}
+              {dataStatus.hasData && (
+                <p className="text-xs text-muted-foreground mt-1">
+                  {dataStatus.type === 'live' ? 
+                    `Calendar shows real booking data${!hideEarnings ? ' with earnings indicators' : ''}` :
+                    'Preview calendar with sample earning patterns'
+                  }
+                </p>
+              )}
             </CardHeader>
             
             <CardContent className="space-y-4">
@@ -195,13 +255,22 @@ export default function TimelineInterface({
                 <TabsContent value="calendar" className="space-y-4">
                   <div className="text-xs text-muted-foreground text-center">
                     Click start date, then end date to select range
+                    {dataStatus.hasData && !hideEarnings && (
+                      <span className="text-primary"> • Dots show earnings days</span>
+                    )}
                   </div>
                   
+                  {/* 🆕 UPDATED: AnalyticsCalendar with real data props */}
                   <AnalyticsCalendar
                     selectedRange={null}
                     onRangeSelect={handleRangeSelect}
                     showRangeSelection={true}
                     compact={true}
+                    vector={vector}                    // 🆕 Real analytics data
+                    currencyService={currencyService}  // 🆕 Currency formatting
+                    hideEarnings={hideEarnings}        // 🆕 Privacy toggle
+                    professionalProfile={professionalProfile} // 🆕 User context
+                    showLegend={false}                 // Compact mode, hide legend
                   />
                 </TabsContent>
                 
@@ -313,6 +382,19 @@ export default function TimelineInterface({
                   ))}
                 </div>
               </div>
+
+              {/* 🆕 NEW: No Data State */}
+              {!dataStatus.hasData && (
+                <div className="p-3 bg-muted/30 border border-border rounded-md">
+                  <div className="flex items-center gap-2 text-sm">
+                    <CalendarIcon className="h-4 w-4 text-muted-foreground" />
+                    <span className="font-medium text-foreground">Calendar Preview</span>
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Date selection is available. Earnings indicators will appear once you have booking data.
+                  </p>
+                </div>
+              )}
             </CardContent>
           </Card>
         </DropdownMenuContent>
@@ -320,24 +402,3 @@ export default function TimelineInterface({
     </div>
   );
 }
-
-// ============ Updated TimelineSelector Integration ============
-// Here's how to integrate this into your existing TimelineSelector:
-
-/*
-// In TimelineSelector.jsx, replace the calendar section with:
-
-<div className="flex items-center gap-3">
-  // ... existing quick range buttons ...
-  
-  <CalendarDropdown
-    selectedRange={customRange}
-    onRangeSelect={handleCalendarRangeSelect}
-    onDateRangeChange={onDateRangeChange}
-    className="ml-auto"
-    placeholder="Custom range"
-  />
-</div>
-
-// And remove the existing expandedView === 'calendar' section
-*/

@@ -13,6 +13,7 @@ import AppointmentLoadingState from '@/components/professional-workspace/appoint
 import AppointmentPagination from '@/components/professional-workspace/appointments/AppointmentPagination'
 import AppointmentErrorState from '@/components/professional-workspace/appointments/AppointmentErrorState'
 import AppointmentProfileIncomplete from '@/components/professional-workspace/appointments/AppointmentProfileIncomplete'
+import AppointmentAttachmentViewer from '@/components/professional-workspace/appointments/AppointmentAttachmentViewer'
 
 
 export default function ManageAppointments() {
@@ -22,6 +23,11 @@ export default function ManageAppointments() {
   const [error, setError] = useState(null)
   const [selectedAppointment, setSelectedAppointment] = useState(null)
   const [showSheet, setShowSheet] = useState(false)
+  
+  // Add these state variables for attachment viewer
+  const [selectedAppointmentForFiles, setSelectedAppointmentForFiles] = useState(null)
+  const [attachmentViewerOpen, setAttachmentViewerOpen] = useState(false)
+  
   const [filters, setFilters] = useState({
     status: 'all',
     search: ''
@@ -162,6 +168,12 @@ export default function ManageAppointments() {
     }
   }, [])
 
+  // Add this function to handle viewing attachments
+  const handleViewAttachments = useCallback((appointment) => {
+    setSelectedAppointmentForFiles(appointment)
+    setAttachmentViewerOpen(true)
+  }, [])
+
   // Filter appointments locally by search
   const filteredAppointments = appointments.filter(appointment => {
     if (!filters.search) return true
@@ -259,6 +271,7 @@ export default function ManageAppointments() {
             onView={handleViewAppointment}
             onAccept={(id) => handleAppointmentAction(id, 'accept')}
             onDecline={(id) => handleAppointmentAction(id, 'decline')}
+            onViewAttachments={handleViewAttachments}
             loading={loading}
             pagination={pagination}
             onPageChange={handlePageChange}
@@ -287,6 +300,20 @@ export default function ManageAppointments() {
         onAccept={() => handleAppointmentAction(selectedAppointment?.appointment_id, 'accept')}
         onDecline={() => handleAppointmentAction(selectedAppointment?.appointment_id, 'decline')}
       />
+
+      {/* Add the AppointmentAttachmentViewer component */}
+      <AppointmentAttachmentViewer
+        appointment={selectedAppointmentForFiles}
+        isOpen={attachmentViewerOpen}
+        onClose={() => {
+          setAttachmentViewerOpen(false)
+          setSelectedAppointmentForFiles(null)
+        }}
+      />
     </div>
-  )
-}
+
+      )
+
+      }
+
+      
