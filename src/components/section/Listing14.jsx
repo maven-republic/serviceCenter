@@ -50,15 +50,16 @@ export default function Listing14() {
   const sortByFilter = (item) =>
     getBestSeller === "best-seller" ? item : item.sort === getBestSeller;
 
+  
+    // .slice(0, 9)
+    // .filter(categoryFilter)
+    // .filter(priceFilter)
+    // .filter(locationFilter)
+    // .filter(searchFilter)
+    // .filter(levelFilter)
+    // .filter(languageFilter)
+    // .filter(sortByFilter)
   const content = freelancer1
-    .slice(0, 9)
-    .filter(categoryFilter)
-    .filter(priceFilter)
-    .filter(locationFilter)
-    .filter(searchFilter)
-    .filter(levelFilter)
-    .filter(languageFilter)
-    .filter(sortByFilter)
     .map((item,i) => (
       <div key={ i } className="col-sm-6 col-xl-4">
         <FreelancerCard2 data={item} />

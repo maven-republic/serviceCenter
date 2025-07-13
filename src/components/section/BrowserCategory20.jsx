@@ -18,7 +18,10 @@ export default function BrowserCategory20() {
 
   return (
     <>
-      <section className="pb190 pb130-md mx-auto maxw1700 bgc-thm4 bdrs24">
+      <section 
+        className="mx-auto maxw1700 bgc-thm4 bdrs24"
+        style={{ padding: "65px 0", backgroundColor: "#5bbb7b17" }}
+      >
         <div className="container">
           <div className="row align-items-center wow fadeInUp">
             <div className="col-lg-9">

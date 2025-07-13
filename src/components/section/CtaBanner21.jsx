@@ -6,7 +6,7 @@ export default function CtaBanner21() {
   return (
     <section className="home11-cta-3 at-home20 bdrs24 maxw1700 mx-auto">
       <div className="container">
-        <div className="row align-items-center justify-content-between">
+        <div className="row align-items-center justify-content-between position-relative">
           <div className="col-md-6 col-lg-8 wow fadeInRight">
             <div className="cta-style3">
               <h2 className="cta-title text-white">

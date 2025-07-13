@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import HeroSearch1 from "../element/HeroSearch1";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
@@ -13,11 +13,22 @@ const role = [
   "Music & Audio",
   "Programming & Tech",
 ];
-
+import { useSearchServiceStore } from "@/store/useSearchServiceStore";
 export default function Breadcumb7() {
   const [getSelectedRole, setSelectedRole] = useState(null);
-
+  const {searchParams, setSearchParams, clearSearch, fetchResults} = useSearchServiceStore();
   // choose a category
+  useEffect(() => {
+    setSearchParams({ 
+      parish_filter: "St. Andrew Parish",
+      limit_val: 1,
+      offset_val: 0,
+    });
+    fetchResults(); 
+    console.log("searchParams", searchParams);
+  },[]);
+  
+  
   const roleHandler = (select) => {
     setSelectedRole(select);
   };
@@ -26,19 +37,19 @@ export default function Breadcumb7() {
 
   // search handler
   const searchHandler = () => {
-    router.push("/service-6");
+    // router.push("/service-6");
   };
   return (
     <>
       <section className="breadcumb-section pt-0">
         <div className="cta-service-v6 cta-banner mx-auto maxw1700 pt120 pt60-sm pb120 pb60-sm bdrs16 position-relative d-flex align-items-center">
-          <Image
+          {/* <Image
             height={300}
             width={400}
             className="service-v3-vector d-none d-lg-block"
             src="/images/about/about-4.png"
             alt="about"
-          />
+          /> */}
           <div className="container">
             <div className="row wow fadeInUp">
               <div className="col-xl-7">

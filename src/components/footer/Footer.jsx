@@ -67,7 +67,7 @@ export default function Footer() {
                                         </div>
                                     </div>
                                 </div>
-                                <div className="app-widget mb-4 mb-sm-5">
+                                {/* <div className="app-widget mb-4 mb-sm-5">
                                     <h5 className="title text-white mb20">
                                         Apps
                                     </h5>
@@ -93,7 +93,7 @@ export default function Footer() {
                                             </Link>
                                         </div>
                                     </div>
-                                </div>
+                                </div> */}
                             </div>
                         </div>
                     </div>

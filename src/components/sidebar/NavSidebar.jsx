@@ -40,7 +40,7 @@ export default function NavSidebar() {
           <div className="ui-navigation-sidebar">
             <Sidebar>
               <Menu>
-                {navigation.map((item,i) =>
+                {navigation?.map((item,i) =>
                   item?.children ? (
                     <SubMenu
                       key={ i }

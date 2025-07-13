@@ -1,14 +1,17 @@
-'use client'
+'use client';
+import { createPagesBrowserClient } from '@supabase/auth-helpers-nextjs';
 
-import { createPagesBrowserClient } from '@supabase/auth-helpers-nextjs'
+let supabaseClient = null;
 
 export function createClient() {
-  return createPagesBrowserClient()
+  if (!supabaseClient) {
+    supabaseClient = createPagesBrowserClient();
+  }
+  return supabaseClient;
 }
 
 export async function getSession() {
-  const supabase = createClient()
-  const { data } = await supabase.auth.getSession()
-  return data.session
+  const supabase = createClient();
+  const { data } = await supabase.auth.getSession();
+  return data.session;
 }
-

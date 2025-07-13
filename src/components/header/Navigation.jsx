@@ -43,7 +43,7 @@ export default function Navigation() {
               </Link>
             )}
 
-            {item.children && (
+            {/* {item.children && (
               <ul className={`sub-menu ${item.id == 1 ? "home-menu" : ""} `}>
                 {item.children?.map((item2,i2) => (
                   <li
@@ -85,7 +85,7 @@ export default function Navigation() {
                   </li>
                 ))}
               </ul>
-            )}
+            )} */}
           </li>
         ))}
       </ul>

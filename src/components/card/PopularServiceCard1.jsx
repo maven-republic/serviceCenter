@@ -27,7 +27,7 @@ export default function PopularServiceCard1({
       >
         <div className="list-thumb">
           <Image
-            // height={100}
+            height={247}
             width={331}
             className="w-100"
             src={data.img}

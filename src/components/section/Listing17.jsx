@@ -72,18 +72,19 @@ export default function Listing17() {
   const sortByFilter = (item) =>
     getBestSeller === "best-seller" ? item : item.sort === getBestSeller;
 
+
+  // .slice(0, 8)
+  // .filter(categoryFilter)
+  // .filter(projectTypeFilter)
+  // .filter(priceFilter)
+  // .filter(skillFilter)
+  // .filter(locationFilter)
+  // .filter(searchFilter)
+  // .filter(speakFilter)
+  // .filter(englishLevelFilter)
+  // .filter(sortByFilter)
   // content
   let content = project1
-    .slice(0, 8)
-    .filter(categoryFilter)
-    .filter(projectTypeFilter)
-    .filter(priceFilter)
-    .filter(skillFilter)
-    .filter(locationFilter)
-    .filter(searchFilter)
-    .filter(speakFilter)
-    .filter(englishLevelFilter)
-    .filter(sortByFilter)
     .map((item,i) => (
       <div key={ i } className="col-md-6 col-xl-4">
         <ProjectCard2 data={item} />

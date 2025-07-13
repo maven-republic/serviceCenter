@@ -31,14 +31,7 @@ export default function Hero20() {
           src="/images/about/home20-hero-1.png"
           alt=" image "
           className="img-1 bounce-y"
-        />
-        <Image
-          width={66}
-          height={66}
-          src="/images/about/home20-hero-2.png"
-          alt=" image "
-          className="img-2 bounce-y"
-        />
+        /> 
         <Image
           width={68}
           height={67}
@@ -61,14 +54,7 @@ export default function Hero20() {
           src="/images/about/home20-hero-5.png"
           alt=" image "
           className="img-1 bounce-y"
-        />
-        <Image
-          width={69}
-          height={68}
-          src="/images/about/home20-hero-6.png"
-          alt=" image "
-          className="img-2 bounce-y"
-        />
+        /> 
         <Image
           width={94}
           height={94}

@@ -56,16 +56,16 @@ export default function Listing6() {
   const speakFilter = (item) =>
     getSpeak?.length !== 0 ? getSpeak.includes(item.language) : item;
 
+  // .slice(0, 9)
+  // .filter(deliveryFilter)
+  // .filter(priceFilter)
+  // .filter(levelFilter)
+  // .filter(locationFilter)
+  // .filter(searchFilter)
+  // .filter(sortByFilter)
+  // .filter(designToolFilter)
+  // .filter(speakFilter)
   let content = product1
-    .slice(0, 9)
-    .filter(deliveryFilter)
-    .filter(priceFilter)
-    .filter(levelFilter)
-    .filter(locationFilter)
-    .filter(searchFilter)
-    .filter(sortByFilter)
-    .filter(designToolFilter)
-    .filter(speakFilter)
     .map((item,i) => (
       <div key={ i } className="col-sm-6 col-xl-4">
         {item?.gallery ? (

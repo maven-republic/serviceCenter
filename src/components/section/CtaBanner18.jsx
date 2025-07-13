@@ -51,8 +51,7 @@ export default function CtaBanner18() {
       </div>
       <Image
         width={610}
-        height={710}
-        style={{ height: "fit-content" }}
+        height={710} 
         className="home10-cta-img  bdrs24"
         src="/images/about/about-19.jpg"
         alt=" image "

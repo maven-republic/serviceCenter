@@ -30,15 +30,15 @@ export default function TrendingService14() {
       <section className={`pt-0 ${path === "/home-9" ? "pb0" : "pb100"}`}>
         <div className="container">
           <div className="row align-items-center wow fadeInUp">
-            <div className="col-xl-3">
+            <div className="col-xl-4">
               <div className="main-title mb30-lg">
-                <h2 className="title">Trending Services</h2>
+                <h2 className="title" style={{whiteSpace:"nowrap"}}>Trending Services</h2>
                 <p className="paragraph">
                   Most viewed and all-time top-selling services
                 </p>
               </div>
             </div>
-            <div className="col-xl-9">
+            <div className="col-xl-8">
               <div className="navpill-style2 at-home9 mb50-lg">
                 <ul
                   className="nav nav-pills mb20 justify-content-xl-end"
@@ -63,9 +63,7 @@ export default function TrendingService14() {
           <div className="row">
             <div className="col-lg-12">
               <div className="row">
-                {product1
-
-                  .filter((item) =>
+                {product1.filter((item) =>
                     getCurrentCategory === "All"
                       ? item
                       : item.tag === getCurrentCategory && item,
