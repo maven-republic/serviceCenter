@@ -1,6 +1,7 @@
+// src/components/section/Collection.jsx - FIXED VERSION
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -34,7 +35,8 @@ import Pagination1 from "./Pagination1";
 import Manifest from "../card/Manifest";
 import { cn } from "@/lib/utils";
 
-export default function Collection() {
+// Separate component that uses useSearchParams
+function CollectionContent() {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(12);
   const [loading, setLoading] = useState(true);
@@ -44,7 +46,7 @@ export default function Collection() {
   const [sortBy, setSortBy] = useState('recommended');
   const [totalResults, setTotalResults] = useState(0);
   
-  // URL search params
+  // URL search params - now safely wrapped in Suspense
   const searchParams = useSearchParams();
   const urlQuery = searchParams.get('q');
   const urlType = searchParams.get('type');
@@ -65,7 +67,7 @@ export default function Collection() {
   // Search store
   const { searchQuery, setSearchQuery } = useSearchStore();
 
-  // 🔧 FIXED: Async data fetching with proper error handling
+  // All your existing functions remain the same...
   const fetchServices = async () => {
     try {
       setLoading(true);
@@ -149,7 +151,7 @@ export default function Collection() {
       console.error('❌ API Error:', error);
       setError(error.message);
       
-      // 🔧 FIXED: Fallback data loading (this was the problematic line 139)
+      // Fallback data loading
       await loadFallbackData();
       
     } finally {
@@ -157,12 +159,11 @@ export default function Collection() {
     }
   };
 
-  // 🔧 FIXED: Separate fallback data function
+  // Separate fallback data function
   const loadFallbackData = async () => {
     try {
       console.log('🔄 Loading fallback data...');
       
-      // 🚨 FIXED: Changed 'module' to 'productData' to avoid ESLint error
       const productData = await import("@/data/product");
       
       if (productData.service && Array.isArray(productData.service)) {
@@ -209,7 +210,7 @@ export default function Collection() {
     resetAllFilters();
   }, [resetAllFilters]);
 
-  // 🔧 ENHANCED: Filter functions with better error handling
+  // Filter functions with better error handling
   const createFilter = (filterFn, fallback = true) => (item) => {
     try {
       return filterFn(item);
@@ -285,7 +286,7 @@ export default function Collection() {
     .filter(speakFilter)
     .filter(categoryFilter);
 
-  // 🔧 ENHANCED: Improved sorting with error handling
+  // Improved sorting with error handling
   if (sortBy && filteredServices.length > 0) {
     filteredServices = [...filteredServices].sort((a, b) => {
       try {
@@ -367,7 +368,7 @@ export default function Collection() {
     return `${filteredServices.length} service${filteredServices.length !== 1 ? 's' : ''} found`;
   };
 
-  // 🔧 ENHANCED: Loading skeleton component
+  // Loading skeleton component
   const LoadingSkeleton = () => (
     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4 2xl:grid-cols-6 gap-6">
       {[...Array(itemsPerPage)].map((_, i) => (
@@ -387,7 +388,7 @@ export default function Collection() {
     </div>
   );
 
-  // 🔧 ENHANCED: Error state with better UX
+  // Error state with better UX
   if (error && services.length === 0 && !loading) {
     return (
       <div className="container max-w-7xl mx-auto px-4 py-8">
@@ -424,7 +425,7 @@ export default function Collection() {
     <div className="min-h-screen bg-background">
       <div className="container max-w-7xl mx-auto px-4 py-6">
         
-        {/* 🔧 ENHANCED: Header Section */}
+        {/* Header Section */}
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-6">
           <div className="space-y-2">
             <div className="flex items-center gap-3">
@@ -458,7 +459,7 @@ export default function Collection() {
             </div>
           </div>
           
-          {/* 🔧 ENHANCED: View Controls */}
+          {/* View Controls */}
           <div className="flex items-center gap-3">
             {/* Sort Dropdown */}
             <Select value={sortBy} onValueChange={setSortBy}>
@@ -518,7 +519,7 @@ export default function Collection() {
           <Sift />
         </div>
 
-        {/* 🔧 ENHANCED: Results Summary Bar */}
+        {/* Results Summary Bar */}
         {!loading && currentItems.length > 0 && (
           <div className="flex justify-between items-center mb-4 p-3 bg-muted/50 rounded-lg">
             <div className="flex items-center gap-4 text-sm">
@@ -571,7 +572,7 @@ export default function Collection() {
                 ))}
               </div>
             ) : (
-              // 🔧 ENHANCED: Empty State
+              // Empty State
               <Card className="text-center py-16">
                 <CardContent className="space-y-6">
                   <div className="mx-auto w-20 h-20 bg-muted rounded-full flex items-center justify-center">
@@ -619,7 +620,7 @@ export default function Collection() {
           </div>
         )}
 
-        {/* 🔧 NEW: Debug info in development */}
+        {/* Debug info in development */}
         {process.env.NODE_ENV === 'development' && (
           <div className="mt-8 p-4 bg-muted/50 rounded-lg text-xs text-muted-foreground">
             <details>
@@ -640,5 +641,44 @@ export default function Collection() {
 
       </div>
     </div>
+  );
+}
+
+// Loading fallback component
+function CollectionFallback() {
+  return (
+    <div className="min-h-screen bg-background">
+      <div className="container max-w-7xl mx-auto px-4 py-6">
+        <div className="space-y-6">
+          <Skeleton className="h-8 w-64" />
+          <Skeleton className="h-4 w-48" />
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4 2xl:grid-cols-6 gap-6">
+            {[...Array(12)].map((_, i) => (
+              <Card key={i} className="h-80">
+                <Skeleton className="h-52 w-full rounded-t-lg" />
+                <CardContent className="p-4 space-y-3">
+                  <Skeleton className="h-4 w-3/4" />
+                  <div className="flex justify-between items-center">
+                    <Skeleton className="h-3 w-16" />
+                    <Skeleton className="h-5 w-12" />
+                  </div>
+                  <Skeleton className="h-3 w-full" />
+                  <Skeleton className="h-3 w-2/3" />
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Main component with Suspense wrapper
+export default function Collection() {
+  return (
+    <Suspense fallback={<CollectionFallback />}>
+      <CollectionContent />
+    </Suspense>
   );
 }
