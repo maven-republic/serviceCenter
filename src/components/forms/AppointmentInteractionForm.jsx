@@ -8,6 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { Switch } from "@/components/ui/switch";
 import {
   Select,
   SelectContent,
@@ -24,38 +25,80 @@ import {
   CheckCircle, 
   XCircle, 
   FileText,
-  Loader2
+  Loader2,
+  Heart,
+  Target,
+  AlertTriangle,
+  Users,
+  MapPin
 } from "lucide-react";
 
 export default function AppointmentInteractionForm({
   appointment,
-  action, // 'accept', 'decline', 'quote'
+  interest, // For update_interest mode
+  action, // 'accept', 'decline', 'quote', 'express_interest', 'update_interest'
+  mode = 'assigned', // 'available', 'interests', 'assigned'
   onSubmit,
   onCancel,
   loading = false
 }) {
-  const [formData, setFormData] = useState({
-    // Response details
-    professional_notes: '',
-    estimated_duration: appointment?.service?.duration_minutes || 60,
-    
-    // Scheduling adjustments
-    suggested_start: appointment?.preferred_start || '',
-    suggested_end: '',
-    
-    // Pricing (for quotes)
-    quoted_price: appointment?.service?.base_price || '',
-    price_breakdown: '',
-    
-    // Additional details
-    requirements: '',
-    next_steps: '',
-    
-    // Decline reasons
-    decline_reason: '',
-    alternative_suggestions: ''
-  });
-  
+  // Initialize form data based on action and existing data
+  const getInitialFormData = () => {
+    const baseData = {
+      // Response details
+      professional_notes: '',
+      estimated_duration: appointment?.service?.duration_minutes || 60,
+      
+      // Scheduling adjustments
+      suggested_start: appointment?.session || '',
+      suggested_end: '',
+      
+      // Pricing (for quotes)
+      quoted_price: appointment?.service?.base_price || '',
+      price_breakdown: '',
+      
+      // Additional details
+      requirements: '',
+      next_steps: '',
+      
+      // Decline reasons
+      decline_reason: '',
+      alternative_suggestions: '',
+
+      // Interest-specific fields
+      intent: 'standard',
+      message: '',
+      assessment: false,
+      modality: 'none',
+      fee: 0.00,
+      amount: null,
+      notes: '',
+      earliest_start: '',
+      latest_start: '',
+      estimated_duration_hours: null
+    }
+
+    // Pre-populate for interest updates
+    if (action === 'update_interest' && interest) {
+      return {
+        ...baseData,
+        intent: interest.intent || 'standard',
+        message: interest.message || '',
+        assessment: interest.assessment || false,
+        modality: interest.modality || 'none',
+        fee: interest.fee || 0.00,
+        amount: interest.amount || '',
+        notes: interest.notes || '',
+        earliest_start: interest.earliest_start || '',
+        latest_start: interest.latest_start || '',
+        estimated_duration_hours: interest.estimated_duration_hours || null
+      }
+    }
+
+    return baseData
+  }
+
+  const [formData, setFormData] = useState(getInitialFormData())
   const [errors, setErrors] = useState({});
 
   // Handle form field changes
@@ -122,6 +165,34 @@ export default function AppointmentInteractionForm({
         newErrors.decline_reason = 'Please provide a reason for declining';
       }
     }
+
+    if (action === 'express_interest') {
+      if (!formData.message.trim()) {
+        newErrors.message = 'Please provide a message expressing your interest';
+      }
+
+      if (formData.assessment && !['local', 'remote', 'phone'].includes(formData.modality)) {
+        newErrors.modality = 'Please select assessment modality when assessment is required';
+      }
+
+      if (formData.assessment && formData.modality === 'local' && formData.fee < 0) {
+        newErrors.fee = 'Assessment fee cannot be negative';
+      }
+
+      if (formData.amount && (isNaN(formData.amount) || formData.amount <= 0)) {
+        newErrors.amount = 'Quote amount must be a valid positive number';
+      }
+    }
+
+    if (action === 'update_interest') {
+      if (formData.amount && (isNaN(formData.amount) || formData.amount <= 0)) {
+        newErrors.amount = 'Quote amount must be a valid positive number';
+      }
+
+      if (formData.assessment && !['local', 'remote', 'phone'].includes(formData.modality)) {
+        newErrors.modality = 'Please select assessment modality when assessment is required';
+      }
+    }
     
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -132,6 +203,9 @@ export default function AppointmentInteractionForm({
     e.preventDefault();
     
     if (!validateForm()) return;
+    
+    // Debug logging
+    console.log('🔍 About to submit interest data:', formData);
     
     // Prepare submission data based on action
     const submissionData = {
@@ -146,15 +220,43 @@ export default function AppointmentInteractionForm({
       delete submissionData.alternative_suggestions;
       delete submissionData.quoted_price;
       delete submissionData.price_breakdown;
+      delete submissionData.intent;
+      delete submissionData.message;
+      delete submissionData.assessment;
+      delete submissionData.modality;
+      delete submissionData.fee;
+      delete submissionData.amount;
     } else if (action === 'decline') {
       delete submissionData.quoted_price;
       delete submissionData.price_breakdown;
       delete submissionData.suggested_start;
       delete submissionData.suggested_end;
       delete submissionData.estimated_duration;
+      delete submissionData.intent;
+      delete submissionData.message;
+      delete submissionData.assessment;
+      delete submissionData.modality;
+      delete submissionData.fee;
+      delete submissionData.amount;
     } else if (action === 'quote') {
       delete submissionData.decline_reason;
       delete submissionData.alternative_suggestions;
+      delete submissionData.intent;
+      delete submissionData.message;
+      delete submissionData.assessment;
+      delete submissionData.modality;
+      delete submissionData.fee;
+      delete submissionData.amount;
+    } else if (action === 'express_interest' || action === 'update_interest') {
+      delete submissionData.decline_reason;
+      delete submissionData.alternative_suggestions;
+      delete submissionData.quoted_price;
+      delete submissionData.price_breakdown;
+      delete submissionData.suggested_start;
+      delete submissionData.suggested_end;
+      delete submissionData.estimated_duration;
+      delete submissionData.requirements;
+      delete submissionData.next_steps;
     }
     
     await onSubmit(submissionData);
@@ -192,6 +294,22 @@ export default function AppointmentInteractionForm({
           variant: 'default',
           submitText: loading ? 'Sending Quote...' : 'Send Quote to Customer'
         };
+      case 'express_interest':
+        return {
+          title: 'Express Interest',
+          icon: Heart,
+          color: 'default',
+          variant: 'default',
+          submitText: loading ? 'Expressing Interest...' : 'Express Interest'
+        };
+      case 'update_interest':
+        return {
+          title: 'Update Interest',
+          icon: Target,
+          color: 'default',
+          variant: 'default',
+          submitText: loading ? 'Updating Interest...' : 'Update Interest'
+        };
       default:
         return {
           title: 'Respond to Appointment',
@@ -217,10 +335,26 @@ export default function AppointmentInteractionForm({
           <div className="space-y-1">
             <CardTitle className="text-xl">{actionConfig.title}</CardTitle>
             <p className="text-sm text-muted-foreground">
-              Respond to {appointment?.customer?.account?.first_name}'s request for "{appointment?.service?.name || appointment?.title}"
+              {action === 'express_interest' 
+                ? `Express interest in "${appointment?.service?.name || appointment?.title}"`
+                : action === 'update_interest'
+                ? `Update your interest in "${appointment?.service?.name || appointment?.title}"`
+                : `Respond to ${appointment?.customer?.account?.first_name}'s request for "${appointment?.service?.name || appointment?.title}"`
+              }
             </p>
           </div>
         </div>
+
+        {/* Competition Warning for Express Interest */}
+        {action === 'express_interest' && appointment?.interest_summary?.total_count > 0 && (
+          <Alert>
+            <Users className="h-4 w-4" />
+            <AlertDescription>
+              <strong>{appointment.interest_summary.total_count} other professionals</strong> have already expressed interest in this project. 
+              Make your proposal stand out!
+            </AlertDescription>
+          </Alert>
+        )}
       </CardHeader>
 
       <form onSubmit={handleSubmit} className="space-y-6">
@@ -433,8 +567,351 @@ export default function AppointmentInteractionForm({
             </div>
           )}
 
+          {/* Express Interest Form Fields */}
+          {action === 'express_interest' && (
+            <div className="space-y-6">
+              <div className="flex items-center gap-2 mb-4">
+                <Heart className="h-4 w-4" />
+                <h3 className="text-lg font-medium">Express Your Interest</h3>
+              </div>
+
+              {/* Intent Level - FIXED: Removed 'urgent' option */}
+              <div className="space-y-2">
+                <Label htmlFor="intent">Interest Level</Label>
+                <Select 
+                  value={formData.intent} 
+                  onValueChange={(value) => handleChange('intent', value)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select interest level..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="low">
+                      <div className="space-y-1">
+                        <div className="font-medium">Low - Just exploring</div>
+                        <div className="text-xs text-muted-foreground">Flexible timeline</div>
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="standard">
+                      <div className="space-y-1">
+                        <div className="font-medium">Standard - Interested</div>
+                        <div className="text-xs text-muted-foreground">Standard timeline</div>
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="high">
+                      <div className="space-y-1">
+                        <div className="font-medium">High - Very interested</div>
+                        <div className="text-xs text-muted-foreground">Priority timeline</div>
+                      </div>
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Message */}
+              <div className="space-y-2">
+                <Label htmlFor="message">Interest Message *</Label>
+                <Textarea
+                  id="message"
+                  rows={4}
+                  value={formData.message}
+                  onChange={(e) => handleChange('message', e.target.value)}
+                  placeholder="Explain why you're interested in this project and what makes you the right professional for the job..."
+                  required
+                  className={errors.message ? 'border-destructive' : ''}
+                />
+                {errors.message && (
+                  <p className="text-sm text-destructive">{errors.message}</p>
+                )}
+              </div>
+
+              {/* Assessment Requirements */}
+              <div className="space-y-4">
+                <div className="flex items-center space-x-2">
+                  <Switch
+                    id="assessment"
+                    checked={formData.assessment}
+                    onCheckedChange={(checked) => handleChange('assessment', checked)}
+                  />
+                  <Label htmlFor="assessment">Site assessment required</Label>
+                </div>
+
+                {formData.assessment && (
+                  <div className="ml-6 space-y-4 p-4 border border-border rounded-md bg-muted/30">
+                    <div className="space-y-2">
+                      <Label htmlFor="modality">Assessment Method *</Label>
+                      <Select 
+                        value={formData.modality} 
+                        onValueChange={(value) => handleChange('modality', value)}
+                      >
+                        <SelectTrigger className={errors.modality ? 'border-destructive' : ''}>
+                          <SelectValue placeholder="Select assessment method..." />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="local">Local visit</SelectItem>
+                          <SelectItem value="remote">Remote assessment</SelectItem>
+                          <SelectItem value="phone">Phone consultation</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      {errors.modality && (
+                        <p className="text-sm text-destructive">{errors.modality}</p>
+                      )}
+                    </div>
+
+                    {formData.modality === 'local' && (
+                      <div className="space-y-2">
+                        <Label htmlFor="fee">Assessment Fee (JMD)</Label>
+                        <div className="relative">
+                          <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                          <Input
+                            type="number"
+                            id="fee"
+                            value={formData.fee}
+                            onChange={(e) => handleChange('fee', parseFloat(e.target.value) || 0)}
+                            min="0"
+                            step="0.01"
+                            placeholder="0.00"
+                            className={`pl-10 ${errors.fee ? 'border-destructive' : ''}`}
+                          />
+                        </div>
+                        {errors.fee && (
+                          <p className="text-sm text-destructive">{errors.fee}</p>
+                        )}
+                        <p className="text-xs text-muted-foreground">
+                          Fee for traveling to customer location (can be deducted from final quote)
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {/* Optional Quote */}
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="amount">Initial Quote (Optional)</Label>
+                  <div className="relative">
+                    <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      type="number"
+                      id="amount"
+                      value={formData.amount || ''}
+                      onChange={(e) => handleChange('amount', e.target.value ? parseFloat(e.target.value) : null)}
+                      min="0"
+                      step="0.01"
+                      placeholder="0.00"
+                      className={`pl-10 ${errors.amount ? 'border-destructive' : ''}`}
+                    />
+                  </div>
+                  {errors.amount && (
+                    <p className="text-sm text-destructive">{errors.amount}</p>
+                  )}
+                  <p className="text-xs text-muted-foreground">
+                    Provide an initial quote if you can estimate without assessment
+                  </p>
+                </div>
+              </div>
+
+              {/* Availability Window */}
+              <div className="space-y-4">
+                <h4 className="font-medium text-foreground">Availability Window (Optional)</h4>
+                <div className="grid gap-4 md:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label htmlFor="earliest_start">Earliest Available</Label>
+                    <Input
+                      type="datetime-local"
+                      id="earliest_start"
+                      value={formData.earliest_start}
+                      onChange={(e) => handleChange('earliest_start', e.target.value)}
+                      min={minDateTime}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="latest_start">Latest Available</Label>
+                    <Input
+                      type="datetime-local"
+                      id="latest_start"
+                      value={formData.latest_start}
+                      onChange={(e) => handleChange('latest_start', e.target.value)}
+                      min={formData.earliest_start || minDateTime}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Additional Notes */}
+              <div className="space-y-2">
+                <Label htmlFor="notes">Additional Notes</Label>
+                <Textarea
+                  id="notes"
+                  rows={3}
+                  value={formData.notes}
+                  onChange={(e) => handleChange('notes', e.target.value)}
+                  placeholder="Any additional information about your approach, experience, or special considerations..."
+                />
+              </div>
+            </div>
+          )}
+
+          {/* Update Interest Form Fields */}
+          {action === 'update_interest' && (
+            <div className="space-y-6">
+              <div className="flex items-center gap-2 mb-4">
+                <Target className="h-4 w-4" />
+                <h3 className="text-lg font-medium">Update Your Interest</h3>
+              </div>
+
+              {/* Current Interest Status */}
+              {interest && (
+                <Alert>
+                  <AlertTriangle className="h-4 w-4" />
+                  <AlertDescription>
+                    Current status: <strong>{interest.status}</strong>
+                    {interest.created_at && (
+                      <span className="ml-2 text-muted-foreground">
+                        (Expressed {new Date(interest.created_at).toLocaleDateString()})
+                      </span>
+                    )}
+                  </AlertDescription>
+                </Alert>
+              )}
+
+              {/* Updated Quote */}
+              <div className="space-y-2">
+                <Label htmlFor="amount">Updated Quote Amount (JMD)</Label>
+                <div className="relative">
+                  <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    type="number"
+                    id="amount"
+                    value={formData.amount || ''}
+                    onChange={(e) => handleChange('amount', e.target.value ? parseFloat(e.target.value) : null)}
+                    min="0"
+                    step="0.01"
+                    placeholder="0.00"
+                    className={`pl-10 ${errors.amount ? 'border-destructive' : ''}`}
+                  />
+                </div>
+                {errors.amount && (
+                  <p className="text-sm text-destructive">{errors.amount}</p>
+                )}
+              </div>
+
+              {/* Assessment Updates */}
+              <div className="space-y-4">
+                <div className="flex items-center space-x-2">
+                  <Switch
+                    id="assessment"
+                    checked={formData.assessment}
+                    onCheckedChange={(checked) => handleChange('assessment', checked)}
+                  />
+                  <Label htmlFor="assessment">Site assessment required</Label>
+                </div>
+
+                {formData.assessment && (
+                  <div className="ml-6 space-y-4 p-4 border border-border rounded-md bg-muted/30">
+                    <div className="space-y-2">
+                      <Label htmlFor="modality">Assessment Method *</Label>
+                      <Select 
+                        value={formData.modality} 
+                        onValueChange={(value) => handleChange('modality', value)}
+                      >
+                        <SelectTrigger className={errors.modality ? 'border-destructive' : ''}>
+                          <SelectValue placeholder="Select assessment method..." />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="local">Local visit</SelectItem>
+                          <SelectItem value="remote">Remote assessment</SelectItem>
+                          <SelectItem value="phone">Phone consultation</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      {errors.modality && (
+                        <p className="text-sm text-destructive">{errors.modality}</p>
+                      )}
+                    </div>
+
+                    {formData.modality === 'local' && (
+                      <div className="space-y-2">
+                        <Label htmlFor="fee">Updated Assessment Fee (JMD)</Label>
+                        <div className="relative">
+                          <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                          <Input
+                            type="number"
+                            id="fee"
+                            value={formData.fee}
+                            onChange={(e) => handleChange('fee', parseFloat(e.target.value) || 0)}
+                            min="0"
+                            step="0.01"
+                            placeholder="0.00"
+                            className={`pl-10 ${errors.fee ? 'border-destructive' : ''}`}
+                          />
+                        </div>
+                        {errors.fee && (
+                          <p className="text-sm text-destructive">{errors.fee}</p>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {/* Updated Message */}
+              <div className="space-y-2">
+                <Label htmlFor="message">Updated Message</Label>
+                <Textarea
+                  id="message"
+                  rows={4}
+                  value={formData.message}
+                  onChange={(e) => handleChange('message', e.target.value)}
+                  placeholder="Update your interest message or provide additional information..."
+                />
+              </div>
+
+              {/* Updated Availability */}
+              <div className="space-y-4">
+                <h4 className="font-medium text-foreground">Updated Availability</h4>
+                <div className="grid gap-4 md:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label htmlFor="earliest_start">Earliest Available</Label>
+                    <Input
+                      type="datetime-local"
+                      id="earliest_start"
+                      value={formData.earliest_start}
+                      onChange={(e) => handleChange('earliest_start', e.target.value)}
+                      min={minDateTime}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="latest_start">Latest Available</Label>
+                    <Input
+                      type="datetime-local"
+                      id="latest_start"
+                      value={formData.latest_start}
+                      onChange={(e) => handleChange('latest_start', e.target.value)}
+                      min={formData.earliest_start || minDateTime}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Updated Notes */}
+              <div className="space-y-2">
+                <Label htmlFor="notes">Updated Notes</Label>
+                <Textarea
+                  id="notes"
+                  rows={3}
+                  value={formData.notes}
+                  onChange={(e) => handleChange('notes', e.target.value)}
+                  placeholder="Any updates to your approach or additional information..."
+                />
+              </div>
+            </div>
+          )}
+
           {/* Common Notes Section (for accept and quote actions) */}
-          {action !== 'decline' && (
+          {(action === 'accept' || action === 'quote') && (
             <>
               <Separator />
               <div className="space-y-4">

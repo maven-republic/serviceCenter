@@ -29,6 +29,8 @@ const Address = forwardRef(({
   useEffect(() => {
     if (isLoaded && inputRef.current && !autocomplete && !disabled) {
       try {
+        console.log('🗺️ Initializing Google Places Autocomplete (legacy)')
+        
         const auto = new window.google.maps.places.Autocomplete(inputRef.current, {
           types: ['address'],
           componentRestrictions: { country: 'jm' }, // Restrict to Jamaica
@@ -38,16 +40,20 @@ const Address = forwardRef(({
           setIsLoading(true)
           const place = auto.getPlace()
           
+          console.log('📍 Place selected:', place)
+          
           if (place && place.geometry && place.geometry.location) {
             setValue(place.formatted_address || place.name || '')
             onSelect?.(place)
+            console.log('✅ Valid place selected with coordinates')
           } else {
-            console.warn('Selected place has no geometry')
+            console.warn('Selected place has no geometry:', place)
           }
           setIsLoading(false)
         })
         
         setAutocomplete(auto)
+        console.log('✅ Google Places Autocomplete initialized')
       } catch (error) {
         console.error('Error initializing Google Places:', error)
       }
@@ -83,11 +89,7 @@ const Address = forwardRef(({
   const handleInputChange = (e) => {
     const newValue = e.target.value
     setValue(newValue)
-    
-    // Clear autocomplete if user manually edits
-    if (autocomplete && newValue !== autocomplete.getPlace()?.formatted_address) {
-      // User is typing manually
-    }
+    console.log('📝 Input value changed:', newValue)
   }
 
   if (loadError) {
@@ -100,6 +102,14 @@ const Address = forwardRef(({
       </div>
     )
   }
+
+  console.log('🎨 Address component rendering:', {
+    isLoaded,
+    disabled,
+    value,
+    placeholder,
+    hasAutocomplete: !!autocomplete
+  })
 
   return (
     <div className={cn("relative", className)}>
@@ -116,6 +126,7 @@ const Address = forwardRef(({
           className={cn(
             "pl-10 pr-10",
             disabled && "bg-muted text-muted-foreground cursor-not-allowed",
+            !isLoaded && "bg-muted",
             className
           )}
         />

@@ -28,7 +28,8 @@ import {
  FileText,
  MessageSquare,
  Upload,
- Image
+ Image,
+ Users
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -37,28 +38,35 @@ export default function Appointment({
  serviceInformation, 
  location, 
  onSuccess, 
- onCancel 
+ onCancel,
+ variant = 'marketplace', // 'marketplace' | 'direct'
+ selectedProfessionals = [] // NEW: Array of selected professionals for targeted marketplace
 }) {
  const { user } = useUserStore();
  const [loading, setLoading] = useState(false);
  const [errors, setErrors] = useState({});
  const [currentStep, setCurrentStep] = useState(1);
  
+ // Determine workflow type based on variant and selectedProfessionals
+ const isMarketplace = variant === 'marketplace';
+ const isTargetedMarketplace = isMarketplace && selectedProfessionals.length > 0;
+ const isOpenMarketplace = isMarketplace && selectedProfessionals.length === 0;
+ 
  // 5-step flow with dedicated file upload step
  const steps = useMemo(() => [
    { id: 1, title: 'Project', icon: FileText, description: 'Describe your needs' },
    { id: 2, title: 'Files', icon: Upload, description: 'Upload references' },
-   { id: 3, title: 'Schedule', icon: Calendar, description: 'Pick a time' },
+   { id: 3, title: 'Schedule', icon: Calendar, description: isMarketplace ? 'When needed' : 'Pick a time' },
    { id: 4, title: 'Location', icon: MapPin, description: 'Service address' },
    { id: 5, title: 'Review', icon: CheckCircle, description: 'Confirm details' }
- ], []);
+ ], [isMarketplace]);
 
  // Form state with file attachments
  const [formData, setFormData] = useState({
    title: serviceInformation?.name || '',
    description: '',
    deadline: '',
-   preferred_start: '',
+   session: '',
    urgency: 'standard',
    customer_message: '',
    attachments: [], // File attachments array
@@ -79,9 +87,11 @@ export default function Appointment({
 
  // Debug component lifecycle
  useEffect(() => {
-   console.log('🔥 APPOINTMENT FORM MOUNTED');
+   console.log('🔥 APPOINTMENT FORM MOUNTED - Variant:', variant);
+   console.log('🔥 Selected Professionals:', selectedProfessionals.length);
+   console.log('🔥 Workflow Type:', { isMarketplace, isTargetedMarketplace, isOpenMarketplace });
    return () => console.log('🔥 APPOINTMENT FORM UNMOUNTED');
- }, []);
+ }, [variant, selectedProfessionals.length, isMarketplace, isTargetedMarketplace, isOpenMarketplace]);
 
  // Update form data when props change
  useEffect(() => {
@@ -135,12 +145,12 @@ export default function Appointment({
    }
    
    // Step 3 validation - Schedule required
-   if (!formData.preferred_start) {
-     newErrors.preferred_start = 'Please select your preferred start time';
+   if (!formData.session) {
+     newErrors.session = 'Please select your preferred start time';
    } else {
-     const startDate = new Date(formData.preferred_start);
+     const startDate = new Date(formData.session);
      if (startDate <= new Date()) {
-       newErrors.preferred_start = 'Start time must be in the future';
+       newErrors.session = 'Start time must be in the future';
      }
    }
 
@@ -161,118 +171,249 @@ export default function Appointment({
    return Object.keys(newErrors).length === 0;
  }, [formData]);
 
- // Submit appointment with file uploads
- const handleSubmit = useCallback(async () => {
-   if (currentStep !== steps.length) return false;
-   if (!validateForm()) return;
-   if (!user?.profile?.customer_id) {
-     setErrors({ general: 'Please log in to make an appointment request' });
-     return;
-   }
+// Enhanced submit handler with TARGETED MARKETPLACE support
+const handleSubmit = useCallback(async () => {
+  if (currentStep !== steps.length) return false;
+  if (!validateForm()) return;
+  if (!user?.profile?.customer_id) {
+    setErrors({ general: 'Please log in to make an appointment request' });
+    return;
+  }
 
-   setLoading(true);
+  setLoading(true);
 
-   try {
-     const supabase = createClient();
-     let addressId = null;
-     
-     // Get customer address if not using different address
-     if (!formData.use_different_address) {
-       const { data: customerAddress } = await supabase
-         .from('address')
-         .select('address_id')
-         .eq('account_id', user.account.account_id)
-         .eq('is_primary', true)
-         .single();
-       
-       addressId = customerAddress?.address_id;
-     }
+  try {
+    const supabase = createClient();
+    let addressId = null;
+    
+    // Get customer address if not using different address
+    if (!formData.use_different_address) {
+      console.log('🔍 Fetching customer address for account:', user.account.account_id);
+      
+      const { data: customerAddress, error: addressError } = await supabase
+        .from('address')
+        .select('address_id')
+        .eq('account_id', user.account.account_id)
+        .eq('is_primary', true)
+        .single();
+      
+      if (addressError) {
+        console.error('❌ Address fetch error:', addressError);
+      } else {
+        console.log('✅ Found customer address:', customerAddress);
+      }
+      
+      addressId = customerAddress?.address_id;
+    }
 
-     // Upload files first if any exist
-     let attachmentIds = [];
-     if (formData.attachments && formData.attachments.length > 0) {
-       console.log('📤 Uploading', formData.attachments.length, 'files...');
-       
-       for (const fileData of formData.attachments) {
-         if (!fileData.uploaded && fileData.file) {
-           try {
-             const uploadData = new FormData();
-             uploadData.append('file', fileData.file);
-             
-             const uploadResponse = await fetch('/api/assets/upload', {
-               method: 'POST',
-               body: uploadData
-             });
-             
-             const uploadResult = await uploadResponse.json();
-             
-             if (uploadResponse.ok) {
-               attachmentIds.push({
-                 asset_id: uploadResult.asset.id,
-                 purpose: fileData.purpose
-               });
-               console.log('✅ Uploaded:', fileData.name);
-             } else {
-               console.error('❌ Upload failed for', fileData.name, ':', uploadResult.error);
-               // Continue with other files, don't fail entire process
-             }
-           } catch (error) {
-             console.error('❌ Upload error for', fileData.name, ':', error);
-             // Continue with other files
-           }
-         }
-       }
-       
-       console.log('📎 Total attachments ready:', attachmentIds.length);
-     }
+    console.log('📍 Address ID to use:', addressId);
 
-     // Create appointment request with attachments
-     const requestData = {
-       customer_id: user.profile.customer_id,
-       professional_id: professional?.professional_id || null,
-       service_id: serviceInformation.service_id,
-       address_id: addressId,
-       description: formData.description,
-       deadline: formData.deadline || null,
-       preferred_start: formData.preferred_start,
-       urgency: formData.urgency,
-       customer_message: formData.customer_message || null,
-       attachment_ids: attachmentIds, // Include attachment IDs
-       service_location: formData.use_different_address ? {
-         ...formData.service_location,
-         latitude: location?.lat,
-         longitude: location?.lng,
-         formatted_address: `${formData.service_location.street_address}, ${formData.service_location.city}, ${formData.service_location.parish}`
-       } : null
-     };
+   
+// Upload files first if any exist
+let attachmentIds = [];
+if (formData.attachments && formData.attachments.length > 0) {
+  console.log('📤 Uploading', formData.attachments.length, 'files...');
+  
+  // GET SESSION FOR AUTHENTICATION - THIS IS THE KEY FIX
+  const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+  
+  if (sessionError || !session?.access_token) {
+    console.error('❌ Authentication error for file upload:', sessionError);
+    throw new Error('Authentication required for file upload');
+  }
 
-     console.log('📋 Submitting appointment with data:', {
-       ...requestData,
-       attachment_count: attachmentIds.length
-     });
+  console.log('🔐 Session found, proceeding with authenticated upload');
+  
+  for (const fileData of formData.attachments) {
+    if (!fileData.uploaded && fileData.file) {
+      try {
+        const uploadData = new FormData();
+        uploadData.append('file', fileData.file);
+        
+        console.log('📤 Uploading file:', fileData.name, 'Size:', fileData.file.size);
+        
+        const uploadResponse = await fetch('/api/assets/upload', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${session.access_token}`, // ADD THIS AUTH HEADER
+            // Don't set Content-Type - let browser handle it for FormData
+          },
+          body: uploadData
+        });
+        
+        console.log('📡 Upload response status:', uploadResponse.status);
+        
+        if (!uploadResponse.ok) {
+          const errorText = await uploadResponse.text();
+          console.error('❌ Upload response error:', errorText);
+          
+          let errorMessage;
+          try {
+            const errorData = JSON.parse(errorText);
+            errorMessage = errorData.error || `Upload failed with status ${uploadResponse.status}`;
+          } catch {
+            errorMessage = `Upload failed with status ${uploadResponse.status}: ${errorText}`;
+          }
+          
+          throw new Error(errorMessage);
+        }
+        
+        const uploadResult = await uploadResponse.json();
+        console.log('📋 Upload result:', uploadResult);
+        
+        if (uploadResult.success && uploadResult.asset) {
+          attachmentIds.push({
+            asset_id: uploadResult.asset.id,
+            purpose: fileData.purpose || 'reference'
+          });
+          console.log('✅ Upload successful for:', fileData.name, 'Asset ID:', uploadResult.asset.id);
+        } else {
+          console.error('❌ Upload failed for', fileData.name, ':', uploadResult.error);
+          throw new Error(`Upload failed for ${fileData.name}: ${uploadResult.error || 'Unknown error'}`);
+        }
+      } catch (error) {
+        console.error('❌ Upload error for', fileData.name, ':', error.message);
+        throw new Error(`Failed to upload ${fileData.name}: ${error.message}`);
+      }
+    }
+  }
+  
+  console.log('📎 Total attachments ready:', attachmentIds.length);
+}
 
-     const response = await fetch('/api/appointments', {
-       method: 'POST',
-       headers: { 'Content-Type': 'application/json' },
-       body: JSON.stringify(requestData)
-     });
+    // Create appointment request with ENHANCED VARIANT-BASED logic
+    const requestData = {
+      customer_id: user.profile.customer_id,
+      professional_id: isMarketplace ? null : professional?.professional_id,
+      service_id: serviceInformation.service_id,
+      address_id: addressId,
+      description: formData.description,
+      deadline: formData.deadline || null,
+      session: formData.session,
+      urgency: formData.urgency,
+      customer_message: formData.customer_message || null,
+      attachment_ids: attachmentIds,
+      
+      // UPDATED: Enhanced marketplace logic
+      open_to_all_professionals: isOpenMarketplace, // Only true for open marketplace
+      recipients: isTargetedMarketplace ? selectedProfessionals.map(p => p.professional_id) : [], // Selected professional IDs
+      max_interests: isTargetedMarketplace ? selectedProfessionals.length : (isOpenMarketplace ? 10 : 1),
+      auto_accept_verified: false,
+      
+      service_location: formData.use_different_address ? {
+        ...formData.service_location,
+        latitude: location?.lat,
+        longitude: location?.lng,
+        formatted_address: `${formData.service_location.street_address}, ${formData.service_location.city}, ${formData.service_location.parish}`
+      } : null
+    };
 
-     const result = await response.json();
+    // Debug the request data thoroughly
+    console.log('🔍 DETAILED REQUEST DATA CHECK:');
+    console.log('variant:', variant);
+    console.log('selectedProfessionals count:', selectedProfessionals.length);
+    console.log('isMarketplace:', isMarketplace);
+    console.log('isTargetedMarketplace:', isTargetedMarketplace);
+    console.log('isOpenMarketplace:', isOpenMarketplace);
+    console.log('customer_id:', requestData.customer_id);
+    console.log('professional_id:', requestData.professional_id);
+    console.log('service_id:', requestData.service_id);
+    console.log('address_id:', requestData.address_id);
+    console.log('description length:', requestData.description?.length);
+    console.log('session:', requestData.session);
+    console.log('open_to_all_professionals:', requestData.open_to_all_professionals);
+    console.log('recipients:', requestData.recipients);
+    console.log('max_interests:', requestData.max_interests);
+    console.log('service_location:', requestData.service_location);
+    console.log('attachment_ids count:', requestData.attachment_ids?.length);
 
-     if (!response.ok) {
-       throw new Error(result.error || 'Failed to create appointment request');
-     }
+    // Validate required fields before sending
+    const missingFields = [];
+    if (!requestData.customer_id) missingFields.push('customer_id');
+    if (!requestData.service_id) missingFields.push('service_id');
+    if (!requestData.description) missingFields.push('description');
+    if (!requestData.session) missingFields.push('session');
 
-     console.log('✅ Appointment created successfully with', result.appointment.attachments?.length || 0, 'attachments');
-     onSuccess?.(result.appointment);
+    if (missingFields.length > 0) {
+      throw new Error(`Missing required fields: ${missingFields.join(', ')}`);
+    }
 
-   } catch (error) {
-     console.error('❌ Appointment request error:', error);
-     setErrors({ general: error.message });
-   } finally {
-     setLoading(false);
-   }
- }, [formData, validateForm, user, professional, serviceInformation, location, onSuccess, currentStep, steps.length]);
+    console.log('📋 Submitting appointment request...');
+
+    const response = await fetch('/api/appointments', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(requestData)
+    });
+
+    console.log('📡 Response status:', response.status);
+    console.log('📡 Response headers:', Object.fromEntries(response.headers.entries()));
+
+    // Get response text first to see what we actually received
+    const responseText = await response.text();
+    console.log('📡 Raw response text:', responseText);
+
+    let result;
+    try {
+      result = JSON.parse(responseText);
+      console.log('📡 Parsed response:', result);
+    } catch (parseError) {
+      console.error('❌ Failed to parse response as JSON:', parseError);
+      console.error('Response was:', responseText);
+      throw new Error(`Server returned invalid JSON. Response: ${responseText.substring(0, 200)}`);
+    }
+
+    if (!response.ok) {
+      console.error('❌ API Error Response:', {
+        status: response.status,
+        statusText: response.statusText,
+        body: result
+      });
+      
+      const errorMessage = result?.error || result?.message || `HTTP ${response.status}: ${response.statusText}`;
+      throw new Error(errorMessage);
+    }
+
+    console.log('✅ Appointment created successfully:', {
+      appointment_id: result.appointment?.appointment_id,
+      workflow_type: result.appointment?.workflow_type,
+      variant: variant,
+      targeted_professionals: isTargetedMarketplace ? selectedProfessionals.length : 0,
+      attachments: result.appointment?.attachments?.length || 0,
+      interests: result.appointment?.interests?.length || 0
+    });
+
+    onSuccess?.(result.appointment);
+
+  } catch (error) {
+    console.error('❌ Full error details:', {
+      name: error.name,
+      message: error.message,
+      stack: error.stack
+    });
+    
+    // Enhanced error handling with more specific messages
+    let errorMessage = error.message;
+    
+    if (error.message.includes('Missing required fields')) {
+      errorMessage = 'Please fill in all required information before submitting.';
+    } else if (error.message.includes('Customer not found')) {
+      errorMessage = 'There was an issue with your account. Please try logging out and back in.';
+    } else if (error.message.includes('Service not found')) {
+      errorMessage = 'The selected service is no longer available. Please refresh and try again.';
+    } else if (error.message.includes('Professional not found')) {
+      errorMessage = 'The selected professional is no longer available. Your request will be opened to all qualified professionals.';
+    } else if (error.message.includes('Failed to fetch')) {
+      errorMessage = 'Network error. Please check your internet connection and try again.';
+    } else if (error.message.includes('invalid JSON')) {
+      errorMessage = 'Server error. Please try again in a few minutes.';
+    }
+    
+    setErrors({ general: errorMessage });
+  } finally {
+    setLoading(false);
+  }
+}, [formData, validateForm, user, professional, serviceInformation, location, onSuccess, currentStep, steps.length, variant, isMarketplace, isTargetedMarketplace, isOpenMarketplace, selectedProfessionals]);
 
  // Step navigation functions
  const nextStep = useCallback(() => {
@@ -298,7 +439,7 @@ export default function Appointment({
    switch (step) {
      case 1: return formData.description.trim() !== '';
      case 2: return true; // File upload is optional
-     case 3: return formData.preferred_start !== '';
+     case 3: return formData.session !== '';
      case 4: return !formData.use_different_address || (
        formData.service_location.street_address &&
        formData.service_location.city &&
@@ -324,8 +465,24 @@ export default function Appointment({
 
  // Handle calendar slot selection
  const handleSlotSelect = useCallback((datetime) => {
-   handleChange('preferred_start', datetime);
+   handleChange('session', datetime);
  }, [handleChange]);
+
+ // Get professional name for display
+ const professionalName = professional?.first_name && professional?.last_name 
+   ? `${professional.first_name} ${professional.last_name}`
+   : professional?.business_name || 'Professional';
+
+ // Get workflow description for UI
+ const getWorkflowDescription = useCallback(() => {
+   if (isTargetedMarketplace) {
+     return `Get quotes from ${selectedProfessionals.length} selected professional${selectedProfessionals.length !== 1 ? 's' : ''}`;
+   } else if (isOpenMarketplace) {
+     return 'Get quotes from multiple professionals';
+   } else {
+     return `Booking with ${professionalName}`;
+   }
+ }, [isTargetedMarketplace, isOpenMarketplace, selectedProfessionals.length, professionalName]);
 
  return (
    <div className="flex flex-col h-full max-h-[95vh]">
@@ -333,6 +490,43 @@ export default function Appointment({
      {/* Fixed Header with Progress and Step Navigation */}
      <div className="flex-shrink-0 bg-background border-b p-6">
        <div className="w-full max-w-4xl mx-auto space-y-6">
+         
+         {/* Workflow Type Indicator - ENHANCED */}
+         <div className="flex items-center justify-between">
+           <div className="flex items-center gap-3">
+             {isMarketplace ? (
+               <>
+                 <Users className="h-5 w-5 text-blue-600" />
+                 <div>
+                   <h3 className="font-semibold text-blue-900">
+                     {isTargetedMarketplace ? 'Targeted Request' : 'Service Request'}
+                   </h3>
+                   <p className="text-sm text-blue-600">{getWorkflowDescription()}</p>
+                 </div>
+               </>
+             ) : (
+               <>
+                 <CheckCircle className="h-5 w-5 text-green-600" />
+                 <div>
+                   <h3 className="font-semibold text-green-900">Direct Booking</h3>
+                   <p className="text-sm text-green-600">{getWorkflowDescription()}</p>
+                 </div>
+               </>
+             )}
+           </div>
+           
+           <div className="flex items-center gap-2">
+             {isTargetedMarketplace && (
+               <Badge variant="outline" className="text-xs">
+                 {selectedProfessionals.length} Selected
+               </Badge>
+             )}
+             <Badge variant={isMarketplace ? "default" : "secondary"} className="text-sm">
+               {isTargetedMarketplace ? "Targeted" : isOpenMarketplace ? "Marketplace" : "Direct"}
+             </Badge>
+           </div>
+         </div>
+         
          {/* Progress Bar */}
          <div className="space-y-3">
            <div className="flex justify-between items-center">
@@ -392,7 +586,12 @@ export default function Appointment({
                    Describe Your Project
                  </CardTitle>
                  <p className="text-sm text-muted-foreground">
-                   Tell us what you need help with so we can match you with the right professional.
+                   {isTargetedMarketplace 
+                     ? `Tell your ${selectedProfessionals.length} selected professionals what you need.`
+                     : isOpenMarketplace
+                     ? 'Tell us what you need so we can match you with qualified professionals.'
+                     : `Tell ${professionalName} what you need help with.`
+                   }
                  </p>
                </CardHeader>
                <CardContent className="space-y-6">
@@ -444,39 +643,16 @@ export default function Appointment({
                    Upload Project Files
                  </CardTitle>
                  <p className="text-sm text-muted-foreground">
-                   Share photos, measurements, specifications, or any other files that will help the professional understand your project better.
+                   {isTargetedMarketplace
+                     ? `Share photos, measurements, or specifications to help your ${selectedProfessionals.length} selected professionals understand your project better.`
+                     : isOpenMarketplace
+                     ? 'Share photos, measurements, or specifications to help professionals understand your project better.'
+                     : `Share photos, measurements, or specifications to help ${professionalName} understand your project better.`
+                   }
                  </p>
                </CardHeader>
                <CardContent className="space-y-6">
                  
-                 {/* Benefits callout */}
-                 {/* <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                   <div className="flex items-start gap-3">
-                     <Image className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
-                     <div>
-                       <h4 className="font-medium text-blue-900 mb-2">Why upload files?</h4>
-                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm text-blue-700">
-                         <div className="flex items-center gap-2">
-                           <CheckCircle className="h-3 w-3" />
-                           <span>Get more accurate quotes</span>
-                         </div>
-                         <div className="flex items-center gap-2">
-                           <CheckCircle className="h-3 w-3" />
-                           <span>Reduce communication time</span>
-                         </div>
-                         <div className="flex items-center gap-2">
-                           <CheckCircle className="h-3 w-3" />
-                           <span>Faster professional responses</span>
-                         </div>
-                         <div className="flex items-center gap-2">
-                           <CheckCircle className="h-3 w-3" />
-                           <span>Show specific requirements</span>
-                         </div>
-                       </div>
-                     </div>
-                   </div>
-                 </div> */}
-
                  {/* File upload component */}
                  <AppointmentFileUpload 
                    onFilesChange={handleFilesChange}
@@ -490,7 +666,12 @@ export default function Appointment({
                      <AlertCircle className="h-4 w-4" />
                      <AlertDescription>
                        <strong>Optional Step:</strong> You can skip this step if you don't have files to upload. 
-                       You can always share files later through messages with your professional.
+                       {isTargetedMarketplace 
+                         ? ' You can always share files later through messages with your selected professionals.'
+                         : isOpenMarketplace
+                         ? ' You can always share files later through messages with professionals.'
+                         : ` You can always share files later through messages with ${professionalName}.`
+                       }
                      </AlertDescription>
                    </Alert>
                  )}
@@ -504,24 +685,27 @@ export default function Appointment({
                <CardHeader className="border-b bg-muted/30">
                  <CardTitle className="text-lg flex items-center gap-2">
                    <Calendar className="h-5 w-5" />
-                   Select Assessment Time
+                   {isMarketplace ? 'When do you need this done?' : 'Select Assessment Time'}
                  </CardTitle>
                  <p className="text-sm text-muted-foreground">
-                   Choose when you'd like the professional to assess your project
+                   {isMarketplace 
+                     ? 'Choose your preferred timeframe for the work to be completed'
+                     : 'Choose when you\'d like the professional to assess your project'
+                   }
                  </p>
                </CardHeader>
                
                <div className="h-[500px] overflow-hidden">
                  <CustomerAvailabilityCalendar
-                   professionalId={professional?.professional_id}
+                   professionalId={isMarketplace ? null : professional?.professional_id}
                    onSlotSelect={handleSlotSelect}
-                   selectedSlot={formData.preferred_start}
+                   selectedSlot={formData.session}
                  />
                  
-                 {errors.preferred_start && (
+                 {errors.session && (
                    <Alert variant="destructive" className="m-4">
                      <AlertCircle className="h-4 w-4" />
-                     <AlertDescription>{errors.preferred_start}</AlertDescription>
+                     <AlertDescription>{errors.session}</AlertDescription>
                    </Alert>
                  )}
                </div>
@@ -584,7 +768,7 @@ export default function Appointment({
              </Card>
            )}
 
-           {/* Step 5: Review & Confirm */}
+           {/* Step 5: Review & Confirm - ENHANCED */}
            {currentStep === 5 && (
              <Card>
                <CardHeader>
@@ -593,7 +777,12 @@ export default function Appointment({
                    Review & Confirm
                  </CardTitle>
                  <p className="text-sm text-muted-foreground">
-                   Please review your appointment details before submitting
+                   {isTargetedMarketplace 
+                     ? `Please review your request before sending to ${selectedProfessionals.length} selected professionals`
+                     : isOpenMarketplace
+                     ? 'Please review your service request before posting'
+                     : 'Please review your appointment details before submitting'
+                   }
                  </p>
                </CardHeader>
                <CardContent className="space-y-6">
@@ -608,9 +797,11 @@ export default function Appointment({
                          {formData.description.length > 150 && '...'}
                        </p>
                      </div>
-                     <Badge variant="outline" className="text-lg font-semibold ml-4">
-                       JMD ${estimatedPrice}
-                     </Badge>
+                     {serviceInformation?.base_price && (
+                       <Badge variant="outline" className="text-lg font-semibold ml-4">
+                         {isMarketplace ? 'Est. ' : ''}JMD ${estimatedPrice}
+                       </Badge>
+                     )}
                    </div>
 
                    <Separator />
@@ -620,9 +811,11 @@ export default function Appointment({
                      <div className="flex items-center gap-3">
                        <Calendar className="h-4 w-4 text-muted-foreground" />
                        <div>
-                         <div className="font-medium">Assessment Date</div>
+                         <div className="font-medium">
+                           {isMarketplace ? 'Preferred Date' : 'Assessment Date'}
+                         </div>
                          <div className="text-sm text-muted-foreground">
-                           {formData.preferred_start && new Date(formData.preferred_start).toLocaleDateString('en-US', {
+                           {formData.session && new Date(formData.session).toLocaleDateString('en-US', {
                              weekday: 'long',
                              year: 'numeric',
                              month: 'long',
@@ -637,7 +830,7 @@ export default function Appointment({
                        <div>
                          <div className="font-medium">Time</div>
                          <div className="text-sm text-muted-foreground">
-                           {formData.preferred_start && new Date(formData.preferred_start).toLocaleTimeString('en-US', {
+                           {formData.session && new Date(formData.session).toLocaleTimeString('en-US', {
                              hour: 'numeric',
                              minute: '2-digit',
                              hour12: true
@@ -667,6 +860,67 @@ export default function Appointment({
                        </Badge>
                      </div>
                    </div>
+
+                   {/* Workflow Type Display - ENHANCED */}
+                   <Separator />
+                   <div className="flex items-center gap-3">
+                     {isTargetedMarketplace ? (
+                       <>
+                         <Users className="h-4 w-4 text-purple-600" />
+                         <div>
+                           <div className="font-medium text-purple-900">Targeted Request</div>
+                           <div className="text-sm text-purple-600">
+                             Sending to {selectedProfessionals.length} selected professional{selectedProfessionals.length !== 1 ? 's' : ''}
+                           </div>
+                         </div>
+                       </>
+                     ) : isOpenMarketplace ? (
+                       <>
+                         <Users className="h-4 w-4 text-blue-600" />
+                         <div>
+                           <div className="font-medium text-blue-900">Open Marketplace Request</div>
+                           <div className="text-sm text-blue-600">Multiple professionals will respond with quotes</div>
+                         </div>
+                       </>
+                     ) : (
+                       <>
+                         <CheckCircle className="h-4 w-4 text-green-600" />
+                         <div>
+                           <div className="font-medium text-green-900">Direct Booking</div>
+                           <div className="text-sm text-green-600">Sending directly to {professionalName}</div>
+                         </div>
+                       </>
+                     )}
+                   </div>
+
+                   {/* Selected Professionals Display for Targeted Marketplace */}
+                   {isTargetedMarketplace && selectedProfessionals.length > 0 && (
+                     <>
+                       <Separator />
+                       <div className="space-y-3">
+                         <div className="flex items-center gap-2">
+                           <Users className="h-4 w-4 text-muted-foreground" />
+                           <div className="font-medium">Selected Professionals ({selectedProfessionals.length})</div>
+                         </div>
+                         <div className="grid gap-2 sm:grid-cols-2">
+                           {selectedProfessionals.map((prof) => (
+                             <div key={prof.professional_id} className="flex items-center gap-2 p-2 bg-background rounded border">
+                               <CheckCircle className="h-3 w-3 text-green-600" />
+                               <span className="text-sm truncate flex-1">
+                                 {prof.first_name && prof.last_name 
+                                   ? `${prof.first_name} ${prof.last_name}`
+                                   : prof.business_name || 'Professional'
+                                 }
+                               </span>
+                               <Badge variant="secondary" className="text-xs">
+                                 Selected
+                               </Badge>
+                             </div>
+                           ))}
+                         </div>
+                       </div>
+                     </>
+                   )}
 
                    {/* Attached Files */}
                    {formData.attachments && formData.attachments.length > 0 && (
@@ -718,7 +972,12 @@ export default function Appointment({
                      rows={3}
                      value={formData.customer_message}
                      onChange={(e) => handleChange('customer_message', e.target.value)}
-                     placeholder="Any special instructions, preferences, or questions for the professional..."
+                     placeholder={isTargetedMarketplace 
+                       ? `Any special instructions, preferences, or questions for your ${selectedProfessionals.length} selected professionals...`
+                       : isOpenMarketplace
+                       ? "Any special instructions, preferences, or questions for the professionals..."
+                       : `Any special instructions, preferences, or questions for ${professionalName}...`
+                     }
                    />
                  </div>
 
@@ -730,13 +989,17 @@ export default function Appointment({
                    </Alert>
                  )}
 
-                 {/* Terms Notice */}
+                 {/* Terms Notice - ENHANCED */}
                  <Alert>
                    <MessageSquare className="h-4 w-4" />
                    <AlertDescription>
-                     <strong>Next Steps:</strong> Your appointment request will be sent to the professional. 
-                     They will review your requirements and either accept, decline, or send you a custom quote. 
-                     You'll be notified via email and in your dashboard.
+                     <strong>Next Steps:</strong> 
+                     {isTargetedMarketplace 
+                       ? ` Your request will be sent to your ${selectedProfessionals.length} selected professionals. They will review your requirements and send you individual quotes. You'll be able to compare their offers and choose the best one.`
+                       : isOpenMarketplace
+                       ? ' Your service request will be posted to qualified professionals. Multiple professionals will review your requirements and send you quotes. You\'ll be able to compare offers and choose the best one.'
+                       : ` Your appointment request will be sent to ${professionalName}. They will review your requirements and either accept, decline, or send you a custom quote. You\'ll be notified via email and in your dashboard.`
+                     }
                    </AlertDescription>
                  </Alert>
                </CardContent>
@@ -785,11 +1048,11 @@ export default function Appointment({
            )}
 
            {/* Show selected time on schedule step */}
-           {currentStep === 3 && formData.preferred_start && (
+           {currentStep === 3 && formData.session && (
              <div className="flex items-center gap-2 text-sm text-muted-foreground">
                <Calendar className="h-4 w-4" />
                <span>
-                 {new Date(formData.preferred_start).toLocaleDateString('en-US', {
+                 {new Date(formData.session).toLocaleDateString('en-US', {
                    month: 'short',
                    day: 'numeric',
                    hour: 'numeric',
@@ -800,7 +1063,29 @@ export default function Appointment({
              </div>
            )}
 
-           {/* Continue/Submit buttons */}
+           {/* Show workflow type on review step - ENHANCED */}
+           {currentStep === 5 && (
+             <div className="flex items-center gap-2 text-sm text-muted-foreground">
+               {isTargetedMarketplace ? (
+                 <>
+                   <Users className="h-4 w-4" />
+                   <span>Targeted ({selectedProfessionals.length})</span>
+                 </>
+               ) : isOpenMarketplace ? (
+                 <>
+                   <Users className="h-4 w-4" />
+                   <span>Open Marketplace</span>
+                 </>
+               ) : (
+                 <>
+                   <CheckCircle className="h-4 w-4" />
+                   <span>Direct Booking</span>
+                 </>
+               )}
+             </div>
+           )}
+
+           {/* Continue/Submit buttons - ENHANCED */}
            {currentStep < steps.length ? (
              <Button 
                type="button"
@@ -822,12 +1107,22 @@ export default function Appointment({
                {loading ? (
                  <>
                    <Loader2 className="h-4 w-4 animate-spin" />
-                   Creating Request...
+                   {isTargetedMarketplace 
+                     ? 'Sending Request...'
+                     : isOpenMarketplace
+                     ? 'Posting Request...' 
+                     : 'Creating Request...'
+                   }
                  </>
                ) : (
                  <>
                    <CheckCircle className="h-4 w-4" />
-                   Send Appointment Request
+                   {isTargetedMarketplace 
+                     ? `Send to ${selectedProfessionals.length} Professionals`
+                     : isOpenMarketplace
+                     ? 'Post Service Request' 
+                     : 'Send Appointment Request'
+                   }
                  </>
                )}
              </Button>

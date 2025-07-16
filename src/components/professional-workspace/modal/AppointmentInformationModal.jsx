@@ -320,7 +320,7 @@ export default function AppointmentInformationModal({
                   <div className="grid grid-cols-1 gap-3">
                     <div className="flex items-center justify-between py-2 border-b border-border">
                       <span className="font-medium text-muted-foreground">Preferred Start:</span>
-                      <span className="text-foreground">{formatDateTime(appointment.preferred_start)}</span>
+                      <span className="text-foreground">{formatDateTime(appointment.session)}</span>
                     </div>
                     {appointment.preferred_end && (
                       <div className="flex items-center justify-between py-2 border-b border-border">

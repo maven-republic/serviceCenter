@@ -1,3 +1,4 @@
+// src/components/ui/badge.jsx - FIXED VERSION
 import * as React from "react"
 import { cn } from "@/lib/utils"
 
@@ -16,8 +17,9 @@ const getBadgeClasses = ({ variant = "default" }) => {
 }
 
 function Badge({ className, variant, ...props }) {
+  // Use <span> instead of <div> to fix hydration error
   return (
-    <div className={cn(getBadgeClasses({ variant }), className)} {...props} />
+    <span className={cn(getBadgeClasses({ variant }), className)} {...props} />
   )
 }
 

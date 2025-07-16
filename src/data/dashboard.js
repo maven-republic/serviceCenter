@@ -1,4 +1,5 @@
 // Updated navigation data structure with Service Pricing added
+// src/data/dashboard.js (Updated customer navigation)
 export const customerNavigation = {
   workspace: [
     {
@@ -7,22 +8,22 @@ export const customerNavigation = {
       icon: 'flaticon-search',
       path: "/customer/workspace",
     },
-    // {
-    //   id: 4,
-    //   name: "Explore",
-    //   icon: "flaticon-rocket",
-    //   path: "/customer/explore",
-    // }
+    {
+      id: 2,
+      name: 'Appointments', // 🆕 NEW
+      icon: 'flaticon-calendar',
+      path: "/customer/appointments",
+    }
   ],
   account: [
     {
-      id: 2,
+      id: 3,
       name: "Analytics",
       icon: "flaticon-home",
       path: "/customer/analytics",
     },
     {
-      id: 3,
+      id: 4,
       name: "Account Information",
       icon: "flaticon-photo",
       path: "/customer/account-information",

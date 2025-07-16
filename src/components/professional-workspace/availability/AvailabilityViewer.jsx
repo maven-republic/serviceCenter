@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
+import { useSupabaseClient } from '@supabase/auth-helpers-react' // Use the provider's client
 import {
   Card,
   CardContent,
@@ -31,7 +31,7 @@ export default function AvailabilityViewer({
   availabilityJson,
   overridesJson 
 }) {
-  const supabase = createClientComponentClient()
+  const supabase = useSupabaseClient() // Get client from provider context
   
   // Parse JSON props as fallback
   const fallbackAvailability = availabilityJson ? JSON.parse(availabilityJson) : []

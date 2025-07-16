@@ -14,7 +14,8 @@ import {
   AlertCircle,
   CheckCircle,
   Users,
-  RefreshCw
+  RefreshCw,
+  Info
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -32,13 +33,50 @@ export default function CustomerAvailabilityCalendar({
   const [currentMonth, setCurrentMonth] = useState(new Date())
   const [selectedDate, setSelectedDate] = useState(null)
 
-  // Fetch available slots from API
-  const fetchAvailableSlots = useCallback(async (startDate, endDate) => {
-    if (!professionalId) {
-      console.error('❌ No professionalId provided')
-      return
-    }
+  // Determine if we're in marketplace mode (no specific professional)
+  const isMarketplaceMode = !professionalId || professionalId === null
 
+  // Generate generic availability for marketplace mode
+  const generateMarketplaceSlots = useCallback(() => {
+    console.log('📅 Marketplace mode - generating generic time slots');
+    
+    const slots = []
+    const today = new Date()
+    
+    for (let day = 1; day <= 30; day++) {
+      const date = new Date(today)
+      date.setDate(today.getDate() + day)
+      
+      // Skip weekends for business hours
+      if (date.getDay() === 0 || date.getDay() === 6) continue
+      
+      const dateStr = formatDate(date)
+      
+      // Generate slots for business hours (8 AM to 6 PM)
+      for (let hour = 8; hour <= 17; hour++) {
+        const slotTime = new Date(date)
+        slotTime.setHours(hour, 0, 0, 0)
+        
+        slots.push({
+          date: dateStr,
+          time: slotTime.toLocaleTimeString('en-US', {
+            hour: 'numeric',
+            minute: '2-digit',
+            hour12: true
+          }),
+          datetime: slotTime.toISOString(),
+          is_available: true,
+          professional_id: null,
+          type: 'marketplace'
+        })
+      }
+    }
+    
+    return slots
+  }, [])
+
+  // Fetch available slots from API for specific professional
+  const fetchProfessionalSlots = useCallback(async (startDate, endDate) => {
     setLoading(true)
     setError(null)
 
@@ -66,6 +104,26 @@ export default function CustomerAvailabilityCalendar({
       setLoading(false)
     }
   }, [professionalId])
+
+  // Main fetch function that handles both modes
+  const fetchAvailableSlots = useCallback(async (startDate, endDate) => {
+    if (isMarketplaceMode) {
+      console.log('📅 Marketplace mode - generating generic time slots');
+      setLoading(true)
+      
+      // Simulate a brief loading period for UX
+      setTimeout(() => {
+        const genericSlots = generateMarketplaceSlots()
+        setAvailableSlots(genericSlots)
+        setLoading(false)
+      }, 300)
+      
+      return
+    }
+
+    // Fetch real availability for specific professional
+    await fetchProfessionalSlots(startDate, endDate)
+  }, [isMarketplaceMode, generateMarketplaceSlots, fetchProfessionalSlots])
 
   // Load slots when component mounts or month changes
   useEffect(() => {
@@ -184,14 +242,29 @@ export default function CustomerAvailabilityCalendar({
     fetchAvailableSlots(formatDate(calendarStart), formatDate(calendarEnd))
   }, [currentMonth, fetchAvailableSlots])
 
+  // Get calendar title and description based on mode
+  const getCalendarTitle = useCallback(() => {
+    if (isMarketplaceMode) {
+      return "Select Your Preferred Time"
+    }
+    return "Professional's Available Times"
+  }, [isMarketplaceMode])
+
+  const getCalendarDescription = useCallback(() => {
+    if (isMarketplaceMode) {
+      return "Choose when you'd like the work to be completed. Selected professionals will confirm availability."
+    }
+    return "Choose from the professional's available time slots."
+  }, [isMarketplaceMode])
+
   // Format month name
   const monthName = currentMonth.toLocaleDateString('en-US', {
     month: 'long',
     year: 'numeric'
   })
 
-  // Error state
-  if (error) {
+  // Error state (only for professional mode)
+  if (error && !isMarketplaceMode) {
     return (
       <Card className={cn("h-full", className)}>
         <CardContent className="flex flex-col items-center justify-center h-96 space-y-4">
@@ -212,180 +285,243 @@ export default function CustomerAvailabilityCalendar({
   }
 
   return (
-    <div className={cn("h-full flex flex-col lg:flex-row gap-6", className)}>
+    <div className={cn("h-full flex flex-col gap-4", className)}>
       
-      {/* Calendar Section */}
-      <Card className="flex-1 min-h-0">
-        <CardHeader className="pb-4">
-          <div className="flex items-center justify-between">
-            <CardTitle className="text-lg font-semibold">
-              {loading ? (
-                <Skeleton className="h-6 w-32" />
-              ) : (
-                monthName
-              )}
-            </CardTitle>
-            <div className="flex items-center gap-2">
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={goToPreviousMonth}
-                disabled={loading}
-                className="h-8 w-8"
-              >
-                <ChevronLeft className="h-4 w-4" />
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={goToToday}
-                disabled={loading}
-                className="hidden sm:flex"
-              >
-                Today
-              </Button>
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={goToNextMonth}
-                disabled={loading}
-                className="h-8 w-8"
-              >
-                <ChevronRight className="h-4 w-4" />
-              </Button>
-            </div>
-          </div>
-        </CardHeader>
-
-        <CardContent className="pb-6">
-          {/* Calendar Grid */}
-          <div className="space-y-4">
-            
-            {/* Weekday Headers */}
-            <div className="grid grid-cols-7 gap-1">
-              {WEEKDAYS.map(day => (
-                <div key={day} className="p-2 text-center text-sm font-medium text-muted-foreground">
-                  {day}
-                </div>
-              ))}
-            </div>
-
-            {/* Calendar Days */}
-            <div className="grid grid-cols-7 gap-1">
-              {calendarDays.map((day, index) => (
-                <Button
-                  key={day.date}
-                  variant="ghost"
-                  className={cn(
-                    "h-12 p-0 font-normal relative transition-all duration-200",
-                    !day.isCurrentMonth && "text-muted-foreground/40",
-                    day.isToday && "bg-primary text-primary-foreground hover:bg-primary/90",
-                    day.isPast && "text-muted-foreground/30 cursor-not-allowed",
-                    day.isAvailable && !day.isPast && !day.isToday && "text-primary font-medium hover:bg-primary/10",
-                    day.isSelected && "bg-primary text-primary-foreground hover:bg-primary/90",
-                    loading && "cursor-not-allowed opacity-50"
+      {/* Mode Indicator */}
+      {isMarketplaceMode && (
+        <Alert className="border-blue-200 bg-blue-50">
+          <Info className="h-4 w-4 text-blue-600" />
+          <AlertDescription className="text-blue-800">
+            <strong>Marketplace Mode:</strong> {getCalendarDescription()}
+          </AlertDescription>
+        </Alert>
+      )}
+      
+      <div className="flex flex-col lg:flex-row gap-6">
+        {/* Calendar Section */}
+        <Card className="flex-1 min-h-0">
+          <CardHeader className="pb-4">
+            <div className="flex items-center justify-between">
+              <div className="space-y-1">
+                <CardTitle className="text-lg font-semibold flex items-center gap-2">
+                  {isMarketplaceMode ? (
+                    <Users className="h-5 w-5 text-blue-600" />
+                  ) : (
+                    <CalendarIcon className="h-5 w-5" />
                   )}
-                  onClick={() => handleDateSelect(day.date, day.isAvailable)}
-                  disabled={loading || day.isPast || !day.isAvailable}
-                >
-                  <div className="flex flex-col items-center justify-center h-full w-full">
-                    {loading ? (
-                      <Skeleton className="h-4 w-4 rounded" />
-                    ) : (
-                      <>
-                        <span className="text-sm">{day.dayNumber}</span>
-                        {day.isAvailable && day.slotsCount > 0 && (
-                          <div className="w-1 h-1 bg-current rounded-full mt-0.5" />
-                        )}
-                      </>
-                    )}
-                  </div>
-                </Button>
-              ))}
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Time Slots Section */}
-      <Card className="lg:w-80 min-h-0">
-        <CardHeader className="pb-4">
-          <CardTitle className="flex items-center gap-2 text-lg">
-            <Clock className="h-5 w-5" />
-            Available Times
-          </CardTitle>
-        </CardHeader>
-
-        <CardContent className="pb-6">
-          {loading ? (
-            // Loading skeleton
-            <div className="space-y-3">
-              <div className="space-y-2">
-                <Skeleton className="h-5 w-32" />
-                <Skeleton className="h-4 w-24" />
+                  {loading ? (
+                    <Skeleton className="h-6 w-32" />
+                  ) : (
+                    getCalendarTitle()
+                  )}
+                </CardTitle>
+                <p className="text-sm text-muted-foreground">
+                  {monthName}
+                </p>
               </div>
-              <div className="space-y-2">
-                {[...Array(6)].map((_, i) => (
-                  <Skeleton key={i} className="h-10 w-full" />
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={goToPreviousMonth}
+                  disabled={loading}
+                  className="h-8 w-8"
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={goToToday}
+                  disabled={loading}
+                  className="hidden sm:flex"
+                >
+                  Today
+                </Button>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={goToNextMonth}
+                  disabled={loading}
+                  className="h-8 w-8"
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          </CardHeader>
+
+          <CardContent className="pb-6">
+            {/* Calendar Grid */}
+            <div className="space-y-4">
+              
+              {/* Weekday Headers */}
+              <div className="grid grid-cols-7 gap-1">
+                {WEEKDAYS.map(day => (
+                  <div key={day} className="p-2 text-center text-sm font-medium text-muted-foreground">
+                    {day}
+                  </div>
+                ))}
+              </div>
+
+              {/* Calendar Days */}
+              <div className="grid grid-cols-7 gap-1">
+                {calendarDays.map((day, index) => (
+                  <Button
+                    key={day.date}
+                    variant="ghost"
+                    className={cn(
+                      "h-12 p-0 font-normal relative transition-all duration-200",
+                      !day.isCurrentMonth && "text-muted-foreground/40",
+                      day.isToday && "bg-primary text-primary-foreground hover:bg-primary/90",
+                      day.isPast && "text-muted-foreground/30 cursor-not-allowed",
+                      day.isAvailable && !day.isPast && !day.isToday && (
+                        isMarketplaceMode 
+                          ? "text-blue-600 font-medium hover:bg-blue-50 border-blue-200" 
+                          : "text-primary font-medium hover:bg-primary/10"
+                      ),
+                      day.isSelected && (
+                        isMarketplaceMode 
+                          ? "bg-blue-600 text-white hover:bg-blue-700" 
+                          : "bg-primary text-primary-foreground hover:bg-primary/90"
+                      ),
+                      loading && "cursor-not-allowed opacity-50"
+                    )}
+                    onClick={() => handleDateSelect(day.date, day.isAvailable)}
+                    disabled={loading || day.isPast || !day.isAvailable}
+                  >
+                    <div className="flex flex-col items-center justify-center h-full w-full">
+                      {loading ? (
+                        <Skeleton className="h-4 w-4 rounded" />
+                      ) : (
+                        <>
+                          <span className="text-sm">{day.dayNumber}</span>
+                          {day.isAvailable && day.slotsCount > 0 && (
+                            <div className={cn(
+                              "w-1 h-1 rounded-full mt-0.5",
+                              isMarketplaceMode ? "bg-blue-600" : "bg-current"
+                            )} />
+                          )}
+                        </>
+                      )}
+                    </div>
+                  </Button>
                 ))}
               </div>
             </div>
-          ) : selectedDate ? (
-            // Selected date with time slots
-            <div className="space-y-4">
-              <div className="space-y-1">
-                <h4 className="font-medium">
-                  {formatSelectedDate(selectedDate)}
-                </h4>
-                <div className="flex items-center gap-2">
-                  <Badge variant="secondary" className="text-xs">
-                    {timeSlotsForSelectedDate.length} available
-                  </Badge>
-                  {timeSlotsForSelectedDate.length > 0 && (
-                    <span className="text-xs text-muted-foreground">
-                      Select a time slot
-                    </span>
-                  )}
-                </div>
-              </div>
+          </CardContent>
+        </Card>
 
-              {timeSlotsForSelectedDate.length > 0 ? (
-                <div className="space-y-2 max-h-80 overflow-y-auto">
-                  {timeSlotsForSelectedDate.map((slot, index) => (
-                    <Button
-                      key={index}
-                      variant={selectedSlot === slot.datetime ? "default" : "outline"}
-                      className="w-full justify-start text-sm h-10"
-                      onClick={() => handleSlotSelect(slot)}
-                    >
-                      <Clock className="h-4 w-4 mr-2" />
-                      {slot.time}
-                    </Button>
+        {/* Time Slots Section */}
+        <Card className="lg:w-80 min-h-0">
+          <CardHeader className="pb-4">
+            <CardTitle className="flex items-center gap-2 text-lg">
+              <Clock className="h-5 w-5" />
+              {isMarketplaceMode ? "Preferred Times" : "Available Times"}
+            </CardTitle>
+            {isMarketplaceMode && (
+              <p className="text-xs text-muted-foreground">
+                Select your preferred time. Professionals will confirm availability.
+              </p>
+            )}
+          </CardHeader>
+
+          <CardContent className="pb-6">
+            {loading ? (
+              // Loading skeleton
+              <div className="space-y-3">
+                <div className="space-y-2">
+                  <Skeleton className="h-5 w-32" />
+                  <Skeleton className="h-4 w-24" />
+                </div>
+                <div className="space-y-2">
+                  {[...Array(6)].map((_, i) => (
+                    <Skeleton key={i} className="h-10 w-full" />
                   ))}
                 </div>
-              ) : (
-                <Alert>
-                  <AlertCircle className="h-4 w-4" />
-                  <AlertDescription>
-                    No time slots available for this date.
-                  </AlertDescription>
-                </Alert>
-              )}
-            </div>
-          ) : (
-            // No date selected
-            <div className="flex flex-col items-center justify-center h-64 text-center space-y-3">
-              <CalendarIcon className="h-12 w-12 text-muted-foreground/50" />
-              <div className="space-y-1">
-                <h4 className="font-medium text-muted-foreground">Select a Date</h4>
-                <p className="text-sm text-muted-foreground">
-                  Choose an available date from the calendar to see time slots
-                </p>
               </div>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+            ) : selectedDate ? (
+              // Selected date with time slots
+              <div className="space-y-4">
+                <div className="space-y-1">
+                  <h4 className="font-medium">
+                    {formatSelectedDate(selectedDate)}
+                  </h4>
+                  <div className="flex items-center gap-2">
+                    <Badge 
+                      variant={isMarketplaceMode ? "default" : "secondary"} 
+                      className={cn(
+                        "text-xs",
+                        isMarketplaceMode && "bg-blue-100 text-blue-800"
+                      )}
+                    >
+                      {timeSlotsForSelectedDate.length} {isMarketplaceMode ? "time options" : "available"}
+                    </Badge>
+                    {timeSlotsForSelectedDate.length > 0 && (
+                      <span className="text-xs text-muted-foreground">
+                        {isMarketplaceMode ? "Select your preferred time" : "Select a time slot"}
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                {timeSlotsForSelectedDate.length > 0 ? (
+                  <div className="space-y-2 max-h-80 overflow-y-auto">
+                    {timeSlotsForSelectedDate.map((slot, index) => (
+                      <Button
+                        key={index}
+                        variant={selectedSlot === slot.datetime ? "default" : "outline"}
+                        className={cn(
+                          "w-full justify-start text-sm h-10",
+                          isMarketplaceMode && selectedSlot === slot.datetime && "bg-blue-600 hover:bg-blue-700",
+                          isMarketplaceMode && selectedSlot !== slot.datetime && "border-blue-200 hover:bg-blue-50"
+                        )}
+                        onClick={() => handleSlotSelect(slot)}
+                      >
+                        <Clock className="h-4 w-4 mr-2" />
+                        {slot.time}
+                        {isMarketplaceMode && (
+                          <Badge variant="secondary" className="ml-auto text-xs bg-blue-100 text-blue-800">
+                            Preferred
+                          </Badge>
+                        )}
+                      </Button>
+                    ))}
+                  </div>
+                ) : (
+                  <Alert>
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertDescription>
+                      {isMarketplaceMode 
+                        ? "No time options available for this date."
+                        : "No time slots available for this date."
+                      }
+                    </AlertDescription>
+                  </Alert>
+                )}
+              </div>
+            ) : (
+              // No date selected
+              <div className="flex flex-col items-center justify-center h-64 text-center space-y-3">
+                {isMarketplaceMode ? (
+                  <Users className="h-12 w-12 text-blue-400" />
+                ) : (
+                  <CalendarIcon className="h-12 w-12 text-muted-foreground/50" />
+                )}
+                <div className="space-y-1">
+                  <h4 className="font-medium text-muted-foreground">Select a Date</h4>
+                  <p className="text-sm text-muted-foreground">
+                    {isMarketplaceMode 
+                      ? "Choose your preferred date to see time options"
+                      : "Choose an available date from the calendar to see time slots"
+                    }
+                  </p>
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
     </div>
   )
 }

@@ -1,7 +1,7 @@
 // src/components/professional-workspace/appointments/AppointmentSearch.jsx
 'use client'
 
-import { Search, Filter, X, ChevronDown } from 'lucide-react'
+import { Search, Filter, X, ChevronDown, Heart, Users, Target, Calendar } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
@@ -20,54 +20,195 @@ export default function AppointmentSearch({
   filters, 
   appointments = [], 
   onStatusFilter, 
-  onSearch 
+  onSearch,
+  mode = 'available' // 'available', 'interests', 'assigned'
 }) {
-  // Filter options aligned with professional.css semantic tokens
-  const filterOptions = [
-    { 
-      key: 'all', 
-      label: 'All Appointments', 
-      count: appointments.length,
-      description: 'View all appointment requests',
-      badgeVariant: 'secondary'
-    },
-    { 
-      key: 'pending', 
-      label: 'Pending Review', 
-      count: appointments.filter(a => a.status === 'pending').length,
-      description: 'Awaiting your response',
-      badgeVariant: 'destructive',
-      isUrgent: true
-    },
-    { 
-      key: 'quoted', 
-      label: 'Quotes Sent', 
-      count: appointments.filter(a => a.status === 'quoted').length,
-      description: 'Customer reviewing quotes',
-      badgeVariant: 'outline'
-    },
-    { 
-      key: 'accepted', 
-      label: 'Confirmed', 
-      count: appointments.filter(a => a.status === 'accepted').length,
-      description: 'Active appointments',
-      badgeVariant: 'default'
-    },
-    { 
-      key: 'converted', 
-      label: 'Completed', 
-      count: appointments.filter(a => a.status === 'converted').length,
-      description: 'Successfully completed',
-      badgeVariant: 'default'
-    },
-    { 
-      key: 'declined', 
-      label: 'Declined', 
-      count: appointments.filter(a => a.status === 'declined').length,
-      description: 'Not proceeded with',
-      badgeVariant: 'secondary'
+  
+  // Tab-specific filter configurations
+  const getFilterOptions = (mode, appointments) => {
+    switch (mode) {
+      case 'available':
+        return [
+          { 
+            key: 'all', 
+            label: 'All Opportunities', 
+            count: appointments.length,
+            description: 'All available appointments',
+            badgeVariant: 'secondary'
+          },
+          { 
+            key: 'pending', 
+            label: 'New Opportunities', 
+            count: appointments.filter(a => a.status === 'pending').length,
+            description: 'Fresh appointment requests',
+            badgeVariant: 'default',
+            isUrgent: true
+          },
+          { 
+            key: 'competing', 
+            label: 'Competitive', 
+            count: appointments.filter(a => a.status === 'competing').length,
+            description: 'Multiple professionals interested',
+            badgeVariant: 'destructive'
+          },
+          { 
+            key: 'urgent', 
+            label: 'Urgent Priority', 
+            count: appointments.filter(a => a.urgency === 'urgent').length,
+            description: 'High priority requests',
+            badgeVariant: 'destructive',
+            isUrgent: true
+          },
+          { 
+            key: 'high', 
+            label: 'High Priority', 
+            count: appointments.filter(a => a.urgency === 'high').length,
+            description: 'Important requests',
+            badgeVariant: 'outline'
+          }
+        ]
+      
+      case 'interests':
+        return [
+          { 
+            key: 'all', 
+            label: 'All My Interests', 
+            count: appointments.length,
+            description: 'View all expressed interests',
+            badgeVariant: 'secondary'
+          },
+          { 
+            key: 'pending', 
+            label: 'Awaiting Response', 
+            count: appointments.filter(a => a.status === 'pending' || a.status === 'interested').length,
+            description: 'Customer hasn\'t responded yet',
+            badgeVariant: 'outline'
+          },
+          { 
+            key: 'quoted', 
+            label: 'Quotes Sent', 
+            count: appointments.filter(a => a.status === 'quoted').length,
+            description: 'Waiting for customer decision',
+            badgeVariant: 'default'
+          },
+          { 
+            key: 'selected', 
+            label: 'Selected!', 
+            count: appointments.filter(a => a.status === 'selected').length,
+            description: 'Customer chose you',
+            badgeVariant: 'default',
+            isUrgent: true
+          },
+          { 
+            key: 'rejected', 
+            label: 'Not Selected', 
+            count: appointments.filter(a => a.status === 'rejected').length,
+            description: 'Customer chose another professional',
+            badgeVariant: 'secondary'
+          }
+        ]
+      
+      case 'assigned':
+        return [
+          { 
+            key: 'all', 
+            label: 'All Assignments', 
+            count: appointments.length,
+            description: 'View all assigned appointments',
+            badgeVariant: 'secondary'
+          },
+          { 
+            key: 'pending', 
+            label: 'Pending Action', 
+            count: appointments.filter(a => a.status === 'pending').length,
+            description: 'Awaiting your response',
+            badgeVariant: 'destructive',
+            isUrgent: true
+          },
+          { 
+            key: 'quoted', 
+            label: 'Quotes Sent', 
+            count: appointments.filter(a => a.status === 'quoted').length,
+            description: 'Customer reviewing quotes',
+            badgeVariant: 'outline'
+          },
+          { 
+            key: 'accepted', 
+            label: 'Confirmed', 
+            count: appointments.filter(a => a.status === 'accepted').length,
+            description: 'Ready to start work',
+            badgeVariant: 'default'
+          },
+          { 
+            key: 'converted', 
+            label: 'Active Projects', 
+            count: appointments.filter(a => a.status === 'converted').length,
+            description: 'Work in progress',
+            badgeVariant: 'default'
+          },
+          { 
+            key: 'declined', 
+            label: 'Declined', 
+            count: appointments.filter(a => a.status === 'declined').length,
+            description: 'Not proceeded with',
+            badgeVariant: 'secondary'
+          }
+        ]
+      
+      default:
+        return [
+          { 
+            key: 'all', 
+            label: 'All Appointments', 
+            count: appointments.length,
+            description: 'View all appointments',
+            badgeVariant: 'secondary'
+          }
+        ]
     }
-  ]
+  }
+
+  // Tab-specific configurations
+  const getTabConfig = (mode) => {
+    switch (mode) {
+      case 'available':
+        return {
+          icon: Search,
+          placeholder: 'Search opportunities by customer, service, or location...',
+          filterTitle: 'Filter Opportunities',
+          summaryLabel: 'opportunities',
+          urgentLabel: 'new'
+        }
+      case 'interests':
+        return {
+          icon: Heart,
+          placeholder: 'Search your interests by project, customer, or status...',
+          filterTitle: 'Filter My Interests',
+          summaryLabel: 'interests',
+          urgentLabel: 'selected'
+        }
+      case 'assigned':
+        return {
+          icon: Target,
+          placeholder: 'Search assignments by customer, service, or status...',
+          filterTitle: 'Filter Assignments',
+          summaryLabel: 'assignments',
+          urgentLabel: 'pending'
+        }
+      default:
+        return {
+          icon: Calendar,
+          placeholder: 'Search appointments...',
+          filterTitle: 'Filter Appointments',
+          summaryLabel: 'appointments',
+          urgentLabel: 'urgent'
+        }
+    }
+  }
+
+  const filterOptions = getFilterOptions(mode, appointments)
+  const tabConfig = getTabConfig(mode)
+  const IconComponent = tabConfig.icon
 
   // Get current filter configuration
   const currentFilter = filterOptions.find(f => f.key === filters.status) || filterOptions[0]
@@ -84,21 +225,52 @@ export default function AppointmentSearch({
   // Calculate filtered appointments count
   const getFilteredCount = () => {
     return appointments.filter(appointment => {
+      // Get the data to search (different for interests vs appointments)
+      const isInterestView = mode === 'interests'
+      const searchData = isInterestView ? appointment.appointment : appointment
+      
       // Apply search filter
       if (filters.search) {
         const searchLower = filters.search.toLowerCase()
-        const customerName = `${appointment.customer?.account?.first_name || ''} ${appointment.customer?.account?.last_name || ''}`.toLowerCase()
-        const serviceName = appointment.service?.name?.toLowerCase() || ''
-        const description = appointment.description?.toLowerCase() || ''
+        const customerName = `${searchData.customer?.account?.first_name || ''} ${searchData.customer?.account?.last_name || ''}`.toLowerCase()
+        const serviceName = searchData.service?.name?.toLowerCase() || ''
+        const description = searchData.description?.toLowerCase() || ''
+        const title = searchData.title?.toLowerCase() || ''
         
-        if (!(customerName.includes(searchLower) || serviceName.includes(searchLower) || description.includes(searchLower))) {
+        if (!(customerName.includes(searchLower) || 
+              serviceName.includes(searchLower) || 
+              description.includes(searchLower) ||
+              title.includes(searchLower))) {
           return false
         }
       }
       
-      // Apply status filter
-      if (filters.status !== 'all' && appointment.status !== filters.status) {
-        return false
+      // Apply status filter (different logic for interests)
+      if (filters.status !== 'all') {
+        if (isInterestView) {
+          // For interests, check the interest status or appointment status
+          const interestStatus = appointment.status
+          const appointmentStatus = appointment.appointment?.status
+          
+          if (filters.status === 'pending') {
+            return interestStatus === 'pending' || interestStatus === 'interested'
+          } else if (filters.status === 'urgent') {
+            return searchData.urgency === 'urgent'
+          } else if (filters.status === 'high') {
+            return searchData.urgency === 'high'
+          } else {
+            return interestStatus === filters.status
+          }
+        } else {
+          // For appointments, check appointment status or urgency
+          if (filters.status === 'urgent' || filters.status === 'high') {
+            return appointment.urgency === filters.status
+          } else if (filters.status === 'competing') {
+            return appointment.status === 'competing' || appointment.interest_count > 1
+          } else {
+            return appointment.status === filters.status
+          }
+        }
       }
       
       return true
@@ -106,17 +278,32 @@ export default function AppointmentSearch({
   }
 
   const filteredCount = getFilteredCount()
-  const pendingCount = appointments.filter(a => a.status === 'pending').length
+  
+  // Get urgent count based on mode
+  const getUrgentCount = () => {
+    switch (mode) {
+      case 'available':
+        return appointments.filter(a => a.status === 'pending').length
+      case 'interests':
+        return appointments.filter(a => a.status === 'selected').length
+      case 'assigned':
+        return appointments.filter(a => a.status === 'pending').length
+      default:
+        return 0
+    }
+  }
+
+  const urgentCount = getUrgentCount()
 
   return (
     <div className="professional-workspace">
-      <Card className="bg-card border-border">
-<CardContent className="pt-4 pb-2 px-4">
+      <Card className="bg-card border-0">
+        <CardContent className="pt-4 pb-2 px-4">
           <div className="flex flex-col lg:flex-row items-start lg:items-center gap-4">
             
             {/* Search Input Section */}
             <div className="flex-1 space-y-3 lg:space-y-0 lg:flex lg:items-center lg:gap-4">
-              {/* Status Filter Dropdown - Professional aligned */}
+              {/* Status Filter Dropdown - Tab-aware */}
               <div className="flex items-center gap-2">
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
@@ -130,7 +317,7 @@ export default function AppointmentSearch({
                       )}
                     >
                       <div className="flex items-center gap-2">
-                        <Filter className="h-4 w-4 text-muted-foreground" />
+                        <IconComponent className="h-4 w-4 text-muted-foreground" />
                         <span className="font-medium text-foreground">{currentFilter.label}</span>
                       </div>
                       <div className="flex items-center gap-2">
@@ -152,7 +339,7 @@ export default function AppointmentSearch({
                   >
                     <div className="p-2">
                       <p className="text-xs font-medium text-muted-foreground mb-2 px-2">
-                        Filter by Status
+                        {tabConfig.filterTitle}
                       </p>
                     </div>
                     
@@ -185,7 +372,7 @@ export default function AppointmentSearch({
                           </Badge>
                         </DropdownMenuItem>
                         
-                        {/* Professional separator spacing */}
+                        {/* Separator placement */}
                         {(index === 0 || index === 2) && index < filterOptions.length - 1 && (
                           <DropdownMenuSeparator className="bg-border my-1" />
                         )}
@@ -195,11 +382,11 @@ export default function AppointmentSearch({
                 </DropdownMenu>
               </div>
 
-              {/* Search Input - Professional aligned */}
+              {/* Search Input - Tab-aware placeholder */}
               <div className="relative flex-1 lg:max-w-md">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
-                  placeholder="Search by customer name, service, or description..."
+                  placeholder={tabConfig.placeholder}
                   value={filters.search}
                   onChange={(e) => onSearch(e.target.value)}
                   className={cn(
@@ -222,13 +409,13 @@ export default function AppointmentSearch({
               </div>
             </div>
 
-            {/* Active Filters & Actions - Professional spacing */}
+            {/* Active Filters & Actions */}
             {hasActiveFilters && (
               <>
                 <Separator orientation="vertical" className="hidden lg:block h-8 bg-border" />
                 
                 <div className="flex flex-wrap items-center gap-2">
-                  {/* Active Filter Tags - Using professional semantic tokens */}
+                  {/* Active Filter Tags */}
                   {filters.status !== 'all' && (
                     <div className="flex items-center gap-1">
                       <Badge 
@@ -277,7 +464,7 @@ export default function AppointmentSearch({
                     </div>
                   )}
                   
-                  {/* Clear All Button - Professional styling */}
+                  {/* Clear All Button */}
                   <Button 
                     variant="ghost" 
                     size="sm"
@@ -294,36 +481,36 @@ export default function AppointmentSearch({
               </>
             )}
             
-            {/* Results Summary - Professional typography */}
+            {/* Results Summary - Tab-aware */}
             {!hasActiveFilters && (
               <div className="hidden lg:flex items-center text-sm text-muted-foreground">
                 <span>
-                  {appointments.length} total {appointments.length === 1 ? 'appointment' : 'appointments'}
+                  {appointments.length} total {tabConfig.summaryLabel}
                 </span>
-                {pendingCount > 0 && (
+                {urgentCount > 0 && (
                   <span className="ml-2 text-destructive font-medium">
-                    • {pendingCount} pending review
+                    • {urgentCount} {tabConfig.urgentLabel}
                   </span>
                 )}
               </div>
             )}
           </div>
           
-          {/* Filter Results Summary - Professional spacing and colors */}
+          {/* Filter Results Summary */}
           {hasActiveFilters && (
             <div className="mt-4 pt-3 border-t border-border">
               <div className="flex items-center justify-between text-sm">
                 <div className="text-muted-foreground">
-                  Showing {filteredCount} of {appointments.length} appointments
+                  Showing {filteredCount} of {appointments.length} {tabConfig.summaryLabel}
                 </div>
                 
                 <div className="flex items-center gap-2">
-                  {pendingCount > 0 && (
+                  {urgentCount > 0 && (
                     <Badge 
                       variant="destructive" 
                       className="text-xs bg-destructive/10 text-destructive hover:bg-destructive/20"
                     >
-                      {pendingCount} urgent
+                      {urgentCount} {tabConfig.urgentLabel}
                     </Badge>
                   )}
                 </div>

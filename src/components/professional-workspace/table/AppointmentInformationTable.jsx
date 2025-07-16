@@ -56,18 +56,26 @@ import {
   Building2,
   Paperclip,
   Image,
-  FileText
+  FileText,
+  Star,
+  Heart,
+  Send,
+  UserCheck
 } from 'lucide-react'
 
 export default function AppointmentInformationTable({
   appointments = [],
+  professionalId, // ✅ NEW: Professional ID for invitation detection
   onView,
   onAccept,
   onDecline,
+  onExpressInterest, // ✅ NEW: For available appointments
+  onUpdateInterest, // ✅ NEW: For interests
   onViewAttachments,
   loading = false,
   pagination,
-  onPageChange
+  onPageChange,
+  mode = 'assigned' // ✅ NEW: 'available', 'interests', 'assigned'
 }) {
   const [actionLoading, setActionLoading] = useState({})
   const [sortConfig, setSortConfig] = useState({
@@ -84,6 +92,26 @@ export default function AppointmentInformationTable({
     } finally {
       setActionLoading(prev => ({ ...prev, [appointmentId]: null }))
     }
+  }
+
+  // ✅ NEW: Handle express interest action
+  const handleExpressInterest = async (appointment) => {
+    const isInvitation = appointment.is_invited || (appointment.recipients && appointment.recipients.includes(professionalId))
+    
+    // Basic interest data - can be enhanced with a form modal
+    const interestData = {
+      intent: isInvitation ? 'high' : 'standard',
+      message: isInvitation 
+        ? 'Thank you for the invitation. I am very interested in this project and would love to discuss the details with you.'
+        : 'I am interested in this project and believe I can provide excellent service. I would appreciate the opportunity to work with you.',
+      assessment: false
+    }
+
+    await handleAction(
+      appointment.appointment_id,
+      'express_interest',
+      () => onExpressInterest(appointment.appointment_id, interestData)
+    )
   }
 
   // Sorting functionality
@@ -109,7 +137,9 @@ export default function AppointmentInformationTable({
     if (selectedRows.size === appointments.length) {
       setSelectedRows(new Set())
     } else {
-      setSelectedRows(new Set(appointments.map(apt => apt.appointment_id)))
+      setSelectedRows(new Set(appointments.map(apt => 
+        mode === 'interests' ? apt.appointment?.appointment_id : apt.appointment_id
+      )))
     }
   }
 
@@ -123,18 +153,44 @@ export default function AppointmentInformationTable({
     if (!sortConfig.key) return appointments
 
     return [...appointments].sort((a, b) => {
-      let aValue = a[sortConfig.key]
-      let bValue = b[sortConfig.key]
+      // Handle interests mode where data is nested
+      const aData = mode === 'interests' ? a.appointment : a
+      const bData = mode === 'interests' ? b.appointment : b
+
+      let aValue = aData[sortConfig.key]
+      let bValue = bData[sortConfig.key]
 
       // Handle nested values
       if (sortConfig.key === 'customer_name') {
-        aValue = `${a.customer?.account?.first_name || ''} ${a.customer?.account?.last_name || ''}`.trim()
-        bValue = `${b.customer?.account?.first_name || ''} ${b.customer?.account?.last_name || ''}`.trim()
+        aValue = `${aData.customer?.account?.first_name || ''} ${aData.customer?.account?.last_name || ''}`.trim()
+        bValue = `${bData.customer?.account?.first_name || ''} ${bData.customer?.account?.last_name || ''}`.trim()
       }
 
       if (sortConfig.key === 'service_name') {
-        aValue = a.service?.name || a.title || ''
-        bValue = b.service?.name || b.title || ''
+        aValue = aData.service?.name || aData.title || ''
+        bValue = bData.service?.name || bData.title || ''
+      }
+
+      // For interests mode, also check interest-specific fields
+      if (mode === 'interests') {
+        if (sortConfig.key === 'interest_status') {
+          aValue = a.status
+          bValue = b.status
+        }
+        if (sortConfig.key === 'interest_intent') {
+          aValue = a.intent
+          bValue = b.intent
+        }
+      }
+
+      // Handle urgency/priority sorting with fallbacks
+      if (sortConfig.key === 'urgency') {
+        aValue = aData.urgency || aData.priority || 'standard'
+        bValue = bData.urgency || bData.priority || 'standard'
+      }
+      if (sortConfig.key === 'appointment_time') {
+        aValue = new Date(aData.appointment_time || 0)
+        bValue = new Date(bData.appointment_time || 0)
       }
 
       // Handle dates
@@ -156,7 +212,60 @@ export default function AppointmentInformationTable({
       }
       return 0
     })
-  }, [appointments, sortConfig])
+  }, [appointments, sortConfig, mode])
+
+  // ✅ DEBUG: Log appointment structure to help identify available fields
+  useMemo(() => {
+    if (appointments.length > 0) {
+      console.log('🔍 Sample appointment structure:', appointments[0])
+      console.log('🔍 Available fields:', Object.keys(appointments[0]))
+      if (mode === 'interests' && appointments[0].appointment) {
+        console.log('🔍 Nested appointment fields:', Object.keys(appointments[0].appointment))
+      }
+      
+      // ✅ NEW: Debug appointment time fields specifically with null checks
+      const appointment = mode === 'interests' ? appointments[0]?.appointment : appointments[0]
+      if (appointment) {
+        console.log('🕒 Appointment time fields check:', {
+          session: appointment.session,              // ✅ YOUR MAIN FIELD!
+          appointment_time: appointment.appointment_time,
+          scheduled_time: appointment.scheduled_time,
+          start_time: appointment.start_time,
+          datetime: appointment.datetime,
+          date: appointment.date,
+          time: appointment.time,
+          created_at: appointment.created_at
+        })
+      } else {
+        console.log('⚠️ Appointment data is undefined')
+      }
+    }
+  }, [appointments, mode])
+
+  // ✅ NEW: Get appointment data based on mode
+  const getAppointmentData = (item) => {
+    if (!item) return null
+    return mode === 'interests' ? item.appointment : item
+  }
+
+  // ✅ NEW: Get appointment time with multiple field fallbacks
+  const getAppointmentTime = (appointment) => {
+    if (!appointment) return null
+    
+    return appointment.session ||           // ✅ YOUR DATA USES THIS!
+           appointment.appointment_time || 
+           appointment.scheduled_time || 
+           appointment.start_time || 
+           appointment.datetime || 
+           appointment.date || 
+           appointment.time ||
+           appointment.created_at ||
+           null
+  }
+  const getInvitationStatus = (appointment) => {
+    if (mode !== 'available') return false
+    return appointment.is_invited || (appointment.recipients && appointment.recipients.includes(professionalId))
+  }
 
   // Professional status configuration using semantic tokens
   const getStatusConfig = (status) => {
@@ -195,9 +304,49 @@ export default function AppointmentInformationTable({
         icon: X,
         label: 'Declined',
         dotColor: 'bg-muted-foreground'
+      },
+      // ✅ NEW: Interest-specific statuses
+      selected: {
+        variant: 'default',
+        className: 'bg-green-600 text-white hover:bg-green-700',
+        icon: UserCheck,
+        label: 'Selected',
+        dotColor: 'bg-white'
+      },
+      rejected: {
+        variant: 'secondary',
+        className: 'bg-red-100 text-red-800 border-red-200',
+        icon: X,
+        label: 'Rejected',
+        dotColor: 'bg-red-600'
       }
     }
     return configs[status] || configs.pending
+  }
+
+  // ✅ NEW: Interest intent configuration
+  const getIntentConfig = (intent) => {
+    const configs = {
+      high: { 
+        icon: Flame,
+        className: 'bg-orange-100 text-orange-800 border-orange-200',
+        label: 'High Interest',
+        dotColor: 'bg-orange-600'
+      },
+      standard: { 
+        icon: Heart,
+        className: 'bg-blue-100 text-blue-800 border-blue-200',
+        label: 'Standard',
+        dotColor: 'bg-blue-600'
+      },
+      low: { 
+        icon: Minus,
+        className: 'bg-gray-100 text-gray-800 border-gray-200',
+        label: 'Low Interest',
+        dotColor: 'bg-gray-600'
+      }
+    }
+    return configs[intent] || configs.standard
   }
 
   // Professional priority configuration using semantic tokens
@@ -295,6 +444,20 @@ export default function AppointmentInformationTable({
       : <ArrowDown className="h-4 w-4 text-foreground" />
   }
 
+  // ✅ NEW: Get table title based on mode
+  const getTableTitle = () => {
+    switch (mode) {
+      case 'available':
+        return 'Available Appointments'
+      case 'interests':
+        return 'My Interests'
+      case 'assigned':
+        return 'Assigned Appointments'
+      default:
+        return 'Appointments Overview'
+    }
+  }
+
   // Professional loading skeleton
   const LoadingSkeleton = () => (
     <Card className="w-full bg-card border-border">
@@ -347,14 +510,30 @@ export default function AppointmentInformationTable({
   }
 
   if (appointments.length === 0) {
+    const emptyMessages = {
+      available: {
+        title: 'No available appointments',
+        description: 'There are currently no appointment opportunities in your area. Check back later for new opportunities and invitations.'
+      },
+      interests: {
+        title: 'No interests expressed',
+        description: 'You haven\'t expressed interest in any appointments yet. Browse available appointments to get started.'
+      },
+      assigned: {
+        title: 'No assigned appointments',
+        description: 'You don\'t have any assigned appointments yet. Express interest in available appointments to get selected by customers.'
+      }
+    }
+
+    const message = emptyMessages[mode] || emptyMessages.assigned
+
     return (
       <Card className="bg-card border-border">
         <CardContent className="flex flex-col items-center justify-center py-16 bg-background">
           <Calendar className="h-16 w-16 text-muted-foreground mb-4" />
-          <h3 className="text-lg font-semibold mb-2 text-foreground">No appointments found</h3>
+          <h3 className="text-lg font-semibold mb-2 text-foreground">{message.title}</h3>
           <p className="text-muted-foreground text-center max-w-md">
-            You don't have any appointment requests yet. Once customers start booking services, 
-            they'll appear here for you to review and manage.
+            {message.description}
           </p>
         </CardContent>
       </Card>
@@ -368,7 +547,7 @@ export default function AppointmentInformationTable({
         <CardHeader className="flex-shrink-0 bg-muted/30 border-b border-border">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
-              <CardTitle className="text-lg text-foreground">Appointments Overview</CardTitle>
+              <CardTitle className="text-lg text-foreground">{getTableTitle()}</CardTitle>
               {selectedRows.size > 0 && (
                 <Badge variant="outline" className="text-xs bg-primary/10 text-primary border-primary/20">
                   {selectedRows.size} of {appointments.length} selected
@@ -411,6 +590,14 @@ export default function AppointmentInformationTable({
                       className="border-border data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground"
                     />
                   </TableHead>
+                  
+                  {/* ✅ NEW: Invitation indicator for available mode */}
+                  {mode === 'available' && (
+                    <TableHead className="py-4 bg-background/95 text-muted-foreground font-medium w-16">
+                      Type
+                    </TableHead>
+                  )}
+                  
                   <TableHead 
                     className="cursor-pointer select-none hover:bg-muted/50 transition-colors py-4 bg-background/95 text-muted-foreground"
                     onClick={() => handleSort('customer_name')}
@@ -431,22 +618,47 @@ export default function AppointmentInformationTable({
                   </TableHead>
                   <TableHead 
                     className="cursor-pointer select-none hover:bg-muted/50 transition-colors py-4 bg-background/95 text-muted-foreground"
-                    onClick={() => handleSort('preferred_start')}
+                    onClick={() => handleSort('appointment_time')}
                   >
                     <div className="flex items-center space-x-2">
-                      <span className="font-medium">Appointment Time </span>
-                      {getSortIcon('preferred_start')}
+                      <span className="font-medium">Appointment Time</span>
+                      {getSortIcon('appointment_time')}
                     </div>
                   </TableHead>
-                  <TableHead 
-                    className="cursor-pointer select-none hover:bg-muted/50 transition-colors py-4 bg-background/95 text-muted-foreground"
-                    onClick={() => handleSort('status')}
-                  >
-                    <div className="flex items-center space-x-2">
-                      <span className="font-medium">Status</span>
-                      {getSortIcon('status')}
-                    </div>
-                  </TableHead>
+                  
+                  {/* ✅ NEW: Different status columns based on mode */}
+                  {mode === 'interests' ? (
+                    <>
+                      <TableHead 
+                        className="cursor-pointer select-none hover:bg-muted/50 transition-colors py-4 bg-background/95 text-muted-foreground"
+                        onClick={() => handleSort('interest_status')}
+                      >
+                        <div className="flex items-center space-x-2">
+                          <span className="font-medium">Interest Status</span>
+                          {getSortIcon('interest_status')}
+                        </div>
+                      </TableHead>
+                      <TableHead 
+                        className="cursor-pointer select-none hover:bg-muted/50 transition-colors py-4 bg-background/95 text-muted-foreground"
+                        onClick={() => handleSort('interest_intent')}
+                      >
+                        <div className="flex items-center space-x-2">
+                          <span className="font-medium">Intent</span>
+                          {getSortIcon('interest_intent')}
+                        </div>
+                      </TableHead>
+                    </>
+                  ) : (
+                    <TableHead 
+                      className="cursor-pointer select-none hover:bg-muted/50 transition-colors py-4 bg-background/95 text-muted-foreground"
+                      onClick={() => handleSort('status')}
+                    >
+                      <div className="flex items-center space-x-2">
+                        <span className="font-medium">Status</span>
+                        {getSortIcon('status')}
+                      </div>
+                    </TableHead>
+                  )}
                   
                   {/* Files Column */}
                   <TableHead className="py-4 bg-background/95 text-muted-foreground font-medium">
@@ -455,19 +667,12 @@ export default function AppointmentInformationTable({
                   
                   <TableHead 
                     className="cursor-pointer select-none hover:bg-muted/50 transition-colors py-4 bg-background/95 text-muted-foreground"
-                    onClick={() => handleSort('urgency')}
-                  >
-                    <div className="flex items-center space-x-2">
-                      <span className="font-medium">Priority</span>
-                      {getSortIcon('urgency')}
-                    </div>
-                  </TableHead>
-                  <TableHead 
-                    className="cursor-pointer select-none hover:bg-muted/50 transition-colors py-4 bg-background/95 text-muted-foreground"
                     onClick={() => handleSort('created_at')}
                   >
                     <div className="flex items-center space-x-2">
-                      <span className="font-medium">Requested</span>
+                      <span className="font-medium">
+                        {mode === 'interests' ? 'Expressed' : 'Requested'}
+                      </span>
                       {getSortIcon('created_at')}
                     </div>
                   </TableHead>
@@ -479,29 +684,74 @@ export default function AppointmentInformationTable({
 
               {/* Professional Table Body */}
               <TableBody>
-                {sortedAppointments.map((appointment) => {
-                  const statusConfig = getStatusConfig(appointment.status)
-                  const priorityConfig = getPriorityConfig(appointment.urgency)
-                  const isSelected = selectedRows.has(appointment.appointment_id)
+                {sortedAppointments.map((item) => {
+                  const appointment = getAppointmentData(item)
+                  
+                  // ✅ Early return if appointment is null/undefined
+                  if (!appointment) {
+                    console.warn('⚠️ Skipping undefined appointment:', item)
+                    return null
+                  }
+                  
+                  const isInvitation = getInvitationStatus(appointment)
+                  const statusConfig = getStatusConfig(
+                    mode === 'interests' ? item.status : appointment.status
+                  )
+                  const intentConfig = mode === 'interests' ? getIntentConfig(item.intent) : null
+                  const itemId = appointment.appointment_id
+                  const isSelected = selectedRows.has(itemId)
                   const attachments = appointment.attachments || []
+                  
+                  // ✅ DEBUG: Check what's causing the styling
+                  console.log('Row styling debug:', {
+                    appointmentId: itemId,
+                    isInvitation,
+                    isSelected,
+                    appointmentData: appointment
+                  })
                   
                   return (
                     <TableRow 
-                      key={appointment.appointment_id}
+                      key={itemId}
                       className={cn(
                         "h-20 transition-all duration-200 hover:bg-muted/50 border-b border-border group",
                         isSelected && "bg-primary/5 border-l-4 border-l-primary"
+                        // ✅ REMOVED: invitation background styling
+                        // isInvitation && "bg-blue-50 dark:bg-blue-950/30 border-l-4 border-l-blue-500"
                       )}
                     >
                       {/* Checkbox */}
                       <TableCell className="py-6">
                         <Checkbox
                           checked={isSelected}
-                          onCheckedChange={() => handleRowSelect(appointment.appointment_id)}
+                          onCheckedChange={() => handleRowSelect(itemId)}
                           aria-label={`Select appointment for ${appointment.customer?.account?.first_name} ${appointment.customer?.account?.last_name}`}
                           className="border-border data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground"
                         />
                       </TableCell>
+
+                      {/* ✅ NEW: Invitation/Type indicator for available mode */}
+                      {mode === 'available' && (
+                        <TableCell className="py-6">
+                          {isInvitation ? (
+                            <Tooltip>
+                              <TooltipTrigger>
+                                <Badge className="bg-blue-600 text-white text-xs">
+                                  <Star className="h-3 w-3 mr-1" />
+                                  Invited
+                                </Badge>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <p>You were specifically invited for this project</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          ) : (
+                            <Badge variant="outline" className="text-xs">
+                              Open
+                            </Badge>
+                          )}
+                        </TableCell>
+                      )}
 
                       {/* Customer */}
                       <TableCell className="py-6">
@@ -536,15 +786,15 @@ export default function AppointmentInformationTable({
                           <div className="font-medium text-sm truncate text-foreground">
                             {appointment.service?.name || appointment.title || 'Untitled Service'}
                           </div>
-                          {appointment.description && (
+                          {(appointment.description || appointment.customer_message) && (
                             <Tooltip>
                               <TooltipTrigger asChild>
                                 <div className="text-xs text-muted-foreground truncate max-w-[200px] cursor-help">
-                                  {appointment.description}
+                                  {appointment.description || appointment.customer_message}
                                 </div>
                               </TooltipTrigger>
                               <TooltipContent className="max-w-xs bg-popover text-popover-foreground border-border">
-                                <p>{appointment.description}</p>
+                                <p>{appointment.description || appointment.customer_message}</p>
                               </TooltipContent>
                             </Tooltip>
                           )}
@@ -559,11 +809,11 @@ export default function AppointmentInformationTable({
                         </div>
                       </TableCell>
 
-                      {/* Preferred Time */}
+                      {/* Appointment Time */}
                       <TableCell className="py-6">
                         <div className="space-y-1">
                           <div className="font-medium text-sm text-foreground">
-                            {formatDate(appointment.preferred_start)}
+                            {formatDate(getAppointmentTime(appointment))}
                           </div>
                           {appointment.deadline && (
                             <div className="text-xs text-muted-foreground flex items-center space-x-1">
@@ -571,26 +821,79 @@ export default function AppointmentInformationTable({
                               <span>Due: {formatDate(appointment.deadline)}</span>
                             </div>
                           )}
+                          {/* ✅ NEW: Debug display to see what we're getting */}
+                          {process.env.NODE_ENV === 'development' && appointment && (
+                            <div className="text-xs text-red-500">
+                              Debug: {JSON.stringify({
+                                session: appointment.session,     // ✅ YOUR MAIN FIELD!
+                                appointment_time: appointment.appointment_time,
+                                scheduled_time: appointment.scheduled_time,
+                                start_time: appointment.start_time,
+                                date: appointment.date,
+                                created_at: appointment.created_at
+                              })}
+                            </div>
+                          )}
                         </div>
                       </TableCell>
 
-                      {/* Status */}
-                      <TableCell className="py-6">
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <div className="flex items-center gap-2 cursor-help w-fit">
-                              <div className={cn("w-2 h-2 rounded-full", statusConfig.dotColor)} />
-                              <Badge className={statusConfig.className}>
-                                <statusConfig.icon className="h-3 w-3 mr-1" />
-                                {statusConfig.label}
-                              </Badge>
-                            </div>
-                          </TooltipTrigger>
-                          <TooltipContent className="bg-popover text-popover-foreground border-border">
-                            <p>Appointment status: {statusConfig.label}</p>
-                          </TooltipContent>
-                        </Tooltip>
-                      </TableCell>
+                      {/* Status - Different based on mode */}
+                      {mode === 'interests' ? (
+                        <>
+                          {/* Interest Status */}
+                          <TableCell className="py-6">
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <div className="flex items-center gap-2 cursor-help w-fit">
+                                  <div className={cn("w-2 h-2 rounded-full", statusConfig.dotColor)} />
+                                  <Badge className={statusConfig.className}>
+                                    <statusConfig.icon className="h-3 w-3 mr-1" />
+                                    {statusConfig.label}
+                                  </Badge>
+                                </div>
+                              </TooltipTrigger>
+                              <TooltipContent className="bg-popover text-popover-foreground border-border">
+                                <p>Interest status: {statusConfig.label}</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TableCell>
+
+                          {/* Interest Intent */}
+                          <TableCell className="py-6">
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <div className="flex items-center gap-2 cursor-help w-fit">
+                                  <div className={cn("w-2 h-2 rounded-full", intentConfig.dotColor)} />
+                                  <Badge className={intentConfig.className}>
+                                    <intentConfig.icon className="h-3 w-3 mr-1" />
+                                    {intentConfig.label}
+                                  </Badge>
+                                </div>
+                              </TooltipTrigger>
+                              <TooltipContent className="bg-popover text-popover-foreground border-border">
+                                <p>Interest level: {intentConfig.label}</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TableCell>
+                        </>
+                      ) : (
+                        <TableCell className="py-6">
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <div className="flex items-center gap-2 cursor-help w-fit">
+                                <div className={cn("w-2 h-2 rounded-full", statusConfig.dotColor)} />
+                                <Badge className={statusConfig.className}>
+                                  <statusConfig.icon className="h-3 w-3 mr-1" />
+                                  {statusConfig.label}
+                                </Badge>
+                              </div>
+                            </TooltipTrigger>
+                            <TooltipContent className="bg-popover text-popover-foreground border-border">
+                              <p>Appointment status: {statusConfig.label}</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TableCell>
+                      )}
 
                       {/* Files Column */}
                       <TableCell className="py-6">
@@ -610,31 +913,10 @@ export default function AppointmentInformationTable({
                         )}
                       </TableCell>
 
-                      {/* Priority */}
-                      <TableCell className="py-6">
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <div className={cn(
-                              "flex items-center space-x-2 px-3 py-2 rounded-md cursor-help w-fit transition-colors",
-                              priorityConfig.className
-                            )}>
-                              <div className={cn("w-2 h-2 rounded-full", priorityConfig.dotColor)} />
-                              <priorityConfig.icon className="h-4 w-4" />
-                              <span className="text-sm font-medium">
-                                {priorityConfig.label}
-                              </span>
-                            </div>
-                          </TooltipTrigger>
-                          <TooltipContent className="bg-popover text-popover-foreground border-border">
-                            <p>Priority level: {priorityConfig.label}</p>
-                          </TooltipContent>
-                        </Tooltip>
-                      </TableCell>
-
-                      {/* Requested */}
+                      {/* Requested/Expressed Date */}
                       <TableCell className="py-6">
                         <div className="text-sm text-muted-foreground">
-                          {formatDate(appointment.created_at)}
+                          {formatDate(mode === 'interests' ? item.created_at : appointment.created_at)}
                         </div>
                       </TableCell>
 
@@ -646,9 +928,9 @@ export default function AppointmentInformationTable({
                               variant="ghost" 
                               size="sm"
                               className="h-8 w-8 p-0 hover:bg-muted data-[state=open]:bg-muted transition-colors text-muted-foreground hover:text-foreground opacity-0 group-hover:opacity-100"
-                              disabled={!!actionLoading[appointment.appointment_id]}
+                              disabled={!!actionLoading[itemId]}
                             >
-                              {actionLoading[appointment.appointment_id] ? (
+                              {actionLoading[itemId] ? (
                                 <Loader2 className="h-4 w-4 animate-spin" />
                               ) : (
                                 <MoreHorizontal className="h-4 w-4" />
@@ -659,7 +941,7 @@ export default function AppointmentInformationTable({
                           <DropdownMenuContent className="bg-popover border-border" align="end">
                             <DropdownMenuItem 
                               className="cursor-pointer hover:bg-muted hover:text-accent-foreground"
-                              onClick={() => onView(appointment.appointment_id)}
+                              onClick={() => onView(itemId)}
                             >
                               <Eye className="mr-2 h-4 w-4" />
                               View Details
@@ -675,15 +957,42 @@ export default function AppointmentInformationTable({
                               View Customer Files
                             </DropdownMenuItem>
                             
-                            {appointment.status === 'pending' && (
+                            {/* ✅ NEW: Mode-specific actions */}
+                            {mode === 'available' && onExpressInterest && (
+                              <>
+                                <DropdownMenuSeparator className="bg-border" />
+                                <DropdownMenuItem 
+                                  className="cursor-pointer hover:bg-muted hover:text-accent-foreground"
+                                  onClick={() => handleExpressInterest(appointment)}
+                                >
+                                  <Send className="mr-2 h-4 w-4" />
+                                  {isInvitation ? 'Respond to Invitation' : 'Express Interest'}
+                                </DropdownMenuItem>
+                              </>
+                            )}
+
+                            {mode === 'interests' && onUpdateInterest && (
+                              <>
+                                <DropdownMenuSeparator className="bg-border" />
+                                <DropdownMenuItem 
+                                  className="cursor-pointer hover:bg-muted hover:text-accent-foreground"
+                                  onClick={() => onUpdateInterest(item.interest_id, { status: 'withdrawn' })}
+                                >
+                                  <X className="mr-2 h-4 w-4" />
+                                  Withdraw Interest
+                                </DropdownMenuItem>
+                              </>
+                            )}
+                            
+                            {mode === 'assigned' && appointment.status === 'pending' && onAccept && onDecline && (
                               <>
                                 <DropdownMenuSeparator className="bg-border" />
                                 <DropdownMenuItem 
                                   className="cursor-pointer hover:bg-muted hover:text-accent-foreground"
                                   onClick={() => handleAction(
-                                    appointment.appointment_id, 
+                                    itemId, 
                                     'accept', 
-                                    () => onAccept(appointment.appointment_id)
+                                    () => onAccept(itemId)
                                   )}
                                 >
                                   <Check className="mr-2 h-4 w-4" />
@@ -692,9 +1001,9 @@ export default function AppointmentInformationTable({
                                 <DropdownMenuItem 
                                   className="cursor-pointer hover:bg-muted hover:text-accent-foreground"
                                   onClick={() => handleAction(
-                                    appointment.appointment_id, 
+                                    itemId, 
                                     'decline', 
-                                    () => onDecline(appointment.appointment_id)
+                                    () => onDecline(itemId)
                                   )}
                                 >
                                   <X className="mr-2 h-4 w-4" />
@@ -712,7 +1021,7 @@ export default function AppointmentInformationTable({
                             <DropdownMenuSeparator className="bg-border" />
                             <DropdownMenuItem className="cursor-pointer hover:bg-muted text-muted-foreground hover:text-destructive">
                               <Trash2 className="mr-2 h-4 w-4" />
-                              Archive Appointment
+                              Archive
                             </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
@@ -730,10 +1039,23 @@ export default function AppointmentInformationTable({
               <span>
                 {selectedRows.size > 0 ? selectedRows.size : '0'} of {appointments.length} row(s) selected
               </span>
-              {appointments.length > 0 && (
+              {appointments.length > 0 && mode !== 'interests' && (
                 <span>
                   • {appointments.filter(a => a.status === 'pending').length} pending
                   • {appointments.filter(a => a.status === 'accepted').length} accepted
+                </span>
+              )}
+              {appointments.length > 0 && mode === 'interests' && (
+                <span>
+                  • {appointments.filter(a => a.status === 'pending').length} pending
+                  • {appointments.filter(a => a.status === 'selected').length} selected
+                  • {appointments.filter(a => a.status === 'rejected').length} rejected
+                </span>
+              )}
+              {/* ✅ NEW: Show invitation count for available mode */}
+              {mode === 'available' && appointments.length > 0 && (
+                <span>
+                  • {appointments.filter(a => getInvitationStatus(a)).length} invitations
                 </span>
               )}
             </div>

@@ -1,9 +1,13 @@
+// Updated src/app/(customer-workspace)/customer/services/[id]/page.jsx
+// FIXED: Use userStore instead of direct session calls
+
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
 import { useParams, useSearchParams, useRouter } from 'next/navigation'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { 
@@ -12,32 +16,35 @@ import {
   DollarSign, 
   Users, 
   Star,
-  Loader2
+  Loader2,
+  CheckCircle,
+  MessageSquare
 } from 'lucide-react'
 
 import { createClient } from '@/utils/supabase/client'
+import { useUserStore } from '@/store/userStore' // USE USERSTORE
 import AddressConfirmation from '@/components/AddressConfirmation/AddressConfirmation'
 import ProfessionalManifest from '@/components/ProfessionalManifest'
 import NoProfessionalsFound from '@/components/NoProfessionalFound/NoProfessionalsFound'
+import AppointmentModal from '@/components/modal/AppointmentModal'
 
 export default function ProfessionalCollectionInterface() {
   const { id: serviceId } = useParams()
   const router = useRouter()
   const searchParams = useSearchParams()
 
-  // Initialize Supabase client
-  const supabase = createClient()
-
-  // Session and account state
-  const [session, setSession] = useState(null)
-  const [account, setAccount] = useState(null)
-  const [accountLoading, setAccountLoading] = useState(true)
+  // USE USERSTORE INSTEAD OF DIRECT SESSION CALLS
+  const { user, isLoading: userLoading, fetchUser } = useUserStore()
   
   // Professional and service state
   const [professionals, setProfessionals] = useState([])
   const [loading, setLoading] = useState(false)
   const [serviceInformation, setServiceInformation] = useState(null)
   const [serviceLoading, setServiceLoading] = useState(true)
+
+  // Multi-select state
+  const [selectedProfessionals, setSelectedProfessionals] = useState([])
+  const [showAppointmentModal, setShowAppointmentModal] = useState(false)
 
   const lat = searchParams.get('lat')
   const lng = searchParams.get('lng')
@@ -46,68 +53,58 @@ export default function ProfessionalCollectionInterface() {
     ? { lat: parseFloat(lat), lng: parseFloat(lng) }
     : null
 
-  // Get session and account data
+  // Handle professional selection toggle
+  const handleProfessionalToggle = useCallback((professional) => {
+    setSelectedProfessionals(prev => {
+      const isSelected = prev.find(p => p.professional_id === professional.professional_id)
+      if (isSelected) {
+        return prev.filter(p => p.professional_id !== professional.professional_id)
+      } else {
+        return [...prev, professional]
+      }
+    })
+  }, [])
+
+  // Check if professional is selected
+  const isProfessionalSelected = useCallback((professionalId) => {
+    return selectedProfessionals.some(p => p.professional_id === professionalId)
+  }, [selectedProfessionals])
+
+  // Handle appointment success
+  const handleAppointmentSuccess = useCallback((appointment) => {
+    console.log('✅ Appointment created successfully:', appointment)
+    setShowAppointmentModal(false)
+    setSelectedProfessionals([]) // Clear selection
+    
+    // Show success message and redirect
+    alert(`Success! Your request has been sent to ${selectedProfessionals.length} professional${selectedProfessionals.length !== 1 ? 's' : ''}. You'll receive quotes soon!`)
+    
+    // Optionally redirect to appointments page
+    router.push('/customer/appointments')
+  }, [selectedProfessionals.length, router])
+
+  // SIMPLIFIED: Get user data from userStore
   useEffect(() => {
-    const getSessionAndAccount = async () => {
-      try {
-        setAccountLoading(true)
-        
-        // Get session
-        const { data: { session }, error: sessionError } = await supabase.auth.getSession()
-        
-        if (sessionError) {
-          console.error('Session error:', sessionError)
-          setAccountLoading(false)
-          return
+    const initializeUser = async () => {
+      if (!user && !userLoading) {
+        console.log('🔄 No user in store, attempting to fetch...')
+        try {
+          const supabase = createClient()
+          const { data: { session } } = await supabase.auth.getSession()
+          
+          if (session?.user) {
+            await fetchUser(session.user, supabase)
+          } else {
+            console.log('👤 No session found - user needs to log in')
+          }
+        } catch (error) {
+          console.error('❌ Error initializing user:', error)
         }
-        
-        setSession(session)
-        
-        // If no session, still allow browsing but without account
-        if (!session?.user?.email) {
-          console.log('No session found - allowing anonymous browsing')
-          setAccountLoading(false)
-          return
-        }
-
-        // Get account data
-        const { data: accountData, error: accountError } = await supabase
-          .from('account')
-          .select('*')
-          .eq('email', session.user.email)
-          .single()
-
-        if (accountError) {
-          console.error('Error fetching account:', accountError)
-          // Don't block if account fetch fails
-        } else {
-          setAccount(accountData)
-        }
-      } catch (err) {
-        console.error('Error in session/account fetch:', err)
-      } finally {
-        setAccountLoading(false)
       }
     }
 
-    getSessionAndAccount()
-
-    // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-   (event, session) => {
-     // Only handle significant auth changes, ignore token refreshes
-     if (event !== 'TOKEN_REFRESHED') {
-       console.log('Auth state changed:', event, session?.user?.email)
-       setSession(session)
-       if (!session) {
-         setAccount(null)
-       }
-     }
-   }
- )
-
-    return () => subscription.unsubscribe()
-  }, [])
+    initializeUser()
+  }, [user, userLoading, fetchUser])
 
   // Fetch service data
   useEffect(() => {
@@ -116,6 +113,7 @@ export default function ProfessionalCollectionInterface() {
 
       try {
         setServiceLoading(true)
+        const supabase = createClient()
         
         const { data: service, error } = await supabase
           .from('service')
@@ -154,13 +152,10 @@ export default function ProfessionalCollectionInterface() {
   }, [serviceId])
 
   const fetchNearbyProfessionals = useCallback(async (location) => {
-    if (!location) return
-    if (!location.lat || !location.lng) return
-    if (!serviceId) return
+    if (!location?.lat || !location?.lng || !serviceId) return
 
     try {
       setLoading(true)
-
       console.log('📡 Fetching nearby professionals for location:', location)
 
       const res = await fetch('/api/professionals/nearby', {
@@ -171,7 +166,6 @@ export default function ProfessionalCollectionInterface() {
 
       const data = await res.json()
       console.log('📦 Professionals fetched:', data)
-
       setProfessionals(data)
     } catch (err) {
       console.error('Error fetching professionals:', err)
@@ -182,11 +176,7 @@ export default function ProfessionalCollectionInterface() {
 
   // Fetch professionals once location is ready
   useEffect(() => {
-    if (
-      locationFromQuery &&
-      typeof locationFromQuery.lat === 'number' &&
-      typeof locationFromQuery.lng === 'number'
-    ) {
+    if (locationFromQuery?.lat && locationFromQuery?.lng) {
       console.log('🔍 Valid location detected:', locationFromQuery)
       fetchNearbyProfessionals(locationFromQuery)
     }
@@ -194,27 +184,14 @@ export default function ProfessionalCollectionInterface() {
 
   const handleAddressConfirmed = (address) => {
     console.log('📍 Confirmed address lat/lng:', address)
-
     const query = new URLSearchParams({
-      lat: address.lat,
-      lng: address.lng,
+      lat: address.lat || address.latitude,
+      lng: address.lng || address.longitude,
     }).toString()
-
     router.push(`/customer/services/${serviceId}?${query}`)
   }
 
-  // Debug logging
-  useEffect(() => {
-    console.log('🔍 DEBUG SESSION:', {
-      session: session,
-      user: session?.user,
-      email: session?.user?.email,
-      accountLoading: accountLoading,
-      account: account
-    })
-  }, [session, accountLoading, account])
-
-  // Loading skeleton components
+  // Loading skeletons (keeping your existing ones)
   const ServiceHeaderSkeleton = () => (
     <Card className="mb-6">
       <CardHeader>
@@ -263,27 +240,57 @@ export default function ProfessionalCollectionInterface() {
     </div>
   )
 
-  // Show loading while checking session/account
-  if (accountLoading) {
+  // Show loading while userStore is initializing
+  if (userLoading) {
     return (
       <div className="container max-w-7xl mx-auto px-4 py-8">
         <div className="flex flex-col items-center justify-center min-h-[400px] space-y-4">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
-          <p className="text-muted-foreground">Initializing...</p>
+          <p className="text-muted-foreground">Loading your account...</p>
         </div>
       </div>
     )
   }
 
+  // EXTRACT ACCOUNT ID FROM USERSTORE
+  const accountId = user?.account?.account_id || null
+  const isLoggedIn = !!user && !!accountId
+
+  console.log('🔍 SERVICE PAGE DEBUG:', {
+    serviceId,
+    locationFromQuery,
+    lat,
+    lng,
+    hasLocation: !!locationFromQuery,
+    showingAddressConfirmation: !locationFromQuery,
+    user: user ? { email: user.email, accountId } : null,
+    isLoggedIn,
+    serviceInformation
+  })
+
   return (
-    <div className="container max-w-7xl mx-auto px-4">
+    <div className="container max-w-7xl mx-auto px-4 relative">
       
-      {/* Service Header */}
-
-
       {/* Main Content */}
       {!locationFromQuery ? (
         <div className="max-w-2xl mx-auto">
+          {/* DEBUG INFO */}
+          {process.env.NODE_ENV === 'development' && (
+            <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded">
+              <h3 className="font-bold text-yellow-800">🔍 Debug Info:</h3>
+              <ul className="text-sm text-yellow-700 mt-2 space-y-1">
+                <li>Service ID: {serviceId}</li>
+                <li>Location from URL: {locationFromQuery ? 'Found' : 'Missing'}</li>
+                <li>Lat: {lat || 'Missing'}</li>
+                <li>Lng: {lng || 'Missing'}</li>
+                <li>User Email: {user?.email || 'No user'}</li>
+                <li>Account ID: {accountId || 'No account'}</li>
+                <li>Is Logged In: {isLoggedIn ? 'YES' : 'NO'}</li>
+                <li>Should show AddressConfirmation: {!locationFromQuery ? 'YES' : 'NO'}</li>
+              </ul>
+            </div>
+          )}
+
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -292,9 +299,16 @@ export default function ProfessionalCollectionInterface() {
               </CardTitle>
             </CardHeader>
             <CardContent>
+              {console.log('🏠 Rendering AddressConfirmation with:', { 
+                accountId,
+                isLoggedIn,
+                userEmail: user?.email,
+                onLocationConfirmed: typeof handleAddressConfirmed 
+              })}
+              
               <AddressConfirmation 
-                accountId={account?.account_id || null} 
-                onConfirm={handleAddressConfirmed} 
+                accountId={accountId} 
+                onLocationConfirmed={handleAddressConfirmed} 
               />
             </CardContent>
           </Card>
@@ -315,15 +329,29 @@ export default function ProfessionalCollectionInterface() {
           <NoProfessionalsFound serviceId={serviceId} />
         </div>
       ) : (
-        <div className="space-y-6">
+        <div className="space-y-6 pb-32">
+          {/* Instructions */}
+          <Alert>
+            <MessageSquare className="h-4 w-4" />
+            <AlertDescription>
+              <strong>Select professionals</strong> to request quotes from. You can choose multiple professionals and compare their offers.
+            </AlertDescription>
+          </Alert>
+
           {/* Results Header */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <h2 className="text-xl font-semibold">
-              Available Professionals
-            </h2>
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <Users className="h-4 w-4" />
-              <span>{professionals.length} professional{professionals.length !== 1 ? 's' : ''} found</span>
+            <h2 className="text-xl font-semibold">Available Professionals</h2>
+            <div className="flex items-center gap-4 text-sm text-muted-foreground">
+              <div className="flex items-center gap-2">
+                <Users className="h-4 w-4" />
+                <span>{professionals.length} professional{professionals.length !== 1 ? 's' : ''} found</span>
+              </div>
+              {selectedProfessionals.length > 0 && (
+                <div className="flex items-center gap-2 text-primary">
+                  <CheckCircle className="h-4 w-4" />
+                  <span>{selectedProfessionals.length} selected</span>
+                </div>
+              )}
             </div>
           </div>
 
@@ -337,16 +365,50 @@ export default function ProfessionalCollectionInterface() {
                   name: 'Loading...', 
                   service_id: serviceId 
                 }}
+                isSelected={isProfessionalSelected(pro.professional_id)}
+                onToggleSelection={handleProfessionalToggle}
+                selectionMode={true}
               />
             ))}
           </div>
         </div>
       )}
+
+      {/* Fixed Bottom Bar - Request Quotes Button */}
+      {selectedProfessionals.length > 0 && (
+        <div className="fixed bottom-0 left-0 right-0 bg-background border-t shadow-lg p-4 z-50">
+          <div className="container max-w-7xl mx-auto">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <CheckCircle className="h-4 w-4" />
+                <span>
+                  {selectedProfessionals.length} professional{selectedProfessionals.length !== 1 ? 's' : ''} selected
+                </span>
+              </div>
+              
+              <Button 
+                size="lg" 
+                onClick={() => setShowAppointmentModal(true)}
+                className="gap-2 px-8"
+              >
+                <MessageSquare className="h-4 w-4" />
+                Request Quotes from {selectedProfessionals.length} Professional{selectedProfessionals.length !== 1 ? 's' : ''}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Appointment Modal */}
+      <AppointmentModal
+        isOpen={showAppointmentModal}
+        onClose={() => setShowAppointmentModal(false)}
+        variant="marketplace"
+        selectedProfessionals={selectedProfessionals}
+        serviceInformation={serviceInformation}
+        location={locationFromQuery}
+        onSuccess={handleAppointmentSuccess}
+      />
     </div>
   )
 }
-
-
-
-
-

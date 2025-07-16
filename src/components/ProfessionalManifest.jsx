@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
+import { Checkbox } from "@/components/ui/checkbox";
 import { 
   Star, 
   MapPin, 
@@ -19,14 +20,22 @@ import {
   User,
   DollarSign,
   Award,
-  Timer
+  Timer,
+  CheckCircle,
+  Circle
 } from "lucide-react";
 import AppointmentModal from "@/components/modal/AppointmentModal";
 import { useUserStore } from "@/store/userStore";
 import useSearchStore from "@/store/searchStore";
 import { cn } from "@/lib/utils";
 
-export default function ProfessionalManifest({ data, serviceInformation }) {
+export default function ProfessionalManifest({ 
+  data, 
+  serviceInformation,
+  isSelected = false,
+  onToggleSelection = null,
+  selectionMode = false 
+}) {
   const [showFullBio, setShowFullBio] = useState(false);
   const [isAppointmentModalOpen, setIsAppointmentModalOpen] = useState(false);
   const { user } = useUserStore();
@@ -117,7 +126,7 @@ export default function ProfessionalManifest({ data, serviceInformation }) {
     return `I'm a ${getJobTitle().toLowerCase()} and I've been providing quality services with ${rating} star ratings from ${review_count} satisfied customers.`;
   };
 
-  // Handle booking button click
+  // Handle booking button click (only for non-selection mode)
   const handleBookingClick = useCallback(() => {
     if (!user) {
       alert('Please log in to book services');
@@ -143,6 +152,19 @@ export default function ProfessionalManifest({ data, serviceInformation }) {
     setIsAppointmentModalOpen(false);
   }, []);
 
+  // Handle selection toggle (for selection mode)
+  const handleSelectionToggle = useCallback((e) => {
+    e?.stopPropagation();
+    onToggleSelection?.(data);
+  }, [data, onToggleSelection]);
+
+  // Handle card click in selection mode
+  const handleCardClick = useCallback(() => {
+    if (selectionMode) {
+      handleSelectionToggle();
+    }
+  }, [selectionMode, handleSelectionToggle]);
+
   // Prepare professional data for booking modal
   const professionalForBooking = {
     professional_id,
@@ -164,8 +186,38 @@ export default function ProfessionalManifest({ data, serviceInformation }) {
 
   return (
     <>
-      <Card className="group h-full hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
+      <Card 
+        className={cn(
+          "group h-full transition-all duration-300",
+          selectionMode && "cursor-pointer hover:shadow-lg hover:-translate-y-1",
+          !selectionMode && "hover:shadow-lg hover:-translate-y-1",
+          isSelected && "ring-2 ring-primary bg-primary/5 shadow-md"
+        )}
+        onClick={handleCardClick}
+      >
         <CardHeader className="text-center space-y-4 pb-4">
+          {/* Selection Mode Header */}
+          {selectionMode && (
+            <div className="flex justify-between items-start">
+              <div className="flex items-center gap-2">
+                <Checkbox 
+                  checked={isSelected}
+                  onCheckedChange={handleSelectionToggle}
+                  className="h-5 w-5"
+                  onClick={(e) => e.stopPropagation()}
+                />
+                <span className="text-sm font-medium">
+                  {isSelected ? 'Selected' : 'Select'}
+                </span>
+              </div>
+              {isSelected && (
+                <Badge variant="default" className="text-xs">
+                  Selected for quotes
+                </Badge>
+              )}
+            </div>
+          )}
+
           {/* Profile Avatar */}
           <div className="flex justify-center">
             <Avatar className="h-20 w-20 ring-2 ring-background shadow-lg">
@@ -189,48 +241,50 @@ export default function ProfessionalManifest({ data, serviceInformation }) {
                 </Badge>
               )}
             </div>
-           
           </div>
 
-          {/* Quick Actions */}
-          <div className="flex justify-center gap-2">
-            <Button
-              variant="outline"
-              size="icon"
-              className="h-8 w-8 rounded-full"
-              asChild
-            >
-              <a href={`/call/${professional_id}`} title="Call">
-                <Phone className="h-4 w-4" />
-              </a>
-            </Button>
-            <Button
-              variant="outline"
-              size="icon"
-              className="h-8 w-8 rounded-full"
-              asChild
-            >
-              <a href={`/messages/${professional_id}`} title="Message">
-                <MessageCircle className="h-4 w-4" />
-              </a>
-            </Button>
-            <Button
-              variant="outline"
-              size="icon"
-              className="h-8 w-8 rounded-full"
-              asChild
-            >
-              <a href={`/professional/${professional_id}`} title="View Profile">
-                <User className="h-4 w-4" />
-              </a>
-            </Button>
-          </div>
+          {/* Quick Actions - Only show when NOT in selection mode */}
+          {!selectionMode && (
+            <div className="flex justify-center gap-2">
+              <Button
+                variant="outline"
+                size="icon"
+                className="h-8 w-8 rounded-full"
+                asChild
+                onClick={(e) => e.stopPropagation()}
+              >
+                <a href={`/call/${professional_id}`} title="Call">
+                  <Phone className="h-4 w-4" />
+                </a>
+              </Button>
+              <Button
+                variant="outline"
+                size="icon"
+                className="h-8 w-8 rounded-full"
+                asChild
+                onClick={(e) => e.stopPropagation()}
+              >
+                <a href={`/messages/${professional_id}`} title="Message">
+                  <MessageCircle className="h-4 w-4" />
+                </a>
+              </Button>
+              <Button
+                variant="outline"
+                size="icon"
+                className="h-8 w-8 rounded-full"
+                asChild
+                onClick={(e) => e.stopPropagation()}
+              >
+                <a href={`/professional/${professional_id}`} title="View Profile">
+                  <User className="h-4 w-4" />
+                </a>
+              </Button>
+            </div>
+          )}
         </CardHeader>
 
         <CardContent className="space-y-4 pb-6">
-          
-
-           {/* Pricing */}
+          {/* Pricing */}
           <div className="text-center p-3 bg-primary/5 rounded-lg">
             <div className="flex items-center justify-center gap-1 text-primary font-semibold">
               <DollarSign className="h-4 w-4" />
@@ -238,7 +292,37 @@ export default function ProfessionalManifest({ data, serviceInformation }) {
             </div>
           </div>
 
-        
+          {/* Rating and Stats */}
+          <div className="grid grid-cols-2 gap-4 text-center">
+            <div className="space-y-1">
+              <div className="flex items-center justify-center gap-1">
+                <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+                <span className="font-semibold">{rating}</span>
+              </div>
+              <p className="text-xs text-muted-foreground">{review_count} reviews</p>
+            </div>
+            <div className="space-y-1">
+              <div className="flex items-center justify-center gap-1 text-green-600">
+                <CheckCircle className="h-4 w-4" />
+                <span className="font-semibold">{completion_rate}%</span>
+              </div>
+              <p className="text-xs text-muted-foreground">Completion</p>
+            </div>
+          </div>
+
+          {/* Distance and Response Time */}
+          <div className="grid grid-cols-2 gap-4 text-center text-sm text-muted-foreground">
+            {distance_km && (
+              <div className="flex items-center justify-center gap-1">
+                <MapPin className="h-3 w-3" />
+                <span>{distance_km.toFixed(1)} km</span>
+              </div>
+            )}
+            <div className="flex items-center justify-center gap-1">
+              <Timer className="h-3 w-3" />
+              <span>{response_time}</span>
+            </div>
+          </div>
 
           {/* Specialties */}
           {specialties.length > 0 && (
@@ -259,26 +343,47 @@ export default function ProfessionalManifest({ data, serviceInformation }) {
             </div>
           )}
 
-          {/* Book Button */}
-          <Button 
-            onClick={handleBookingClick}
-            className="w-full gap-2 group-hover:shadow-md transition-all duration-200"
-            size="lg"
-          >
-            <Calendar className="h-4 w-4" />
-            Book Appointment
-          </Button>
+          {/* Selection Mode Footer */}
+          {selectionMode ? (
+            <div className="pt-2 border-t">
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium">
+                  {isSelected ? 'Will receive quote request' : 'Click to select for quotes'}
+                </span>
+                <div className="flex items-center gap-1">
+                  {isSelected ? (
+                    <CheckCircle className="h-5 w-5 text-primary" />
+                  ) : (
+                    <Circle className="h-5 w-5 text-muted-foreground" />
+                  )}
+                </div>
+              </div>
+            </div>
+          ) : (
+            /* Direct Book Button - Only show when NOT in selection mode */
+            <Button 
+              onClick={handleBookingClick}
+              className="w-full gap-2 group-hover:shadow-md transition-all duration-200"
+              size="lg"
+            >
+              <Calendar className="h-4 w-4" />
+              Book Appointment
+            </Button>
+          )}
         </CardContent>
       </Card>
 
-      {/* Booking Modal */}
-      <AppointmentModal
-        isOpen={isAppointmentModalOpen}
-        onClose={handleCloseModal}
-        professional={professionalForBooking}
-        serviceInformation={serviceInformation}
-        location={getCustomerLocation()}
-      />
+      {/* Direct Booking Modal - Only render when NOT in selection mode */}
+      {!selectionMode && (
+        <AppointmentModal
+          isOpen={isAppointmentModalOpen}
+          onClose={handleCloseModal}
+          professional={professionalForBooking}
+          serviceInformation={serviceInformation}
+          location={getCustomerLocation()}
+          variant="direct"
+        />
+      )}
     </>
   );
 }

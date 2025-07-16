@@ -159,7 +159,7 @@ class AnalyticsDataService {
         .select(`
           appointment_id,
           status,
-          preferred_start,
+          session,
           urgency,
           service!fk_appointment_service (
             name, 

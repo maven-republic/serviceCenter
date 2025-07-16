@@ -88,10 +88,10 @@ export async function GET(request, { params }) {
     // Get existing appointments in the date range
     const { data: existingAppointments, error: appointmentsError } = await supabase
       .from('appointment')
-      .select('preferred_start, preferred_end')
+      .select('session, preferred_end')
       .eq('professional_id', professionalId)
-      .gte('preferred_start', `${startDate}T00:00:00`)
-      .lte('preferred_start', `${endDate}T23:59:59`)
+      .gte('session', `${startDate}T00:00:00`)
+      .lte('session', `${endDate}T23:59:59`)
       .in('status', ['pending', 'quoted', 'converted'])
 
     if (appointmentsError) {
@@ -369,7 +369,7 @@ function hasConflict(slot, existingAppointments, existingBookings, slotDuration,
   
   // Check against existing appointments (assume 1 hour duration if no end time)
   for (const appointment of existingAppointments) {
-    const apptStart = new Date(appointment.preferred_start)
+    const apptStart = new Date(appointment.session)
     const apptEnd = appointment.preferred_end 
       ? new Date(appointment.preferred_end)
       : new Date(apptStart.getTime() + (60 * 60 * 1000)) // Default 1 hour

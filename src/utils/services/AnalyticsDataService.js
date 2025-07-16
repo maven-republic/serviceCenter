@@ -86,7 +86,7 @@ export class AnalyticsDataService {
       .select(`
         appointment_id,
         status,
-        preferred_start,
+        session,
         urgency,
         service:service_id (name),
         address:address_id (parish)

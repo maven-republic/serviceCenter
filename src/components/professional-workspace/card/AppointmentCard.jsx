@@ -22,16 +22,25 @@ import {
   Loader2,
   Paperclip,
   Image,
-  FileText
+  FileText,
+  Heart,
+  Users,
+  DollarSign,
+  Target,
+  Edit3
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 export default function AppointmentCard({ 
   appointment, 
+  interest, // For interests tab
   onView, 
   onAccept, 
   onDecline,
-  onViewAttachments
+  onViewAttachments,
+  onExpressInterest,
+  onUpdateInterest,
+  mode = 'assigned' // 'available', 'interests', 'assigned'
 }) {
   const [actionLoading, setActionLoading] = useState(null)
 
@@ -45,23 +54,42 @@ export default function AppointmentCard({
     }
   }
 
-  // Status configuration using your semantic tokens
-  const getStatusConfig = (status) => {
+  // Determine data source based on mode
+  const appointmentInformation = mode === 'interests' ? interest?.appointment : appointment
+  const isInterestCard = mode === 'interests'
+
+  // Status configuration for appointments
+  const getAppointmentStatusConfig = (status) => {
     const configs = {
       pending: { 
         variant: 'secondary',
         className: 'bg-muted text-muted-foreground',
-        label: 'Pending'
+        label: 'Available'
+      },
+      interested: { 
+        variant: 'default',
+        className: 'bg-blue-100 text-blue-800',
+        label: 'Has Interest'
+      },
+      competing: { 
+        variant: 'default',
+        className: 'bg-orange-100 text-orange-800',
+        label: 'Competitive'
+      },
+      evaluating: { 
+        variant: 'default',
+        className: 'bg-purple-100 text-purple-800',
+        label: 'In Review'
       },
       quoted: { 
         variant: 'outline',
         className: 'bg-background text-foreground border-border',
         label: 'Quoted'
       },
-      accepted: { 
+      approved: { 
         variant: 'default',
-        className: 'bg-primary text-primary-foreground',
-        label: 'Accepted'
+        className: 'bg-green-100 text-green-800',
+        label: 'Approved'
       },
       converted: { 
         variant: 'default',
@@ -77,7 +105,44 @@ export default function AppointmentCard({
     return configs[status] || configs.pending
   }
 
-  // Priority configuration using your semantic tokens
+  // Status configuration for interests
+  const getInterestStatusConfig = (status) => {
+    const configs = {
+      interested: { 
+        variant: 'default',
+        className: 'bg-blue-100 text-blue-800',
+        label: 'Interested',
+        icon: Heart
+      },
+      quoted: { 
+        variant: 'outline',
+        className: 'bg-background text-foreground border-border',
+        label: 'Quoted',
+        icon: DollarSign
+      },
+      selected: { 
+        variant: 'default',
+        className: 'bg-green-100 text-green-800',
+        label: 'Selected',
+        icon: Target
+      },
+      rejected: { 
+        variant: 'destructive',
+        className: 'bg-red-100 text-red-800',
+        label: 'Not Selected',
+        icon: X
+      },
+      withdrawn: { 
+        variant: 'secondary',
+        className: 'bg-muted text-muted-foreground',
+        label: 'Withdrawn',
+        icon: X
+      }
+    }
+    return configs[status] || configs.interested
+  }
+
+  // Priority configuration
   const getPriorityConfig = (urgency) => {
     const configs = {
       urgent: { 
@@ -100,7 +165,7 @@ export default function AppointmentCard({
     return configs[urgency] || configs.standard
   }
 
-  // Format date using consistent pattern
+  // Format date
   const formatDateTime = (dateString) => {
     if (!dateString) return 'Not specified'
     
@@ -128,8 +193,46 @@ export default function AppointmentCard({
     }
   }
 
-  const statusConfig = getStatusConfig(appointment.status)
-  const priorityConfig = getPriorityConfig(appointment.urgency)
+  // Format currency
+  const formatCurrency = (amount) => {
+    if (!amount) return 'Not specified'
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD'
+    }).format(amount)
+  }
+
+  // Handle express interest
+  const handleExpressInterest = () => {
+    if (onExpressInterest && appointmentInformation) {
+      handleAction('express', () => 
+        onExpressInterest(appointmentInformation.appointment_id, {
+          intent: 'high',
+          message: 'I am interested in this project and would like to provide a quote.',
+          assessment: false,
+          modality: 'none'
+        })
+      )
+    }
+  }
+
+  // Handle update interest
+  const handleUpdateInterest = () => {
+    if (onUpdateInterest && interest) {
+      onUpdateInterest(interest.interest_id)
+    }
+  }
+
+  if (!appointmentInformation) return null
+
+  const statusConfig = isInterestCard 
+    ? getInterestStatusConfig(interest?.status)
+    : getAppointmentStatusConfig(appointmentInformation.status)
+  const priorityConfig = getPriorityConfig(appointmentInformation.urgency)
+
+  // Show competition indicator for available appointments
+  const showCompetition = mode === 'available' && (appointmentInformation.interest_count > 0 || appointmentInformation.interest_summary?.total_count > 0)
+  const competitionCount = appointmentInformation.interest_count || appointmentInformation.interest_summary?.total_count || 0
 
   return (
     <Card className="group hover:shadow-md transition-all duration-200 border-border bg-card">
@@ -140,254 +243,270 @@ export default function AppointmentCard({
           <div className="flex items-center gap-4 flex-1">
             <Avatar className="h-12 w-12 border border-border">
               <AvatarImage 
-                src={appointment.customer?.account?.profile_picture_url} 
-                alt="Customer"
+                src={appointmentInformation.customer?.account?.profile_image || appointmentInformation.customer?.profile_image} 
+                alt={appointmentInformation.customer?.account?.first_name || appointmentInformation.customer?.first_name}
               />
-              <AvatarFallback className="bg-muted text-muted-foreground font-medium">
-                {appointment.customer?.account?.first_name?.[0]}
-                {appointment.customer?.account?.last_name?.[0]}
+              <AvatarFallback className="bg-muted text-muted-foreground">
+                <User className="h-5 w-5" />
               </AvatarFallback>
             </Avatar>
+            
             <div className="flex-1 min-w-0">
-              <h4 className="font-semibold text-foreground truncate">
-                {appointment.customer?.account?.first_name} {appointment.customer?.account?.last_name}
-              </h4>
-              <div className="flex items-center gap-4 mt-1">
-                <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                  <Mail className="h-3 w-3" />
-                  <span className="truncate">{appointment.customer?.account?.email}</span>
-                </div>
-                {appointment.customer?.phone?.phone_number && (
-                  <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                    <Phone className="h-3 w-3" />
-                    <span>{appointment.customer.phone.phone_number}</span>
-                  </div>
+              {/* Customer Name & Contact */}
+              <div className="flex items-center gap-2 mb-1">
+                <h3 className="font-semibold text-foreground truncate">
+                  {appointmentInformation.customer?.account?.first_name || appointmentInformation.customer?.first_name} {' '}
+                  {appointmentInformation.customer?.account?.last_name || appointmentInformation.customer?.last_name}
+                </h3>
+                {appointmentInformation.customer?.account?.phone && (
+                  <Phone className="h-3 w-3 text-muted-foreground" />
+                )}
+              </div>
+              
+              {/* Service & Location */}
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <span className="truncate">
+                  {appointmentInformation.service?.name || 'Service request'}
+                </span>
+                {appointmentInformation.address && (
+                  <>
+                    <Separator orientation="vertical" className="h-4" />
+                    <MapPin className="h-3 w-3 flex-shrink-0" />
+                    <span className="truncate">
+                      {appointmentInformation.address?.city}, {appointmentInformation.address?.state}
+                    </span>
+                  </>
                 )}
               </div>
             </div>
           </div>
-          
-          {/* Status Badges */}
-          <div className="flex flex-col gap-2 items-end">
-            <Badge className={statusConfig.className}>
+
+          {/* Status & Priority Badges */}
+          <div className="flex flex-col items-end gap-2">
+            <Badge 
+              variant={statusConfig.variant}
+              className={cn(statusConfig.className, "text-xs")}
+            >
+              {isInterestCard && statusConfig.icon && (
+                <statusConfig.icon className="w-3 h-3 mr-1" />
+              )}
               {statusConfig.label}
             </Badge>
-            <Badge className={priorityConfig.className}>
-              {priorityConfig.label}
-            </Badge>
+            
+            {appointmentInformation.urgency && (
+              <Badge 
+                variant="outline"
+                className={cn(priorityConfig.className, "text-xs")}
+              >
+                <AlertTriangle className="w-3 h-3 mr-1" />
+                {priorityConfig.label}
+              </Badge>
+            )}
+
+            {/* Competition Indicator */}
+            {showCompetition && (
+              <Badge variant="outline" className="text-xs bg-orange-50 text-orange-700 border-orange-200">
+                <Users className="w-3 h-3 mr-1" />
+                {competitionCount} interested
+              </Badge>
+            )}
           </div>
         </div>
       </CardHeader>
 
-      <CardContent className="space-y-4">
-        {/* Service Information */}
-        <div className="space-y-3">
-          <div className="flex items-start gap-3">
-            <div className="flex-shrink-0 w-8 h-8 bg-muted rounded-full flex items-center justify-center">
-              <User className="h-4 w-4 text-muted-foreground" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <h5 className="font-medium text-foreground mb-1">
-                {appointment.service?.name || appointment.title}
-              </h5>
-              {appointment.description && (
-                <p className="text-sm text-muted-foreground line-clamp-2 leading-relaxed">
-                  {appointment.description}
-                </p>
-              )}
-              {appointment.service?.base_price && (
-                <div className="flex items-center gap-2 mt-2 text-sm">
-                  <span className="font-medium text-foreground">Base Price:</span>
-                  <span className="font-semibold text-primary">
-                    JMD ${appointment.service.base_price}
-                  </span>
-                  {appointment.service.duration_minutes && (
-                    <span className="text-muted-foreground">
-                      • {appointment.service.duration_minutes} mins
-                    </span>
-                  )}
-                </div>
-              )}
+      <CardContent className="pt-0 space-y-4">
+        {/* Appointment Details */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+          {/* Schedule */}
+          <div className="flex items-center gap-2">
+            <Calendar className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+            <div>
+              <p className="font-medium text-foreground">Schedule</p>
+              <p className="text-muted-foreground">
+                {formatDateTime(appointmentInformation.preferred_date)}
+              </p>
             </div>
           </div>
 
-          <Separator className="bg-border" />
-
-          {/* Schedule Information */}
-          <div className="flex items-start gap-3">
-            <div className="flex-shrink-0 w-8 h-8 bg-muted rounded-full flex items-center justify-center">
-              <Calendar className="h-4 w-4 text-muted-foreground" />
-            </div>
-            <div className="flex-1 space-y-2">
-              <div>
-                <span className="text-sm font-medium text-foreground">Preferred Time:</span>
-                <p className="text-sm text-muted-foreground mt-1">
-                  {formatDateTime(appointment.preferred_start)}
-                </p>
-              </div>
-              {appointment.deadline && (
-                <div className="flex items-center gap-2">
-                  <AlertTriangle className="h-4 w-4 text-destructive" />
-                  <span className="text-sm font-medium text-foreground">Deadline:</span>
-                  <span className="text-sm text-destructive">
-                    {formatDateTime(appointment.deadline)}
-                  </span>
-                </div>
-              )}
+          {/* Budget/Quote */}
+          <div className="flex items-center gap-2">
+            <DollarSign className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+            <div>
+              <p className="font-medium text-foreground">
+                {isInterestCard && interest?.amount ? 'My Quote' : 'Budget'}
+              </p>
+              <p className="text-muted-foreground">
+                {isInterestCard && interest?.amount 
+                  ? formatCurrency(interest.amount)
+                  : formatCurrency(appointmentInformation.budget_range?.max || appointmentInformation.budget)
+                }
+              </p>
             </div>
           </div>
-
-          {/* Location Information */}
-          {appointment.address && (
-            <>
-              <Separator className="bg-border" />
-              <div className="flex items-start gap-3">
-                <div className="flex-shrink-0 w-8 h-8 bg-muted rounded-full flex items-center justify-center">
-                  <MapPin className="h-4 w-4 text-muted-foreground" />
-                </div>
-                <div className="flex-1">
-                  <div className="text-sm space-y-1">
-                    {appointment.address.street_address && (
-                      <div className="text-foreground">{appointment.address.street_address}</div>
-                    )}
-                    <div className="text-foreground">
-                      {appointment.address.city}, {appointment.address.parish}
-                    </div>
-                    {appointment.address.community && (
-                      <div className="text-muted-foreground italic">{appointment.address.community}</div>
-                    )}
-                    {appointment.address.landmark && (
-                      <div className="text-primary font-medium">Near {appointment.address.landmark}</div>
-                    )}
-                  </div>
-                </div>
-              </div>
-            </>
-          )}
-
-          {/* Customer Attachments Section */}
-          {appointment.attachments && appointment.attachments.length > 0 && (
-            <>
-              <Separator className="bg-border" />
-              <div className="flex items-start gap-3">
-                <div className="flex-shrink-0 w-8 h-8 bg-muted rounded-full flex items-center justify-center">
-                  <Paperclip className="h-4 w-4 text-muted-foreground" />
-                </div>
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-2">
-                    <span className="text-sm font-medium text-foreground">Customer Files ({appointment.attachments.length})</span>
-                  </div>
-                  <div className="flex flex-wrap gap-2">
-                    {appointment.attachments.slice(0, 3).map((attachment, index) => {
-                      const isImage = attachment.asset?.type === 'image'
-                      const IconComponent = isImage ? Image : FileText
-                      
-                      return (
-                        <div key={attachment.id} className="flex items-center gap-1 bg-muted/50 rounded px-2 py-1">
-                          <IconComponent className="h-3 w-3" />
-                          <span className="text-xs truncate max-w-[100px]">
-                            {attachment.asset?.original || 'File'}
-                          </span>
-                          <Badge variant="secondary" className="text-xs">
-                            {attachment.purpose}
-                          </Badge>
-                        </div>
-                      )
-                    })}
-                    {appointment.attachments.length > 3 && (
-                      <span className="text-xs text-muted-foreground">
-                        +{appointment.attachments.length - 3} more
-                      </span>
-                    )}
-                  </div>
-                </div>
-              </div>
-            </>
-          )}
-
-          {/* Customer Message */}
-          {appointment.customer_message && (
-            <>
-              <Separator className="bg-border" />
-              <div className="flex items-start gap-3">
-                <div className="flex-shrink-0 w-8 h-8 bg-muted rounded-full flex items-center justify-center">
-                  <MessageSquare className="h-4 w-4 text-muted-foreground" />
-                </div>
-                <div className="flex-1">
-                  <span className="text-sm font-medium text-foreground">Customer Notes:</span>
-                  <div className="mt-2 p-3 bg-muted rounded-md border-l-4 border-l-primary">
-                    <p className="text-sm text-foreground italic">"{appointment.customer_message}"</p>
-                  </div>
-                </div>
-              </div>
-            </>
-          )}
         </div>
 
-        <Separator className="bg-border" />
-
-        {/* Footer Actions */}
-        <div className="flex items-center justify-between pt-2">
-          <div className="text-xs text-muted-foreground">
-            Requested {new Date(appointment.created_at).toLocaleDateString('en-US', {
-              month: 'short',
-              day: 'numeric',
-              hour: 'numeric',
-              minute: '2-digit'
-            })}
-          </div>
-          
-          <div className="flex items-center gap-2">
-            <Button 
-              variant="outline" 
-              size="sm"
-              onClick={onView}
-              disabled={!!actionLoading}
-              className="flex items-center gap-2"
-            >
-              <Eye className="h-3 w-3" />
-              View
-            </Button>
-
-            {/* View Files Button */}
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => onViewAttachments(appointment)}
-              className="gap-2"
-              disabled={!appointment.attachments || appointment.attachments.length === 0}
-            >
-              <Eye className="h-3 w-3" />
-              View Files ({appointment.attachments?.length || 0})
-            </Button>
+        {/* Interest-specific Information */}
+        {isInterestCard && interest && (
+          <div className="border border-border rounded-lg p-3 bg-muted/50">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-sm font-medium text-foreground">My Interest Details</span>
+              <span className="text-xs text-muted-foreground">
+                {new Date(interest.created_at).toLocaleDateString()}
+              </span>
+            </div>
             
-            {appointment.status === 'pending' && (
+            {interest.message && (
+              <p className="text-sm text-muted-foreground mb-2 line-clamp-2">
+                {interest.message}
+              </p>
+            )}
+            
+            <div className="flex items-center gap-4 text-xs text-muted-foreground">
+              {interest.assessment && (
+                <span className="flex items-center gap-1">
+                  <Target className="h-3 w-3" />
+                  Assessment: {interest.modality || 'Required'}
+                </span>
+              )}
+              {interest.fee && (
+                <span className="flex items-center gap-1">
+                  <DollarSign className="h-3 w-3" />
+                  Fee: {formatCurrency(interest.fee)}
+                </span>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Customer Message */}
+        {appointmentInformation.description && (
+          <div className="flex items-start gap-2">
+            <MessageSquare className="h-4 w-4 text-muted-foreground flex-shrink-0 mt-0.5" />
+            <div className="flex-1">
+              <p className="font-medium text-foreground text-sm mb-1">Customer Message</p>
+              <p className="text-sm text-muted-foreground line-clamp-2">
+                {appointmentInformation.description}
+              </p>
+            </div>
+          </div>
+        )}
+
+        {/* Attachments */}
+        {appointmentInformation.attachments && appointmentInformation.attachments.length > 0 && (
+          <div className="flex items-center gap-2 text-sm">
+            <Paperclip className="h-4 w-4 text-muted-foreground" />
+            <span className="text-muted-foreground">
+              {appointmentInformation.attachments.length} attachment{appointmentInformation.attachments.length > 1 ? 's' : ''}
+            </span>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-auto p-0 text-xs text-primary hover:text-primary/80"
+              onClick={() => onViewAttachments?.(appointmentInformation.appointment_id)}
+            >
+              View files
+            </Button>
+          </div>
+        )}
+
+        <Separator />
+
+        {/* Action Buttons */}
+        <div className="flex items-center justify-between">
+          {/* View Button (always present) */}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => onView?.(appointmentInformation.appointment_id)}
+            className="flex items-center gap-2"
+          >
+            <Eye className="h-4 w-4" />
+            View Details
+          </Button>
+
+          {/* Action Buttons Based on Mode */}
+          <div className="flex items-center gap-2">
+            {/* Available Appointments - Express Interest */}
+            {mode === 'available' && (
+              <Button
+                size="sm"
+                onClick={handleExpressInterest}
+                disabled={actionLoading === 'express'}
+                className="flex items-center gap-2"
+              >
+                {actionLoading === 'express' ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Heart className="h-4 w-4" />
+                )}
+                Express Interest
+              </Button>
+            )}
+
+            {/* My Interests - Update/Manage */}
+            {mode === 'interests' && interest && (
               <>
-                <Button 
+                {interest.status === 'interested' && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={handleUpdateInterest}
+                    disabled={actionLoading === 'update'}
+                    className="flex items-center gap-2"
+                  >
+                    {actionLoading === 'update' ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Edit3 className="h-4 w-4" />
+                    )}
+                    Update Quote
+                  </Button>
+                )}
+                
+                {interest.status === 'quoted' && (
+                  <Badge variant="outline" className="text-xs">
+                    <Clock className="w-3 h-3 mr-1" />
+                    Awaiting Response
+                  </Badge>
+                )}
+                
+                {interest.status === 'selected' && (
+                  <Badge className="text-xs bg-green-100 text-green-800">
+                    <Check className="w-3 h-3 mr-1" />
+                    Selected
+                  </Badge>
+                )}
+              </>
+            )}
+
+            {/* Assigned Appointments - Accept/Decline */}
+            {mode === 'assigned' && appointmentInformation.status === 'pending' && (
+              <>
+                <Button
                   variant="outline"
                   size="sm"
                   onClick={() => handleAction('decline', onDecline)}
-                  disabled={!!actionLoading}
-                  className="flex items-center gap-2 border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground"
+                  disabled={actionLoading === 'decline'}
+                  className="flex items-center gap-2"
                 >
                   {actionLoading === 'decline' ? (
-                    <Loader2 className="h-3 w-3 animate-spin" />
+                    <Loader2 className="h-4 w-4 animate-spin" />
                   ) : (
-                    <X className="h-3 w-3" />
+                    <X className="h-4 w-4" />
                   )}
                   Decline
                 </Button>
                 
-                <Button 
+                <Button
                   size="sm"
                   onClick={() => handleAction('accept', onAccept)}
-                  disabled={!!actionLoading}
+                  disabled={actionLoading === 'accept'}
                   className="flex items-center gap-2"
                 >
                   {actionLoading === 'accept' ? (
-                    <Loader2 className="h-3 w-3 animate-spin" />
+                    <Loader2 className="h-4 w-4 animate-spin" />
                   ) : (
-                    <Check className="h-3 w-3" />
+                    <Check className="h-4 w-4" />
                   )}
                   Accept
                 </Button>

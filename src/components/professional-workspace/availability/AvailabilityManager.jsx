@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
+import { useSupabaseClient } from '@supabase/auth-helpers-react' // Use the provider's client
 import {
   Card,
   CardContent,
@@ -32,7 +32,7 @@ export default function AvailabilityManager({
   professionalId,
   profileSettings = {}
 }) {
-  const supabase = createClientComponentClient()
+  const supabase = useSupabaseClient() // Get client from provider context
   const [availability, setAvailability] = useState(initialAvailability)
   const [overrides, setOverrides] = useState(initialOverrides)
   const [protocolRules, setProtocolRules] = useState(profileSettings)
@@ -188,7 +188,7 @@ export default function AvailabilityManager({
   const tabCounts = getTabCounts()
 
   return (
-    <div className=" professional-workspace max-w-7xl mx-auto p-6 space-y-6">
+    <div className="professional-workspace max-w-7xl mx-auto p-6 space-y-6">
       {/* Header */}
       <div className="space-y-2">
         <div className="flex items-center justify-between">

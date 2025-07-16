@@ -19,7 +19,9 @@ export default function AppointmentModal({
   onClose, 
   professional, 
   serviceInformation, 
-  location 
+  location,
+  variant = 'marketplace', // 'marketplace' | 'direct'
+  selectedProfessionals = [] // For targeted marketplace
 }) {
   // Handle appointment success
   const handleAppointmentSuccess = useCallback((appointmentRequest) => {
@@ -27,11 +29,15 @@ export default function AppointmentModal({
     
     // Show success message or redirect
     // You might want to replace this with a toast notification
-    alert('Appointment sent! You will receive a confirmation email shortly.')
+    if (variant === 'marketplace') {
+      alert('Request posted! Multiple professionals will respond with quotes.')
+    } else {
+      alert('Appointment sent! You will receive a confirmation email shortly.')
+    }
     
     // Close modal
     onClose?.()
-  }, [onClose])
+  }, [onClose, variant])
 
   // Format professional name for display
   const professionalName = professional?.first_name && professional?.last_name 
@@ -40,24 +46,37 @@ export default function AppointmentModal({
     ? professional.business_name
     : 'Professional'
 
+  // Determine modal title based on variant
+  const modalTitle = variant === 'marketplace' 
+    ? selectedProfessionals.length > 0
+      ? `Request Quotes from ${selectedProfessionals.length} Professional${selectedProfessionals.length !== 1 ? 's' : ''}`
+      : `Request ${serviceInformation?.name || 'Service'}`
+    : `Book with ${professionalName}`
+
+  const modalDescription = variant === 'marketplace'
+    ? selectedProfessionals.length > 0
+      ? `Send your service request to ${selectedProfessionals.length} selected professional${selectedProfessionals.length !== 1 ? 's' : ''} and receive quotes`
+      : 'Post your service request and receive quotes from multiple professionals'
+    : 'Schedule your appointment and provide service details'
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-5xl max-h-[95vh] overflow-hidden flex flex-col p-0 gap-0">
         
-        {/* Add the required DialogHeader with DialogTitle */}
+        {/* Updated DialogHeader with dynamic content */}
         <DialogHeader className="sr-only">
-          <DialogTitle>Book Appointment with {professionalName}</DialogTitle>
-          <DialogDescription>
-            Schedule your appointment and provide service details
-          </DialogDescription>
+          <DialogTitle>{modalTitle}</DialogTitle>
+          <DialogDescription>{modalDescription}</DialogDescription>
         </DialogHeader>
 
         {/* Modal Body - Appointment Form */}
         <div className="flex-1 overflow-y-auto">
           <Appointment
-            professional={professional}
+            professional={variant === 'marketplace' ? null : professional}
             serviceInformation={serviceInformation}
             location={location}
+            variant={variant}
+            selectedProfessionals={selectedProfessionals}
             onSuccess={handleAppointmentSuccess}
             onCancel={onClose}
           />
