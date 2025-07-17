@@ -32,7 +32,7 @@ export const AppointmentsList = ({
     return <AppointmentsEmpty />;
   }
 
-  // Appointments Table
+  // Appointments Table (now with built-in drawer functionality)
   return (
     <div className="space-y-4">
       <AppointmentsTable appointments={appointments} />

@@ -2,7 +2,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { X, ArrowLeft, User, Calendar, MapPin, MessageSquare, Clock, Phone, Mail, Building2, AlertCircle, Heart, Users, DollarSign, Target, Trophy } from 'lucide-react'
+import { X, ArrowLeft, User, Calendar, MapPin, MessageSquare, Clock, Phone, Mail, Building2, AlertCircle, Heart, Users, DollarSign, Target, Trophy, Crown } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -16,19 +16,23 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet"
+// ✅ FIXED: Import the correct forms
+import ProfessionalInterestForm from '@/components/professional-workspace/interests/ProfessionalInterestForm'
+import InterestResponseForm from '@/components/professional-workspace/interests/InterestResponseForm'
 import AppointmentInteractionForm from '@/components/forms/AppointmentInteractionForm'
 
 export default function AppointmentInformationView({ 
   open, 
   onOpenChange, 
   appointment,
+  professionalId, // ✅ NEW: Professional ID for invitation context
   onAccept,
   onDecline,
   onExpressInterest,
   onUpdateInterest,
-  mode = 'assigned' // 'available', 'interests', 'assigned'
+    mode = 'available' // ✅ Change from 'assigned' to 'available'
 }) {
-  const [currentView, setCurrentView] = useState('details') // 'details', 'accept', 'decline', 'quote', 'express_interest'
+  const [currentView, setCurrentView] = useState('details') // 'details', 'accept', 'decline', 'quote', 'express_interest', 'update_interest'
   const [actionLoading, setActionLoading] = useState(false)
 
   // Reset view when sheet opens/closes
@@ -98,7 +102,6 @@ export default function AppointmentInformationView({
       }
 
       // Show success message
-      // TODO: Replace with toast notification
       alert(`Appointment ${formData.action}ed successfully!`)
 
       // Close sheet
@@ -106,14 +109,13 @@ export default function AppointmentInformationView({
 
     } catch (error) {
       console.error(`❌ Error ${formData.action}ing appointment:`, error)
-      // TODO: Replace with toast notification
       alert(`Error: ${error.message}`)
     } finally {
       setActionLoading(false)
     }
   }, [onAccept, onDecline, handleClose])
 
-  // Handle interest expression (for available appointments)
+  // ✅ FIXED: Handle interest expression with new form
   const handleInterestSubmit = useCallback(async (interestData) => {
     setActionLoading(true)
     
@@ -132,7 +134,7 @@ export default function AppointmentInformationView({
     }
   }, [appointment?.appointment_id, onExpressInterest, handleClose])
 
-  // Handle interest update (for existing interests)
+  // ✅ FIXED: Handle interest update with new form
   const handleInterestUpdate = useCallback(async (updateData) => {
     setActionLoading(true)
     
@@ -141,7 +143,7 @@ export default function AppointmentInformationView({
       
       // Find the interest ID from appointment interests
       const currentInterest = appointment.interests?.find(i => 
-        i.professional_id === appointment.viewMode?.professional_id || 
+        i.professional_id === professionalId || 
         i.status !== 'withdrawn'
       )
       
@@ -157,7 +159,36 @@ export default function AppointmentInformationView({
     } finally {
       setActionLoading(false)
     }
-  }, [appointment?.interests, onUpdateInterest, handleClose])
+  }, [appointment?.interests, professionalId, onUpdateInterest, handleClose])
+
+  // ✅ FIXED: Handle withdraw interest
+  const handleWithdrawInterest = useCallback(async () => {
+    setActionLoading(true)
+    
+    try {
+      const currentInterest = appointment.interests?.find(i => 
+        i.professional_id === professionalId
+      )
+      
+      if (currentInterest) {
+        const response = await fetch(`/api/interests/${currentInterest.interest_id}`, {
+          method: 'DELETE'
+        })
+        
+        if (!response.ok) {
+          throw new Error('Failed to withdraw interest')
+        }
+        
+        alert('Interest withdrawn successfully')
+        handleClose()
+      }
+    } catch (error) {
+      console.error('❌ Error withdrawing interest:', error)
+      alert(`Error: ${error.message}`)
+    } finally {
+      setActionLoading(false)
+    }
+  }, [appointment?.interests, professionalId, handleClose])
 
   // Handle quick actions (for simple accept/decline without form)
   const handleQuickAction = useCallback(async (action) => {
@@ -352,6 +383,19 @@ export default function AppointmentInformationView({
   const currentInterest = isInterestView ? appointment.interests?.[0] : null
   const displayData = isInterestView ? appointment : appointment
   
+  // ✅ NEW: Check if this is an invitation
+  const isInvited = professionalId && appointment?.recipients && 
+    appointment.recipients.includes(professionalId)
+
+  // ✅ FIXED: Move console.log AFTER isInvited is declared
+  console.log('🔍 AppointmentInformationView Debug:', {
+    mode,
+    currentView,
+    professionalId,
+    appointment: appointment?.appointment_id,
+    isInvited
+  })
+  
   const statusConfig = getStatusConfig(
     isInterestView ? currentInterest?.status : displayData.status, 
     mode
@@ -397,6 +441,7 @@ export default function AppointmentInformationView({
                       'Appointment Details'
                     ) :
                      currentView === 'express_interest' ? 'Express Interest' :
+                     currentView === 'update_interest' ? 'Update Interest' :
                      currentView === 'accept' ? 'Accept Appointment' :
                      currentView === 'decline' ? 'Decline Appointment' :
                      currentView === 'quote' ? 'Send Quote' : 'Appointment'}
@@ -404,8 +449,16 @@ export default function AppointmentInformationView({
                 </div>
               </div>
               
-              {/* Status and Competition Badges */}
+              {/* Status and Invitation Badges */}
               <div className="flex items-center gap-3 mb-3">
+                {/* ✅ NEW: Invitation badge */}
+                {isInvited && (
+                  <Badge className="bg-blue-600 text-white">
+                    <Crown className="w-3 h-3 mr-1" />
+                    Invited
+                  </Badge>
+                )}
+                
                 <div className="flex items-center gap-2">
                   <div className={cn("w-2 h-2 rounded-full", statusConfig.indicator)} />
                   <Badge className={statusConfig.className}>
@@ -446,7 +499,7 @@ export default function AppointmentInformationView({
           
           {/* Details View */}
           {currentView === 'details' && (
-            <div className="space-y-6">
+            <div className="space-y-6 px-6">
               
               {/* Interest Details (for interests tab) */}
               {isInterestView && currentInterest && (
@@ -476,6 +529,17 @@ export default function AppointmentInformationView({
                           </span>
                         </div>
                       )}
+
+                      {/* ✅ NEW: Price range display */}
+                      {(currentInterest.price_range_min || currentInterest.price_range_max) && (
+                        <div className="flex items-center justify-between py-3 border-b border-border">
+                          <span className="font-medium text-muted-foreground">Price Range</span>
+                          <span className="text-foreground font-semibold">
+                            JMD ${currentInterest.price_range_min ? parseFloat(currentInterest.price_range_min).toLocaleString() : '?'} - 
+                            ${currentInterest.price_range_max ? parseFloat(currentInterest.price_range_max).toLocaleString() : '?'}
+                          </span>
+                        </div>
+                      )}
                       
                       {currentInterest.assessment && (
                         <div className="flex items-center justify-between py-3 border-b border-border">
@@ -492,6 +556,16 @@ export default function AppointmentInformationView({
                       <div className="p-4 bg-muted/20 border border-border rounded-md border-l-4 border-l-foreground">
                         <p className="text-foreground italic leading-relaxed">
                           "{currentInterest.message}"
+                        </p>
+                      </div>
+                    )}
+
+                    {/* ✅ NEW: Assessment justification display */}
+                    {currentInterest.assessment_justification && (
+                      <div className="p-4 bg-amber-50 border border-amber-200 rounded-md border-l-4 border-l-amber-500">
+                        <div className="font-medium text-amber-800 mb-2">Assessment Justification</div>
+                        <p className="text-amber-700 text-sm leading-relaxed">
+                          {currentInterest.assessment_justification}
                         </p>
                       </div>
                     )}
@@ -541,182 +615,10 @@ export default function AppointmentInformationView({
                   </div>
                 </CardContent>
               </Card>
-
-              {/* Service Information */}
-              <Card className="bg-card border-border">
-                <CardHeader className="pb-4">
-                  <CardTitle className="flex items-center gap-2 text-base font-medium text-foreground">
-                    <div className="p-2 rounded-md bg-muted/50">
-                      <Building2 className="h-4 w-4 text-muted-foreground" />
-                    </div>
-                    Service Details
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div>
-                    <h5 className="font-semibold text-foreground text-lg mb-3">
-                      {displayData.service?.name || displayData.title}
-                    </h5>
-                    {displayData.description && (
-                      <div className="space-y-3">
-                        <p className="text-sm font-medium text-muted-foreground">Project Description</p>
-                        <div className="p-4 bg-muted/30 rounded-md border-l-4 border-foreground">
-                          <p className="text-sm text-foreground leading-relaxed">{displayData.description}</p>
-                        </div>
-                      </div>
-                    )}
-                    {displayData.service?.base_price && (
-                      <div className="mt-4 p-3 bg-muted/20 rounded-md">
-                        <div className="flex items-center justify-between">
-                          <span className="font-medium text-muted-foreground">Base Price</span>
-                          <div className="text-right">
-                            <span className="text-2xl font-bold text-foreground">
-                              JMD ${displayData.service.base_price}
-                            </span>
-                            {displayData.service.duration_minutes && (
-                              <p className="text-sm text-muted-foreground">
-                                {displayData.service.duration_minutes} minutes
-                              </p>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Schedule Information */}
-              <Card className="bg-card border-border">
-                <CardHeader className="pb-4">
-                  <CardTitle className="flex items-center gap-2 text-base font-medium text-foreground">
-                    <div className="p-2 rounded-md bg-muted/50">
-                      <Calendar className="h-4 w-4 text-muted-foreground" />
-                    </div>
-                    Scheduling
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    <div className="grid grid-cols-1 gap-4">
-                      <div className="flex items-center justify-between py-3 border-b border-border">
-                        <span className="font-medium text-muted-foreground">Preferred Start</span>
-                        <span className="text-foreground font-mono text-sm">{formatDateTime(displayData.session)}</span>
-                      </div>
-                      {displayData.preferred_end && (
-                        <div className="flex items-center justify-between py-3 border-b border-border">
-                          <span className="font-medium text-muted-foreground">Preferred End</span>
-                          <span className="text-foreground font-mono text-sm">{formatDateTime(displayData.preferred_end)}</span>
-                        </div>
-                      )}
-                      {displayData.deadline && (
-                        <div className="flex items-center justify-between py-3 border-b border-border">
-                          <span className="font-medium text-muted-foreground">Project Deadline</span>
-                          <span className="text-foreground font-mono text-sm font-medium">{formatDateTime(displayData.deadline)}</span>
-                        </div>
-                      )}
-                      <div className="flex items-center justify-between py-3">
-                        <span className="font-medium text-muted-foreground">Urgency Level</span>
-                        <div className="flex items-center gap-2">
-                          <div className={cn("w-2 h-2 rounded-full", urgencyConfig.indicator)} />
-                          <Badge className={urgencyConfig.className}>
-                            {urgencyConfig.text}
-                          </Badge>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Location Information */}
-              {displayData.address && (
-                <Card className="bg-card border-border">
-                  <CardHeader className="pb-4">
-                    <CardTitle className="flex items-center gap-2 text-base font-medium text-foreground">
-                      <div className="p-2 rounded-md bg-muted/50">
-                        <MapPin className="h-4 w-4 text-muted-foreground" />
-                      </div>
-                      Service Location
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-3">
-                      {displayData.address.street_address && (
-                        <div className="text-foreground font-medium">{displayData.address.street_address}</div>
-                      )}
-                      <div className="text-foreground">
-                        {displayData.address.city}, {displayData.address.parish}
-                      </div>
-                      {displayData.address.community && (
-                        <div className="text-muted-foreground italic">{displayData.address.community}</div>
-                      )}
-                      {displayData.address.landmark && (
-                        <div className="text-foreground font-medium">Near {displayData.address.landmark}</div>
-                      )}
-                      {displayData.address.is_rural && (
-                        <div className="flex items-center gap-2 mt-3 p-3 bg-muted/30 border border-border rounded-md">
-                          <AlertCircle className="h-4 w-4 text-muted-foreground" />
-                          <span className="text-muted-foreground text-sm">Rural location</span>
-                        </div>
-                      )}
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
-
-              {/* Customer Message */}
-              {displayData.customer_message && (
-                <Card className="bg-card border-border">
-                  <CardHeader className="pb-4">
-                    <CardTitle className="flex items-center gap-2 text-base font-medium text-foreground">
-                      <div className="p-2 rounded-md bg-muted/50">
-                        <MessageSquare className="h-4 w-4 text-muted-foreground" />
-                      </div>
-                      Customer Notes
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="p-4 bg-muted/20 border border-border rounded-md border-l-4 border-l-foreground">
-                      <p className="text-foreground italic leading-relaxed">"{displayData.customer_message}"</p>
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
-
-              {/* Competition Analysis (for available appointments) */}
-              {mode === 'available' && displayData.interest_summary?.total_count > 0 && (
-                <Card className="bg-card border-border">
-                  <CardHeader className="pb-4">
-                    <CardTitle className="flex items-center gap-2 text-base font-medium text-foreground">
-                      <div className="p-2 rounded-md bg-muted/50">
-                        <Users className="h-4 w-4 text-muted-foreground" />
-                      </div>
-                      Competition Analysis
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="text-center p-3 bg-muted/20 rounded-md">
-                        <div className="text-2xl font-bold text-foreground">
-                          {displayData.interest_summary.total_count}
-                        </div>
-                        <div className="text-sm text-muted-foreground">Total Interests</div>
-                      </div>
-                      <div className="text-center p-3 bg-muted/20 rounded-md">
-                        <div className="text-2xl font-bold text-foreground">
-                          {displayData.interest_summary.quoted_count || 0}
-                        </div>
-                        <div className="text-sm text-muted-foreground">With Quotes</div>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
             </div>
           )}
 
-          {/* Form Views */}
+          {/* ✅ FIXED: Form Views with new components */}
           {(currentView === 'accept' || currentView === 'decline' || currentView === 'quote') && (
             <div className="px-6">
               <AppointmentInteractionForm
@@ -730,13 +632,12 @@ export default function AppointmentInformationView({
             </div>
           )}
 
-          {/* Interest Expression Form */}
+          {/* ✅ FIXED: Interest Expression Form - Now uses ProfessionalInterestForm */}
           {currentView === 'express_interest' && (
             <div className="px-6">
-              <AppointmentInteractionForm
+              <ProfessionalInterestForm
                 appointment={displayData}
-                action="express_interest"
-                mode="available"
+                professionalId={professionalId}
                 onSubmit={handleInterestSubmit}
                 onCancel={() => setCurrentView('details')}
                 loading={actionLoading}
@@ -744,15 +645,14 @@ export default function AppointmentInformationView({
             </div>
           )}
 
-          {/* Interest Update Form */}
-          {currentView === 'update_interest' && (
+          {/* ✅ FIXED: Interest Update Form - Now uses InterestResponseForm */}
+          {currentView === 'update_interest' && currentInterest && (
             <div className="px-6">
-              <AppointmentInteractionForm
-                appointment={displayData}
+              <InterestResponseForm
                 interest={currentInterest}
-                action="update_interest"
-                mode="interests"
+                appointment={displayData}
                 onSubmit={handleInterestUpdate}
+                onWithdraw={handleWithdrawInterest}
                 onCancel={() => setCurrentView('details')}
                 loading={actionLoading}
               />
@@ -775,17 +675,17 @@ export default function AppointmentInformationView({
                     size="sm"
                     onClick={() => setCurrentView('express_interest')}
                     disabled={actionLoading}
-                    className="flex items-center gap-2 bg-foreground text-background hover:bg-foreground/90"
+                    className={`flex items-center gap-2 ${isInvited ? 'bg-blue-600 hover:bg-blue-700' : 'bg-foreground hover:bg-foreground/90'} text-white`}
                   >
-                    <Heart className="h-4 w-4" />
-                    Express Interest
+                    {isInvited ? <Crown className="h-4 w-4" /> : <Heart className="h-4 w-4" />}
+                    {isInvited ? 'Respond to Invitation' : 'Express Interest'}
                   </Button>
                 )}
 
                 {/* My Interests Actions */}
                 {mode === 'interests' && currentInterest && (
                   <>
-                    {currentInterest.status === 'interested' && (
+                    {['interested', 'quoted'].includes(currentInterest.status) && (
                       <Button
                         size="sm"
                         onClick={() => setCurrentView('update_interest')}
@@ -793,15 +693,8 @@ export default function AppointmentInformationView({
                         className="flex items-center gap-2 bg-foreground text-background hover:bg-foreground/90"
                       >
                         <DollarSign className="h-4 w-4" />
-                        Update Quote
+                        Update Interest
                       </Button>
-                    )}
-                    
-                    {currentInterest.status === 'quoted' && (
-                      <div className="flex items-center gap-2 text-muted-foreground italic text-sm">
-                        <Clock className="h-4 w-4" />
-                        Awaiting customer response
-                      </div>
                     )}
                     
                     {currentInterest.status === 'selected' && (
@@ -855,42 +748,6 @@ export default function AppointmentInformationView({
                       Accept
                     </Button>
                   </>
-                )}
-                
-                {mode === 'assigned' && displayData.status === 'quoted' && (
-                  <>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setCurrentView('decline')}
-                      disabled={actionLoading}
-                      className="flex items-center gap-2 bg-background hover:bg-muted border-border text-muted-foreground hover:text-foreground"
-                    >
-                      <X className="h-4 w-4" />
-                      Decline
-                    </Button>
-                    
-                    <Button
-                      size="sm"
-                      onClick={() => setCurrentView('accept')}
-                      disabled={actionLoading}
-                      className="flex items-center gap-2 bg-foreground text-background hover:bg-foreground/90"
-                    >
-                      <Calendar className="h-4 w-4" />
-                      Accept Quote
-                    </Button>
-                  </>
-                )}
-                
-                {mode === 'assigned' && ['accepted', 'converted', 'declined'].includes(displayData.status) && (
-                  <div className="flex items-center gap-2 text-muted-foreground italic text-sm">
-                    {displayData.status === 'declined' ? (
-                      <X className="h-4 w-4" />
-                    ) : (
-                      <Calendar className="h-4 w-4" />
-                    )}
-                    This appointment has been {displayData.status}
-                  </div>
                 )}
               </div>
             </div>

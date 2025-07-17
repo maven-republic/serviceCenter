@@ -541,6 +541,8 @@ export default function ManageAppointments() {
   // Handle view appointment details
   const handleViewAppointment = useCallback(async (appointmentId) => {
     console.log('👁️ Viewing appointment:', appointmentId)
+      console.log('🔍 Current activeTab:', activeTab) // Add this debug
+
 
     try {
       const response = await fetch(`/api/appointments/${appointmentId}`)
@@ -549,6 +551,9 @@ export default function ManageAppointments() {
       if (!response.ok) {
         throw new Error(data.error || 'Failed to fetch appointment details')
       }
+
+          console.log('📋 Setting appointment with mode:', activeTab) // Add this debug
+
 
       setSelectedAppointment({
         ...data.appointment,
@@ -830,6 +835,9 @@ export default function ManageAppointments() {
           </div>
         </TabsContent>
       </Tabs>
+
+      {showSheet && console.log('🔧 Passing mode to AppointmentInformationView:', activeTab)}
+
 
       {/* ✅ ENHANCED: Appointment Detail Sheet with Professional ID */}
       <AppointmentInformationView

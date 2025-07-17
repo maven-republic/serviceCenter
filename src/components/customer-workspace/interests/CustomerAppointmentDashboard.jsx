@@ -1,25 +1,19 @@
-// src/components/customer-workspace/interests/CustomerAppointmentDashboard.jsx (Updated with all components)
+// src/components/customer-workspace/interests/CustomerAppointmentDashboard.jsx (Debug Version)
 "use client";
 
 import { useState, useEffect } from 'react';
-import { Card, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { 
-  Clock, 
-  User, 
-  DollarSign, 
-  Award,
   AlertCircle,
   Users,
-  BarChart3
+  BarChart3,
+  User,
+  Clock
 } from 'lucide-react';
 
 import InterestSelectionCard from './InterestSelectionCard';
 import InterestComparisonView from './InterestComparisonView';
-import AppointmentInterestStatus from './AppointmentInterestStatus';
 import AssessmentScheduler from './AssessmentScheduler';
 
 const CustomerAppointmentDashboard = ({ appointmentId }) => {
@@ -29,6 +23,7 @@ const CustomerAppointmentDashboard = ({ appointmentId }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [actionLoading, setActionLoading] = useState(false);
+  const [debugInfo, setDebugInfo] = useState(null);
 
   useEffect(() => {
     if (appointmentId) {
@@ -40,20 +35,96 @@ const CustomerAppointmentDashboard = ({ appointmentId }) => {
     try {
       setLoading(true);
       setError(null);
+      setDebugInfo(null);
+      
+      console.log('🔍 Fetching interests for appointment:', appointmentId);
       
       const response = await fetch(`/api/appointments/${appointmentId}/interests`);
-      const data = await response.json();
+      
+      // Debug: Log response details
+      console.log('📡 Response status:', response.status);
+      console.log('📡 Response ok:', response.ok);
+      console.log('📡 Response headers:', Object.fromEntries(response.headers.entries()));
+      
+      // Check if response is ok
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('❌ HTTP Error Response:', errorText);
+        setDebugInfo({
+          status: response.status,
+          statusText: response.statusText,
+          responseText: errorText
+        });
+        setError(`HTTP ${response.status}: ${response.statusText}`);
+        return;
+      }
+      
+      // Get response as text first to debug
+      const responseText = await response.text();
+      console.log('📡 Raw response text (first 500 chars):', responseText.substring(0, 500));
+      
+      // Check if response is empty
+      if (!responseText.trim()) {
+        console.error('❌ Empty response received');
+        setError('Empty response from server');
+        setDebugInfo({
+          status: response.status,
+          responseText: 'EMPTY'
+        });
+        return;
+      }
+      
+      // Try to parse JSON
+      let data;
+      try {
+        data = JSON.parse(responseText);
+        console.log('✅ JSON parsed successfully:', data);
+      } catch (parseError) {
+        console.error('❌ JSON Parse Error:', parseError);
+        console.error('❌ Response text that failed to parse:', responseText);
+        setError('Invalid JSON response from server');
+        setDebugInfo({
+          status: response.status,
+          parseError: parseError.message,
+          responseText: responseText.substring(0, 1000)
+        });
+        return;
+      }
+      
+      // Check if data has expected structure
+      if (!data) {
+        console.error('❌ No data in response');
+        setError('No data received from server');
+        return;
+      }
       
       if (data.success) {
+        console.log('✅ Data loaded successfully:', {
+          appointment: !!data.appointment,
+          interestsCount: data.interests?.length || 0,
+          summary: !!data.summary
+        });
+        
         setAppointmentData(data.appointment);
-        setInterests(data.interests);
+        setInterests(data.interests || []);
         setSummary(data.summary);
       } else {
+        console.error('❌ API returned error:', data.error);
         setError(data.error || 'Failed to load appointment interests');
+        setDebugInfo({
+          apiError: data.error,
+          details: data.details
+        });
       }
     } catch (error) {
-      console.error('Error fetching appointment interests:', error);
-      setError('Failed to load appointment data');
+      console.error('💥 Fetch error:', error);
+      console.error('💥 Error stack:', error.stack);
+      setError(`Network error: ${error.message}`);
+      setDebugInfo({
+        errorType: error.name,
+        errorMessage: error.message,
+        errorStack: error.stack
+      });
     } finally {
       setLoading(false);
     }
@@ -62,6 +133,8 @@ const CustomerAppointmentDashboard = ({ appointmentId }) => {
   const handleSelectProfessional = async (interestId, notes = '') => {
     try {
       setActionLoading(true);
+      console.log('🎯 Selecting professional:', { interestId, notes });
+      
       const response = await fetch(`/api/appointments/${appointmentId}/interests`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -72,16 +145,35 @@ const CustomerAppointmentDashboard = ({ appointmentId }) => {
         })
       });
 
-      const result = await response.json();
+      console.log('📡 Selection response status:', response.status);
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('❌ Selection HTTP Error:', errorText);
+        return { success: false, error: `HTTP ${response.status}: ${errorText}` };
+      }
+
+      const responseText = await response.text();
+      let result;
+      
+      try {
+        result = JSON.parse(responseText);
+      } catch (parseError) {
+        console.error('❌ Selection JSON Parse Error:', parseError);
+        return { success: false, error: 'Invalid response format' };
+      }
+
       if (result.success) {
+        console.log('✅ Professional selected successfully');
         await fetchAppointmentInterests(); // Refresh data
         return { success: true };
       } else {
+        console.error('❌ Selection failed:', result.error);
         return { success: false, error: result.error };
       }
     } catch (error) {
-      console.error('Error selecting professional:', error);
-      return { success: false, error: 'Selection failed' };
+      console.error('💥 Selection error:', error);
+      return { success: false, error: 'Selection failed: ' + error.message };
     } finally {
       setActionLoading(false);
     }
@@ -100,7 +192,14 @@ const CustomerAppointmentDashboard = ({ appointmentId }) => {
         })
       });
 
-      const result = await response.json();
+      if (!response.ok) {
+        const errorText = await response.text();
+        return { success: false, error: `HTTP ${response.status}: ${errorText}` };
+      }
+
+      const responseText = await response.text();
+      const result = JSON.parse(responseText);
+      
       if (result.success) {
         await fetchAppointmentInterests(); // Refresh data
         return { success: true };
@@ -109,7 +208,7 @@ const CustomerAppointmentDashboard = ({ appointmentId }) => {
       }
     } catch (error) {
       console.error('Error rejecting professional:', error);
-      return { success: false, error: 'Rejection failed' };
+      return { success: false, error: 'Rejection failed: ' + error.message };
     } finally {
       setActionLoading(false);
     }
@@ -118,13 +217,6 @@ const CustomerAppointmentDashboard = ({ appointmentId }) => {
   const handleMessageProfessional = (interest) => {
     // TODO: Implement messaging functionality
     console.log('Message professional:', interest.professional_id);
-  };
-
-  const formatCurrency = (amount) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD'
-    }).format(amount);
   };
 
   if (loading) {
@@ -140,10 +232,42 @@ const CustomerAppointmentDashboard = ({ appointmentId }) => {
 
   if (error) {
     return (
-      <Alert variant="destructive">
-        <AlertCircle className="h-4 w-4" />
-        <AlertDescription>{error}</AlertDescription>
-      </Alert>
+      <div className="space-y-4">
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+        
+        {/* Debug Information */}
+        {debugInfo && (
+          <Alert>
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>
+              <details className="mt-2">
+                <summary className="cursor-pointer font-medium">Debug Information</summary>
+                <pre className="mt-2 text-xs bg-gray-100 p-2 rounded overflow-auto max-h-40">
+                  {JSON.stringify(debugInfo, null, 2)}
+                </pre>
+              </details>
+            </AlertDescription>
+          </Alert>
+        )}
+        
+        <div className="flex space-x-2">
+          <button 
+            onClick={fetchAppointmentInterests}
+            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+          >
+            Retry
+          </button>
+          <button 
+            onClick={() => window.open(`/api/appointments/${appointmentId}/interests`, '_blank')}
+            className="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700"
+          >
+            Debug API
+          </button>
+        </div>
+      </div>
     );
   }
 
@@ -164,77 +288,22 @@ const CustomerAppointmentDashboard = ({ appointmentId }) => {
 
   return (
     <div className="space-y-6">
-      {/* Header with Status */}
-      <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold">{appointmentInformation.title}</h1>
-            <p className="text-muted-foreground">
-              Professional Interest Management
-            </p>
-          </div>
-        </div>
-
-        <AppointmentInterestStatus 
-          status={appointmentInformation.status}
-          interestCount={activeInterests.length}
-          selectedInterest={selectedInterest}
-        />
-      </div>
-
-      {/* Summary Statistics */}
-      {summary && summary.total_interests > 0 && (
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center space-x-2">
-                <User className="h-4 w-4 text-blue-600" />
-                <span className="text-sm font-medium">Total Responses</span>
+      {/* Debug Panel */}
+      {process.env.NODE_ENV === 'development' && (
+        <Alert>
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>
+            <details>
+              <summary className="cursor-pointer font-medium">Debug Info</summary>
+              <div className="mt-2 text-xs">
+                <p>Appointment ID: {appointmentId}</p>
+                <p>Interests Count: {interests.length}</p>
+                <p>Active Interests: {activeInterests.length}</p>
+                <p>Selected Interest: {selectedInterest ? 'Yes' : 'No'}</p>
               </div>
-              <p className="text-2xl font-bold">{summary.total_interests}</p>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center space-x-2">
-                <DollarSign className="h-4 w-4 text-green-600" />
-                <span className="text-sm font-medium">With Quotes</span>
-              </div>
-              <p className="text-2xl font-bold">{summary.quoted_interests}</p>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center space-x-2">
-                <Clock className="h-4 w-4 text-orange-600" />
-                <span className="text-sm font-medium">Avg Response</span>
-              </div>
-              <p className="text-2xl font-bold">
-                {summary.response_time_stats?.average_response_time 
-                  ? `${Math.round(summary.response_time_stats.average_response_time)}m`
-                  : '—'
-                }
-              </p>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center space-x-2">
-                <Award className="h-4 w-4 text-purple-600" />
-                <span className="text-sm font-medium">Avg Quote</span>
-              </div>
-              <p className="text-2xl font-bold">
-                {summary.average_quote && summary.average_quote > 0 
-                  ? formatCurrency(summary.average_quote) 
-                  : '—'
-                }
-              </p>
-            </CardContent>
-          </Card>
-        </div>
+            </details>
+          </AlertDescription>
+        </Alert>
       )}
 
       {/* Main Content Tabs */}
@@ -242,7 +311,7 @@ const CustomerAppointmentDashboard = ({ appointmentId }) => {
         <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="responses" className="flex items-center space-x-2">
             <Users className="h-4 w-4" />
-            <span>Responses ({activeInterests.length})</span>
+            <span>Answers ({activeInterests.length})</span>
           </TabsTrigger>
           <TabsTrigger value="compare" disabled={activeInterests.length < 2}>
             <BarChart3 className="h-4 w-4 mr-2" />
@@ -276,7 +345,7 @@ const CustomerAppointmentDashboard = ({ appointmentId }) => {
               </AlertDescription>
             </Alert>
           ) : (
-            <div className="space-y-6">
+            <div className="space-y-4">
               {activeInterests.map((interest) => (
                 <InterestSelectionCard 
                   key={interest.interest_id}

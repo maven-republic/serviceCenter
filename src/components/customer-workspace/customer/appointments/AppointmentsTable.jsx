@@ -1,10 +1,11 @@
 // src/components/customer-workspace/customer/appointments/AppointmentsTable.jsx
 "use client";
 
-import { useRouter } from 'next/navigation';
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { 
   Table,
   TableBody,
@@ -13,8 +14,11 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { Eye, Calendar, Clock, MessageSquare, MoreHorizontal } from 'lucide-react';
+import { Eye, Calendar, Clock, MessageSquare, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
+
+// CORRECTED IMPORT PATH - Go up two levels, then into interests folder
+import CustomerAppointmentDashboard from '../../interests/CustomerAppointmentDashboard';
 
 const getStatusVariant = (status) => {
   const variants = {
@@ -63,158 +67,214 @@ const truncateText = (text, maxLength = 100) => {
 };
 
 export const AppointmentsTable = ({ appointments }) => {
-  const router = useRouter();
+  const [selectedAppointmentId, setSelectedAppointmentId] = useState(null);
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+
+  const handleViewAppointment = (appointmentId) => {
+    setSelectedAppointmentId(appointmentId);
+    setIsDrawerOpen(true);
+  };
+
+  const handleCloseDrawer = () => {
+    setIsDrawerOpen(false);
+    setSelectedAppointmentId(null);
+  };
+
+  const selectedAppointment = appointments.find(
+    apt => apt.appointment_id === selectedAppointmentId
+  );
 
   return (
-    <Card className="animate-fade-in">
-      <CardHeader className="pb-4">
-        <CardTitle className="flex items-center gap-3 text-foreground">
-          <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-primary/10">
-            <Calendar className="h-4 w-4 text-primary" />
-          </div>
-          <div>
-            <h3 className="text-lg font-semibold">Your Appointments</h3>
-            <p className="text-sm text-muted-foreground font-normal">
-              {appointments.length} appointment{appointments.length !== 1 ? 's' : ''} total
-            </p>
-          </div>
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="p-0">
-        <div className="relative overflow-hidden">
-          <Table>
-            <TableHeader>
-              <TableRow className="hover:bg-transparent border-border">
-                <TableHead className="font-semibold text-muted-foreground">Service</TableHead>
-                <TableHead className="font-semibold text-muted-foreground">Request Details</TableHead>
-                <TableHead className="font-semibold text-muted-foreground">Status</TableHead>
-                <TableHead className="font-semibold text-muted-foreground">Created</TableHead>
-                <TableHead className="font-semibold text-muted-foreground text-center">Responses</TableHead>
-                <TableHead className="font-semibold text-muted-foreground text-right">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {appointments.map((appointment, index) => (
-                <TableRow 
-                  key={appointment.appointment_id} 
-                  className={cn(
-                    "group cursor-pointer transition-colors hover:bg-muted/30",
-                    "border-border/50"
-                  )}
-                  onClick={() => router.push(`/customer/appointments/${appointment.appointment_id}/interests`)}
-                >
-                  <TableCell className="py-4">
-                    <div className="flex flex-col gap-1.5">
-                      <div className="font-medium text-sm text-foreground">
-                        {appointment.service?.name || 'Service Request'}
-                      </div>
-                      <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                        <span className="font-mono bg-muted/50 px-1.5 py-0.5 rounded text-[10px]">
-                          #{appointment.appointment_id.slice(0, 8)}
-                        </span>
-                      </div>
-                    </div>
-                  </TableCell>
-                  
-                  <TableCell className="py-4 max-w-[300px]">
-                    <div className="flex flex-col gap-1.5">
-                      <div className="font-medium text-sm text-foreground line-clamp-1">
-                        {appointment.title || 'Untitled Request'}
-                      </div>
-                      {appointment.customer_message && (
-                        <div className="flex items-start gap-2">
-                          <MessageSquare className="h-3 w-3 text-muted-foreground mt-0.5 flex-shrink-0" />
-                          <div className="text-xs text-muted-foreground line-clamp-2 leading-relaxed">
-                            {truncateText(appointment.customer_message, 120)}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  </TableCell>
-                  
-                  <TableCell className="py-4">
-                    <Badge 
-                      className={cn(
-                        "border font-medium capitalize text-xs px-2.5 py-1",
-                        getStatusColor(appointment.status)
-                      )}
-                      variant="outline"
-                    >
-                      {appointment.status.replace('_', ' ')}
-                    </Badge>
-                  </TableCell>
-                  
-                  <TableCell className="py-4">
-                    <div className="flex flex-col gap-1">
-                      <div className="flex items-center gap-1.5 text-sm text-foreground">
-                        <Calendar className="h-3 w-3 text-muted-foreground" />
-                        {formatDate(appointment.created_at)}
-                      </div>
-                      <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                        <Clock className="h-3 w-3" />
-                        {formatTime(appointment.created_at)}
-                      </div>
-                    </div>
-                  </TableCell>
-                  
-                  <TableCell className="py-4 text-center">
-                    <div className="flex flex-col gap-1">
-                      <div className="text-sm font-semibold text-foreground">
-                        {appointment.interest_summary?.total_interests || 0}
-                      </div>
-                      <div className="text-xs text-muted-foreground">
-                        {appointment.interest_summary?.active_interests || 0} active
-                      </div>
-                    </div>
-                  </TableCell>
-                  
-                  <TableCell className="py-4 text-right">
-                    <Button 
-                      size="sm"
-                      variant="ghost"
-                      className="opacity-0 group-hover:opacity-100 transition-opacity hover:bg-primary/10 text-primary hover:text-primary"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        router.push(`/customer/appointments/${appointment.appointment_id}/interests`);
-                      }}
-                    >
-                      <Eye className="h-3 w-3 mr-1.5" />
-                      View
-                    </Button>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
-        
-        {/* Enhanced Footer */}
-        <div className="border-t border-border bg-muted/20 px-6 py-4 mt-0">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <div className="w-1.5 h-1.5 bg-primary rounded-full"></div>
-              <span>Showing {appointments.length} appointment{appointments.length !== 1 ? 's' : ''}</span>
+    <>
+      <Card className="animate-fade-in">
+        <CardHeader className="pb-4">
+          <CardTitle className="flex items-center gap-3 text-foreground">
+            <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-primary/10">
+              <Calendar className="h-4 w-4 text-primary" />
             </div>
-            
-            <div className="flex items-center gap-6">
-              <div className="flex items-center gap-6 text-xs">
-                <div className="flex items-center gap-2">
-                  <div className="w-2 h-2 bg-yellow-500 rounded-full"></div>
-                  <span className="text-muted-foreground">Pending</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                  <span className="text-muted-foreground">Active</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                  <span className="text-muted-foreground">Completed</span>
+            <div>
+              <h3 className="text-lg font-semibold">Your Appointments</h3>
+              <p className="text-sm text-muted-foreground font-normal">
+                {appointments.length} appointment{appointments.length !== 1 ? 's' : ''} total
+              </p>
+            </div>
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="p-0">
+          <div className="relative overflow-hidden">
+            <Table>
+              <TableHeader>
+                <TableRow className="hover:bg-transparent border-border">
+                  <TableHead className="font-semibold text-muted-foreground">Service</TableHead>
+                  <TableHead className="font-semibold text-muted-foreground">Request Details</TableHead>
+                  <TableHead className="font-semibold text-muted-foreground">Status</TableHead>
+                  <TableHead className="font-semibold text-muted-foreground">Created</TableHead>
+                  <TableHead className="font-semibold text-muted-foreground text-center">Responses</TableHead>
+                  <TableHead className="font-semibold text-muted-foreground text-right">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {appointments.map((appointment, index) => (
+                  <TableRow 
+                    key={appointment.appointment_id} 
+                    className={cn(
+                      "group cursor-pointer transition-colors hover:bg-muted/30",
+                      "border-border/50"
+                    )}
+                    onClick={() => handleViewAppointment(appointment.appointment_id)}
+                  >
+                    <TableCell className="py-4">
+                      <div className="flex flex-col gap-1.5">
+                        <div className="font-medium text-sm text-foreground">
+                          {appointment.service?.name || 'Service Request'}
+                        </div>
+                        <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                          <span className="font-mono bg-muted/50 px-1.5 py-0.5 rounded text-[10px]">
+                            #{appointment.appointment_id.slice(0, 8)}
+                          </span>
+                        </div>
+                      </div>
+                    </TableCell>
+                    
+                    <TableCell className="py-4 max-w-[300px]">
+                      <div className="flex flex-col gap-1.5">
+                        <div className="font-medium text-sm text-foreground line-clamp-1">
+                          {appointment.title || 'Untitled Request'}
+                        </div>
+                        {appointment.customer_message && (
+                          <div className="flex items-start gap-2">
+                            <MessageSquare className="h-3 w-3 text-muted-foreground mt-0.5 flex-shrink-0" />
+                            <div className="text-xs text-muted-foreground line-clamp-2 leading-relaxed">
+                              {truncateText(appointment.customer_message, 120)}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </TableCell>
+                    
+                    <TableCell className="py-4">
+                      <Badge 
+                        className={cn(
+                          "border font-medium capitalize text-xs px-2.5 py-1",
+                          getStatusColor(appointment.status)
+                        )}
+                        variant="outline"
+                      >
+                        {appointment.status.replace('_', ' ')}
+                      </Badge>
+                    </TableCell>
+                    
+                    <TableCell className="py-4">
+                      <div className="flex flex-col gap-1">
+                        <div className="flex items-center gap-1.5 text-sm text-foreground">
+                          <Calendar className="h-3 w-3 text-muted-foreground" />
+                          {formatDate(appointment.created_at)}
+                        </div>
+                        <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                          <Clock className="h-3 w-3" />
+                          {formatTime(appointment.created_at)}
+                        </div>
+                      </div>
+                    </TableCell>
+                    
+                    <TableCell className="py-4 text-center">
+                      <div className="flex flex-col gap-1">
+                        <div className="text-sm font-semibold text-foreground">
+                          {appointment.interest_summary?.total_interests || 0}
+                        </div>
+                        <div className="text-xs text-muted-foreground">
+                          {appointment.interest_summary?.active_interests || 0} active
+                        </div>
+                      </div>
+                    </TableCell>
+                    
+                    <TableCell className="py-4 text-right">
+                      <Button 
+                        size="sm"
+                        variant="ghost"
+                        className="opacity-0 group-hover:opacity-100 transition-opacity hover:bg-primary/10 text-primary hover:text-primary"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleViewAppointment(appointment.appointment_id);
+                        }}
+                      >
+                        <Eye className="h-3 w-3 mr-1.5" />
+                        View
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+          
+          {/* Enhanced Footer */}
+          <div className="border-t border-border bg-muted/20 px-6 py-4 mt-0">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <div className="w-1.5 h-1.5 bg-primary rounded-full"></div>
+                <span>Showing {appointments.length} appointment{appointments.length !== 1 ? 's' : ''}</span>
+              </div>
+              
+              <div className="flex items-center gap-6">
+                <div className="flex items-center gap-6 text-xs">
+                  <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 bg-yellow-500 rounded-full"></div>
+                    <span className="text-muted-foreground">Pending</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                    <span className="text-muted-foreground">Active</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                    <span className="text-muted-foreground">Completed</span>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
-        </div>
-      </CardContent>
-    </Card>
+        </CardContent>
+      </Card>
+
+      {/* Appointment Details Drawer */}
+      <Sheet open={isDrawerOpen} onOpenChange={setIsDrawerOpen}>
+        <SheetContent className="w-full sm:max-w-4xl overflow-y-auto">
+          <SheetHeader className="pb-6 border-b">
+            <div className="space-y-1">
+              <SheetTitle className="text-xl">
+                {selectedAppointment?.title || 'Appointment Details'}
+              </SheetTitle>
+              <SheetDescription className="flex items-center gap-2">
+                <span>{selectedAppointment?.service?.name || 'Service Request'}</span>
+                {selectedAppointment && (
+                  <>
+                    <span>•</span>
+                    <Badge 
+                      className={cn(
+                        "border font-medium capitalize text-xs px-2 py-0.5",
+                        getStatusColor(selectedAppointment.status)
+                      )}
+                      variant="outline"
+                    >
+                      {selectedAppointment.status.replace('_', ' ')}
+                    </Badge>
+                  </>
+                )}
+              </SheetDescription>
+            </div>
+          </SheetHeader>
+
+          {/* Render the appointment dashboard */}
+          <div className="py-6">
+            {selectedAppointmentId && (
+              <CustomerAppointmentDashboard 
+                appointmentId={selectedAppointmentId}
+              />
+            )}
+          </div>
+        </SheetContent>
+      </Sheet>
+    </>
   );
 };

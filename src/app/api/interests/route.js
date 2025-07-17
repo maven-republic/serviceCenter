@@ -1,5 +1,5 @@
 // src/app/api/interests/route.js
-// Professional interests management API
+// Professional interests management API - UPDATED with price range support
 
 import { createClient } from '@/utils/supabase/server'
 import { NextResponse } from 'next/server'
@@ -7,7 +7,7 @@ import { NextResponse } from 'next/server'
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
 
-// GET /api/interests - Get professional's interests
+// GET /api/interests - Get professional's interests (unchanged)
 export async function GET(request) {
   try {
     console.log('🎯 GET /api/interests called')
@@ -30,7 +30,7 @@ export async function GET(request) {
       )
     }
 
-    // Updated query to use new single-word column names
+    // Updated query to include new price range fields
     let query = supabase
       .from('interest')
       .select(`
@@ -96,93 +96,14 @@ export async function GET(request) {
 
     console.log(`✅ Found ${interests?.length || 0} interests`)
 
-    // Debug: Log the raw appointment data
-    if (interests && interests.length > 0) {
-      console.log('🔍 Sample appointment data:', interests[0].appointment)
-    }
-
-    // Step 2: If we have interests, try to get customer account details separately
-    if (interests && interests.length > 0) {
-      try {
-        // Get unique customer IDs
-        const customerIds = [...new Set(
-          interests
-            .map(interest => interest.appointment?.customer?.customer_id)
-            .filter(Boolean)
-        )]
-        
-        console.log('🔍 Fetching customer details for:', customerIds.length, 'customers')
-        
-        if (customerIds.length > 0) {
-          // Fetch customer account data separately with specific relationship name
-          const { data: customers, error: customerError } = await supabase
-            .from('individual_customer')
-            .select(`
-              customer_id,
-              account!individual_customer_account_id_fkey (
-                account_id,
-                first_name,
-                last_name,
-                email,
-                profile_picture_url
-              )
-            `)
-            .in('customer_id', customerIds)
-          
-          if (!customerError && customers) {
-            console.log('✅ Customer details fetched:', customers.length)
-            console.log('🔍 Sample customer data:', customers[0])
-            
-            // Create a map for quick lookup
-            const customerMap = customers.reduce((map, customer) => {
-              map[customer.customer_id] = customer
-              return map
-            }, {})
-            
-            console.log('🔍 Customer map created:', Object.keys(customerMap))
-            
-            // Merge customer data back into interests
-            interests.forEach(interest => {
-              if (interest.appointment?.customer?.customer_id) {
-                const customerId = interest.appointment.customer.customer_id
-                const customerData = customerMap[customerId]
-                if (customerData) {
-                  // Merge account data into customer object
-                  interest.appointment.customer = {
-                    ...interest.appointment.customer,
-                    account: customerData.account
-                  }
-                }
-              }
-            })
-            
-            console.log('✅ Customer details merged successfully')
-          } else {
-            console.log('⚠️ Could not fetch customer details:', customerError?.message)
-          }
-        }
-      } catch (customerFetchError) {
-        console.log('⚠️ Customer fetch failed, continuing without customer details:', customerFetchError.message)
-      }
-    }
-
-    // Transform the data to use new column names and make it Calendly-style
+    // Transform the data to include new price range fields
     const transformedInterests = interests?.map(interest => {
-      // Debug appointment time extraction
       const appointmentTime = interest.appointment?.session
       const appointmentDuration = interest.appointment?.duration || 60
       
-      console.log('🔍 Processing interest:', {
-        appointment_id: interest.appointment?.appointment_id,
-        session: interest.appointment?.session,
-        duration: interest.appointment?.duration,
-        customer_id: interest.appointment?.customer?.customer_id,
-        customer_account: interest.appointment?.customer?.account
-      })
-      
       return {
         ...interest,
-        // Customer's requested appointment time (Calendly-style)
+        // Customer's requested appointment time
         appointment_time: appointmentTime,
         appointment_duration: appointmentDuration,
         appointment_end_time: appointmentTime ? 
@@ -197,16 +118,20 @@ export async function GET(request) {
         professional_message: interest.message,
         professional_replied_at: interest.replied,
         
-        // Add customer data at top level for easier access
+        // NEW: Price range fields
+        price_range_min: interest.price_range_min,
+        price_range_max: interest.price_range_max,
+        assessment_justification: interest.assessment_justification,
+        
+        // Add customer/service data at top level
         customer: interest.appointment?.customer,
         customer_id: interest.appointment?.customer?.customer_id,
-        // Add service data at top level  
         service: interest.appointment?.service,
         service_id: interest.appointment?.service?.service_id
       }
     }) || []
 
-    console.log('✅ Found', transformedInterests.length, 'interests with customer data')
+    console.log('✅ Found', transformedInterests.length, 'interests with price range data')
 
     return NextResponse.json({
       success: true,
@@ -225,7 +150,7 @@ export async function GET(request) {
   }
 }
 
-// POST /api/interests - Create new interest (professional expressing interest)
+// POST /api/interests - Create new interest (UPDATED with price range support)
 export async function POST(request) {
   try {
     console.log('🎯 POST /api/interests called')
@@ -243,14 +168,27 @@ export async function POST(request) {
       modality = 'none',
       fee = 0,
       notes,
-      // New response fields
+      // NEW: Price range fields
+      price_range_min,
+      price_range_max,
+      assessment_justification,
+      // Response fields
       response = 'pending',
       suggested_time,
       suggested_duration,
       response_message
     } = body
 
-    console.log('📝 Interest request:', { appointment_id, professional_id, intent, assessment, response })
+    console.log('📝 Interest request:', { 
+      appointment_id, 
+      professional_id, 
+      intent, 
+      assessment, 
+      response,
+      price_range_min,
+      price_range_max,
+      has_justification: !!assessment_justification
+    })
 
     // Validate required fields
     if (!appointment_id || !professional_id) {
@@ -258,6 +196,23 @@ export async function POST(request) {
         { error: 'Missing required fields: appointment_id and professional_id' },
         { status: 400 }
       )
+    }
+
+    // NEW: Enhanced validation for assessment-only with price ranges
+    if (assessment && !amount) {
+      if (!price_range_min && !price_range_max) {
+        return NextResponse.json(
+          { error: 'Price range is required when assessment is needed without immediate quote' },
+          { status: 400 }
+        )
+      }
+      
+      if (!assessment_justification || !assessment_justification.trim()) {
+        return NextResponse.json(
+          { error: 'Assessment justification is required when assessment is needed without immediate quote' },
+          { status: 400 }
+        )
+      }
     }
 
     // Validate appointment exists and is accepting interests
@@ -312,7 +267,7 @@ export async function POST(request) {
       )
     }
 
-    // Create interest record using new column names
+    // Create interest record with new price range fields
     const interestData = {
       appointment_id,
       professional_id,
@@ -325,7 +280,11 @@ export async function POST(request) {
       notes: notes || null,
       status: 'interested',
       selected_by_customer: false,
-      // New response fields
+      // NEW: Price range fields
+      price_range_min: price_range_min ? parseFloat(price_range_min) : null,
+      price_range_max: price_range_max ? parseFloat(price_range_max) : null,
+      assessment_justification: assessment_justification || null,
+      // Response fields
       response: response,
       suggested: suggested_time || null,
       alternate: suggested_duration || null,

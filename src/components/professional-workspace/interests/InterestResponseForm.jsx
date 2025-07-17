@@ -1,4 +1,6 @@
 // src/components/professional-workspace/interests/InterestResponseForm.jsx
+// UPDATED with price range support
+
 'use client'
 
 import { useState, useCallback, useEffect } from 'react'
@@ -27,7 +29,8 @@ import {
   Save,
   Trash2,
   CheckCircle,
-  Users
+  Users,
+  Info
 } from "lucide-react"
 
 export default function InterestResponseForm({
@@ -45,6 +48,10 @@ export default function InterestResponseForm({
     modality: interest?.modality || 'none',
     fee: interest?.fee || 0.00,
     amount: interest?.amount || null,
+    // NEW: Price range fields
+    price_range_min: interest?.price_range_min || '',
+    price_range_max: interest?.price_range_max || '',
+    assessment_justification: interest?.assessment_justification || '',
     earliest_start: interest?.earliest_start || '',
     latest_start: interest?.latest_start || '',
     notes: interest?.notes || '',
@@ -63,6 +70,10 @@ export default function InterestResponseForm({
         modality: interest.modality || 'none',
         fee: interest.fee || 0.00,
         amount: interest.amount || null,
+        // NEW: Price range fields
+        price_range_min: interest.price_range_min || '',
+        price_range_max: interest.price_range_max || '',
+        assessment_justification: interest.assessment_justification || '',
         earliest_start: interest.earliest_start || '',
         latest_start: interest.latest_start || '',
         notes: interest.notes || '',
@@ -84,7 +95,16 @@ export default function InterestResponseForm({
     }
   }, [errors])
 
-  // Validate form
+  // NEW: Get pricing strategy
+  const getPricingStrategy = () => {
+    if (!formData.assessment && formData.amount) return 'immediate'
+    if (formData.assessment && formData.amount) return 'preliminary'
+    if (formData.assessment && !formData.amount && (formData.price_range_min || formData.price_range_max)) return 'range'
+    if (formData.assessment && !formData.amount) return 'assessment_only'
+    return 'none'
+  }
+
+  // UPDATED: Enhanced validation with price range
   const validateForm = useCallback(() => {
     const newErrors = {}
     
@@ -98,6 +118,23 @@ export default function InterestResponseForm({
 
     if (formData.assessment && formData.modality === 'local' && formData.fee < 0) {
       newErrors.fee = 'Assessment fee cannot be negative'
+    }
+
+    // NEW: Price range validation for assessment-only
+    if (formData.assessment && !formData.amount) {
+      if (!formData.price_range_min && !formData.price_range_max) {
+        newErrors.pricing = 'Please provide either a quote or price range when assessment is required'
+      } else if (formData.price_range_min && formData.price_range_max) {
+        const min = parseFloat(formData.price_range_min)
+        const max = parseFloat(formData.price_range_max)
+        if (min >= max) {
+          newErrors.price_range_max = 'Maximum price must be greater than minimum price'
+        }
+      }
+      
+      if (!formData.assessment_justification.trim()) {
+        newErrors.assessment_justification = 'Please explain why assessment is required'
+      }
     }
 
     if (formData.earliest_start && formData.latest_start) {
@@ -114,17 +151,20 @@ export default function InterestResponseForm({
     return Object.keys(newErrors).length === 0
   }, [formData])
 
-  // Handle form submission
+  // UPDATED: Handle form submission with price range
   const handleSubmit = useCallback(async (e) => {
     e.preventDefault()
     
     if (!validateForm()) return
     
-    // Clean up data before submission
     const submissionData = {
       ...formData,
       amount: formData.amount || null,
       fee: formData.assessment && formData.modality === 'local' ? formData.fee : 0,
+      // NEW: Include price range fields
+      price_range_min: formData.price_range_min ? parseFloat(formData.price_range_min) : null,
+      price_range_max: formData.price_range_max ? parseFloat(formData.price_range_max) : null,
+      assessment_justification: formData.assessment_justification || null,
       earliest_start: formData.earliest_start || null,
       latest_start: formData.latest_start || null,
       estimated_duration_hours: formData.estimated_duration_hours || null
@@ -141,8 +181,9 @@ export default function InterestResponseForm({
   }, [onWithdraw])
 
   const minDateTime = new Date().toISOString().slice(0, 16)
+  const strategy = getPricingStrategy()
 
-  // Get status configuration - UPDATED to include all database statuses
+  // Get status configuration
   const getStatusConfig = (status) => {
     switch (status) {
       case 'interested':
@@ -191,7 +232,6 @@ export default function InterestResponseForm({
   }
 
   const statusConfig = getStatusConfig(interest?.status)
-  // UPDATED: Fixed canEdit logic to match database statuses
   const canEdit = ['interested', 'invited', 'quoted'].includes(interest?.status)
 
   return (
@@ -202,6 +242,14 @@ export default function InterestResponseForm({
           <CardTitle className="text-base flex items-center gap-2">
             <Target className="h-4 w-4" />
             Interest Status
+            {/* NEW: Show pricing strategy badge */}
+            <Badge variant="outline" className="ml-2">
+              {strategy === 'immediate' && 'Immediate Quote'}
+              {strategy === 'preliminary' && 'Preliminary + Assessment'}
+              {strategy === 'range' && 'Range + Assessment'}
+              {strategy === 'assessment_only' && 'Assessment Only'}
+              {strategy === 'none' && 'No Pricing'}
+            </Badge>
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -250,17 +298,27 @@ export default function InterestResponseForm({
       {/* Update Form */}
       {canEdit && (
         <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Updated Quote */}
+          {/* UPDATED: Pricing Strategy with price range */}
           <Card>
             <CardHeader className="pb-3">
               <CardTitle className="text-base flex items-center gap-2">
                 <DollarSign className="h-4 w-4" />
-                Update Quote
+                Update Pricing Strategy
+                <Badge variant={strategy === 'immediate' ? 'default' : 'outline'} className="ml-2">
+                  {strategy === 'immediate' && 'Immediate Quote'}
+                  {strategy === 'preliminary' && 'Preliminary + Assessment'}
+                  {strategy === 'range' && 'Range + Assessment'}
+                  {strategy === 'assessment_only' && 'Assessment Only'}
+                  {strategy === 'none' && 'Select Strategy'}
+                </Badge>
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
+              {/* Quote field */}
               <div className="space-y-2">
-                <Label htmlFor="amount">Updated Quote Amount (JMD)</Label>
+                <Label htmlFor="amount">
+                  {formData.assessment ? 'Preliminary Quote (JMD)' : 'Final Quote (JMD)'}
+                </Label>
                 <div className="relative">
                   <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input
@@ -284,6 +342,52 @@ export default function InterestResponseForm({
                 )}
               </div>
 
+              {/* NEW: Price Range (when assessment but no quote) */}
+              {formData.assessment && !formData.amount && (
+                <div className="space-y-4 p-4 border border-amber-200 bg-amber-50 rounded-md">
+                  <div className="flex items-center gap-2">
+                    <Info className="h-4 w-4 text-amber-600" />
+                    <Label className="font-medium text-amber-800">
+                      Updated Price Range (Required for Assessment-Only)
+                    </Label>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-1">
+                      <Label className="text-sm">Minimum (JMD)</Label>
+                      <Input
+                        type="number"
+                        placeholder="e.g., 3000"
+                        value={formData.price_range_min}
+                        onChange={(e) => handleChange('price_range_min', e.target.value)}
+                        className={errors.pricing ? 'border-destructive' : ''}
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-sm">Maximum (JMD)</Label>
+                      <Input
+                        type="number"
+                        placeholder="e.g., 8000"
+                        value={formData.price_range_max}
+                        onChange={(e) => handleChange('price_range_max', e.target.value)}
+                        className={errors.price_range_max ? 'border-destructive' : ''}
+                      />
+                    </div>
+                  </div>
+                  {errors.pricing && (
+                    <p className="text-sm text-destructive">{errors.pricing}</p>
+                  )}
+                  {errors.price_range_max && (
+                    <p className="text-sm text-destructive">{errors.price_range_max}</p>
+                  )}
+                  {/* Show current range if exists */}
+                  {(interest?.price_range_min || interest?.price_range_max) && (
+                    <p className="text-xs text-muted-foreground">
+                      Current range: JMD ${interest.price_range_min || '?'} - ${interest.price_range_max || '?'}
+                    </p>
+                  )}
+                </div>
+              )}
+
               {/* Estimated Duration */}
               <div className="space-y-2">
                 <Label htmlFor="estimated_duration_hours">Estimated Duration (Hours)</Label>
@@ -303,9 +407,6 @@ export default function InterestResponseForm({
                 {errors.estimated_duration_hours && (
                   <p className="text-sm text-destructive">{errors.estimated_duration_hours}</p>
                 )}
-                <p className="text-xs text-muted-foreground">
-                  How many hours do you estimate this project will take?
-                </p>
               </div>
             </CardContent>
           </Card>
@@ -364,6 +465,37 @@ export default function InterestResponseForm({
                       </div>
                       {errors.fee && (
                         <p className="text-sm text-destructive">{errors.fee}</p>
+                      )}
+                      <Alert>
+                        <CheckCircle className="h-4 w-4" />
+                        <AlertDescription>
+                          <strong>Fee Policy:</strong> This fee will be <strong>deducted from your final quote</strong> if the customer accepts your proposal.
+                        </AlertDescription>
+                      </Alert>
+                    </div>
+                  )}
+
+                  {/* NEW: Assessment justification for assessment-only */}
+                  {!formData.amount && (
+                    <div className="space-y-2">
+                      <Label htmlFor="assessment_justification">
+                        Updated Assessment Justification *
+                      </Label>
+                      <Textarea
+                        id="assessment_justification"
+                        rows={3}
+                        value={formData.assessment_justification}
+                        onChange={(e) => handleChange('assessment_justification', e.target.value)}
+                        placeholder="Update your explanation of why site assessment is necessary..."
+                        className={errors.assessment_justification ? 'border-destructive' : ''}
+                      />
+                      {errors.assessment_justification && (
+                        <p className="text-sm text-destructive">{errors.assessment_justification}</p>
+                      )}
+                      {interest?.assessment_justification && (
+                        <p className="text-xs text-muted-foreground">
+                          Current: "{interest.assessment_justification}"
+                        </p>
                       )}
                     </div>
                   )}
@@ -503,10 +635,22 @@ export default function InterestResponseForm({
               <CardTitle className="text-base">Interest Details</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
+              {/* Quote or Price Range Display */}
               {interest?.amount && (
                 <div className="flex justify-between items-center py-2 border-b">
                   <span className="font-medium text-muted-foreground">Quote Amount</span>
                   <span className="font-semibold">JMD ${parseFloat(interest.amount).toLocaleString()}</span>
+                </div>
+              )}
+
+              {/* NEW: Price Range Display */}
+              {!interest?.amount && (interest?.price_range_min || interest?.price_range_max) && (
+                <div className="flex justify-between items-center py-2 border-b">
+                  <span className="font-medium text-muted-foreground">Price Range</span>
+                  <span className="font-semibold">
+                    JMD ${interest.price_range_min ? parseFloat(interest.price_range_min).toLocaleString() : '?'} - 
+                    ${interest.price_range_max ? parseFloat(interest.price_range_max).toLocaleString() : '?'}
+                  </span>
                 </div>
               )}
 
@@ -528,6 +672,16 @@ export default function InterestResponseForm({
                 <div className="space-y-2">
                   <span className="font-medium text-muted-foreground">Message</span>
                   <p className="text-sm bg-muted/30 p-3 rounded-md italic">"{interest.message}"</p>
+                </div>
+              )}
+
+              {/* NEW: Assessment Justification Display */}
+              {interest?.assessment_justification && (
+                <div className="space-y-2">
+                  <span className="font-medium text-muted-foreground">Assessment Justification</span>
+                  <p className="text-sm bg-amber-50 p-3 rounded-md border border-amber-200">
+                    {interest.assessment_justification}
+                  </p>
                 </div>
               )}
 

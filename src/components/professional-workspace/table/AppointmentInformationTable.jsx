@@ -60,22 +60,23 @@ import {
   Star,
   Heart,
   Send,
-  UserCheck
+  UserCheck,
+  Crown
 } from 'lucide-react'
 
 export default function AppointmentInformationTable({
   appointments = [],
-  professionalId, // ✅ NEW: Professional ID for invitation detection
+  professionalId,
   onView,
   onAccept,
   onDecline,
-  onExpressInterest, // ✅ NEW: For available appointments
-  onUpdateInterest, // ✅ NEW: For interests
+  onExpressInterest,
+  onUpdateInterest,
   onViewAttachments,
   loading = false,
   pagination,
   onPageChange,
-  mode = 'assigned' // ✅ NEW: 'available', 'interests', 'assigned'
+  mode = 'assigned' // 'available', 'interests', 'assigned'
 }) {
   const [actionLoading, setActionLoading] = useState({})
   const [sortConfig, setSortConfig] = useState({
@@ -94,24 +95,10 @@ export default function AppointmentInformationTable({
     }
   }
 
-  // ✅ NEW: Handle express interest action
-  const handleExpressInterest = async (appointment) => {
-    const isInvitation = appointment.is_invited || (appointment.recipients && appointment.recipients.includes(professionalId))
-    
-    // Basic interest data - can be enhanced with a form modal
-    const interestData = {
-      intent: isInvitation ? 'high' : 'standard',
-      message: isInvitation 
-        ? 'Thank you for the invitation. I am very interested in this project and would love to discuss the details with you.'
-        : 'I am interested in this project and believe I can provide excellent service. I would appreciate the opportunity to work with you.',
-      assessment: false
-    }
-
-    await handleAction(
-      appointment.appointment_id,
-      'express_interest',
-      () => onExpressInterest(appointment.appointment_id, interestData)
-    )
+  // ✅ FIXED: Express interest now opens the form instead of auto-submitting
+  const handleExpressInterest = (appointment) => {
+    // Open the appointment details view which will show the form
+    onView(appointment.appointment_id)
   }
 
   // Sorting functionality
@@ -153,7 +140,6 @@ export default function AppointmentInformationTable({
     if (!sortConfig.key) return appointments
 
     return [...appointments].sort((a, b) => {
-      // Handle interests mode where data is nested
       const aData = mode === 'interests' ? a.appointment : a
       const bData = mode === 'interests' ? b.appointment : b
 
@@ -171,7 +157,6 @@ export default function AppointmentInformationTable({
         bValue = bData.service?.name || bData.title || ''
       }
 
-      // For interests mode, also check interest-specific fields
       if (mode === 'interests') {
         if (sortConfig.key === 'interest_status') {
           aValue = a.status
@@ -183,14 +168,13 @@ export default function AppointmentInformationTable({
         }
       }
 
-      // Handle urgency/priority sorting with fallbacks
       if (sortConfig.key === 'urgency') {
         aValue = aData.urgency || aData.priority || 'standard'
         bValue = bData.urgency || bData.priority || 'standard'
       }
       if (sortConfig.key === 'appointment_time') {
-        aValue = new Date(aData.appointment_time || 0)
-        bValue = new Date(bData.appointment_time || 0)
+        aValue = new Date(aData.session || aData.appointment_time || 0)
+        bValue = new Date(bData.session || bData.appointment_time || 0)
       }
 
       // Handle dates
@@ -214,45 +198,17 @@ export default function AppointmentInformationTable({
     })
   }, [appointments, sortConfig, mode])
 
-  // ✅ DEBUG: Log appointment structure to help identify available fields
-  useMemo(() => {
-    if (appointments.length > 0) {
-      console.log('🔍 Sample appointment structure:', appointments[0])
-      console.log('🔍 Available fields:', Object.keys(appointments[0]))
-      if (mode === 'interests' && appointments[0].appointment) {
-        console.log('🔍 Nested appointment fields:', Object.keys(appointments[0].appointment))
-      }
-      
-      // ✅ NEW: Debug appointment time fields specifically with null checks
-      const appointment = mode === 'interests' ? appointments[0]?.appointment : appointments[0]
-      if (appointment) {
-        console.log('🕒 Appointment time fields check:', {
-          session: appointment.session,              // ✅ YOUR MAIN FIELD!
-          appointment_time: appointment.appointment_time,
-          scheduled_time: appointment.scheduled_time,
-          start_time: appointment.start_time,
-          datetime: appointment.datetime,
-          date: appointment.date,
-          time: appointment.time,
-          created_at: appointment.created_at
-        })
-      } else {
-        console.log('⚠️ Appointment data is undefined')
-      }
-    }
-  }, [appointments, mode])
-
-  // ✅ NEW: Get appointment data based on mode
+  // Get appointment data based on mode
   const getAppointmentData = (item) => {
     if (!item) return null
     return mode === 'interests' ? item.appointment : item
   }
 
-  // ✅ NEW: Get appointment time with multiple field fallbacks
+  // Get appointment time with multiple field fallbacks
   const getAppointmentTime = (appointment) => {
     if (!appointment) return null
     
-    return appointment.session ||           // ✅ YOUR DATA USES THIS!
+    return appointment.session ||
            appointment.appointment_time || 
            appointment.scheduled_time || 
            appointment.start_time || 
@@ -262,12 +218,13 @@ export default function AppointmentInformationTable({
            appointment.created_at ||
            null
   }
+
   const getInvitationStatus = (appointment) => {
     if (mode !== 'available') return false
     return appointment.is_invited || (appointment.recipients && appointment.recipients.includes(professionalId))
   }
 
-  // Professional status configuration using semantic tokens
+  // Status configuration
   const getStatusConfig = (status) => {
     const configs = {
       pending: { 
@@ -305,7 +262,13 @@ export default function AppointmentInformationTable({
         label: 'Declined',
         dotColor: 'bg-muted-foreground'
       },
-      // ✅ NEW: Interest-specific statuses
+      interested: {
+        variant: 'default',
+        className: 'bg-blue-100 text-blue-800 border-blue-200',
+        icon: Heart,
+        label: 'Interested',
+        dotColor: 'bg-blue-600'
+      },
       selected: {
         variant: 'default',
         className: 'bg-green-600 text-white hover:bg-green-700',
@@ -324,7 +287,7 @@ export default function AppointmentInformationTable({
     return configs[status] || configs.pending
   }
 
-  // ✅ NEW: Interest intent configuration
+  // Interest intent configuration
   const getIntentConfig = (intent) => {
     const configs = {
       high: { 
@@ -349,38 +312,7 @@ export default function AppointmentInformationTable({
     return configs[intent] || configs.standard
   }
 
-  // Professional priority configuration using semantic tokens
-  const getPriorityConfig = (urgency) => {
-    const configs = {
-      urgent: { 
-        icon: Flame,
-        className: 'bg-destructive text-destructive-foreground hover:bg-destructive/90',
-        label: 'Urgent',
-        dotColor: 'bg-destructive-foreground'
-      },
-      high: { 
-        icon: ArrowUp,
-        className: 'bg-secondary text-secondary-foreground hover:bg-secondary/80',
-        label: 'High',
-        dotColor: 'bg-secondary-foreground'
-      },
-      standard: { 
-        icon: Minus,
-        className: 'bg-muted text-muted-foreground hover:bg-muted/80',
-        label: 'Standard',
-        dotColor: 'bg-muted-foreground'
-      },
-      low: { 
-        icon: ArrowDown,
-        className: 'bg-muted/50 text-muted-foreground hover:bg-muted',
-        label: 'Low',
-        dotColor: 'bg-muted-foreground'
-      }
-    }
-    return configs[urgency] || configs.standard
-  }
-
-  // Format date for display with better handling
+  // Format date for display
   const formatDate = (dateString) => {
     if (!dateString) return '-'
     
@@ -392,7 +324,6 @@ export default function AppointmentInformationTable({
       const diffTime = date.getTime() - now.getTime()
       const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
       
-      // Handle different time periods
       if (diffDays === 0) {
         return `Today ${date.toLocaleTimeString('en-US', { 
           hour: 'numeric', 
@@ -444,7 +375,7 @@ export default function AppointmentInformationTable({
       : <ArrowDown className="h-4 w-4 text-foreground" />
   }
 
-  // ✅ NEW: Get table title based on mode
+  // Get table title based on mode
   const getTableTitle = () => {
     switch (mode) {
       case 'available':
@@ -458,7 +389,7 @@ export default function AppointmentInformationTable({
     }
   }
 
-  // Professional loading skeleton
+  // Loading skeleton
   const LoadingSkeleton = () => (
     <Card className="w-full bg-card border-border">
       <CardHeader className="py-2 px-4 bg-muted/30 border-b border-border">
@@ -469,19 +400,6 @@ export default function AppointmentInformationTable({
       </CardHeader>
       <CardContent className="bg-background p-6">
         <div className="space-y-4">
-          {/* Table header skeleton */}
-          <div className="flex items-center space-x-4 pb-3 border-b border-border">
-            <Skeleton className="h-4 w-4 bg-muted" />
-            <Skeleton className="h-4 w-32 bg-muted" />
-            <Skeleton className="h-4 w-24 bg-muted" />
-            <Skeleton className="h-4 w-32 bg-muted" />
-            <Skeleton className="h-4 w-20 bg-muted" />
-            <Skeleton className="h-4 w-20 bg-muted" />
-            <Skeleton className="h-4 w-24 bg-muted" />
-            <Skeleton className="h-4 w-16 bg-muted" />
-          </div>
-          
-          {/* Table rows skeleton */}
           {[...Array(5)].map((_, i) => (
             <div key={i} className="flex items-center space-x-4 py-4">
               <Skeleton className="h-4 w-4 bg-muted" />
@@ -543,7 +461,6 @@ export default function AppointmentInformationTable({
   return (
     <TooltipProvider>
       <Card className="w-full bg-card border-border">
-        {/* Professional Table Header */}
         <CardHeader className="flex-shrink-0 bg-muted/30 border-b border-border">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
@@ -575,11 +492,9 @@ export default function AppointmentInformationTable({
           </div>
         </CardHeader>
 
-        {/* Scrollable Table Content */}
         <CardContent className="p-0 flex-1 bg-background">
           <div className="border-0 rounded-none max-h-[600px] overflow-y-auto">
             <Table>
-              {/* Professional Sticky Header */}
               <TableHeader className="sticky top-0 bg-background/95 backdrop-blur-sm z-10 border-b border-border">
                 <TableRow className="hover:bg-transparent border-b border-border">
                   <TableHead className="w-12 py-4 bg-background/95">
@@ -591,7 +506,6 @@ export default function AppointmentInformationTable({
                     />
                   </TableHead>
                   
-                  {/* ✅ NEW: Invitation indicator for available mode */}
                   {mode === 'available' && (
                     <TableHead className="py-4 bg-background/95 text-muted-foreground font-medium w-16">
                       Type
@@ -626,7 +540,6 @@ export default function AppointmentInformationTable({
                     </div>
                   </TableHead>
                   
-                  {/* ✅ NEW: Different status columns based on mode */}
                   {mode === 'interests' ? (
                     <>
                       <TableHead 
@@ -660,7 +573,6 @@ export default function AppointmentInformationTable({
                     </TableHead>
                   )}
                   
-                  {/* Files Column */}
                   <TableHead className="py-4 bg-background/95 text-muted-foreground font-medium">
                     Files
                   </TableHead>
@@ -682,12 +594,10 @@ export default function AppointmentInformationTable({
                 </TableRow>
               </TableHeader>
 
-              {/* Professional Table Body */}
               <TableBody>
                 {sortedAppointments.map((item) => {
                   const appointment = getAppointmentData(item)
                   
-                  // ✅ Early return if appointment is null/undefined
                   if (!appointment) {
                     console.warn('⚠️ Skipping undefined appointment:', item)
                     return null
@@ -702,26 +612,16 @@ export default function AppointmentInformationTable({
                   const isSelected = selectedRows.has(itemId)
                   const attachments = appointment.attachments || []
                   
-                  // ✅ DEBUG: Check what's causing the styling
-                  console.log('Row styling debug:', {
-                    appointmentId: itemId,
-                    isInvitation,
-                    isSelected,
-                    appointmentData: appointment
-                  })
-                  
                   return (
                     <TableRow 
                       key={itemId}
                       className={cn(
-                        "h-20 transition-all duration-200 hover:bg-muted/50 border-b border-border group",
+                        "h-20 transition-all duration-200 hover:bg-muted/50 border-b border-border group cursor-pointer",
                         isSelected && "bg-primary/5 border-l-4 border-l-primary"
-                        // ✅ REMOVED: invitation background styling
-                        // isInvitation && "bg-blue-50 dark:bg-blue-950/30 border-l-4 border-l-blue-500"
                       )}
+                      onClick={() => onView(itemId)}
                     >
-                      {/* Checkbox */}
-                      <TableCell className="py-6">
+                      <TableCell className="py-6" onClick={(e) => e.stopPropagation()}>
                         <Checkbox
                           checked={isSelected}
                           onCheckedChange={() => handleRowSelect(itemId)}
@@ -730,14 +630,13 @@ export default function AppointmentInformationTable({
                         />
                       </TableCell>
 
-                      {/* ✅ NEW: Invitation/Type indicator for available mode */}
                       {mode === 'available' && (
                         <TableCell className="py-6">
                           {isInvitation ? (
                             <Tooltip>
                               <TooltipTrigger>
                                 <Badge className="bg-blue-600 text-white text-xs">
-                                  <Star className="h-3 w-3 mr-1" />
+                                  <Crown className="h-3 w-3 mr-1" />
                                   Invited
                                 </Badge>
                               </TooltipTrigger>
@@ -753,7 +652,6 @@ export default function AppointmentInformationTable({
                         </TableCell>
                       )}
 
-                      {/* Customer */}
                       <TableCell className="py-6">
                         <div className="flex items-center space-x-4">
                           <Avatar className="h-10 w-10 border border-border">
@@ -780,7 +678,6 @@ export default function AppointmentInformationTable({
                         </div>
                       </TableCell>
 
-                      {/* Service */}
                       <TableCell className="py-6">
                         <div className="min-w-0 space-y-1">
                           <div className="font-medium text-sm truncate text-foreground">
@@ -798,18 +695,9 @@ export default function AppointmentInformationTable({
                               </TooltipContent>
                             </Tooltip>
                           )}
-                          {appointment.location && (
-                            <div className="flex items-center space-x-1 text-xs text-muted-foreground">
-                              <MapPin className="h-3 w-3" />
-                              <span className="truncate max-w-[150px]">
-                                {appointment.location}
-                              </span>
-                            </div>
-                          )}
                         </div>
                       </TableCell>
 
-                      {/* Appointment Time */}
                       <TableCell className="py-6">
                         <div className="space-y-1">
                           <div className="font-medium text-sm text-foreground">
@@ -821,26 +709,11 @@ export default function AppointmentInformationTable({
                               <span>Due: {formatDate(appointment.deadline)}</span>
                             </div>
                           )}
-                          {/* ✅ NEW: Debug display to see what we're getting */}
-                          {process.env.NODE_ENV === 'development' && appointment && (
-                            <div className="text-xs text-red-500">
-                              Debug: {JSON.stringify({
-                                session: appointment.session,     // ✅ YOUR MAIN FIELD!
-                                appointment_time: appointment.appointment_time,
-                                scheduled_time: appointment.scheduled_time,
-                                start_time: appointment.start_time,
-                                date: appointment.date,
-                                created_at: appointment.created_at
-                              })}
-                            </div>
-                          )}
                         </div>
                       </TableCell>
 
-                      {/* Status - Different based on mode */}
                       {mode === 'interests' ? (
                         <>
-                          {/* Interest Status */}
                           <TableCell className="py-6">
                             <Tooltip>
                               <TooltipTrigger asChild>
@@ -858,7 +731,6 @@ export default function AppointmentInformationTable({
                             </Tooltip>
                           </TableCell>
 
-                          {/* Interest Intent */}
                           <TableCell className="py-6">
                             <Tooltip>
                               <TooltipTrigger asChild>
@@ -895,133 +767,158 @@ export default function AppointmentInformationTable({
                         </TableCell>
                       )}
 
-                      {/* Files Column */}
                       <TableCell className="py-6">
-                        {attachments.length === 0 ? (
-                          <span className="text-muted-foreground text-sm">No files</span>
-                        ) : (
-                          <div className="flex items-center gap-1">
-                            <Paperclip className="h-3 w-3 text-muted-foreground" />
-                            <span className="text-sm">{attachments.length}</span>
-                            {attachments.some(att => att.asset?.type === 'image') && (
-                              <Image className="h-3 w-3 text-blue-600" />
-                            )}
-                            {attachments.some(att => att.asset?.type === 'document') && (
-                              <FileText className="h-3 w-3 text-green-600" />
-                            )}
-                          </div>
-                        )}
+                        <div className="flex items-center space-x-2">
+                          {attachments.length > 0 && (
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-8 w-8 p-0 text-muted-foreground hover:text-foreground"
+                                  onClick={(e) => {
+                                    e.stopPropagation()
+                                    onViewAttachments?.(appointment.appointment_id)
+                                  }}
+                                >
+                                  <Paperclip className="h-4 w-4" />
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent className="bg-popover text-popover-foreground border-border">
+                                <p>{attachments.length} attachment{attachments.length > 1 ? 's' : ''}</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          )}
+                          
+                          {attachments.some(att => att.type?.startsWith('image/')) && (
+                            <Tooltip>
+                              <TooltipTrigger>
+                                <div className="flex items-center text-xs text-muted-foreground">
+                                  <Image className="h-3 w-3 mr-1" />
+                                  <span>{attachments.filter(att => att.type?.startsWith('image/')).length}</span>
+                                </div>
+                              </TooltipTrigger>
+                              <TooltipContent className="bg-popover text-popover-foreground border-border">
+                                <p>Images attached</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          )}
+                          
+                          {attachments.some(att => !att.type?.startsWith('image/')) && (
+                            <Tooltip>
+                              <TooltipTrigger>
+                                <div className="flex items-center text-xs text-muted-foreground">
+                                  <FileText className="h-3 w-3 mr-1" />
+                                  <span>{attachments.filter(att => !att.type?.startsWith('image/')).length}</span>
+                                </div>
+                              </TooltipTrigger>
+                              <TooltipContent className="bg-popover text-popover-foreground border-border">
+                                <p>Documents attached</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          )}
+                          
+                          {attachments.length === 0 && (
+                            <span className="text-xs text-muted-foreground">-</span>
+                          )}
+                        </div>
                       </TableCell>
 
-                      {/* Requested/Expressed Date */}
                       <TableCell className="py-6">
                         <div className="text-sm text-muted-foreground">
                           {formatDate(mode === 'interests' ? item.created_at : appointment.created_at)}
                         </div>
                       </TableCell>
 
-                      {/* Actions */}
-                      <TableCell className="text-right py-6">
+                      <TableCell className="text-right py-6" onClick={(e) => e.stopPropagation()}>
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
                             <Button 
                               variant="ghost" 
-                              size="sm"
-                              className="h-8 w-8 p-0 hover:bg-muted data-[state=open]:bg-muted transition-colors text-muted-foreground hover:text-foreground opacity-0 group-hover:opacity-100"
-                              disabled={!!actionLoading[itemId]}
+                              className="h-8 w-8 p-0 hover:bg-muted text-muted-foreground hover:text-foreground"
+                              disabled={actionLoading[itemId]}
                             >
                               {actionLoading[itemId] ? (
                                 <Loader2 className="h-4 w-4 animate-spin" />
                               ) : (
                                 <MoreHorizontal className="h-4 w-4" />
                               )}
-                              <span className="sr-only">Open appointment actions</span>
                             </Button>
                           </DropdownMenuTrigger>
-                          <DropdownMenuContent className="bg-popover border-border" align="end">
+                          <DropdownMenuContent align="end" className="w-48 bg-popover border-border">
                             <DropdownMenuItem 
-                              className="cursor-pointer hover:bg-muted hover:text-accent-foreground"
+                              className="flex items-center text-foreground hover:bg-muted"
                               onClick={() => onView(itemId)}
                             >
-                              <Eye className="mr-2 h-4 w-4" />
+                              <Eye className="h-4 w-4 mr-2" />
                               View Details
                             </DropdownMenuItem>
 
-                            {/* View Customer Files */}
-                            <DropdownMenuItem 
-                              onClick={() => onViewAttachments(appointment)}
-                              disabled={!appointment.attachments || appointment.attachments.length === 0}
-                              className="cursor-pointer hover:bg-muted hover:text-accent-foreground"
-                            >
-                              <Eye className="h-4 w-4 mr-2" />
-                              View Customer Files
-                            </DropdownMenuItem>
-                            
-                            {/* ✅ NEW: Mode-specific actions */}
-                            {mode === 'available' && onExpressInterest && (
+                            {mode === 'available' && (
                               <>
                                 <DropdownMenuSeparator className="bg-border" />
                                 <DropdownMenuItem 
-                                  className="cursor-pointer hover:bg-muted hover:text-accent-foreground"
+                                  className="flex items-center text-foreground hover:bg-muted"
                                   onClick={() => handleExpressInterest(appointment)}
                                 >
-                                  <Send className="mr-2 h-4 w-4" />
+                                  <Heart className="h-4 w-4 mr-2" />
                                   {isInvitation ? 'Respond to Invitation' : 'Express Interest'}
                                 </DropdownMenuItem>
                               </>
                             )}
 
-                            {mode === 'interests' && onUpdateInterest && (
+                            {mode === 'interests' && (
                               <>
                                 <DropdownMenuSeparator className="bg-border" />
                                 <DropdownMenuItem 
-                                  className="cursor-pointer hover:bg-muted hover:text-accent-foreground"
-                                  onClick={() => onUpdateInterest(item.interest_id, { status: 'withdrawn' })}
+                                  className="flex items-center text-foreground hover:bg-muted"
+                                  onClick={() => handleAction(
+                                    itemId,
+                                    'update_interest',
+                                    () => onUpdateInterest?.(item.interest_id)
+                                  )}
                                 >
-                                  <X className="mr-2 h-4 w-4" />
-                                  Withdraw Interest
+                                  <Edit className="h-4 w-4 mr-2" />
+                                  Update Interest
                                 </DropdownMenuItem>
                               </>
                             )}
-                            
-                            {mode === 'assigned' && appointment.status === 'pending' && onAccept && onDecline && (
+
+                            {mode === 'assigned' && (
                               <>
                                 <DropdownMenuSeparator className="bg-border" />
                                 <DropdownMenuItem 
-                                  className="cursor-pointer hover:bg-muted hover:text-accent-foreground"
+                                  className="flex items-center text-green-600 hover:bg-green-50"
                                   onClick={() => handleAction(
-                                    itemId, 
-                                    'accept', 
-                                    () => onAccept(itemId)
+                                    itemId,
+                                    'accept',
+                                    () => onAccept?.(itemId)
                                   )}
                                 >
-                                  <Check className="mr-2 h-4 w-4" />
+                                  <Check className="h-4 w-4 mr-2" />
                                   Accept Appointment
                                 </DropdownMenuItem>
                                 <DropdownMenuItem 
-                                  className="cursor-pointer hover:bg-muted hover:text-accent-foreground"
+                                  className="flex items-center text-red-600 hover:bg-red-50"
                                   onClick={() => handleAction(
-                                    itemId, 
-                                    'decline', 
-                                    () => onDecline(itemId)
+                                    itemId,
+                                    'decline',
+                                    () => onDecline?.(itemId)
                                   )}
                                 >
-                                  <X className="mr-2 h-4 w-4" />
+                                  <X className="h-4 w-4 mr-2" />
                                   Decline Appointment
                                 </DropdownMenuItem>
                               </>
                             )}
-                            
+
                             <DropdownMenuSeparator className="bg-border" />
-                            <DropdownMenuItem className="cursor-pointer hover:bg-muted hover:text-accent-foreground">
-                              <Calendar className="mr-2 h-4 w-4" />
-                              Reschedule
-                            </DropdownMenuItem>
-                            
-                            <DropdownMenuSeparator className="bg-border" />
-                            <DropdownMenuItem className="cursor-pointer hover:bg-muted text-muted-foreground hover:text-destructive">
-                              <Trash2 className="mr-2 h-4 w-4" />
-                              Archive
+                            <DropdownMenuItem 
+                              className="flex items-center text-foreground hover:bg-muted"
+                              onClick={() => {/* TODO: Share functionality */}}
+                            >
+                              <Send className="h-4 w-4 mr-2" />
+                              Share
                             </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
@@ -1032,63 +929,71 @@ export default function AppointmentInformationTable({
               </TableBody>
             </Table>
           </div>
-
-          {/* Professional Footer */}
-          <div className="flex items-center justify-between px-6 py-4 border-t border-border bg-muted/30 flex-shrink-0">
-            <div className="flex items-center space-x-4 text-sm text-muted-foreground">
-              <span>
-                {selectedRows.size > 0 ? selectedRows.size : '0'} of {appointments.length} row(s) selected
-              </span>
-              {appointments.length > 0 && mode !== 'interests' && (
-                <span>
-                  • {appointments.filter(a => a.status === 'pending').length} pending
-                  • {appointments.filter(a => a.status === 'accepted').length} accepted
-                </span>
-              )}
-              {appointments.length > 0 && mode === 'interests' && (
-                <span>
-                  • {appointments.filter(a => a.status === 'pending').length} pending
-                  • {appointments.filter(a => a.status === 'selected').length} selected
-                  • {appointments.filter(a => a.status === 'rejected').length} rejected
-                </span>
-              )}
-              {/* ✅ NEW: Show invitation count for available mode */}
-              {mode === 'available' && appointments.length > 0 && (
-                <span>
-                  • {appointments.filter(a => getInvitationStatus(a)).length} invitations
-                </span>
-              )}
-            </div>
-            
-            {pagination && pagination.totalPages > 1 && (
-              <div className="flex items-center space-x-2">
-                <Button 
-                  variant="outline" 
-                  size="sm"
-                  onClick={() => onPageChange(pagination.page - 1)}
-                  disabled={pagination.page === 1}
-                  className="bg-background hover:bg-muted border-border text-foreground"
-                >
-                  <ChevronLeft className="h-4 w-4 mr-1" />
-                  Previous
-                </Button>
-                <span className="text-sm text-muted-foreground">
-                  Page {pagination.page} of {pagination.totalPages}
-                </span>
-                <Button 
-                  variant="outline" 
-                  size="sm"
-                  onClick={() => onPageChange(pagination.page + 1)}
-                  disabled={pagination.page === pagination.totalPages}
-                  className="bg-background hover:bg-muted border-border text-foreground"
-                >
-                  Next
-                  <ChevronRight className="h-4 w-4 ml-1" />
-                </Button>
-              </div>
-            )}
-          </div>
         </CardContent>
+
+        {/* Pagination */}
+        {pagination && (
+          <div className="flex items-center justify-between px-6 py-4 border-t border-border bg-muted/30">
+            <div className="flex items-center space-x-2 text-sm text-muted-foreground">
+              <span>
+                Showing {((pagination.currentPage - 1) * pagination.pageSize) + 1} to{' '}
+                {Math.min(pagination.currentPage * pagination.pageSize, pagination.totalItems)} of{' '}
+                {pagination.totalItems} results
+              </span>
+            </div>
+            <div className="flex items-center space-x-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => onPageChange?.(pagination.currentPage - 1)}
+                disabled={pagination.currentPage <= 1}
+                className="bg-background hover:bg-muted border-border text-foreground"
+              >
+                <ChevronLeft className="h-4 w-4 mr-1" />
+                Previous
+              </Button>
+              <div className="flex items-center space-x-1">
+                {Array.from({ length: pagination.totalPages }, (_, i) => i + 1)
+                  .filter(page => {
+                    const current = pagination.currentPage
+                    return page === 1 || 
+                           page === pagination.totalPages || 
+                           (page >= current - 1 && page <= current + 1)
+                  })
+                  .map((page, index, array) => (
+                    <div key={page} className="flex items-center">
+                      {index > 0 && array[index - 1] !== page - 1 && (
+                        <span className="px-2 text-muted-foreground">...</span>
+                      )}
+                      <Button
+                        variant={page === pagination.currentPage ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => onPageChange?.(page)}
+                        className={cn(
+                          "w-8 h-8 p-0",
+                          page === pagination.currentPage 
+                            ? "bg-primary text-primary-foreground" 
+                            : "bg-background hover:bg-muted border-border text-foreground"
+                        )}
+                      >
+                        {page}
+                      </Button>
+                    </div>
+                  ))}
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => onPageChange?.(pagination.currentPage + 1)}
+                disabled={pagination.currentPage >= pagination.totalPages}
+                className="bg-background hover:bg-muted border-border text-foreground"
+              >
+                Next
+                <ChevronRight className="h-4 w-4 ml-1" />
+              </Button>
+            </div>
+          </div>
+        )}
       </Card>
     </TooltipProvider>
   )

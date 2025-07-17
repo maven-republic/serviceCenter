@@ -28,12 +28,14 @@ import {
   Send,
   Star,
   Crown,
-  Target
+  Target,
+  Info,
+  CheckCircle
 } from "lucide-react"
 
 export default function ProfessionalInterestForm({
   appointment,
-  professionalId, // Professional ID to check for invitations
+  professionalId,
   onSubmit,
   onCancel,
   loading = false
@@ -45,6 +47,10 @@ export default function ProfessionalInterestForm({
     modality: 'none',
     fee: 0.00,
     amount: null,
+    // NEW: Price range fields
+    price_range_min: '',
+    price_range_max: '',
+    assessment_justification: '',
     earliest_start: '',
     latest_start: '',
     notes: '',
@@ -54,7 +60,6 @@ export default function ProfessionalInterestForm({
 
   const [errors, setErrors] = useState({})
 
-  // ✅ NEW: Check if this professional was specifically invited
   const isInvited = appointment?.recipients && professionalId && 
     appointment.recipients.includes(professionalId)
 
@@ -71,7 +76,16 @@ export default function ProfessionalInterestForm({
     }
   }, [errors])
 
-  // Validate form
+  // NEW: Get pricing strategy
+  const getPricingStrategy = () => {
+    if (!formData.assessment && formData.amount) return 'immediate'
+    if (formData.assessment && formData.amount) return 'preliminary'
+    if (formData.assessment && !formData.amount && (formData.price_range_min || formData.price_range_max)) return 'range'
+    if (formData.assessment && !formData.amount) return 'assessment_only'
+    return 'none'
+  }
+
+  // UPDATED: Enhanced validation with price range
   const validateForm = useCallback(() => {
     const newErrors = {}
     
@@ -85,6 +99,23 @@ export default function ProfessionalInterestForm({
 
     if (formData.assessment && formData.modality === 'local' && formData.fee < 0) {
       newErrors.fee = 'Assessment fee cannot be negative'
+    }
+
+    // NEW: Price range validation for assessment-only
+    if (formData.assessment && !formData.amount) {
+      if (!formData.price_range_min && !formData.price_range_max) {
+        newErrors.pricing = 'Please provide either a quote or price range when assessment is required'
+      } else if (formData.price_range_min && formData.price_range_max) {
+        const min = parseFloat(formData.price_range_min)
+        const max = parseFloat(formData.price_range_max)
+        if (min >= max) {
+          newErrors.price_range_max = 'Maximum price must be greater than minimum price'
+        }
+      }
+      
+      if (!formData.assessment_justification.trim()) {
+        newErrors.assessment_justification = 'Please explain why assessment is required'
+      }
     }
 
     if (formData.amount && (isNaN(formData.amount) || formData.amount <= 0)) {
@@ -105,17 +136,20 @@ export default function ProfessionalInterestForm({
     return Object.keys(newErrors).length === 0
   }, [formData])
 
-  // Handle form submission
+  // UPDATED: Handle form submission with price range
   const handleSubmit = useCallback(async (e) => {
     e.preventDefault()
     
     if (!validateForm()) return
     
-    // Clean up data before submission
     const submissionData = {
       ...formData,
       amount: formData.amount || null,
       fee: formData.assessment && formData.modality === 'local' ? formData.fee : 0,
+      // NEW: Include price range fields
+      price_range_min: formData.price_range_min ? parseFloat(formData.price_range_min) : null,
+      price_range_max: formData.price_range_max ? parseFloat(formData.price_range_max) : null,
+      assessment_justification: formData.assessment_justification || null,
       earliest_start: formData.earliest_start || null,
       latest_start: formData.latest_start || null,
       estimated_duration_hours: formData.estimated_duration_hours || null,
@@ -126,10 +160,11 @@ export default function ProfessionalInterestForm({
   }, [formData, onSubmit, validateForm])
 
   const minDateTime = new Date().toISOString().slice(0, 16)
+  const strategy = getPricingStrategy()
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
-      {/* ✅ NEW: Invitation Alert */}
+      {/* Invitation Alert - unchanged */}
       {isInvited && (
         <Alert className="border-blue-200 bg-blue-50">
           <div className="flex items-center gap-3">
@@ -149,7 +184,7 @@ export default function ProfessionalInterestForm({
         </Alert>
       )}
 
-      {/* Competition Alert - UPDATED */}
+      {/* Competition Alert - unchanged */}
       {appointment?.interest_summary?.total_count > 0 && (
         <Alert>
           <Users className="h-4 w-4" />
@@ -160,7 +195,7 @@ export default function ProfessionalInterestForm({
         </Alert>
       )}
 
-      {/* Interest Level */}
+      {/* Interest Level - unchanged */}
       <Card>
         <CardHeader className="pb-3">
           <CardTitle className="text-base flex items-center gap-2">
@@ -221,16 +256,11 @@ export default function ProfessionalInterestForm({
             {errors.message && (
               <p className="text-sm text-destructive">{errors.message}</p>
             )}
-            {isInvited && (
-              <p className="text-xs text-blue-600 font-medium">
-                💡 Tip: As an invited professional, emphasize your specific qualifications and unique approach to win this project.
-              </p>
-            )}
           </div>
         </CardContent>
       </Card>
 
-      {/* Assessment Requirements */}
+      {/* UPDATED: Assessment Requirements with fee policy */}
       <Card>
         <CardHeader className="pb-3">
           <CardTitle className="text-base flex items-center gap-2">
@@ -246,7 +276,7 @@ export default function ProfessionalInterestForm({
               onCheckedChange={(checked) => handleChange('assessment', checked)}
             />
             <Label htmlFor="assessment" className="font-medium">
-              I need to assess the site before providing an accurate quote
+              I need to assess the site before providing a final quote
             </Label>
           </div>
 
@@ -262,19 +292,19 @@ export default function ProfessionalInterestForm({
                     <SelectItem value="local">
                       <div className="space-y-1">
                         <div className="font-medium">Site Visit</div>
-                        <div className="text-xs text-muted-foreground">Travel to customer location</div>
+                        <div className="text-xs text-muted-foreground">Travel to customer location (fee applies)</div>
                       </div>
                     </SelectItem>
                     <SelectItem value="remote">
                       <div className="space-y-1">
                         <div className="font-medium">Video Call</div>
-                        <div className="text-xs text-muted-foreground">Virtual assessment via video</div>
+                        <div className="text-xs text-muted-foreground">Virtual assessment via video (no fee)</div>
                       </div>
                     </SelectItem>
                     <SelectItem value="phone">
                       <div className="space-y-1">
                         <div className="font-medium">Phone Consultation</div>
-                        <div className="text-xs text-muted-foreground">Discuss details over phone</div>
+                        <div className="text-xs text-muted-foreground">Discuss details over phone (no fee)</div>
                       </div>
                     </SelectItem>
                   </SelectContent>
@@ -303,8 +333,35 @@ export default function ProfessionalInterestForm({
                   {errors.fee && (
                     <p className="text-sm text-destructive">{errors.fee}</p>
                   )}
+                  {/* NEW: Fee deduction policy */}
+                  <Alert>
+                    <CheckCircle className="h-4 w-4" />
+                    <AlertDescription>
+                      <strong>Fee Policy:</strong> This fee will be <strong>deducted from your final quote</strong> if the customer accepts your proposal.
+                    </AlertDescription>
+                  </Alert>
+                </div>
+              )}
+
+              {/* NEW: Assessment justification for assessment-only */}
+              {!formData.amount && (
+                <div className="space-y-2">
+                  <Label htmlFor="assessment_justification">
+                    Why is assessment required? *
+                  </Label>
+                  <Textarea
+                    id="assessment_justification"
+                    rows={3}
+                    value={formData.assessment_justification}
+                    onChange={(e) => handleChange('assessment_justification', e.target.value)}
+                    placeholder="Explain why site assessment is necessary (e.g., 'Need to measure exact dimensions and assess electrical layout for accurate pricing')"
+                    className={errors.assessment_justification ? 'border-destructive' : ''}
+                  />
+                  {errors.assessment_justification && (
+                    <p className="text-sm text-destructive">{errors.assessment_justification}</p>
+                  )}
                   <p className="text-xs text-muted-foreground">
-                    Fee for traveling to customer location (typically deducted from final quote if you're selected)
+                    Help customers understand why assessment is required for accurate pricing.
                   </p>
                 </div>
               )}
@@ -313,22 +370,27 @@ export default function ProfessionalInterestForm({
         </CardContent>
       </Card>
 
-      {/* Initial Quote (Optional) */}
+      {/* UPDATED: Pricing Strategy with price range */}
       <Card>
         <CardHeader className="pb-3">
           <CardTitle className="text-base flex items-center gap-2">
             <DollarSign className="h-4 w-4" />
-            Initial Quote (Optional)
-            {isInvited && (
-              <Badge variant="outline" className="text-xs border-blue-200 text-blue-700">
-                Competitive Advantage
-              </Badge>
-            )}
+            Pricing Strategy
+            <Badge variant={strategy === 'immediate' ? 'default' : 'outline'} className="ml-2">
+              {strategy === 'immediate' && 'Immediate Quote'}
+              {strategy === 'preliminary' && 'Preliminary + Assessment'}
+              {strategy === 'range' && 'Range + Assessment'}
+              {strategy === 'assessment_only' && 'Assessment Only'}
+              {strategy === 'none' && 'Select Strategy'}
+            </Badge>
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
+          {/* Quote field */}
           <div className="space-y-2">
-            <Label htmlFor="amount">Estimated Price (JMD)</Label>
+            <Label htmlFor="amount">
+              {formData.assessment ? 'Preliminary Quote (JMD)' : 'Final Quote (JMD)'}
+            </Label>
             <div className="relative">
               <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
@@ -346,16 +408,57 @@ export default function ProfessionalInterestForm({
               <p className="text-sm text-destructive">{errors.amount}</p>
             )}
             <p className="text-xs text-muted-foreground">
-              Provide an estimate if you can quote without assessment. Leave blank if assessment is required.
+              {formData.assessment 
+                ? 'Provide your best estimate based on available information. Final quote after assessment.'
+                : 'Your final quote for this project.'
+              }
             </p>
-            {isInvited && (
-              <p className="text-xs text-blue-600 font-medium">
-                💡 Invited professionals who provide competitive quotes often win the project.
-              </p>
-            )}
           </div>
 
-          {/* Estimated Duration */}
+          {/* NEW: Price Range (when assessment but no quote) */}
+          {formData.assessment && !formData.amount && (
+            <div className="space-y-4 p-4 border border-amber-200 bg-amber-50 rounded-md">
+              <div className="flex items-center gap-2">
+                <Info className="h-4 w-4 text-amber-600" />
+                <Label className="font-medium text-amber-800">
+                  Estimated Price Range (Required for Assessment-Only)
+                </Label>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <Label className="text-sm">Minimum (JMD)</Label>
+                  <Input
+                    type="number"
+                    placeholder="e.g., 3000"
+                    value={formData.price_range_min}
+                    onChange={(e) => handleChange('price_range_min', e.target.value)}
+                    className={errors.pricing ? 'border-destructive' : ''}
+                  />
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-sm">Maximum (JMD)</Label>
+                  <Input
+                    type="number"
+                    placeholder="e.g., 8000"
+                    value={formData.price_range_max}
+                    onChange={(e) => handleChange('price_range_max', e.target.value)}
+                    className={errors.price_range_max ? 'border-destructive' : ''}
+                  />
+                </div>
+              </div>
+              {errors.pricing && (
+                <p className="text-sm text-destructive">{errors.pricing}</p>
+              )}
+              {errors.price_range_max && (
+                <p className="text-sm text-destructive">{errors.price_range_max}</p>
+              )}
+              <p className="text-xs text-amber-700">
+                💡 <strong>Tip:</strong> Customers are more likely to pay for assessments when they have pricing expectations.
+              </p>
+            </div>
+          )}
+
+          {/* Estimated Duration - unchanged */}
           <div className="space-y-2">
             <Label htmlFor="estimated_duration_hours">Estimated Duration (Hours)</Label>
             <div className="relative">
@@ -389,7 +492,7 @@ export default function ProfessionalInterestForm({
         </CardContent>
       </Card>
 
-      {/* Availability Window */}
+      {/* Availability Window - unchanged */}
       <Card>
         <CardHeader className="pb-3">
           <CardTitle className="text-base flex items-center gap-2">
@@ -436,16 +539,11 @@ export default function ProfessionalInterestForm({
                 }
               </span>
             </p>
-            {isInvited && (
-              <p className="text-xs text-blue-600 font-medium mt-1">
-                💡 Matching the customer's preferred time increases your chances of selection.
-              </p>
-            )}
           </div>
         </CardContent>
       </Card>
 
-      {/* Additional Notes */}
+      {/* Additional Notes - unchanged */}
       <Card>
         <CardHeader className="pb-3">
           <CardTitle className="text-base">Additional Information</CardTitle>
@@ -463,16 +561,11 @@ export default function ProfessionalInterestForm({
                 : "Share anything else about your approach, special equipment, experience, or considerations..."
               }
             />
-            {isInvited && (
-              <p className="text-xs text-blue-600 font-medium">
-                💡 Use this space to highlight why the customer made the right choice by inviting you.
-              </p>
-            )}
           </div>
         </CardContent>
       </Card>
 
-      {/* Form Actions */}
+      {/* Form Actions - unchanged */}
       <div className="flex justify-between items-center pt-4">
         <Button
           type="button"
@@ -502,7 +595,7 @@ export default function ProfessionalInterestForm({
         </Button>
       </div>
 
-      {/* ✅ NEW: Invitation Summary Footer */}
+      {/* Invitation Summary Footer - unchanged */}
       {isInvited && (
         <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
           <div className="flex items-start gap-3">

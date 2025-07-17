@@ -1,12 +1,12 @@
 // src/app/api/interests/[id]/route.js
-// Individual interest management
+// Individual interest management - UPDATED with price range support
 
 import { createClient } from '@/utils/supabase/server'
 import { NextResponse } from 'next/server'
 
 export const dynamic = 'force-dynamic'
 
-// GET /api/interests/[id] - Get specific interest details
+// GET /api/interests/[id] - Get specific interest details (unchanged)
 export async function GET(request, { params }) {
   const resolvedParams = await params
   const { id } = resolvedParams
@@ -96,7 +96,7 @@ export async function GET(request, { params }) {
   }
 }
 
-// PATCH /api/interests/[id] - Update interest
+// PATCH /api/interests/[id] - Update interest (UPDATED with price range support)
 export async function PATCH(request, { params }) {
   const resolvedParams = await params
   const { id } = resolvedParams
@@ -112,7 +112,7 @@ export async function PATCH(request, { params }) {
     // Get current interest to validate
     const { data: currentInterest, error: fetchError } = await supabase
       .from('interest')
-      .select('interest_id, professional_id, appointment_id, status')
+      .select('interest_id, professional_id, appointment_id, status, assessment, amount')
       .eq('interest_id', id)
       .single()
 
@@ -149,10 +149,24 @@ export async function PATCH(request, { params }) {
       updateData.status = body.status
     }
 
-    // Handle other field updates
+    // UPDATED: Handle other field updates including new price range fields
     const allowedFields = [
-      'message', 'amount', 'proposed_start', 'proposed_end', 
-      'notes', 'intent', 'assessment'
+      'message', 
+      'amount', 
+      'proposed_start', 
+      'proposed_end', 
+      'notes', 
+      'intent', 
+      'assessment',
+      'modality',
+      'fee',
+      'estimated_duration_hours',
+      'earliest_start',
+      'latest_start',
+      // NEW: Price range fields
+      'price_range_min',
+      'price_range_max',
+      'assessment_justification'
     ]
     
     allowedFields.forEach(field => {
@@ -160,6 +174,42 @@ export async function PATCH(request, { params }) {
         updateData[field] = body[field]
       }
     })
+
+    // NEW: Enhanced validation for assessment-only with price ranges
+    if (body.assessment !== undefined || body.amount !== undefined || body.price_range_min !== undefined || body.price_range_max !== undefined) {
+      const newAssessment = body.assessment !== undefined ? body.assessment : currentInterest.assessment
+      const newAmount = body.amount !== undefined ? body.amount : currentInterest.amount
+      const newPriceRangeMin = body.price_range_min !== undefined ? body.price_range_min : null
+      const newPriceRangeMax = body.price_range_max !== undefined ? body.price_range_max : null
+      const newJustification = body.assessment_justification !== undefined ? body.assessment_justification : null
+
+      // Validate assessment-only requirements
+      if (newAssessment && !newAmount) {
+        if (!newPriceRangeMin && !newPriceRangeMax) {
+          return NextResponse.json(
+            { error: 'Price range is required when assessment is needed without immediate quote' },
+            { status: 400 }
+          )
+        }
+        
+        if (!newJustification || !newJustification.trim()) {
+          return NextResponse.json(
+            { error: 'Assessment justification is required when assessment is needed without immediate quote' },
+            { status: 400 }
+          )
+        }
+      }
+
+      // Validate price range order
+      if (newPriceRangeMin && newPriceRangeMax) {
+        if (parseFloat(newPriceRangeMin) >= parseFloat(newPriceRangeMax)) {
+          return NextResponse.json(
+            { error: 'Maximum price must be greater than minimum price' },
+            { status: 400 }
+          )
+        }
+      }
+    }
 
     updateData.updated_at = new Date().toISOString()
 
@@ -238,7 +288,7 @@ export async function PATCH(request, { params }) {
   }
 }
 
-// DELETE /api/interests/[id] - Delete/withdraw interest
+// DELETE /api/interests/[id] - Delete/withdraw interest (unchanged)
 export async function DELETE(request, { params }) {
   const resolvedParams = await params
   const { id } = resolvedParams
