@@ -63,14 +63,14 @@ export default function CustomerHeader() {
           </Button>
 
           {/* Logo */}
-          <Link href="/customer/workspace" className="flex items-center space-x-2">
+          {/* <Link href="/customer/workspace" className="flex items-center space-x-2">
             <div className="h-8 w-8 bg-primary rounded-lg flex items-center justify-center">
               <span className="text-primary-foreground font-bold text-sm">SC</span>
             </div>
             <span className="hidden sm:inline-block font-bold text-lg">
               Service Center
             </span>
-          </Link>
+          </Link> */}
         </div>
 
         {/* Center - Search (Desktop) */}

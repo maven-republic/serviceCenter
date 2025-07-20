@@ -21,11 +21,12 @@ export default function ManageAppointments() {
   const { user } = useUserStore()
   const [appointments, setAppointments] = useState([])
   const [interests, setInterests] = useState([])
+  const [professional, setProfessional] = useState(null) // ✅ NEW: Professional state
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [selectedAppointment, setSelectedAppointment] = useState(null)
   const [showSheet, setShowSheet] = useState(false)
-  const [activeTab, setActiveTab] = useState('available') // available, interests, assigned
+  const [activeTab, setActiveTab] = useState('available')
   
   // File viewer state
   const [selectedAppointmentForFiles, setSelectedAppointmentForFiles] = useState(null)
@@ -45,10 +46,67 @@ export default function ManageAppointments() {
   // Tab-specific counts with invitation breakdown
   const [tabCounts, setTabCounts] = useState({
     available: 0,
-    invitations: 0, // New: count of invitations within available
+    invitations: 0,
     interests: 0,
     assigned: 0
   })
+
+  // ✅ NEW: Fetch professional data
+  const fetchProfessionalData = useCallback(async () => {
+    if (!user?.profile?.professional_id) return
+
+    try {
+      console.log('🔍 Fetching professional data for:', user.profile.professional_id)
+      
+      const response = await fetch(`/api/professionals/${user.profile.professional_id}`)
+      
+      if (!response.ok) {
+        console.warn('⚠️ Professional API failed, using fallback data')
+        // Create fallback professional object
+        setProfessional({
+          id: user.profile.professional_id,
+          professional_id: user.profile.professional_id,
+          account: user.profile || {
+            first_name: 'Professional',
+            last_name: '',
+            email: user.email || ''
+          }
+        })
+        return
+      }
+
+      const data = await response.json()
+      console.log('✅ Professional data fetched successfully')
+      
+      setProfessional({
+        ...data.professional,
+        // Ensure both ID formats exist
+        id: data.professional?.id || data.professional?.professional_id || user.profile.professional_id,
+        professional_id: data.professional?.professional_id || data.professional?.id || user.profile.professional_id
+      })
+
+    } catch (error) {
+      console.error('❌ Error fetching professional data:', error)
+      // Create fallback professional object
+      setProfessional({
+        id: user.profile.professional_id,
+        professional_id: user.profile.professional_id,
+        account: user.profile || {
+          first_name: 'Professional',
+          last_name: '',
+          email: user.email || ''
+        }
+      })
+    }
+  }, [user?.profile?.professional_id, user?.email, user?.profile])
+
+  // ✅ NEW: Comprehensive refresh handler
+  const handleRefresh = useCallback(() => {
+    console.log('🔄 Refreshing all data...')
+    fetchData(pagination.page)
+    fetchTabCounts()
+    fetchProfessionalData()
+  }, [pagination.page])
 
   // ✅ ENHANCED: Fetch available appointments with invitation detection
   const fetchAvailableAppointments = useCallback(async (page = 1) => {
@@ -60,13 +118,12 @@ export default function ManageAppointments() {
     try {
       const params = new URLSearchParams({
         professional_filter: 'available',
-        professional_id: user.profile.professional_id, // ✅ KEY: Pass professional ID for invitation detection
+        professional_id: user.profile.professional_id,
         status: 'pending',
         limit: pagination.limit.toString(),
         offset: ((page - 1) * pagination.limit).toString()
       })
 
-      // Add status filter if not 'all'
       if (filters.status !== 'all') {
         params.append('status', filters.status)
       }
@@ -94,7 +151,6 @@ export default function ManageAppointments() {
 
       console.log('✅ Available appointments fetched:', data.appointments?.length || 0)
       
-      // ✅ NEW: Log invitation breakdown
       const invitationCount = data.appointments?.filter(apt => apt.is_invited)?.length || 0
       const openCount = data.appointments?.filter(apt => !apt.is_invited)?.length || 0
       console.log('🎯 Invitations found:', invitationCount, 'Open marketplace:', openCount)
@@ -129,7 +185,6 @@ export default function ManageAppointments() {
         offset: ((page - 1) * pagination.limit).toString()
       })
 
-      // Add status filter if not 'all'
       if (filters.status !== 'all') {
         params.append('status', filters.status)
       }
@@ -188,7 +243,6 @@ export default function ManageAppointments() {
         offset: ((page - 1) * pagination.limit).toString()
       })
 
-      // Add status filter if not 'all'
       if (filters.status !== 'all') {
         params.append('status', filters.status)
       }
@@ -239,7 +293,6 @@ export default function ManageAppointments() {
     try {
       console.log('🔢 Fetching tab counts for professional:', user.profile.professional_id)
 
-      // Make calls sequentially to better identify which one fails
       let availableCount = 0
       let invitationCount = 0
       let interestsCount = 0  
@@ -325,7 +378,6 @@ export default function ManageAppointments() {
 
     } catch (err) {
       console.error('❌ Error in fetchTabCounts:', err)
-      // Set default counts if everything fails
       setTabCounts({
         available: 0,
         invitations: 0,
@@ -352,17 +404,17 @@ export default function ManageAppointments() {
     }
   }, [activeTab, fetchAvailableAppointments, fetchProfessionalInterests, fetchAssignedAppointments])
 
-  // Load data when tab changes
+  // Load data when tab changes or component mounts
   useEffect(() => {
     fetchData(1)
     fetchTabCounts()
-  }, [activeTab, fetchData, fetchTabCounts])
+    fetchProfessionalData() // ✅ NEW: Fetch professional data
+  }, [activeTab, fetchData, fetchTabCounts, fetchProfessionalData])
 
   // ✅ ENHANCED: Express interest with invitation awareness
   const handleExpressInterest = useCallback(async (appointmentId, interestData) => {
     if (!appointmentId) return
 
-    // ✅ NEW: Find the appointment to check if it's an invitation
     const appointment = appointments.find(apt => apt.appointment_id === appointmentId)
     const isInvitation = appointment?.is_invited || false
 
@@ -376,7 +428,6 @@ export default function ManageAppointments() {
         appointment_id: appointmentId,
         professional_id: user.profile.professional_id,
         ...interestData,
-        // ✅ NEW: Add invitation context to the interest
         invitation_response: isInvitation,
         intent: isInvitation ? 'high' : (interestData.intent || 'standard')
       }
@@ -394,7 +445,6 @@ export default function ManageAppointments() {
       console.log('🔍 Response status:', response.status)
       console.log('🔍 Response ok:', response.ok)
 
-      // Get response text first to see what we're actually getting
       const responseText = await response.text()
       console.log('🔍 Raw response:', responseText)
 
@@ -410,7 +460,6 @@ export default function ManageAppointments() {
       if (!response.ok) {
         console.error('❌ API Error Response:', data)
         
-        // Show the actual error from the API
         const errorMessage = data.error || data.message || `HTTP ${response.status}: ${response.statusText}`
         const errorDetails = data.details ? ` Details: ${JSON.stringify(data.details)}` : ''
         
@@ -419,36 +468,28 @@ export default function ManageAppointments() {
 
       console.log('✅ Interest expressed successfully:', data)
 
-      // ✅ ENHANCED: Success message based on invitation status
       const successMessage = isInvitation 
         ? 'Response to invitation sent successfully! The customer will review your proposal.'
         : 'Interest expressed successfully! You\'ll be notified if the customer selects you.'
 
-      // Refresh available appointments and tab counts
-      fetchAvailableAppointments(pagination.page)
-      fetchTabCounts()
+      // ✅ Use comprehensive refresh
+      handleRefresh()
 
-      // Close sheet if open
       if (showSheet) {
         setShowSheet(false)
         setSelectedAppointment(null)
       }
 
-      // Show success message
-      // TODO: Replace with toast notification
       alert(successMessage)
 
     } catch (err) {
       console.error('❌ Complete error details:', err)
       console.error('❌ Error stack:', err.stack)
       
-      // Show the actual error to the user instead of generic message
       setError(`Failed to express interest: ${err.message}`)
-      
-      // Also alert so it's immediately visible
       alert(`Error expressing interest: ${err.message}`)
     }
-  }, [user?.profile?.professional_id, pagination.page, showSheet, fetchAvailableAppointments, fetchTabCounts, appointments])
+  }, [user?.profile?.professional_id, showSheet, appointments, handleRefresh])
 
   // Update existing interest
   const handleUpdateInterest = useCallback(async (interestId, updateData) => {
@@ -473,11 +514,9 @@ export default function ManageAppointments() {
 
       console.log('✅ Interest updated successfully')
 
-      // Refresh interests and tab counts
-      fetchProfessionalInterests(pagination.page)
-      fetchTabCounts()
+      // ✅ Use comprehensive refresh
+      handleRefresh()
 
-      // Close sheet if open
       if (showSheet) {
         setShowSheet(false)
         setSelectedAppointment(null)
@@ -487,7 +526,7 @@ export default function ManageAppointments() {
       console.error('❌ Error updating interest:', err)
       setError(err.message)
     }
-  }, [pagination.page, showSheet, fetchProfessionalInterests, fetchTabCounts])
+  }, [showSheet, handleRefresh])
 
   // Handle appointment action (accept/decline) - for assigned appointments
   const handleAppointmentAction = useCallback(async (appointmentId, action, additionalData = {}) => {
@@ -517,7 +556,6 @@ export default function ManageAppointments() {
 
       console.log(`✅ Appointment ${action}ed successfully`)
 
-      // Update the appointment in the local state
       setAppointments(prev => 
         prev.map(apt => 
           apt.appointment_id === appointmentId 
@@ -526,7 +564,6 @@ export default function ManageAppointments() {
         )
       )
 
-      // Close sheet if open
       if (showSheet) {
         setShowSheet(false)
         setSelectedAppointment(null)
@@ -541,8 +578,7 @@ export default function ManageAppointments() {
   // Handle view appointment details
   const handleViewAppointment = useCallback(async (appointmentId) => {
     console.log('👁️ Viewing appointment:', appointmentId)
-      console.log('🔍 Current activeTab:', activeTab) // Add this debug
-
+    console.log('🔍 Current activeTab:', activeTab)
 
     try {
       const response = await fetch(`/api/appointments/${appointmentId}`)
@@ -552,12 +588,11 @@ export default function ManageAppointments() {
         throw new Error(data.error || 'Failed to fetch appointment details')
       }
 
-          console.log('📋 Setting appointment with mode:', activeTab) // Add this debug
-
+      console.log('📋 Setting appointment with mode:', activeTab)
 
       setSelectedAppointment({
         ...data.appointment,
-        viewMode: activeTab // Pass current tab context
+        viewMode: activeTab
       })
       setShowSheet(true)
 
@@ -582,7 +617,6 @@ export default function ManageAppointments() {
     const searchLower = filters.search.toLowerCase()
     
     return dataSource.filter(item => {
-      // For interests, search in appointment data
       const appointment = activeTab === 'interests' ? item.appointment : item
       
       const customerName = `${appointment.customer?.account?.first_name || ''} ${appointment.customer?.account?.last_name || ''}`.toLowerCase()
@@ -660,7 +694,7 @@ export default function ManageAppointments() {
 
       {/* Main Content with Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-        {/* ✅ ENHANCED: Tab Navigation with Invitation Indicators */}
+        {/* Tab Navigation with Invitation Indicators */}
         <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="available" className="flex items-center gap-2">
             <div className="flex items-center gap-2">
@@ -671,7 +705,6 @@ export default function ManageAppointments() {
                     {tabCounts.available}
                   </Badge>
                 )}
-                {/* ✅ NEW: Special invitation indicator */}
                 {tabCounts.invitations > 0 && (
                   <Badge className="bg-blue-600 text-white text-xs">
                     {tabCounts.invitations} invited
@@ -707,9 +740,8 @@ export default function ManageAppointments() {
           mode={activeTab}
         />
 
-        {/* ✅ ENHANCED: Tab Content with Invitation Support */}
+        {/* Tab Content with Comprehensive Professional Support */}
         <TabsContent value="available" className="space-y-4">
-          {/* ✅ NEW: Invitation Summary for Available Tab */}
           {tabCounts.invitations > 0 && (
             <Card className="border-blue-200 bg-blue-50">
               <CardContent className="p-4">
@@ -746,10 +778,12 @@ export default function ManageAppointments() {
             ) : (
               <AppointmentInformationTable
                 appointments={filteredData}
-                professionalId={user?.profile?.professional_id} // ✅ Pass professional ID for invitation detection
+                professionalId={user?.profile?.professional_id}
+                professional={professional} // ✅ NEW: Pass professional object
                 onView={handleViewAppointment}
                 onExpressInterest={handleExpressInterest}
                 onViewAttachments={handleViewAttachments}
+                onRefresh={handleRefresh} // ✅ NEW: Pass refresh handler
                 loading={loading}
                 pagination={pagination}
                 onPageChange={handlePageChange}
@@ -780,10 +814,12 @@ export default function ManageAppointments() {
             ) : (
               <AppointmentInformationTable
                 appointments={filteredData}
-                professionalId={user?.profile?.professional_id} // ✅ Pass professional ID
+                professionalId={user?.profile?.professional_id}
+                professional={professional} // ✅ NEW: Pass professional object
                 onView={handleViewAppointment}
                 onUpdateInterest={handleUpdateInterest}
                 onViewAttachments={handleViewAttachments}
+                onRefresh={handleRefresh} // ✅ NEW: Pass refresh handler
                 loading={loading}
                 pagination={pagination}
                 onPageChange={handlePageChange}
@@ -814,11 +850,13 @@ export default function ManageAppointments() {
             ) : (
               <AppointmentInformationTable
                 appointments={filteredData}
-                professionalId={user?.profile?.professional_id} // ✅ Pass professional ID
+                professionalId={user?.profile?.professional_id}
+                professional={professional} // ✅ NEW: Pass professional object
                 onView={handleViewAppointment}
                 onAccept={(id) => handleAppointmentAction(id, 'accept')}
                 onDecline={(id) => handleAppointmentAction(id, 'decline')}
                 onViewAttachments={handleViewAttachments}
+                onRefresh={handleRefresh} // ✅ NEW: Pass refresh handler
                 loading={loading}
                 pagination={pagination}
                 onPageChange={handlePageChange}
@@ -838,7 +876,6 @@ export default function ManageAppointments() {
 
       {showSheet && console.log('🔧 Passing mode to AppointmentInformationView:', activeTab)}
 
-
       {/* ✅ ENHANCED: Appointment Detail Sheet with Professional ID */}
       <AppointmentInformationView
         open={showSheet}
@@ -849,11 +886,13 @@ export default function ManageAppointments() {
           }
         }}
         appointment={selectedAppointment}
-        professionalId={user?.profile?.professional_id} // ✅ Pass professional ID for invitation context
+        professionalId={user?.profile?.professional_id}
+        professional={professional} // ✅ NEW: Pass professional object
         onAccept={() => handleAppointmentAction(selectedAppointment?.appointment_id, 'accept')}
         onDecline={() => handleAppointmentAction(selectedAppointment?.appointment_id, 'decline')}
         onExpressInterest={handleExpressInterest}
         onUpdateInterest={handleUpdateInterest}
+        onRefresh={handleRefresh} // ✅ NEW: Pass refresh handler
       />
 
       {/* ✅ Attachment Viewer Modal */}

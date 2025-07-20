@@ -140,6 +140,15 @@ const useSearchStore = create(
       },
       
       clearConfirmedAddress: () => set({ confirmedAddress: null }),
+
+      // Add this function to your searchStore.js
+clearSearchResults: () => set({
+  searchResults: [],
+  totalResults: 0,
+  hasMoreResults: false,
+  searchError: null,
+  isSearching: false
+}),
       
       // Search API Integration
       performSearch: async (query, options = {}) => {

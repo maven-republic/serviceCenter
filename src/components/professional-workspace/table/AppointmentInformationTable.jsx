@@ -61,12 +61,16 @@ import {
   Heart,
   Send,
   UserCheck,
-  Crown
+  Crown,
+  CheckCircle
 } from 'lucide-react'
+
+import ProfessionalResponseHandler from '@/components/professional-workspace/interests/ProfessionalResponseHandler'
 
 export default function AppointmentInformationTable({
   appointments = [],
   professionalId,
+  professional, // ✅ NEW: Accept full professional object
   onView,
   onAccept,
   onDecline,
@@ -76,6 +80,7 @@ export default function AppointmentInformationTable({
   loading = false,
   pagination,
   onPageChange,
+  onRefresh,
   mode = 'assigned' // 'available', 'interests', 'assigned'
 }) {
   const [actionLoading, setActionLoading] = useState({})
@@ -84,6 +89,62 @@ export default function AppointmentInformationTable({
     direction: 'desc'
   })
   const [selectedRows, setSelectedRows] = useState(new Set())
+  const [selectedInterest, setSelectedInterest] = useState(null)
+
+  // ✅ COMPREHENSIVE: Professional data management
+  const getProfessionalData = () => {
+    // Priority 1: Use provided professional object
+    if (professional) {
+      return {
+        ...professional,
+        // Ensure both id formats exist for compatibility
+        id: professional.id || professional.professional_id,
+        professional_id: professional.professional_id || professional.id
+      }
+    }
+
+    // Priority 2: Create minimal professional object from ID
+    if (professionalId) {
+      return {
+        id: professionalId,
+        professional_id: professionalId,
+        // Add placeholder data that might be useful
+        account: {
+          first_name: 'Professional', // Fallback display name
+          last_name: ''
+        }
+      }
+    }
+
+    // Priority 3: Log error for debugging
+    console.error('AppointmentInformationTable: No professional data available')
+    return null
+  }
+
+  // ✅ COMPREHENSIVE: Response success handler
+  const handleResponseSuccess = (result) => {
+    console.log('Professional response successful:', result)
+    
+    // Comprehensive data refresh
+    if (onRefresh) {
+      onRefresh()
+    }
+    
+    // Clear selection
+    setSelectedInterest(null)
+    
+    // Optional: Show success feedback
+    // toast.success('Response sent successfully!')
+  }
+
+  // ✅ COMPREHENSIVE: Response error handler
+  const handleResponseError = (error) => {
+    console.error('Professional response failed:', error)
+    
+    // Keep modal open so user can retry
+    // Optional: Show error feedback
+    // toast.error('Failed to send response. Please try again.')
+  }
 
   // Handle action with loading state per appointment
   const handleAction = async (appointmentId, action, actionHandler) => {
@@ -95,10 +156,42 @@ export default function AppointmentInformationTable({
     }
   }
 
-  // ✅ FIXED: Express interest now opens the form instead of auto-submitting
+  // ✅ IMPROVED: Express interest with better error handling
   const handleExpressInterest = (appointment) => {
-    // Open the appointment details view which will show the form
-    onView(appointment.appointment_id)
+    try {
+      onView(appointment.appointment_id)
+    } catch (error) {
+      console.error('Failed to open appointment:', error)
+    }
+  }
+
+  // ✅ COMPREHENSIVE: Professional response handler
+  const handleShowResponseHandler = (interest) => {
+    const professionalData = getProfessionalData()
+    
+    if (!professionalData) {
+      console.error('Cannot show response handler: No professional data')
+      return
+    }
+
+    if (!interest?.appointment) {
+      console.error('Cannot show response handler: Invalid interest data', interest)
+      return
+    }
+
+    console.log('Opening response handler:', {
+      interest,
+      appointment: interest.appointment,
+      professional: professionalData
+    })
+
+    setSelectedInterest(interest)
+  }
+
+  // ✅ COMPREHENSIVE: Close handler with cleanup
+  const handleCloseResponseHandler = () => {
+    setSelectedInterest(null)
+    // Optional: Clear any form state or temporary data
   }
 
   // Sorting functionality
@@ -275,6 +368,20 @@ export default function AppointmentInformationTable({
         icon: UserCheck,
         label: 'Selected',
         dotColor: 'bg-white'
+      },
+      confirmed: {
+        variant: 'default',
+        className: 'bg-emerald-100 text-emerald-800 border-emerald-200',
+        icon: CheckCircle,
+        label: 'Confirmed',
+        dotColor: 'bg-emerald-600'
+      },
+      declined_by_professional: { // ✅ NEW: Add the new status
+        variant: 'secondary',
+        className: 'bg-red-100 text-red-800 border-red-200',
+        icon: X,
+        label: 'Declined',
+        dotColor: 'bg-red-600'
       },
       rejected: {
         variant: 'secondary',
@@ -460,6 +567,19 @@ export default function AppointmentInformationTable({
 
   return (
     <TooltipProvider>
+      {/* ✅ COMPREHENSIVE: Professional Response Handler */}
+      {selectedInterest && (
+        <ProfessionalResponseHandler
+          interest={selectedInterest}
+          appointment={selectedInterest.appointment}
+          professional={getProfessionalData()}
+          onSuccess={handleResponseSuccess}
+          onError={handleResponseError}
+          onClose={handleCloseResponseHandler}
+          open={!!selectedInterest}
+        />
+      )}
+
       <Card className="w-full bg-card border-border">
         <CardHeader className="flex-shrink-0 bg-muted/30 border-b border-border">
           <div className="flex items-center justify-between">
@@ -846,30 +966,30 @@ export default function AppointmentInformationTable({
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end" className="w-48 bg-popover border-border">
-                            <DropdownMenuItem 
-                              className="flex items-center text-foreground hover:bg-muted"
-                              onClick={() => onView(itemId)}
-                            >
-                              <Eye className="h-4 w-4 mr-2" />
-                              View Details
-                            </DropdownMenuItem>
-
                             {mode === 'available' && (
-                              <>
-                                <DropdownMenuSeparator className="bg-border" />
-                                <DropdownMenuItem 
-                                  className="flex items-center text-foreground hover:bg-muted"
-                                  onClick={() => handleExpressInterest(appointment)}
-                                >
-                                  <Heart className="h-4 w-4 mr-2" />
-                                  {isInvitation ? 'Respond to Invitation' : 'Express Interest'}
-                                </DropdownMenuItem>
-                              </>
+                              <DropdownMenuItem 
+                                className="flex items-center text-foreground hover:bg-muted"
+                                onClick={() => handleExpressInterest(appointment)}
+                              >
+                                <Heart className="h-4 w-4 mr-2" />
+                                {isInvitation ? 'Respond to Invitation' : 'Express Interest'}
+                              </DropdownMenuItem>
                             )}
 
-                            {mode === 'interests' && (
+                            {/* ✅ COMPREHENSIVE: Professional response actions for selected interests */}
+                            {mode === 'interests' && item.status === 'selected' && (
+                              <DropdownMenuItem 
+                                className="flex items-center text-green-600 hover:bg-green-50"
+                                onClick={() => handleShowResponseHandler(item)}
+                              >
+                                <CheckCircle className="h-4 w-4 mr-2" />
+                                Respond to Selection
+                              </DropdownMenuItem>
+                            )}
+
+                            {mode === 'interests' && ['interested', 'quoted', 'confirmed'].includes(item.status) && (
                               <>
-                                <DropdownMenuSeparator className="bg-border" />
+                                {item.status === 'selected' && <DropdownMenuSeparator className="bg-border" />}
                                 <DropdownMenuItem 
                                   className="flex items-center text-foreground hover:bg-muted"
                                   onClick={() => handleAction(
@@ -884,9 +1004,22 @@ export default function AppointmentInformationTable({
                               </>
                             )}
 
+                             {/* ✅ NEW: Reapply option for rejected interests */}
+                            {mode === 'interests' && (item.status === 'rejected' || item.status === 'declined_by_professional') && (
+                              <DropdownMenuItem 
+                                className="flex items-center text-blue-600 hover:bg-blue-50"
+                                onClick={() => handleAction(
+                                  itemId,
+                                  'reapply',
+                                  () => onExpressInterest?.(appointment.appointment_id, { intent: 'standard' })
+                                )}
+                              >
+                                {/* <Heart className="h-4 w-4 mr-2" /> */}
+                                Reapply
+                              </DropdownMenuItem>
+                            )}
                             {mode === 'assigned' && (
                               <>
-                                <DropdownMenuSeparator className="bg-border" />
                                 <DropdownMenuItem 
                                   className="flex items-center text-green-600 hover:bg-green-50"
                                   onClick={() => handleAction(
@@ -912,14 +1045,21 @@ export default function AppointmentInformationTable({
                               </>
                             )}
 
-                            <DropdownMenuSeparator className="bg-border" />
-                            <DropdownMenuItem 
-                              className="flex items-center text-foreground hover:bg-muted"
-                              onClick={() => {/* TODO: Share functionality */}}
-                            >
-                              <Send className="h-4 w-4 mr-2" />
-                              Share
-                            </DropdownMenuItem>
+                            {/* Keep Share option at the bottom */}
+                            {(mode === 'available' || 
+                              (mode === 'interests' && (item.status === 'selected' || ['interested', 'quoted', 'confirmed'].includes(item.status))) ||
+                              mode === 'assigned') && (
+                              <>
+                                <DropdownMenuSeparator className="bg-border" />
+                                <DropdownMenuItem 
+                                  className="flex items-center text-foreground hover:bg-muted"
+                                  onClick={() => {/* TODO: Share functionality */}}
+                                >
+                                  <Send className="h-4 w-4 mr-2" />
+                                  Share
+                                </DropdownMenuItem>
+                              </>
+                            )}
                           </DropdownMenuContent>
                         </DropdownMenu>
                       </TableCell>

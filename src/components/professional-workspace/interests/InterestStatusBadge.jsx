@@ -11,7 +11,10 @@ import {
   CheckCircle,
   AlertTriangle,
   Users,
-  Eye
+  Eye,
+  UserCheck,
+  Shield,
+  Hourglass
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
@@ -46,6 +49,16 @@ export default function InterestStatusBadge({
           description: 'Customer specifically invited you to quote'
         }
       
+      case 'interested':
+        return {
+          label: 'Interest Expressed',
+          icon: Heart,
+          variant: 'default',
+          className: 'bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100',
+          dotColor: 'bg-blue-500',
+          description: 'You expressed interest in this project'
+        }
+      
       case 'quoted':
         return {
           label: 'Quote Sent',
@@ -56,15 +69,50 @@ export default function InterestStatusBadge({
           description: 'Customer is reviewing your quote'
         }
       
+      // Customer selection status
       case 'selected':
         return {
           label: 'Selected!',
           icon: Target,
           variant: 'default',
-          className: 'bg-green-50 text-green-700 border-green-200 hover:bg-green-100',
+          className: 'bg-green-50 text-green-700 border-green-200 hover:bg-green-100 animate-pulse duration-2000',
           dotColor: 'bg-green-500',
-          description: 'Customer chose you for this project',
+          description: 'Customer chose you! Please respond within 48 hours.',
+          isSuccess: true,
+          isUrgent: true
+        }
+      
+      // Professional confirmed status
+      case 'confirmed':
+        return {
+          label: 'Confirmed',
+          icon: CheckCircle,
+          variant: 'default',
+          className: 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100',
+          dotColor: 'bg-emerald-500',
+          description: 'You confirmed availability and are ready to proceed',
           isSuccess: true
+        }
+      
+      // Professional declined selection - NEW
+      case 'declined_by_professional':
+        return {
+          label: 'Declined',
+          icon: X,
+          variant: 'secondary',
+          className: 'bg-red-50 text-red-600 border-red-200 hover:bg-red-100',
+          dotColor: 'bg-red-400',
+          description: 'You declined this selection'
+        }
+      
+      case 'declined':
+        return {
+          label: 'Declined',
+          icon: X,
+          variant: 'secondary',
+          className: 'bg-red-50 text-red-600 border-red-200 hover:bg-red-100',
+          dotColor: 'bg-red-400',
+          description: 'You declined this selection'
         }
       
       case 'rejected':
@@ -98,16 +146,6 @@ export default function InterestStatusBadge({
           isSuccess: true
         }
       
-      case 'declined':
-        return {
-          label: 'Declined',
-          icon: X,
-          variant: 'secondary',
-          className: 'bg-red-50 text-red-600 border-red-200 hover:bg-red-100',
-          dotColor: 'bg-red-400',
-          description: 'You declined the project assignment'
-        }
-      
       case 'expired':
         return {
           label: 'Expired',
@@ -116,6 +154,29 @@ export default function InterestStatusBadge({
           className: 'bg-yellow-50 text-yellow-700 border-yellow-200 hover:bg-yellow-100',
           dotColor: 'bg-yellow-500',
           description: 'Interest expired due to timeout'
+        }
+      
+      // Response deadline approaching
+      case 'response_needed':
+        return {
+          label: 'Response Needed',
+          icon: Hourglass,
+          variant: 'default',
+          className: 'bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100 animate-pulse duration-1500',
+          dotColor: 'bg-amber-500',
+          description: 'Customer is waiting for your response',
+          isUrgent: true
+        }
+      
+      // Assessment phase
+      case 'assessment_scheduled':
+        return {
+          label: 'Assessment Scheduled',
+          icon: Shield,
+          variant: 'default',
+          className: 'bg-indigo-50 text-indigo-700 border-indigo-200 hover:bg-indigo-100',
+          dotColor: 'bg-indigo-500',
+          description: 'Assessment appointment is scheduled'
         }
       
       case 'viewed':
@@ -171,7 +232,8 @@ export default function InterestStatusBadge({
         config.className,
         sizeConfig.badge,
         'inline-flex items-center gap-1.5 font-medium transition-colors',
-        config.isSuccess && 'animate-pulse duration-1000',
+        config.isSuccess && 'ring-1 ring-emerald-200',
+        config.isUrgent && 'ring-1 ring-amber-300',
         className
       )}
       title={config.description}
@@ -181,20 +243,52 @@ export default function InterestStatusBadge({
           'rounded-full',
           config.dotColor,
           sizeConfig.dot,
-          config.isSuccess && 'animate-pulse'
+          config.isUrgent && 'animate-pulse'
         )} />
       )}
       
       {showIcon && !showDot && (
         <IconComponent className={cn(
           sizeConfig.icon,
-          config.isSuccess && 'animate-pulse'
+          config.isUrgent && 'animate-pulse'
         )} />
       )}
       
       <span>{config.label}</span>
     </Badge>
   )
+}
+
+// Helper function to get status priority for sorting
+export const getStatusPriority = (status) => {
+  const priorities = {
+    'selected': 1,                    // Highest priority - needs immediate action
+    'response_needed': 2,             // Urgent response required
+    'confirmed': 3,                   // Success state
+    'assessment_scheduled': 4,        // Active project
+    'quoted': 5,                      // Waiting for customer
+    'interested': 6,                  // Standard interest
+    'invited': 7,                     // Invitation received
+    'pending': 8,                     // Under review
+    'viewed': 9,                      // Customer activity
+    'accepted': 10,                   // Completed action
+    'rejected': 11,                   // Customer decision
+    'declined': 12,                   // Professional decision
+    'declined_by_professional': 12,   // Professional decision - NEW
+    'withdrawn': 13,                  // Professional action
+    'expired': 14                     // Lowest priority
+  }
+  return priorities[status] || 99
+}
+
+// Helper function to check if status needs action
+export const statusNeedsAction = (status) => {
+  return ['selected', 'response_needed', 'invited'].includes(status)
+}
+
+// Helper function to check if status is positive outcome
+export const statusIsPositive = (status) => {
+  return ['selected', 'confirmed', 'accepted', 'assessment_scheduled'].includes(status)
 }
 
 // Export named variations for convenience
@@ -217,3 +311,33 @@ export const InterestStatusText = ({ status, size = "default", className }) => (
     className={className}
   />
 )
+
+// Professional response status component
+export const ResponseStatusBadge = ({ status, deadline, className }) => {
+  // Calculate urgency based on deadline
+  const getUrgencyStatus = () => {
+    if (!deadline) return status
+    
+    const now = new Date()
+    const deadlineDate = new Date(deadline)
+    const hoursRemaining = (deadlineDate - now) / (1000 * 60 * 60)
+    
+    if (status === 'selected') {
+      if (hoursRemaining <= 6) {
+        return 'response_needed' // Very urgent
+      }
+      return 'selected' // Normal urgent
+    }
+    
+    return status
+  }
+  
+  const displayStatus = getUrgencyStatus()
+  
+  return (
+    <InterestStatusBadge 
+      status={displayStatus}
+      className={className}
+    />
+  )
+}

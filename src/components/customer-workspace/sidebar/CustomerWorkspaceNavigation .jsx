@@ -41,9 +41,10 @@ export default function CustomerWorkspaceNavigation() {
   );
 
   return (
-    <div className="hidden lg:block w-64 border-r bg-background">
+    // WORKING: Sticky sidebar that stays fixed while content scrolls
+    <div className="hidden lg:block w-64 border-r bg-background sticky top-0 h-screen z-10">
       <div className="flex h-full flex-col">
-        <div className="flex-1 overflow-auto">
+        <div className="flex-1 overflow-y-auto scrollbar-thin">
           <nav className="p-4 space-y-6">
             {/* Workspace Section */}
             <div className="space-y-2">
@@ -105,6 +106,13 @@ export default function CustomerWorkspaceNavigation() {
               </div>
             </div>
           </nav>
+        </div>
+
+        {/* Fixed Footer */}
+        <div className="p-4 border-t border-border bg-background/95">
+          <div className="text-xs text-muted-foreground text-center">
+            Customer Portal
+          </div>
         </div>
       </div>
     </div>

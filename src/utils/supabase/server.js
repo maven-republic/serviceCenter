@@ -2,6 +2,7 @@
 import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 
+// Async version for Server Components
 export async function createClient() {
   const cookieStore = await cookies()
   
@@ -32,20 +33,19 @@ export async function createClient() {
   )
 }
 
-// ALTERNATIVE: Non-async version (recommended for API routes)
-export function createClientSync() {
-  // For API routes, we can use a simpler approach
+// Synchronous version for API routes (RECOMMENDED)
+export function createClientForAPI() {
   return createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
     {
       cookies: {
         getAll: () => {
-          // In API routes, we can access cookies differently
+          // For API routes, we use a simpler approach
           return []
         },
         setAll: () => {
-          // No-op for API routes
+          // No-op for API routes since we can't modify cookies in most API responses
         },
       },
       auth: {

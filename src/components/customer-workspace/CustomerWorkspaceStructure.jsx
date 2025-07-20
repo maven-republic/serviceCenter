@@ -28,20 +28,21 @@ export default function CustomerWorkspaceStructure({ children }) {
   }, [user, fetchUser]);
 
   return (
+    // FIXED: Removed h-screen and overflow constraints to allow sticky positioning
     <div className="min-h-screen bg-background">
-      <div className="flex h-screen">
-        {/* Sidebar */}
+      <div className="flex">
+        {/* Sidebar Container - FIXED: Removed h-full that was causing issues */}
         <div className={cn(
-          "transition-all duration-300 ease-in-out",
+          "transition-all duration-300 ease-in-out flex-shrink-0",
           isActive ? "w-0 overflow-hidden" : "w-64"
         )}>
           <CustomerWorkspaceNavigation />
         </div>
         
-        {/* Main Content Area */}
-        <div className="flex-1 flex flex-col overflow-hidden">
+        {/* Main Content Area - FIXED: Removed overflow-hidden and flex constraints */}
+        <div className="flex-1 min-h-screen">
           {/* Main Content */}
-          <main className="flex-1 overflow-auto p-6">
+          <main className="p-6">
             <div className="max-w-7xl mx-auto">
               {children}
             </div>

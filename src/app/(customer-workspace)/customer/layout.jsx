@@ -29,7 +29,7 @@ export default function CustomerWorkspaceLayout({ children }) {
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <CustomerHeader />
+      {/* <CustomerHeader /> */}
       <CustomerWorkspaceStructure>
         {children}
       </CustomerWorkspaceStructure>

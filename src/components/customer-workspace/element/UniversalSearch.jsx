@@ -1,227 +1,143 @@
-'use client'
+// ============================================================================
+// 🔍 SEARCH COMPONENTS ARCHITECTURE (UPDATED PATHS)
+// ============================================================================
 
-import { useState, useRef, useEffect, useCallback } from 'react'
-import { useRouter } from 'next/navigation'
-import { 
-  Command,
-  CommandDialog,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList
-} from "@/components/ui/command"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { 
-  Search, 
-  Briefcase,
-  Tag,
-  Users,
-  Building
-} from "lucide-react"
-import useSearchStore from '@/store/searchStore'
-import { cn } from "@/lib/utils"
+// 1️⃣ MAIN UNIVERSAL SEARCH COMPONENT
+// File: src/components/customer-workspace/element/UniversalSearch.jsx
+import { useState, useEffect } from 'react';
+import { Search, X, Filter } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
+import { useSearchAnalysis } from './search/primitives/useSearchAnalysis';
+import { useSearchTelemetry } from './search/primitives/useSearchTelemetry';
+import SearchSuggestionDropdown from './search/SearchSuggestionDropdown';
+import SearchConfigProvider from './search/SearchConfigProvider';
+import SearchInputField from './search/SearchInputField';
 
 export default function UniversalSearch({ 
+  onSearch, 
+  onClear,
+  value = '',
   className = '',
-  placeholder = "Search for services, professionals, or categories...",
-  onSearch
+  placeholder = 'Search for any service...',
+  size = 'large',
+  showSuggestions = true,
+  showFilters = false,
+  variant = 'default'
 }) {
-  const [open, setOpen] = useState(false)
-  const [query, setQuery] = useState('')
-  const [suggestions, setSuggestions] = useState([])
-  const [loading, setLoading] = useState(false)
+  const [query, setQuery] = useState(value);
+  const [isFocused, setIsFocused] = useState(false);
   
-  const router = useRouter()
-  const { setSearchQuery } = useSearchStore()
-  const searchTimeout = useRef(null)
+  const { analysis, smartSuggestions } = useSearchAnalysis(query);
+  const { logSearch } = useSearchTelemetry();
 
-  // Fetch suggestions from API
-  const fetchSuggestions = useCallback(async (searchQuery) => {
-    if (!searchQuery || searchQuery.length < 2) {
-      setSuggestions([])
-      return
-    }
-
-    setLoading(true)
-    try {
-      const response = await fetch(`/api/search/suggestions?q=${encodeURIComponent(searchQuery)}`)
-      if (response.ok) {
-        const data = await response.json()
-        setSuggestions(data.suggestions || [])
-      }
-    } catch (error) {
-      console.error('Error fetching suggestions:', error)
-      setSuggestions([])
-    } finally {
-      setLoading(false)
-    }
-  }, [])
-
-  // Debounced search
+  // Sync with external value changes
   useEffect(() => {
-    if (searchTimeout.current) {
-      clearTimeout(searchTimeout.current)
+    setQuery(value);
+  }, [value]);
+
+  // Also add this useEffect to monitor state changes
+useEffect(() => {
+  console.log('🔍 Query state changed:', query);
+  console.log('🔍 Value prop:', value);
+}, [query, value]);
+
+// And this one to monitor the value prop
+useEffect(() => {
+  console.log('🔄 Value prop changed, syncing to query:', value);
+  setQuery(value);
+}, [value]);
+
+
+  const handleSubmit = async (e) => {
+    if (e && e.preventDefault) e.preventDefault();
+    if (query.trim()) {
+      const startTime = performance.now();
+      
+      // Call your backend search
+      const results = await onSearch?.(query.trim(), { analysis, smartSuggestions });
+      
+      const endTime = performance.now();
+      const searchTime = Math.round(endTime - startTime);
+      
+      // Log search telemetry
+      await logSearch({
+        query: query.trim(),
+        resultsCount: results?.length || 0,
+        searchTimeMs: searchTime,
+        filtersApplied: analysis.isEmergency ? { emergency: true } : null
+      });
+      
+      setIsFocused(false);
     }
+  };
 
-    if (query.length >= 2) {
-      searchTimeout.current = setTimeout(() => {
-        fetchSuggestions(query)
-      }, 300)
-    } else {
-      setSuggestions([])
+ const handleClear = () => {
+  console.log('🧹 Clear button clicked');
+  console.log('🧹 Before clear - query:', query);
+  
+  setQuery('');
+  onClear?.();
+  onSearch?.('');
+  
+  console.log('🧹 After clear - query should be empty');
+};
+
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter') {
+      handleSubmit(e);
     }
-
-    return () => {
-      if (searchTimeout.current) {
-        clearTimeout(searchTimeout.current)
-      }
+    if (e.key === 'Escape') {
+      setIsFocused(false);
     }
-  }, [query, fetchSuggestions])
+  };
 
-  // Handle search execution
-  const executeSearch = useCallback((searchQuery, type = 'service') => {
-    if (!searchQuery.trim()) return
-
-    // Update search store
-    setSearchQuery(searchQuery.trim())
+  const handleSuggestionClick = async (suggestion) => {
+    setQuery(suggestion.searchTerm);
+    const results = await onSearch?.(suggestion.searchTerm, { 
+      analysis, 
+      type: suggestion.type 
+    });
     
-    // Call parent callback if provided
-    if (onSearch) {
-      onSearch(searchQuery.trim())
-    }
-
-    // Navigate to search results
-    if (type === 'industry' || type === 'vertical') {
-      router.push(`/customer/workspace?category=${encodeURIComponent(searchQuery)}`)
-    } else {
-      router.push(`/customer/workspace?q=${encodeURIComponent(searchQuery)}`)
-    }
-
-    // Close dialog
-    setOpen(false)
-    setQuery('')
-  }, [router, setSearchQuery, onSearch])
-
-  // Handle keyboard shortcut
-  const handleKeyDown = useCallback((e) => {
-    if (e.key === 'k' && (e.metaKey || e.ctrlKey)) {
-      e.preventDefault()
-      setOpen(true)
-    }
-  }, [])
-
-  // Keyboard event listener
-  useEffect(() => {
-    document.addEventListener('keydown', handleKeyDown)
-    return () => document.removeEventListener('keydown', handleKeyDown)
-  }, [handleKeyDown])
-
-  // Get icon for suggestion type
-  const getSuggestionIcon = (type) => {
-    switch (type) {
-      case 'service': return Briefcase
-      case 'keyword': return Search
-      case 'industry': return Building
-      case 'vertical': return Tag
-      case 'professional': return Users
-      default: return Search
-    }
-  }
-
-  // Get badge text for suggestion type
-  const getBadgeText = (suggestion) => {
-    switch (suggestion.type) {
-      case 'service': return 'Service'
-      case 'keyword': return 'Related'
-      case 'industry': return 'Industry'
-      case 'vertical': return 'Category'
-      case 'professional': return 'Pro'
-      default: return suggestion.badge || suggestion.type
-    }
-  }
+    // Log suggestion click
+    await logSearch({
+      query: suggestion.searchTerm,
+      resultsCount: results?.length || 0,
+      filtersApplied: { suggestionType: suggestion.type }
+    });
+    
+    setIsFocused(false);
+  };
 
   return (
-    <>
-      {/* Minimalist Search Bar */}
-      <div className={cn("relative w-full max-w-2xl", className)}>
-        <Button
-          variant="outline"
-          className="relative w-full justify-start text-muted-foreground hover:bg-accent/50 h-12"
-          onClick={() => setOpen(true)}
-        >
-          <Search className="mr-3 h-4 w-4" />
-          <span className="flex-1 text-left">{placeholder}</span>
-          <div className="hidden sm:flex items-center gap-1 text-xs">
-            <kbd className="pointer-events-none inline-flex h-6 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-xs font-medium text-muted-foreground">
-              <span className="text-xs">⌘</span>K
-            </kbd>
-          </div>
-        </Button>
+    <SearchConfigProvider size={size} variant={variant}>
+      <div className={cn('relative w-full', className)}>
+        <div className="relative">
+          <SearchInputField
+            query={query}
+            setQuery={setQuery}
+            placeholder={placeholder}
+            isFocused={isFocused}
+            onFocus={() => setIsFocused(true)}
+            onBlur={() => setTimeout(() => setIsFocused(false), 150)}
+            onKeyDown={handleKeyDown}
+            onClear={handleClear}
+            onSubmit={handleSubmit}
+            showFilters={showFilters}
+          />
+        </div>
+
+        {showSuggestions && (
+          <SearchSuggestionDropdown
+            query={query}
+            isFocused={isFocused}
+            analysis={analysis}
+            smartSuggestions={smartSuggestions}
+            onSuggestionClick={handleSuggestionClick}
+          />
+        )}
       </div>
-
-      {/* Search Dialog */}
-      <CommandDialog open={open} onOpenChange={setOpen}>
-        <CommandInput
-          placeholder={placeholder}
-          value={query}
-          onValueChange={setQuery}
-          className="text-base"
-        />
-        
-        <CommandList className="max-h-96">
-          {/* Search Suggestions */}
-          {suggestions.length > 0 && (
-            <CommandGroup>
-              {suggestions.map((suggestion, index) => {
-                const Icon = getSuggestionIcon(suggestion.type)
-                return (
-                  <CommandItem
-                    key={`${suggestion.type}-${suggestion.id}-${index}`}
-                    value={suggestion.text}
-                    onSelect={() => executeSearch(suggestion.text, suggestion.type)}
-                    className="flex items-center gap-3 p-3"
-                  >
-                    <Icon className="h-4 w-4 text-muted-foreground" />
-                    <div className="flex-1">
-                      <div className="font-medium">{suggestion.text}</div>
-                      {suggestion.category && (
-                        <div className="text-xs text-muted-foreground">
-                          {suggestion.category}
-                        </div>
-                      )}
-                    </div>
-                    <Badge variant="outline" className="text-xs">
-                      {getBadgeText(suggestion)}
-                    </Badge>
-                  </CommandItem>
-                )
-              })}
-            </CommandGroup>
-          )}
-
-          {/* No Results */}
-          {query.length >= 2 && !loading && suggestions.length === 0 && (
-            <CommandEmpty className="py-6 text-center">
-              <div className="space-y-2">
-                <Search className="mx-auto h-8 w-8 text-muted-foreground" />
-                <p className="text-sm text-muted-foreground">
-                  No results found for "{query}"
-                </p>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => executeSearch(query)}
-                  className="mt-2"
-                >
-                  Search anyway
-                </Button>
-              </div>
-            </CommandEmpty>
-          )}
-        </CommandList>
-      </CommandDialog>
-    </>
-  )
+    </SearchConfigProvider>
+  );
 }

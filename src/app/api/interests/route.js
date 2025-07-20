@@ -1,5 +1,5 @@
 // src/app/api/interests/route.js
-// Professional interests management API - UPDATED with price range support
+// Professional interests management API - FIXED with customer account data
 
 import { createClient } from '@/utils/supabase/server'
 import { NextResponse } from 'next/server'
@@ -7,7 +7,7 @@ import { NextResponse } from 'next/server'
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
 
-// GET /api/interests - Get professional's interests (unchanged)
+// GET /api/interests - Get professional's interests (FIXED)
 export async function GET(request) {
   try {
     console.log('🎯 GET /api/interests called')
@@ -30,7 +30,7 @@ export async function GET(request) {
       )
     }
 
-    // Updated query to include new price range fields
+    // ✅ FIXED: Updated query to include customer account data
     let query = supabase
       .from('interest')
       .select(`
@@ -54,7 +54,15 @@ export async function GET(request) {
             base_price
           ),
           customer:customer_id (
-            customer_id
+            customer_id,
+            account_id,
+            account!individual_customer_account_id_fkey (
+              account_id,
+              first_name,
+              last_name,
+              email,
+              profile_picture_url
+            )
           ),
           address:address_id (
             address_id,
@@ -131,7 +139,7 @@ export async function GET(request) {
       }
     }) || []
 
-    console.log('✅ Found', transformedInterests.length, 'interests with price range data')
+    console.log('✅ Found', transformedInterests.length, 'interests with customer account data')
 
     return NextResponse.json({
       success: true,
@@ -304,7 +312,14 @@ export async function POST(request) {
           session,
           duration,
           customer:customer_id (
-            customer_id
+            customer_id,
+            account:account_id (
+              account_id,
+              first_name,
+              last_name,
+              email,
+              profile_picture_url
+            )
           )
         )
       `)

@@ -1,55 +1,22 @@
-// src/app/(customer-workspace)/customer/workspace/page.jsx (FIXED - No Interests)
-"use client";
-
-import { useState } from 'react';
-import Collection from "@/components/section/Collection";
-import UniversalSearch from "@/components/customer-workspace/element/UniversalSearch";
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
+// src/app/(customer-workspace)/customer/workspace/page.jsx
 import { 
-  CheckCircle, 
-  Calendar, 
-  Users, 
-  Search,
-  PlusCircle,
-  ArrowRight,
-  Star,
-  TrendingUp
-} from 'lucide-react';
+  SearchProvider,
+  SearchInput, 
+  Discoveries 
+} from '@/components/discoveries';
 
-export default function ExploreInterface() {
-  const [searchQuery, setSearchQuery] = useState('');
-
-  const handleSearch = (query) => {
-    console.log('Search query:', query);
-    setSearchQuery(query);
-  };
-
+export default function WorkspacePage() {
   return (
-    <div className="min-h-screen bg-background">
-      <div className="container max-w-7xl mx-auto px-4 py-6">
+    <SearchProvider>
+      <div className="container mx-auto px-4 py-8">
+        <h1 className="text-3xl font-bold mb-8">What service do you need?</h1>
         
-        {/* Header */}
-        <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold mb-4">What service do you need?  </h1>
+        <div className="max-w-2xl mx-auto mb-8">
+          <SearchInput size="lg" placeholder="Search for services..." />
         </div>
-
-        {/* Search Bar */}
-        <div className="flex justify-center mb-8">
-          <UniversalSearch 
-            onSearch={handleSearch}
-            className="w-full max-w-3xl"
-            placeholder="What service are you looking for today?"
-          />
-        </div>
-
-        <div>
-             <Collection />
-        </div>
-
+        
+        <Discoveries />
       </div>
-    </div>
+    </SearchProvider>
   );
 }

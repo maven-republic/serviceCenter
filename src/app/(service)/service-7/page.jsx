@@ -1,6 +1,6 @@
 import Footer from "@/components/footer/Footer";
 import Header20 from "@/components/header/Header20";
-import Collection from "@/components/section/Collection";
+import Collection from "@/components/customer-workspace/collections/Collection";
 
 export const metadata = {
     title: "Freeio - Freelance Marketplace React/Next Js Template | Service 7",

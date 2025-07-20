@@ -31,6 +31,17 @@ const CustomerAppointmentDashboard = ({ appointmentId }) => {
     }
   }, [appointmentId]);
 
+  // In CustomerAppointmentDashboard.jsx, add this debug log
+useEffect(() => {
+  if (interests.length > 0) {
+    console.log('🔍 DEBUG: Interests data structure:', interests[0]);
+    console.log('🔍 DEBUG: First interest fields:', Object.keys(interests[0]));
+    if (interests[0].professional) {
+      console.log('🔍 DEBUG: Professional fields:', Object.keys(interests[0].professional));
+    }
+  }
+}, [interests]);
+
   const fetchAppointmentInterests = async () => {
     try {
       setLoading(true);
