@@ -1,4 +1,4 @@
-// src/components/discoveries/context/SearchContext.jsx
+// src/components/discoveries/context/SearchContext.jsx - UPDATED VERSION
 'use client';
 
 import { createContext, useContext, useState, useCallback, useEffect } from 'react';
@@ -7,12 +7,21 @@ import { useRouter, useSearchParams } from 'next/navigation';
 const initialState = {
   query: '',
   results: [],
-  filters: {},
+  filters: {
+    minPrice: undefined,
+    maxPrice: undefined,
+    industry: undefined,
+    vertical: undefined,
+    parish: undefined,
+    featured: false
+  },
   isLoading: false,
   error: null,
   totalResults: 0,
   searchTimeMs: 0,
   usedFuzzy: false,
+  usedKeywords: false,
+  searchMethod: 'none',
   suggestions: []
 };
 
@@ -23,7 +32,7 @@ export function SearchProvider({ children }) {
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  // Load all services by default on mount
+  // Load initial state from URL or fetch all services
   useEffect(() => {
     const urlQuery = searchParams.get('q');
     const urlFilters = {
@@ -35,27 +44,29 @@ export function SearchProvider({ children }) {
       featured: searchParams.get('featured') === 'true'
     };
 
-    if (urlQuery || Object.values(urlFilters).some(Boolean)) {
-      setState(prev => ({
-        ...prev,
-        query: urlQuery || '',
-        filters: urlFilters
-      }));
+    // Update state with URL parameters
+    setState(prev => ({
+      ...prev,
+      query: urlQuery || '',
+      filters: urlFilters
+    }));
 
-      if (urlQuery) {
-        performSearch(urlQuery);
-      }
+    if (urlQuery) {
+      // Perform search if there's a query
+      performSearch(urlQuery, { keywords: true });
     } else {
-      // Load all services by default if no URL params
+      // Load all services by default
       loadAllServices();
     }
-  }, []);
+  }, []); // Only run once on mount
 
   const loadAllServices = useCallback(async () => {
     setState(prev => ({ ...prev, isLoading: true, error: null }));
 
     try {
-      const response = await fetch('/api/services');
+      console.log('📋 Loading all services...');
+      
+      const response = await fetch('/api/services?limit=100&sort=featured');
       
       if (!response.ok) {
         throw new Error(`Failed to load services: ${response.status}`);
@@ -65,18 +76,24 @@ export function SearchProvider({ children }) {
       
       setState(prev => ({
         ...prev,
-        results: data.services || data || [],
-        totalResults: data.total || (data.services || data || []).length,
+        results: data.services || [],
+        totalResults: data.total || 0,
+        searchTimeMs: data.searchTimeMs || 0,
         isLoading: false,
-        query: '' // No search query, showing all services
+        query: '', // No search query, showing all services
+        searchMethod: 'all_services'
       }));
 
+      console.log(`✅ Loaded ${data.services?.length || 0} services`);
+
     } catch (error) {
-      console.error('Error loading services:', error);
+      console.error('❌ Error loading services:', error);
       setState(prev => ({
         ...prev,
         error: error instanceof Error ? error.message : 'Failed to load services',
-        isLoading: false
+        isLoading: false,
+        results: [],
+        totalResults: 0
       }));
     }
   }, []);
@@ -92,6 +109,20 @@ export function SearchProvider({ children }) {
     }));
   }, []);
 
+  const clearFilters = useCallback(() => {
+    setState(prev => ({ 
+      ...prev, 
+      filters: {
+        minPrice: undefined,
+        maxPrice: undefined,
+        industry: undefined,
+        vertical: undefined,
+        parish: undefined,
+        featured: false
+      }
+    }));
+  }, []);
+
   const performSearch = useCallback(async (query, options = {}) => {
     // If empty query, reload all services
     if (!query || query.trim().length === 0) {
@@ -100,7 +131,12 @@ export function SearchProvider({ children }) {
     }
 
     if (query.trim().length < 2) {
-      setState(prev => ({ ...prev, results: [], totalResults: 0 }));
+      setState(prev => ({ 
+        ...prev, 
+        results: [], 
+        totalResults: 0,
+        error: null
+      }));
       return;
     }
 
@@ -109,25 +145,40 @@ export function SearchProvider({ children }) {
     try {
       const params = new URLSearchParams({
         q: query.trim(),
-        fuzzy: options.fuzzy ? 'true' : 'false'
+        fuzzy: String(options.fuzzy || false),
+        keywords: String(options.keywords || false),
+        limit: String(options.limit || 50)
       });
 
-      // Add filters to search
+      // Add current filters to search
       Object.entries(state.filters).forEach(([key, value]) => {
         if (value !== undefined && value !== null && value !== '') {
-          params.set(key === 'minPrice' ? 'min_price' : 
-                    key === 'maxPrice' ? 'max_price' : key, 
-                    value.toString());
+          const paramKey = key === 'minPrice' ? 'min_price' : 
+                          key === 'maxPrice' ? 'max_price' : key;
+          params.set(paramKey, String(value));
         }
+      });
+
+      console.log('🔍 SearchContext performing search:', {
+        query: query.trim(),
+        options,
+        url: `/api/search?${params.toString()}`
       });
 
       const response = await fetch(`/api/search?${params.toString()}`);
       
       if (!response.ok) {
-        throw new Error(`Search failed: ${response.status}`);
+        throw new Error(`Search failed: ${response.status} ${response.statusText}`);
       }
 
       const data = await response.json();
+
+      console.log('✅ SearchContext received response:', {
+        total: data.total,
+        usedKeywords: data.usedKeywords,
+        searchMethod: data.searchMethod,
+        resultsCount: data.results?.length
+      });
 
       setState(prev => ({
         ...prev,
@@ -136,18 +187,23 @@ export function SearchProvider({ children }) {
         totalResults: data.total || 0,
         searchTimeMs: data.searchTimeMs || 0,
         usedFuzzy: data.usedFuzzy || false,
-        isLoading: false
+        usedKeywords: data.usedKeywords || false,
+        searchMethod: data.searchMethod || 'unknown',
+        isLoading: false,
+        error: null
       }));
 
-      // Update URL
+      // Update URL with search parameters
       updateURL(query.trim(), state.filters);
 
     } catch (error) {
-      console.error('Search error:', error);
+      console.error('❌ Search error:', error);
       setState(prev => ({
         ...prev,
         error: error instanceof Error ? error.message : 'Search failed',
-        isLoading: false
+        isLoading: false,
+        results: [],
+        totalResults: 0
       }));
     }
   }, [state.filters, loadAllServices]);
@@ -159,15 +215,28 @@ export function SearchProvider({ children }) {
     }
 
     try {
-      const response = await fetch(`/api/search/suggestions?q=${encodeURIComponent(query)}`);
+      console.log('💡 Getting suggestions for:', query);
+      
+      const response = await fetch(
+        `/api/search/suggestions?q=${encodeURIComponent(query)}&limit=8&include_services=true`
+      );
+      
+      if (!response.ok) {
+        throw new Error(`Suggestions failed: ${response.status}`);
+      }
+      
       const data = await response.json();
       
       setState(prev => ({
         ...prev,
         suggestions: data.suggestions || []
       }));
+
+      console.log(`✅ Got ${data.suggestions?.length || 0} suggestions`);
+      
     } catch (error) {
-      console.error('Suggestions error:', error);
+      console.error('❌ Suggestions error:', error);
+      setState(prev => ({ ...prev, suggestions: [] }));
     }
   }, []);
 
@@ -178,36 +247,60 @@ export function SearchProvider({ children }) {
     setTimeout(() => loadAllServices(), 100);
   }, [router, loadAllServices]);
 
-  const clearFilters = useCallback(() => {
-    setState(prev => ({ ...prev, filters: {} }));
-  }, []);
-
   const updateURL = useCallback((query, filters) => {
     const params = new URLSearchParams();
     
     if (query) params.set('q', query);
-    if (filters.minPrice) params.set('min_price', filters.minPrice.toString());
-    if (filters.maxPrice) params.set('max_price', filters.maxPrice.toString());
+    if (filters.minPrice) params.set('min_price', String(filters.minPrice));
+    if (filters.maxPrice) params.set('max_price', String(filters.maxPrice));
     if (filters.industry) params.set('industry', filters.industry);
     if (filters.vertical) params.set('vertical', filters.vertical);
     if (filters.parish) params.set('parish', filters.parish);
     if (filters.featured) params.set('featured', 'true');
 
     const queryString = params.toString();
-    router.push(`/customer/workspace${queryString ? `?${queryString}` : ''}`);
+    const newUrl = `/customer/workspace${queryString ? `?${queryString}` : ''}`;
+    
+    // Only update URL if it's different
+    if (window.location.pathname + window.location.search !== newUrl) {
+      router.push(newUrl);
+    }
   }, [router]);
 
+  // Method to refresh current search
+  const refreshSearch = useCallback(() => {
+    if (state.query) {
+      performSearch(state.query, { keywords: state.usedKeywords });
+    } else {
+      loadAllServices();
+    }
+  }, [state.query, state.usedKeywords, performSearch, loadAllServices]);
+
+  const contextValue = {
+    // State
+    ...state,
+    
+    // Actions
+    setQuery,
+    updateFilters,
+    clearFilters,
+    performSearch,
+    getSuggestions,
+    clearAll,
+    loadAllServices,
+    refreshSearch,
+    
+    // Computed values
+    hasResults: state.results.length > 0,
+    hasQuery: state.query.length > 0,
+    hasFilters: Object.values(state.filters).some(v => 
+      v !== undefined && v !== null && v !== '' && v !== false
+    ),
+    isEmpty: !state.isLoading && !state.error && state.results.length === 0
+  };
+
   return (
-    <SearchContext.Provider value={{
-      ...state,
-      setQuery,
-      updateFilters,
-      performSearch,
-      getSuggestions,
-      clearAll,
-      clearFilters,
-      loadAllServices
-    }}>
+    <SearchContext.Provider value={contextValue}>
       {children}
     </SearchContext.Provider>
   );
@@ -220,3 +313,6 @@ export function useSearch() {
   }
   return context;
 }
+
+// Export for debugging
+export { SearchContext };

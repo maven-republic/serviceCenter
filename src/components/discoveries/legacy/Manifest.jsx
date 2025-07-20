@@ -3,43 +3,49 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useState, useMemo } from "react";
-import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Heart, Star } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export default function Manifest({ data }) {
-  const [isFavActive, setFavActive] = useState(false);
   const [imageError, setImageError] = useState(false);
 
   // Safely extract data with fallbacks
   const serviceInformation = {
     id: data?.id || data?.service_id || 'unknown',
-    title: data?.title || data?.name || 'Service',
+    title: data?.title || data?.name || data?.service_name || 'Service',
     description: data?.description || '',
     price: data?.price || data?.base_price || 0,
-    category: data?.category || 'General',
-    img: data?.img || null,
+    category: data?.category || data?.vertical_name || data?.industry_name || 'General',
+    img: data?.img || data?.image_url || null,
     rating: data?.rating || 4.8,
     reviews: data?.reviews || 0
   };
 
-  // Minimalistic pastel gradients
-  const getPastelGradient = (seed) => {
-    const pastelGradients = [
-      'bg-gradient-to-br from-rose-100 to-pink-200',
-      'bg-gradient-to-br from-blue-100 to-indigo-200', 
-      'bg-gradient-to-br from-green-100 to-emerald-200',
-      'bg-gradient-to-br from-purple-100 to-violet-200',
-      'bg-gradient-to-br from-yellow-100 to-amber-200',
-      'bg-gradient-to-br from-cyan-100 to-teal-200',
-      'bg-gradient-to-br from-orange-100 to-red-200',
-      'bg-gradient-to-br from-indigo-100 to-blue-200',
-      'bg-gradient-to-br from-emerald-100 to-green-200',
-      'bg-gradient-to-br from-violet-100 to-purple-200',
-      'bg-gradient-to-br from-amber-100 to-yellow-200',
-      'bg-gradient-to-br from-teal-100 to-cyan-200'
+  // Flat shadcn color palette
+  const getFlatColor = (seed) => {
+    const flatColors = [
+      'bg-slate-100 text-slate-700',
+      'bg-gray-100 text-gray-700',
+      'bg-zinc-100 text-zinc-700',
+      'bg-neutral-100 text-neutral-700',
+      'bg-stone-100 text-stone-700',
+      'bg-red-100 text-red-700',
+      'bg-orange-100 text-orange-700',
+      'bg-amber-100 text-amber-700',
+      'bg-yellow-100 text-yellow-700',
+      'bg-lime-100 text-lime-700',
+      'bg-green-100 text-green-700',
+      'bg-emerald-100 text-emerald-700',
+      'bg-teal-100 text-teal-700',
+      'bg-cyan-100 text-cyan-700',
+      'bg-sky-100 text-sky-700',
+      'bg-blue-100 text-blue-700',
+      'bg-indigo-100 text-indigo-700',
+      'bg-violet-100 text-violet-700',
+      'bg-purple-100 text-purple-700',
+      'bg-fuchsia-100 text-fuchsia-700',
+      'bg-pink-100 text-pink-700',
+      'bg-rose-100 text-rose-700'
     ];
     
     const hashCode = (str) => {
@@ -52,12 +58,12 @@ export default function Manifest({ data }) {
       return Math.abs(hash);
     };
 
-    const index = hashCode(seed || 'default') % pastelGradients.length;
-    return pastelGradients[index];
+    const index = hashCode(seed || 'default') % flatColors.length;
+    return flatColors[index];
   };
 
-  const gradientClass = useMemo(() =>
-    getPastelGradient(serviceInformation.id || serviceInformation.title),
+  const colorClass = useMemo(() =>
+    getFlatColor(serviceInformation.id || serviceInformation.title),
     [serviceInformation.id, serviceInformation.title]
   );
 
@@ -65,63 +71,60 @@ export default function Manifest({ data }) {
                        serviceInformation.img !== '/images/services/default-service.jpg' && 
                        !imageError;
 
-  const truncatedTitle = serviceInformation.title.length > 45 ? 
-                        serviceInformation.title.slice(0, 45) + "..." : 
+  const truncatedTitle = serviceInformation.title.length > 32 ? 
+                        serviceInformation.title.slice(0, 32) + "..." : 
                         serviceInformation.title;
 
   return (
-    <div className="h-full flex flex-col space-y-3">
-      {/* Card Section */}
-      <Card className="group overflow-hidden border border-gray-100 bg-white hover:border-gray-200  transition-all duration-200">
-        {/* Image Section */}
-        <div className="relative h-28 overflow-hidden">
+    <Link 
+      href={`/services/${serviceInformation.id}`}
+      className="block group"
+    >
+      <div className="space-y-3">
+        {/* Flat Card Section */}
+        <div className="relative aspect-square overflow-hidden rounded-lg border border-border bg-muted/50 group-hover:bg-muted transition-colors duration-200">
           {hasValidImage ? (
             <Image
               fill
-              className="object-cover transition-transform duration-200 group-hover:scale-[1.02]"
+              className="object-cover transition-transform duration-200 group-hover:scale-105"
               src={serviceInformation.img}
               alt={serviceInformation.title}
               onError={() => setImageError(true)}
             />
           ) : (
-            // Minimalistic pastel fallback
-            <div className={cn("h-full w-full flex items-center justify-center", gradientClass)}>
+            // Flat color fallback with icon/initial
+            <div className={cn("h-full w-full flex items-center justify-center", colorClass)}>
               <div className="text-center">
-                
+                <div className="text-2xl font-bold">
+                  {serviceInformation.title.charAt(0).toUpperCase()}
+                </div>
               </div>
             </div>
           )}
 
-           {/* Clean Price Badge */}
+          {/* Flat Price Badge */}
           {serviceInformation.price > 0 && (
-            <div className="absolute bottom-2 left-2 bg-white/90 backdrop-blur-sm rounded-full px-2 py-1 border border-gray-100">
-              <span className="text-xs font-medium text-gray-700">
+            <div className="absolute top-2 right-2">
+              <Badge variant="secondary" className="bg-background/90 text-foreground border">
                 ${serviceInformation.price}
-              </span>
+              </Badge>
             </div>
           )}
         </div>
-      </Card>
 
-      {/* Content Section - Outside Card */}
-      <div className="flex-1 space-y-2">
-        {/* Title */}
-        <Link 
-          href={`services/${serviceInformation.id}`}
-          className="block group/link"
-        >
-          <h3 className="font-medium text-sm text-gray-900 group-hover/link:text-gray-600 transition-colors duration-200 leading-snug">
+        {/* Content Section */}
+        <div className="space-y-1">
+          {/* Title */}
+          <h3 className="font-medium text-sm text-foreground group-hover:text-primary transition-colors duration-200 leading-tight">
             {truncatedTitle}
           </h3>
-        </Link>
 
-        {/* Category */}
-        <div className="flex items-center justify-between">
-          <span className="text-xs text-gray-400 font-normal">
+          {/* Category */}
+          <p className="text-xs text-muted-foreground">
             {serviceInformation.category}
-          </span>
+          </p>
         </div>
       </div>
-    </div>
+    </Link>
   );
 }

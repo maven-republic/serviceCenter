@@ -1,17 +1,19 @@
-// src/components/search/SearchInput.jsx
+// src/components/discoveries/core/SearchInput.jsx
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
 import { Search, X, Loader2 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { useSearch } from '@/components/discoveries/context/SearchContext';
+import { Badge } from '@/components/ui/badge';
+import { useSearch } from '../context/SearchContext';
 import { useDebouncedCallback } from 'use-debounce';
+import { cn } from '@/lib/utils';
 
 export default function SearchInput({ 
-  placeholder = "Search services...",
+  placeholder = "Search for services, professionals, or industries...",
   className = "",
-  size = 'md',
+  size = 'lg',
   showSuggestions = true
 }) {
   const { 
@@ -120,83 +122,117 @@ export default function SearchInput({
   const sizeClasses = {
     sm: 'h-9 text-sm',
     md: 'h-11 text-base', 
-    lg: 'h-14 text-lg'
+    lg: 'h-16 text-lg'
   };
 
   return (
-    <div className={`relative ${className}`}>
-      <form onSubmit={handleSubmit} className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-        
-        <Input
-          ref={inputRef}
-          type="text"
-          value={localQuery}
-          onChange={(e) => handleInputChange(e.target.value)}
-          onKeyDown={handleKeyDown}
-          onFocus={() => {
-            if (localQuery.length > 1 && suggestions.length > 0) {
-              setShowSuggestionDropdown(true);
-            }
-          }}
-          onBlur={(e) => {
-            // Delay hiding to allow clicks on suggestions
-            setTimeout(() => {
-              if (!dropdownRef.current?.contains(document.activeElement)) {
-                setShowSuggestionDropdown(false);
+    <div className={cn("w-full max-w-7xl mx-auto", className)}>
+      <div className="relative">
+        <form onSubmit={handleSubmit} className="relative">
+          {/* Search Icon */}
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+          
+          {/* Main Input */}
+          <Input
+            ref={inputRef}
+            type="text"
+            value={localQuery}
+            onChange={(e) => handleInputChange(e.target.value)}
+            onKeyDown={handleKeyDown}
+            onFocus={() => {
+              if (localQuery.length > 1 && suggestions.length > 0) {
+                setShowSuggestionDropdown(true);
               }
-            }, 150);
-          }}
-          placeholder={placeholder}
-          className={`${sizeClasses[size]} pl-10 pr-10 ${
-            showSuggestionDropdown ? 'rounded-b-none' : ''
-          }`}
-        />
+            }}
+            onBlur={(e) => {
+              // Delay hiding to allow clicks on suggestions
+              setTimeout(() => {
+                if (!dropdownRef.current?.contains(document.activeElement)) {
+                  setShowSuggestionDropdown(false);
+                }
+              }, 150);
+            }}
+            placeholder={placeholder}
+            className={cn(
+              sizeClasses[size], 
+              "pl-12 pr-24 text-base bg-background border-input",
+              "focus:ring-0 focus:ring-offset-0 focus-visible:ring-1 focus-visible:ring-ring",
+              showSuggestionDropdown ? 'rounded-b-none border-b-0' : ''
+            )}
+          />
 
-        {/* Loading spinner */}
-        {isLoading && (
-          <Loader2 className="absolute right-10 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-muted-foreground" />
-        )}
+          {/* Right Side Icons */}
+          <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
+            {/* Loading spinner */}
+            {isLoading && (
+              <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+            )}
 
-        {/* Clear button */}
-        {localQuery && (
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            onClick={handleClear}
-            className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8 p-0 hover:bg-muted"
-          >
-            <X className="h-4 w-4" />
-          </Button>
-        )}
-      </form>
+            {/* Clear button */}
+            {localQuery && !isLoading && (
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={handleClear}
+                className="h-8 w-8 p-0 hover:bg-muted/50"
+              >
+                <X className="h-4 w-4" />
+                <span className="sr-only">Clear search</span>
+              </Button>
+            )}
 
-      {/* Suggestions dropdown */}
-      {showSuggestionDropdown && suggestions.length > 0 && (
-        <div 
-          ref={dropdownRef}
-          className="absolute top-full left-0 right-0 bg-white border border-t-0 border-input rounded-b-md shadow-lg z-50 max-h-60 overflow-y-auto"
-        >
-          {suggestions.map((suggestion, index) => (
-            <button
-              key={`${suggestion.suggestion}-${index}`}
-              type="button"
-              onClick={() => handleSuggestionClick(suggestion.suggestion)}
-              className={`w-full px-4 py-3 text-left hover:bg-muted transition-colors ${
-                index === focusedIndex ? 'bg-muted' : ''
-              }`}
+            {/* Search button for mobile */}
+            <Button
+              type="submit"
+              size="sm"
+              className="h-8 px-3 bg-primary text-primary-foreground hover:bg-primary/90"
             >
-              <div className="flex items-center justify-between">
-                <span className="text-sm">{suggestion.suggestion}</span>
-                <span className="text-xs text-muted-foreground">
-                  {suggestion.suggestion_type === 'popular' ? 'Popular' : 'Service'}
-                </span>
+              <Search className="h-4 w-4 sm:mr-2" />
+              <span className="hidden sm:inline">Search</span>
+            </Button>
+          </div>
+        </form>
+
+        {/* Flat Suggestions Dropdown */}
+        {showSuggestionDropdown && suggestions.length > 0 && (
+          <div 
+            ref={dropdownRef}
+            className="absolute top-full left-0 right-0 bg-background border border-t-0 border-input rounded-b-lg z-50 max-h-64 overflow-y-auto"
+          >
+            <div className="p-2">
+              <div className="text-xs text-muted-foreground mb-2 px-2 py-1">
+                Suggestions
               </div>
-            </button>
-          ))}
-        </div>
-      )}
+              {suggestions.map((suggestion, index) => (
+                <button
+                  key={`${suggestion.suggestion}-${index}`}
+                  type="button"
+                  onClick={() => handleSuggestionClick(suggestion.suggestion)}
+                  className={cn(
+                    "w-full px-3 py-2 text-left rounded-md transition-colors",
+                    "hover:bg-muted/50 focus:bg-muted/50",
+                    index === focusedIndex && 'bg-muted/50'
+                  )}
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Search className="h-3 w-3 text-muted-foreground" />
+                      <span className="text-sm text-foreground">{suggestion.suggestion}</span>
+                    </div>
+                    <Badge 
+                      variant="secondary" 
+                      className="text-xs bg-muted text-muted-foreground border-0"
+                    >
+                      {suggestion.suggestion_type === 'popular' ? 'Popular' : 'Service'}
+                    </Badge>
+                  </div>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

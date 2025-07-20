@@ -20,6 +20,8 @@ export { default as CategoryFilter } from './filters/CategoryFilter';
 
 // 📝 Input Components
 export { default as SearchInput } from './core/SearchInput';
+export { default as KeywordFilter } from './core/KeywordFilter';
+
 
 // 📄 Navigation Components
 export { default as DiscoveriesPagination } from './navigation/DiscoveriesPagination';

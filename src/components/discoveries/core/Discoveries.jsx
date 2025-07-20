@@ -106,28 +106,7 @@ export default function Discoveries() {
     <div className="space-y-6">
       {/* Header with Filter Button and Controls */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <div className="flex-1">
-          <h2 className="text-xl font-semibold mb-2">
-            {query ? `Discoveries for "${query}"` : 'All Services'}
-          </h2>
-          <div className="flex items-center gap-3 text-sm text-muted-foreground">
-            <span>{totalResults} results</span>
-            {searchTimeMs && (
-              <>
-                <span>•</span>
-                <span>{searchTimeMs}ms</span>
-              </>
-            )}
-            {usedFuzzy && (
-              <>
-                <span>•</span>
-                <Badge variant="secondary" className="text-xs">
-                  Smart Search
-                </Badge>
-              </>
-            )}
-          </div>
-        </div>
+        
 
         {/* Right Side Controls */}
         <div className="flex items-center gap-3">
