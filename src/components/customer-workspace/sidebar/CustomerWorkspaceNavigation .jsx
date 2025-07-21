@@ -1,316 +1,327 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { logout } from "@/app/(auth)/logout/actions";
-import { customerNavigation } from "@/data/dashboard";
+import { customerNavigation, navigationConfig } from "@/data/dashboard";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
-import { Badge } from "@/components/ui/badge";
 import { 
-  ChevronLeft, 
-  ChevronRight, 
-  User, 
-  Settings, 
-  LogOut,
-  Calendar,
-  BarChart3,
-  CreditCard,
-  Search,
+  // Core Navigation
   Home,
+  Search,
+  Calendar,
+  User,
+  Settings,
+  LogOut,
+  
+  // Analytics & Data
+  BarChart3,
+  LineChart,
+  TrendingUp,
+  Activity,
+  PieChart,
+  
+  // Communication & User
   MessageSquare,
   Bell,
-  HelpCircle,
   UserCircle,
-  TrendingUp
+  UserCheck,
+  Phone,
+  
+  // Business & Services  
+  Briefcase,
+  Clock,
+  MapPin,
+  
+  // Financial
+  CreditCard,
+  DollarSign,
+  Receipt,
+  
+  // Utility
+  HelpCircle,
+  Bookmark,
+  Star,
+  Plus,
+  Grid3X3,
+  Shield,
+  Zap
 } from "lucide-react";
-import { cn } from "@/lib/utils";
-import toggleStore from "@/store/toggleStore";
 
-// Modern icon mapping for better visual consistency
+// Semantic Icon Mapping System (UI Layer)
 const iconMap = {
-  "flaticon-home": BarChart3,                    // 📊 Analytics - Changed from Home to BarChart3
-  "flaticon-search": Search,
-  "flaticon-calendar": Calendar,
-  "flaticon-user": User,
-  "flaticon-photo": UserCircle,                  // 👤 Account Information - Added mapping
-  "flaticon-analytics": BarChart3,               // 📊 Analytics - Modern bar chart
-  "flaticon-account-info": UserCircle,           // 👤 Account Information - User in circle
-  "flaticon-account-information": UserCircle,     // Alternative naming
-  "flaticon-credit-card": CreditCard,
-  "flaticon-settings": Settings,
-  "flaticon-logout": LogOut,
-  "flaticon-message": MessageSquare,
-  "flaticon-notification": Bell,
-  "flaticon-help": HelpCircle,
-  "flaticon-appointment": Calendar,              // 📅 Appointments
-  // Additional analytics options
-  "flaticon-stats": BarChart3,
-  "flaticon-dashboard": BarChart3,
-  "flaticon-reports": TrendingUp,
-  // Additional account options  
-  "flaticon-profile": UserCircle,
-  "flaticon-my-account": UserCircle,
+  // === WORKSPACE & DISCOVERY ===
+  'search': Search,
+  'explore': Grid3X3,
+  'discover': Search,
+  'browse': Grid3X3,
+  'home': Home,
+  
+  // === ANALYTICS & PERFORMANCE ===
+  'analytics': LineChart,        // 📈 Perfect for analytics/trends
+  'dashboard': BarChart3,        // 📊 Overview/summary data
+  'stats': Activity,             // ⚡ Real-time statistics
+  'reports': TrendingUp,         // 📈 Growth/performance reports
+  'insights': PieChart,          // 🥧 Data breakdown
+  'performance': BarChart3,      // 📊 Performance metrics
+  
+  // === SCHEDULING & TIME ===
+  'calendar': Calendar,          // 📅 Appointments/events
+  'schedule': Clock,             // 🕒 Scheduling/timing
+  'availability': Clock,         // 🕒 Time availability
+  'booking': Calendar,           // 📅 Booking system
+  'appointments': Calendar,      // 📅 Appointment management
+  
+  // === USER & PROFILE ===
+  'profile': UserCircle,         // 👤 User profile
+  'account': UserCircle,         // 👤 Account management
+  'user': User,                  // 👤 User data
+  'account-settings': Settings,  // ⚙️ Settings
+  'verification': UserCheck,     // ✅ Verification status
+  
+  // === SERVICES & BUSINESS ===
+  'services': Briefcase,         // 💼 Service offerings
+  'business': Briefcase,         // 💼 Business management
+  'portfolio': Briefcase,        // 💼 Work portfolio
+  
+  // === COMMUNICATION ===
+  'messages': MessageSquare,     // 💬 Messaging
+  'chat': MessageSquare,         // 💬 Chat interface
+  'notifications': Bell,         // 🔔 Notifications
+  'support': HelpCircle,         // ❓ Help/support
+  'contact': Phone,              // 📞 Contact info
+  
+  // === FINANCIAL ===
+  'payments': CreditCard,        // 💳 Payment methods
+  'billing': Receipt,            // 🧾 Billing/invoices
+  'invoices': Receipt,           // 🧾 Invoice management
+  'money': DollarSign,           // 💰 Financial
+  'wallet': DollarSign,          // 💰 Wallet/balance
+  
+  // === LOCATION ===
+  'address': MapPin,             // 📍 Address/location
+  'location': MapPin,            // 📍 Geographic location
+  'map': MapPin,                 // 📍 Map/navigation
+  
+  // === UTILITY & ACTIONS ===
+  'settings': Settings,          // ⚙️ Configuration
+  'help': HelpCircle,           // ❓ Help/FAQ
+  'saved': Bookmark,            // 🔖 Saved items
+  'favorites': Star,            // ⭐ Favorites
+  'reviews': Star,              // ⭐ Reviews/ratings
+  'add': Plus,                  // ➕ Add/create
+  'create': Plus,               // ➕ Create new
+  'quick': Zap,                 // ⚡ Quick actions
+  
+  // === SYSTEM ACTIONS ===
+  'logout': LogOut,             // 🚪 Sign out
+  'security': Shield,           // 🛡️ Security/privacy
+  
+  // === LEGACY SUPPORT (Backward Compatibility) ===
+  'flaticon-search': Search,
+  'flaticon-calendar': Calendar,
+  'flaticon-user': User,
+  'flaticon-photo': UserCircle,
+  'flaticon-home': Home,
+  'flaticon-analytics': LineChart,
+  'flaticon-account-info': UserCircle,
+  'flaticon-account-information': UserCircle,
+  'flaticon-credit-card': CreditCard,
+  'flaticon-settings': Settings,
+  'flaticon-logout': LogOut,
+  'flaticon-message': MessageSquare,
+  'flaticon-notification': Bell,
+  'flaticon-help': HelpCircle,
+  'flaticon-appointment': Calendar,
+  'flaticon-stats': Activity,
+  'flaticon-dashboard': BarChart3,
+  'flaticon-reports': TrendingUp,
+  'flaticon-profile': UserCircle,
+  'flaticon-my-account': UserCircle,
 };
 
-export default function CustomerWorkspaceNavigation() {
-  const pathname = usePathname();
-  const { isDasboardSidebarActive, dashboardSlidebarToggleHandler } = toggleStore();
-  const [hoveredItem, setHoveredItem] = useState(null);
+// Advanced icon resolver with fallback chain
+const getIconComponent = (iconIdentifier, fallback = Home) => {
+  if (!iconIdentifier) return fallback;
   
-  const isCollapsed = isDasboardSidebarActive;
+  // Direct component reference
+  if (typeof iconIdentifier === 'function') {
+    return iconIdentifier;
+  }
+  
+  // String identifier resolution
+  if (typeof iconIdentifier === 'string') {
+    // Try exact match first
+    if (iconMap[iconIdentifier]) {
+      return iconMap[iconIdentifier];
+    }
+    
+    // Try normalized match (lowercase, normalize separators)
+    const normalizedKey = iconIdentifier.toLowerCase()
+      .replace(/[\s-_]/g, '-')
+      .replace(/^flaticon-/, ''); // Remove flaticon prefix for semantic matching
+    
+    if (iconMap[normalizedKey]) {
+      return iconMap[normalizedKey];
+    }
+  }
+  
+  // Log missing icons in development for debugging
+  if (process.env.NODE_ENV === 'development') {
+    console.warn(`Icon not found: "${iconIdentifier}". Using fallback.`);
+  }
+  
+  return fallback;
+};
 
-  // Get icon component from mapping or fallback
-  const getIconComponent = (iconClass) => {
-    const IconComponent = iconMap[iconClass] || Home;
-    return IconComponent;
-  };
-
-  const NavigationItem = ({ item, isActive = false, section }) => {
-    const IconComponent = getIconComponent(item.icon);
-    const itemKey = `${section}-${item.name}`;
-    const isHovered = hoveredItem === itemKey;
-
-    return (
-      <Link
-        href={item.path}
-        className={cn(
-          "group relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition-all duration-200",
-          "hover:bg-accent/50 hover:text-accent-foreground hover:scale-[1.02]",
-          "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
-          isActive && "bg-primary/10 text-primary font-medium shadow-sm border border-primary/20",
-          !isActive && "text-muted-foreground hover:text-foreground",
-          isCollapsed && "justify-center px-2"
-        )}
-        onMouseEnter={() => setHoveredItem(itemKey)}
-        onMouseLeave={() => setHoveredItem(null)}
-      >
-        <div className={cn(
-          "flex items-center justify-center transition-all duration-200",
-          isActive && "text-primary",
-          isHovered && "scale-110"
-        )}>
-          <IconComponent className={cn(
-            "h-5 w-5 transition-all duration-200",
-            isActive && "drop-shadow-sm"
-          )} />
-        </div>
-        
-        {!isCollapsed && (
-          <>
-            <span className={cn(
-              "flex-1 transition-all duration-200",
-              isActive && "font-medium"
-            )}>
-              {item.name}
-            </span>
-            
-            {/* Optional badge for notifications */}
-            {item.badge && (
-              <Badge 
-                variant="secondary" 
-                className="ml-auto h-5 w-5 flex items-center justify-center p-0 text-xs"
-              >
-                {item.badge}
-              </Badge>
-            )}
-            
-            {/* Active indicator */}
-            {isActive && (
-              <div className="w-1 h-1 bg-primary rounded-full" />
-            )}
-          </>
-        )}
-
-        {/* Collapsed mode tooltip */}
-        {isCollapsed && (
-          <div className={cn(
-            "absolute left-full ml-2 px-2 py-1 bg-popover text-popover-foreground text-xs rounded-md shadow-lg border opacity-0 pointer-events-none transition-all duration-200 z-50 whitespace-nowrap",
-            isHovered && "opacity-100"
-          )}>
-            {item.name}
-            <div className="absolute right-full top-1/2 -translate-y-1/2 border-4 border-transparent border-r-popover" />
-          </div>
-        )}
-      </Link>
-    );
-  };
-
-  const LogoutButton = ({ item, isActive = false }) => {
-    const IconComponent = getIconComponent(item.icon);
-    const isHovered = hoveredItem === 'logout';
-
+// Enhanced Navigation Item Component
+const NavigationItem = ({ item, isActive = false, hoveredItem, setHoveredItem }) => {
+  const IconComponent = getIconComponent(item.icon);
+  const isHovered = hoveredItem === item.name;
+  
+  // Handle special actions (like logout)
+  if (item.action === 'logout') {
     return (
       <form>
-        <Button
-          variant="ghost"
-          className={cn(
-            "group relative w-full justify-start gap-3 h-auto px-3 py-2.5 text-sm font-normal rounded-xl transition-all duration-200",
-            "hover:bg-destructive/10 hover:text-destructive hover:scale-[1.02]",
-            "text-muted-foreground",
-            isCollapsed && "justify-center px-2"
-          )}
+        <button
+          type="submit"
           formAction={logout}
-          onMouseEnter={() => setHoveredItem('logout')}
+          className="flex flex-col items-center justify-center group w-full"
+          onMouseEnter={() => setHoveredItem(item.name)}
           onMouseLeave={() => setHoveredItem(null)}
         >
-          <div className={cn(
-            "flex items-center justify-center transition-all duration-200",
-            isHovered && "scale-110"
-          )}>
+          <div className={`
+            w-12 h-12 rounded-lg flex items-center justify-center transition-all duration-200
+            bg-gray-100 text-gray-600 hover:bg-red-100 hover:text-red-600
+            ${isHovered ? 'scale-105' : ''}
+          `}>
             <IconComponent className="h-5 w-5" />
           </div>
-          
-          {!isCollapsed && (
-            <span className="flex-1 text-left">
-              {item.name}
-            </span>
-          )}
-
-          {/* Collapsed mode tooltip */}
-          {isCollapsed && (
-            <div className={cn(
-              "absolute left-full ml-2 px-2 py-1 bg-popover text-popover-foreground text-xs rounded-md shadow-lg border opacity-0 pointer-events-none transition-all duration-200 z-50 whitespace-nowrap",
-              isHovered && "opacity-100"
-            )}>
-              {item.name}
-              <div className="absolute right-full top-1/2 -translate-y-1/2 border-4 border-transparent border-r-popover" />
-            </div>
-          )}
-        </Button>
+          <span className="mt-2 text-xs font-medium text-gray-600 text-center leading-tight">
+            {item.name}
+          </span>
+        </button>
       </form>
     );
-  };
+  }
 
-  const SectionHeader = ({ title, children }) => (
-    <div className="space-y-2">
-      {!isCollapsed && (
-        <h4 className="text-xs font-semibold text-muted-foreground/70 px-3 uppercase tracking-wider">
-          {title}
-        </h4>
-      )}
-      {isCollapsed && (
-        <Separator className="mx-2" />
-      )}
-      <div className="space-y-1">
-        {children}
+  // Regular navigation item
+  return (
+    <Link
+      href={item.path}
+      className="flex flex-col items-center justify-center group relative"
+      onMouseEnter={() => setHoveredItem(item.name)}
+      onMouseLeave={() => setHoveredItem(null)}
+      title={item.description} // Tooltip with description
+    >
+      {/* Icon Container */}
+      <div className={`
+        w-12 h-12 rounded-lg flex items-center justify-center transition-all duration-200 relative
+        ${isActive 
+          ? 'bg-gray-900 text-white shadow-md' 
+          : 'bg-gray-100 text-gray-600 hover:bg-gray-200 hover:text-gray-800'
+        }
+        ${isHovered ? 'scale-105' : ''}
+      `}>
+        <IconComponent className="h-5 w-5" />
+        
+        {/* Badge for notifications */}
+        {item.badge && item.badge > 0 && (
+          <div className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center font-semibold">
+            {item.badge > 99 ? '99+' : item.badge}
+          </div>
+        )}
       </div>
-    </div>
+      
+      {/* Label */}
+      <span className={`
+        mt-2 text-xs font-medium text-center leading-tight max-w-[80px] px-1
+        ${isActive ? 'text-gray-900' : 'text-gray-600'}
+      `}>
+        {item.name}
+      </span>
+      
+      {/* Active indicator */}
+      {isActive && (
+        <div className="absolute -left-2 top-4 w-1 h-4 bg-gray-900 rounded-full" />
+      )}
+    </Link>
   );
+};
+
+// Main Navigation Component
+export default function CustomerWorkspaceNavigation() {
+  const pathname = usePathname();
+  const [hoveredItem, setHoveredItem] = useState(null);
+
+  // Separate navigation items - Account Information goes to bottom
+  const mainNavItems = useMemo(() => {
+    return [
+      ...(customerNavigation.workspace || []),
+      // Exclude account items from main nav - they go to bottom
+      ...(customerNavigation.settings?.filter(item => item.action !== 'logout') || [])
+    ];
+  }, []);
+
+  // Get account and logout items for bottom section
+  const accountItem = useMemo(() => {
+    return customerNavigation.account?.find(item => item.name === 'Account Information');
+  }, []);
+
+  const logoutItem = useMemo(() => {
+    return customerNavigation.settings?.find(item => item.action === 'logout');
+  }, []);
+
+  // Determine visible items based on config
+  const visibleItems = mainNavItems.slice(0, navigationConfig.maxVisibleItems || 6);
 
   return (
-    <div className={cn(
-      "hidden lg:block border-r bg-background/95 backdrop-blur-sm sticky top-0 h-screen z-10 transition-all duration-300 ease-in-out",
-      isCollapsed ? "w-16" : "w-64"
-    )}>
-      <div className="flex h-full flex-col">
-        {/* Header with toggle */}
-        <div className={cn(
-          "flex items-center justify-between p-4 border-b border-border/50",
-          isCollapsed && "justify-center"
-        )}>
-          {!isCollapsed && (
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center">
-                <User className="h-4 w-4 text-primary" />
-              </div>
-              <div>
-                <h2 className="text-sm font-semibold">Workspace</h2>
-                <p className="text-xs text-muted-foreground">Customer Portal</p>
-              </div>
-            </div>
+    <div className="hidden lg:flex w-24 border-r border-gray-200 bg-white sticky top-0 h-screen z-10">
+      <div className="flex flex-col w-full">
+        {/* Header/Logo Area */}
+        <div className="flex items-center justify-center p-4 border-b border-gray-100">
+          <div className="w-8 h-8 bg-gray-900 rounded-lg flex items-center justify-center">
+            <div className="w-4 h-4 bg-white rounded-sm"></div>
+          </div>
+        </div>
+
+        {/* Main Navigation Items */}
+        <div className="flex-1 flex flex-col justify-between py-6">
+          <div className="space-y-4 px-4">
+            {visibleItems.map((item) => (
+              <NavigationItem
+                key={item.id}
+                item={item}
+                isActive={pathname === item.path}
+                hoveredItem={hoveredItem}
+                setHoveredItem={setHoveredItem}
+              />
+            ))}
+          </div>
+        </div>
+
+        {/* Bottom Section - Account Information & Logout */}
+        <div className="border-t border-gray-100 py-4 px-4 space-y-3">
+          {/* Account Information - Replaces generic account avatar */}
+          {accountItem && (
+            <NavigationItem
+              item={accountItem}
+              isActive={pathname === accountItem.path}
+              hoveredItem={hoveredItem}
+              setHoveredItem={setHoveredItem}
+            />
           )}
-          
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={dashboardSlidebarToggleHandler}
-            className={cn(
-              "h-8 w-8 rounded-lg hover:bg-accent/50 transition-all duration-200",
-              isCollapsed && "hover:scale-110"
-            )}
-          >
-            {isCollapsed ? (
-              <ChevronRight className="h-4 w-4" />
-            ) : (
-              <ChevronLeft className="h-4 w-4" />
-            )}
-          </Button>
+
+          {/* Logout Button */}
+          {logoutItem && (
+            <NavigationItem
+              item={logoutItem}
+              isActive={false}
+              hoveredItem={hoveredItem}
+              setHoveredItem={setHoveredItem}
+            />
+          )}
         </div>
-
-        {/* Navigation Content */}
-        <div className="flex-1 overflow-y-auto scrollbar-thin">
-          <nav className={cn(
-            "p-4 space-y-6",
-            isCollapsed && "p-2 space-y-4"
-          )}>
-            {/* Workspace Section */}
-            <SectionHeader title="Workspace">
-              {customerNavigation.workspace?.map((item, i) => (
-                <NavigationItem
-                  key={`workspace-${i}`}
-                  item={item}
-                  section="workspace"
-                  isActive={pathname === item.path}
-                />
-              ))}
-            </SectionHeader>
-
-            {!isCollapsed && <Separator className="opacity-50" />}
-
-            {/* Account Section */}
-            <SectionHeader title="Account">
-              {customerNavigation.account?.map((item, i) => (
-                <NavigationItem
-                  key={`account-${i}`}
-                  item={item}
-                  section="account"
-                  isActive={pathname === item.path}
-                />
-              ))}
-            </SectionHeader>
-
-            {!isCollapsed && <Separator className="opacity-50" />}
-
-            {/* Settings Section */}
-            <SectionHeader title="Settings">
-              {customerNavigation.settings?.map((item, i) => (
-                <div key={`settings-${i}`}>
-                  {item.name === "Logout" ? (
-                    <LogoutButton
-                      item={item}
-                      isActive={pathname === item.path}
-                    />
-                  ) : (
-                    <NavigationItem
-                      item={item}
-                      section="settings"
-                      isActive={pathname === item.path}
-                    />
-                  )}
-                </div>
-              ))}
-            </SectionHeader>
-          </nav>
-        </div>
-
-        {/* Enhanced Footer */}
-        {!isCollapsed && (
-          <div className="p-4 border-t border-border/50 bg-background/95">
-            <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground">
-              <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
-              <span>Customer Portal</span>
-            </div>
-          </div>
-        )}
-        
-        {/* Collapsed footer */}
-        {isCollapsed && (
-          <div className="p-2 border-t border-border/50">
-            <div className="w-2 h-2 bg-green-500 rounded-full mx-auto animate-pulse" />
-          </div>
-        )}
       </div>
     </div>
   );

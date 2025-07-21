@@ -1,158 +1,150 @@
-// Updated navigation data structure with Service Pricing added
-// src/data/dashboard.js (Updated customer navigation)
+// Updated navigation data structure with semantic icon naming
+// src/data/dashboard.js (Clean Data Layer)
+
 export const customerNavigation = {
   workspace: [
     {
       id: 1,
       name: 'Explore',
-      icon: 'flaticon-search',
+      icon: 'search',                    // ✅ Clean semantic name
       path: "/customer/workspace",
+      description: "Find services and professionals",
+      shortcut: "cmd+e"
     },
     {
       id: 2,
-      name: 'Appointments', // 🆕 NEW
-      icon: 'flaticon-calendar',
+      name: 'Appointments',
+      icon: 'calendar',                  // ✅ Clear intent
       path: "/customer/appointments",
+      description: "Manage your bookings",
+      badge: null,                       // Can be populated dynamically
+      requiresAuth: true
     }
   ],
   account: [
     {
       id: 3,
       name: "Analytics",
-      icon: "flaticon-home",
+      icon: "analytics",                 // ✅ Perfect semantic name (was flaticon-home)
       path: "/customer/analytics",
+      description: "View performance metrics",
+      requiresFeature: "basic"
     },
     {
       id: 4,
       name: "Account Information",
-      icon: "flaticon-photo",
+      icon: "profile",                   // ✅ Clear semantic name (was flaticon-photo)
       path: "/customer/account-information",
+      description: "Manage your profile",
+      requiresAuth: true
     }
   ],
   settings: [
     {
       id: 5,
       name: "Logout",
-      icon: "flaticon-logout",
+      icon: "logout",                    // ✅ Clear action name
       path: "/login",
+      description: "Sign out of your account",
+      action: "logout"                   // Special handling flag
     }
   ]
 };
 
-export const professionalNavigation = [
-  {
-    id: 1,
-    name: "Analytics",
-    icon: "flaticon-home",
-    path: "/professional/workspace",
+export const professionalNavigation = {
+  dashboard: [
+    {
+      id: 1,
+      name: "Analytics",
+      icon: "analytics",                 // ✅ Semantic name (was flaticon-home)
+      path: "/professional/workspace",
+      description: "Business performance overview",
+      permissions: ["professional"]
+    },
+    {
+      id: 2,
+      name: "Appointments",
+      icon: "calendar",                  // ✅ Clear purpose
+      path: "/professional/manage-appointments",
+      description: "Manage client bookings",
+      badge: null                        // Dynamic appointment count
+    }
+  ],
+  account: [
+    {
+      id: 15,
+      name: "Account Information",
+      icon: "profile",                   // ✅ Consistent with customer
+      path: "/professional/account-information",
+      description: "Update professional profile"
+    },
+    {
+      id: 16,
+      name: "Availability",
+      icon: "schedule",                  // ✅ More specific than calendar
+      path: "/professional/availability",
+      description: "Set your working hours"
+    }
+  ],
+  settings: [
+    {
+      id: 17,
+      name: "Logout",
+      icon: "logout",
+      path: "/login",
+      action: "logout"
+    }
+  ]
+};
+
+// Navigation configuration and metadata
+export const navigationConfig = {
+  // Default settings
+  maxVisibleItems: 6,
+  enableShortcuts: true,
+  enableBadges: true,
+  
+  // Icon categories for documentation/reference
+  iconCategories: {
+    workspace: ['search', 'explore', 'dashboard'],
+    scheduling: ['calendar', 'schedule', 'availability'],
+    analytics: ['analytics', 'stats', 'reports', 'insights'],
+    user: ['profile', 'account', 'settings'],
+    communication: ['messages', 'notifications', 'support'],
+    financial: ['payments', 'billing', 'invoices'],
+    actions: ['logout', 'add', 'create', 'save']
   },
 
-  {
-    id: 2,
-    name: "Appointments", // 🆕 NEW APPOINTMENT LINK
-    icon: "flaticon-appointment",
-    path: "/professional/manage-appointments",
-  },
+  // Role-based access control
+  userRoles: {
+    customer: ['workspace', 'account', 'settings'],
+    professional: ['dashboard', 'account', 'settings'],
+    admin: ['dashboard', 'account', 'settings', 'admin']
+  }
+};
 
-  // {
-    // id: 2,
-    // name: "Projects",
-    // icon: "flaticon-document",
-    // path: "/professional/projects",
-  // },
-  // {
-    // id: 3,
-    // name: "Saved",
-    // icon: "flaticon-like",
-    // path: "/saved",
-  // },
-  // {
-    // id: 4,
-    // name: "Message",
-    // icon: "flaticon-chat",
-    // path: "/message",
-  // },
-  // {
-    // id: 5,
-    // name: "Reviews",
-    // icon: "flaticon-review-1",
-    // path: "/reviews",
-  // },
-  // {
-    // id: 6,
-    // name: "Invoice",
-    // icon: "flaticon-receipt",
-    // path: "/invoice",
-  // },
-  // {
-    // id: 7,
-    // name: "Payouts",
-    // icon: "flaticon-dollar",
-    // path: "/payouts",
-  // },
-  // {
-    // id: 8,
-    // name: "Statements",
-    // icon: "flaticon-web",
-    // path: "/statements",
-  // },
-  // {
-    // id: 9,
-    // name: "Manage Services",
-    // icon: "flaticon-presentation",
-    // path: "/professional/manage-services",
-  // },
-  // {
-    // id: 10,
-    // name: "Manage Jobs",
-    // icon: "flaticon-briefcase",
-    // path: "/manage-jobs",
-  // },
-  // {
-    // id: 11,
-    // name: "Manage Project",
-    // icon: "flaticon-content",
-    // path: "/manage-projects",
-  // },
-  // {
-    // id: 12,
-    // name: "Add Services",
-    // icon: "flaticon-document",
-    // path: "/professional/add-services",
-  // },
-  // {
-  //   id: 13,
-  //   name: "Quotations",
-  //   icon: "flaticon-content",
-  //   path: "/professional/manage-quotations",
-  // },
-  // {
-  //   id: 14,
-  //   name: "Valuation",
-  //   icon: "flaticon-price-tag",
-  //   path: "/professional/service-pricing",
-  // },
-  {
-    id: 15,
-    name: "Account Information",
-    icon: "flaticon-photo",
-    path: "/professional/account-information",
-  },
-  {
-    id: 16,
-    name: "Availability",
-    icon: "flaticon-calendar",
-    path: "/professional/availability",
-  },
-  {
-    id: 17,
-    name: "Logout",
-    icon: "flaticon-logout",
-    path: "/login",
-  },
-]
+// Utility functions for navigation
+export const getNavigationForRole = (role) => {
+  switch (role) {
+    case 'customer':
+      return customerNavigation;
+    case 'professional':
+      return professionalNavigation;
+    default:
+      return customerNavigation;
+  }
+};
 
-// Rest of your existing exports remain unchanged...
+export const flattenNavigation = (navigation) => {
+  return Object.values(navigation).flat();
+};
+
+export const getNavigationItemById = (navigation, id) => {
+  const allItems = flattenNavigation(navigation);
+  return allItems.find(item => item.id === id);
+};
+
+// Keep existing exports for backward compatibility
 export const invoice = [
   {
     id: 1,

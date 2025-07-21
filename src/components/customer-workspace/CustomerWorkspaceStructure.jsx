@@ -30,21 +30,14 @@ export default function CustomerWorkspaceStructure({ children }) {
   return (
     <div className="min-h-screen bg-background">
       <div className="flex">
-        {/* Sidebar Container - Dynamic width based on collapsed state */}
-        <div className={cn(
-          "transition-all duration-300 ease-in-out flex-shrink-0",
-          isActive ? "w-16" : "w-64"
-        )}>
-          <CustomerWorkspaceNavigation />
-        </div>
+        {/* Navigation Sidebar - Fixed width to match your component */}
+        <CustomerWorkspaceNavigation />
         
-        {/* Main Content Area with responsive padding */}
+        {/* Main Content Area with proper spacing */}
         <div className="flex-1 min-h-screen">
-          <main className={cn(
-            "transition-all duration-300 ease-in-out",
-            isActive ? "p-6" : "p-6"
-          )}>
-            <div className="max-w-7xl mx-auto">
+          <main className="p-6 lg:p-8">
+            {/* Container with proper max-width and spacing */}
+            <div className="max-w-7xl mx-auto space-y-6">
               {children}
             </div>
           </main>
