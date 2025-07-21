@@ -4,7 +4,7 @@
 import { RefreshCw } from 'lucide-react';
 import { AppointmentsError } from './AppointmentsError';
 import { AppointmentsEmpty } from './AppointmentsEmpty';
-import { AppointmentsTable } from './AppointmentsTable';
+import { AppointmentsDataTable } from './appointments-data-table';
 
 export const AppointmentsList = ({ 
   appointments, 
@@ -32,10 +32,20 @@ export const AppointmentsList = ({
     return <AppointmentsEmpty />;
   }
 
-  // Appointments Table (now with built-in drawer functionality)
+  // Handle row click (for analytics or navigation)
+  const handleRowClick = (appointment) => {
+    console.log('Appointment clicked:', appointment.appointment_id);
+    // You can add additional analytics or navigation logic here
+  };
+
+  // Main Data Table
   return (
     <div className="space-y-4">
-      <AppointmentsTable appointments={appointments} />
+      <AppointmentsDataTable 
+        data={appointments}
+        onRowClick={handleRowClick}
+        isLoading={loading}
+      />
     </div>
   );
 };
