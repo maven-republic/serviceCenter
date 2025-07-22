@@ -1,16 +1,14 @@
 "use client";
 
-import toggleStore from "@/store/toggleStore";
-import CustomerWorkspaceNavigation from "./sidebar/CustomerWorkspaceNavigation ";
+import { useEffect } from "react";
 import { useUserStore } from "@/store/userStore";
 import { createClient } from '@/utils/supabase/client';
-import { useEffect } from "react";
-import { cn } from "@/lib/utils";
+import CustomerWorkspaceNavigation from "./sidebar/CustomerWorkspaceNavigation ";
 
 export default function CustomerWorkspaceStructure({ children }) {
-  const isActive = toggleStore((state) => state.isDasboardSidebarActive); 
   const { user, fetchUser } = useUserStore();
 
+  // User authentication effect
   useEffect(() => {    
     async function setUser() {
       const supabase = createClient();
@@ -28,20 +26,25 @@ export default function CustomerWorkspaceStructure({ children }) {
   }, [user, fetchUser]);
 
   return (
+    // ✅ FOUNDATION: Single scroll architecture
     <div className="min-h-screen bg-background">
-      <div className="flex">
-        {/* Navigation Sidebar - Fixed width to match your component */}
-        <CustomerWorkspaceNavigation />
+      <div className="flex min-h-screen">
         
-        {/* Main Content Area with proper spacing */}
-        <div className="flex-1 min-h-screen">
-          <main className="p-6 lg:p-8">
-            {/* Container with proper max-width and spacing */}
-            <div className="max-w-7xl mx-auto space-y-6">
+        {/* ✅ SIDEBAR: Fixed position, proper constraints */}
+        <div className="flex-shrink-0">
+          <CustomerWorkspaceNavigation />
+        </div>
+        
+        {/* ✅ MAIN: Natural scroll, no overflow conflicts */}
+        <div className="flex-1 min-w-0">
+          <main className="h-full w-full">
+            {/* ✅ CONTAINER: Responsive padding, no max-width conflicts */}
+            <div className="h-full w-full px-4 sm:px-6 lg:px-8 py-6">
               {children}
             </div>
           </main>
         </div>
+        
       </div>
     </div>
   );

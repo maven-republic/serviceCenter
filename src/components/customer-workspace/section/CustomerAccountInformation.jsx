@@ -74,25 +74,24 @@ export default function CustomerAccountInformation() {
   };
 
   return (
-    <Card className="w-full max-w-4xl mx-auto">
-      <CardHeader className="space-y-1">
-        <CardTitle className="text-2xl font-semibold flex items-center gap-2">
-          <User className="h-6 w-6" />
-          Customer Information
-        </CardTitle>
-        <p className="text-sm text-muted-foreground">
-          View and manage your account details
-        </p>
-      </CardHeader>
-      
-      <Separator />
-      
-      <CardContent className="p-6">
-        {/* Profile Section */}
-        <div className="space-y-6">
-          {/* Avatar Section */}
-          <div className="flex items-center gap-6">
-            <Avatar className="h-20 w-20">
+    <div className="w-full">
+      <Card className="border-0 shadow-sm">
+        <CardHeader className="space-y-1 pb-6">
+          <CardTitle className="text-2xl font-semibold flex items-center gap-2">
+            <User className="h-6 w-6" />
+            Customer Information
+          </CardTitle>
+          <p className="text-sm text-muted-foreground">
+            View and manage your account details
+          </p>
+        </CardHeader>
+        
+        <Separator />
+        
+        <CardContent className="p-6 space-y-6">
+          {/* Profile Section */}
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6">
+            <Avatar className="h-20 w-20 shrink-0">
               <AvatarImage 
                 src={selectedImage || "/images/team/customer-default.png"}
                 alt="Customer Profile"
@@ -102,8 +101,8 @@ export default function CustomerAccountInformation() {
               </AvatarFallback>
             </Avatar>
             
-            <div className="space-y-2">
-              <h3 className="text-lg font-medium">
+            <div className="space-y-2 min-w-0 flex-1">
+              <h3 className="text-lg font-medium truncate">
                 {user?.account?.first_name} {user?.account?.last_name}
               </h3>
               <p className="text-sm text-muted-foreground">
@@ -118,8 +117,8 @@ export default function CustomerAccountInformation() {
 
           <Separator />
 
-          {/* Account Details */}
-          <div className="grid gap-6 md:grid-cols-2">
+          {/* Account Details Grid */}
+          <div className="grid gap-4 sm:gap-6 md:grid-cols-2">
             {/* Full Name */}
             <div className="space-y-2">
               <Label className="text-sm font-medium flex items-center gap-2">
@@ -139,7 +138,7 @@ export default function CustomerAccountInformation() {
                 <Mail className="h-4 w-4" />
                 Email Address
                 {user?.email_confirmed_at && (
-                  <Badge variant="default" className="ml-2 gap-1">
+                  <Badge variant="default" className="ml-2 gap-1 shrink-0">
                     <CheckCircle className="h-3 w-3" />
                     Verified
                   </Badge>
@@ -176,9 +175,9 @@ export default function CustomerAccountInformation() {
                 <Input
                   value="Customer"
                   disabled
-                  className="bg-muted flex-1"
+                  className="bg-muted flex-1 min-w-0"
                 />
-                <Badge variant="secondary">Active</Badge>
+                <Badge variant="secondary" className="shrink-0">Active</Badge>
               </div>
             </div>
           </div>
@@ -186,7 +185,7 @@ export default function CustomerAccountInformation() {
           <Separator />
 
           {/* Account Statistics */}
-          <div className="grid gap-4 md:grid-cols-3">
+          <div className="grid gap-4 grid-cols-1 sm:grid-cols-3">
             <Card className="bg-primary/5 border-primary/20">
               <CardContent className="p-4 text-center">
                 <div className="text-2xl font-bold text-primary">0</div>
@@ -210,7 +209,7 @@ export default function CustomerAccountInformation() {
           </div>
 
           {/* Action Buttons */}
-          <div className="flex flex-col sm:flex-row gap-3 pt-4">
+          <div className="flex flex-col sm:flex-row gap-3 pt-2">
             <Button asChild className="gap-2">
               <Link href="/customer/edit-profile">
                 <Edit3 className="h-4 w-4" />
@@ -225,8 +224,8 @@ export default function CustomerAccountInformation() {
               </Link>
             </Button>
           </div>
-        </div>
-      </CardContent>
-    </Card>
+        </CardContent>
+      </Card>
+    </div>
   );
 }

@@ -2,6 +2,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from 'next/navigation';
 import {
   flexRender,
   getCoreRowModel,
@@ -10,7 +11,7 @@ import {
   getSortedRowModel,
   useReactTable,
 } from "@tanstack/react-table";
-import { Calendar } from "lucide-react";
+import { Calendar, Plus } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -35,6 +36,7 @@ export function AppointmentsDataTable({
   onRowClick,
   isLoading = false,
 }) {
+  const router = useRouter();
   const [sorting, setSorting] = useState([]);
   const [columnFilters, setColumnFilters] = useState([]);
   const [columnVisibility, setColumnVisibility] = useState(defaultColumnVisibility);
@@ -85,14 +87,28 @@ export function AppointmentsDataTable({
     setSelectedAppointmentId(null);
   };
 
+  // Handle create appointment
+  const handleCreateAppointment = () => {
+    router.push('/customer/workspace');
+  };
+
   const selectedAppointment = data.find(
     apt => apt.appointment_id === selectedAppointmentId
   );
 
   return (
     <>
-      <Card className="animate-fade-in">
-        <CardHeader className="pb-4">
+      <Card className="animate-fade-in relative">
+        {/* Large Create Button - Top Right Corner INSIDE Card */}
+        <Button
+          onClick={handleCreateAppointment}
+          className="absolute top-4 right-4 z-10 h-12 w-12 rounded-full bg-primary hover:bg-primary/90 shadow-lg hover:shadow-xl transition-all duration-200"
+          title="Create New Appointment"
+        >
+          <Plus className="h-6 w-6" />
+        </Button>
+
+        <CardHeader className="pb-4 pr-20">
           <CardTitle className="flex items-center gap-3 text-foreground">
             <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-primary/10">
               <Calendar className="h-4 w-4 text-primary" />

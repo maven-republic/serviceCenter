@@ -1,4 +1,8 @@
-// src/components/discoveries/context/SearchContext.jsx - UPDATED VERSION
+// ============================================================================
+// Updated SearchContext with Pagination Support - context/SearchContext.jsx
+// Adds pagination handling to your existing search functionality
+// ============================================================================
+
 'use client';
 
 import { createContext, useContext, useState, useCallback, useEffect } from 'react';
@@ -15,6 +19,9 @@ const initialState = {
     parish: undefined,
     featured: false
   },
+  // ✅ ADD: Pagination state
+  currentPage: 1,
+  itemsPerPage: 24,
   isLoading: false,
   error: null,
   totalResults: 0,
@@ -35,6 +42,7 @@ export function SearchProvider({ children }) {
   // Load initial state from URL or fetch all services
   useEffect(() => {
     const urlQuery = searchParams.get('q');
+    const urlPage = searchParams.get('page');
     const urlFilters = {
       minPrice: searchParams.get('min_price') ? Number(searchParams.get('min_price')) : undefined,
       maxPrice: searchParams.get('max_price') ? Number(searchParams.get('max_price')) : undefined,
@@ -44,16 +52,20 @@ export function SearchProvider({ children }) {
       featured: searchParams.get('featured') === 'true'
     };
 
-    // Update state with URL parameters
+    // ✅ UPDATE: Include pagination in state
     setState(prev => ({
       ...prev,
       query: urlQuery || '',
+      currentPage: urlPage ? parseInt(urlPage, 10) : 1,
       filters: urlFilters
     }));
 
     if (urlQuery) {
       // Perform search if there's a query
-      performSearch(urlQuery, { keywords: true });
+      performSearch(urlQuery, { 
+        keywords: true,
+        page: urlPage ? parseInt(urlPage, 10) : 1
+      });
     } else {
       // Load all services by default
       loadAllServices();
@@ -81,6 +93,7 @@ export function SearchProvider({ children }) {
         searchTimeMs: data.searchTimeMs || 0,
         isLoading: false,
         query: '', // No search query, showing all services
+        currentPage: 1, // ✅ ADD: Reset to page 1
         searchMethod: 'all_services'
       }));
 
@@ -105,7 +118,8 @@ export function SearchProvider({ children }) {
   const updateFilters = useCallback((newFilters) => {
     setState(prev => ({
       ...prev,
-      filters: { ...prev.filters, ...newFilters }
+      filters: { ...prev.filters, ...newFilters },
+      currentPage: 1 // ✅ ADD: Reset to page 1 when filters change
     }));
   }, []);
 
@@ -119,10 +133,12 @@ export function SearchProvider({ children }) {
         vertical: undefined,
         parish: undefined,
         featured: false
-      }
+      },
+      currentPage: 1 // ✅ ADD: Reset to page 1 when clearing filters
     }));
   }, []);
 
+  // ✅ UPDATE: Enhanced performSearch with pagination support
   const performSearch = useCallback(async (query, options = {}) => {
     // If empty query, reload all services
     if (!query || query.trim().length === 0) {
@@ -143,11 +159,17 @@ export function SearchProvider({ children }) {
     setState(prev => ({ ...prev, isLoading: true, error: null }));
 
     try {
+      // ✅ ADD: Handle pagination in search params
+      const page = options.page || state.currentPage || 1;
+      const limit = options.limit || state.itemsPerPage || 24;
+      const offset = options.offset || ((page - 1) * limit);
+
       const params = new URLSearchParams({
         q: query.trim(),
         fuzzy: String(options.fuzzy || false),
         keywords: String(options.keywords || false),
-        limit: String(options.limit || 50)
+        limit: String(limit),
+        offset: String(offset)
       });
 
       // Add current filters to search
@@ -161,6 +183,9 @@ export function SearchProvider({ children }) {
 
       console.log('🔍 SearchContext performing search:', {
         query: query.trim(),
+        page,
+        limit,
+        offset,
         options,
         url: `/api/search?${params.toString()}`
       });
@@ -177,7 +202,8 @@ export function SearchProvider({ children }) {
         total: data.total,
         usedKeywords: data.usedKeywords,
         searchMethod: data.searchMethod,
-        resultsCount: data.results?.length
+        resultsCount: data.results?.length,
+        page
       });
 
       setState(prev => ({
@@ -185,6 +211,7 @@ export function SearchProvider({ children }) {
         query: query.trim(),
         results: data.results || [],
         totalResults: data.total || 0,
+        currentPage: page, // ✅ ADD: Update current page
         searchTimeMs: data.searchTimeMs || 0,
         usedFuzzy: data.usedFuzzy || false,
         usedKeywords: data.usedKeywords || false,
@@ -193,8 +220,8 @@ export function SearchProvider({ children }) {
         error: null
       }));
 
-      // Update URL with search parameters
-      updateURL(query.trim(), state.filters);
+      // Update URL with search parameters including page
+      updateURL(query.trim(), state.filters, page);
 
     } catch (error) {
       console.error('❌ Search error:', error);
@@ -206,7 +233,7 @@ export function SearchProvider({ children }) {
         totalResults: 0
       }));
     }
-  }, [state.filters, loadAllServices]);
+  }, [state.filters, state.currentPage, state.itemsPerPage, loadAllServices]);
 
   const getSuggestions = useCallback(async (query) => {
     if (!query || query.length < 2) {
@@ -247,10 +274,12 @@ export function SearchProvider({ children }) {
     setTimeout(() => loadAllServices(), 100);
   }, [router, loadAllServices]);
 
-  const updateURL = useCallback((query, filters) => {
+  // ✅ UPDATE: Include page in URL updates
+  const updateURL = useCallback((query, filters, page = 1) => {
     const params = new URLSearchParams();
     
     if (query) params.set('q', query);
+    if (page > 1) params.set('page', String(page)); // Only add page if > 1
     if (filters.minPrice) params.set('min_price', String(filters.minPrice));
     if (filters.maxPrice) params.set('max_price', String(filters.maxPrice));
     if (filters.industry) params.set('industry', filters.industry);
@@ -270,11 +299,14 @@ export function SearchProvider({ children }) {
   // Method to refresh current search
   const refreshSearch = useCallback(() => {
     if (state.query) {
-      performSearch(state.query, { keywords: state.usedKeywords });
+      performSearch(state.query, { 
+        keywords: state.usedKeywords,
+        page: state.currentPage 
+      });
     } else {
       loadAllServices();
     }
-  }, [state.query, state.usedKeywords, performSearch, loadAllServices]);
+  }, [state.query, state.usedKeywords, state.currentPage, performSearch, loadAllServices]);
 
   const contextValue = {
     // State

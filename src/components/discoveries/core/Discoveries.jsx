@@ -1,13 +1,12 @@
 // ============================================================================
-// Full-Width Discoveries Component - src/components/discoveries/core/Discoveries.jsx
-// Maximum space for services with right-side filter drawer
+// Phase 3: Discoveries Component Optimization - core/Discoveries.jsx
+// Eliminates spacing issues, perfect service grid integration
 // ============================================================================
 
 'use client';
 
 import { useState } from 'react';
 import { useSearch } from '../context/SearchContext';
-import DiscoveriesHeader from './DiscoveriesHeader';
 import DiscoveriesList from './DiscoveriesList';
 import DiscoveriesLoading from './DiscoveriesLoading';
 import DiscoveriesEmpty from './DiscoveriesEmpty';
@@ -26,7 +25,7 @@ import {
 } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Filter, Grid, List, X } from "lucide-react";
+import { Filter, X } from "lucide-react";
 
 export default function Discoveries() {
   const {
@@ -42,7 +41,6 @@ export default function Discoveries() {
   } = useSearch();
 
   // Local state for UI controls
-  const [viewMode, setViewMode] = useState('grid');
   const [showFilters, setShowFilters] = useState(false);
 
   // Count active filters
@@ -103,23 +101,27 @@ export default function Discoveries() {
   const filterBadges = getFilterBadges();
 
   return (
-    <div className="space-y-6">
-      {/* Header with Filter Button and Controls */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+    // ✅ CLEAN CONTAINER: No excessive spacing, minimal bottom padding
+    <div className="w-full">
+      
+      {/* ✅ CONTROLS BAR: Compact, responsive */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-6">
+        
         
 
         {/* Right Side Controls */}
         <div className="flex items-center gap-3">
-          {/* Filter Drawer Trigger */}
+          
+          {/* Filter Drawer */}
           <Sheet open={showFilters} onOpenChange={setShowFilters}>
             <SheetTrigger asChild>
-              <Button variant="outline" className="relative">
+              <Button variant="outline" size="sm" className="relative">
                 <Filter className="h-4 w-4 mr-2" />
                 Filters
                 {activeFiltersCount > 0 && (
                   <Badge 
                     variant="destructive" 
-                    className="ml-2 h-5 w-5 p-0 flex items-center justify-center text-xs"
+                    className="ml-2 h-4 w-4 p-0 flex items-center justify-center text-xs"
                   >
                     {activeFiltersCount}
                   </Badge>
@@ -133,39 +135,17 @@ export default function Discoveries() {
                   Refine your search to find the perfect service
                 </SheetDescription>
               </SheetHeader>
-              
-              {/* Filter Content */}
               <div className="mt-6">
                 <DiscoveriesFilters />
               </div>
             </SheetContent>
           </Sheet>
-
-          {/* View Mode Toggle */}
-          <div className="flex rounded-md border">
-            <Button
-              variant={viewMode === 'grid' ? 'default' : 'ghost'}
-              size="sm"
-              onClick={() => setViewMode('grid')}
-              className="rounded-r-none"
-            >
-              <Grid className="h-4 w-4" />
-            </Button>
-            <Button
-              variant={viewMode === 'list' ? 'default' : 'ghost'}
-              size="sm"
-              onClick={() => setViewMode('list')}
-              className="rounded-l-none"
-            >
-              <List className="h-4 w-4" />
-            </Button>
-          </div>
         </div>
       </div>
 
-      {/* Active Filter Badges */}
+      {/* ✅ ACTIVE FILTER BADGES: Only show when needed */}
       {filterBadges.length > 0 && (
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2 mb-6">
           <span className="text-sm text-muted-foreground">Active filters:</span>
           {filterBadges.map((badge) => (
             <Badge 
@@ -197,47 +177,73 @@ export default function Discoveries() {
         </div>
       )}
 
-      {/* Main Content - Full Width! */}
-      <div className="w-full">
-        {/* Loading State */}
-        {isLoading && <DiscoveriesLoading />}
+      {/* ✅ CONTENT STATES: Direct, no wrapper containers */}
+      
+      {/* Loading State */}
+      {isLoading && (
+        <DiscoveriesLoading />
+      )}
 
-        {/* Error State */}
-        {error && !isLoading && (
-          <DiscoveriesError error={error} />
-        )}
+      {/* Error State */}
+      {error && !isLoading && (
+        <DiscoveriesError error={error} />
+      )}
 
-        {/* Results - Full Width Grid */}
-        {!isLoading && !error && results.length > 0 && (
-          <>
-            <DiscoveriesList results={results} viewMode={viewMode} />
-            
-            {/* Pagination */}
-            {results.length > 24 && (
-              <div className="mt-8">
-                <DiscoveriesPagination
-                  totalItems={totalResults}
-                  itemsPerPage={24}
-                  currentPage={1}
-                  onPageChange={(page) => console.log('Page change:', page)}
-                />
-              </div>
-            )}
-          </>
-        )}
+      {/* ✅ RESULTS: Clean integration with service grid */}
+      {!isLoading && !error && results.length > 0 && (
+  <div className="space-y-8">
+    {/* Service Grid - Removed viewMode */}
+    <DiscoveriesList results={results} />
+    
+    {/* ✅ CONNECTED: Pagination with SearchContext integration */}
+    {totalResults > 24 && (
+      <DiscoveriesPagination
+        totalItems={totalResults}
+        itemsPerPage={24}
+      />
+    )}
+  </div>
+)}
 
-        {/* Empty State */}
-        {!isLoading && !error && query && results.length === 0 && (
-          <DiscoveriesEmpty query={query} />
-        )}
+      {/* Empty State */}
+      {!isLoading && !error && query && results.length === 0 && (
+        <DiscoveriesEmpty query={query} />
+      )}
 
-        {/* No services at all */}
-        {!isLoading && !error && !query && results.length === 0 && (
-          <div className="text-center py-12 text-muted-foreground">
-            <p>No services available at the moment.</p>
-          </div>
-        )}
-      </div>
+      {/* No services state */}
+      {!isLoading && !error && !query && results.length === 0 && (
+        <div className="text-center py-12 text-muted-foreground">
+          <p>No services available at the moment.</p>
+        </div>
+      )}
+      
     </div>
   );
 }
+
+/* 
+🎯 PHASE 3 ARCHITECTURE DECISIONS:
+
+✅ SPACING OPTIMIZATION:
+- mb-6 for consistent section spacing
+- space-y-8 between grid and pagination
+- pt-2 for minimal pagination spacing
+- No excessive pb-8 or margin accumulation
+
+✅ CONTENT FLOW:
+- Direct content states, no wrapper containers
+- Clean conditional rendering
+- No nested spacing conflicts
+
+✅ RESPONSIVE CONTROLS:
+- Compact controls bar with proper flex layout
+- Filter drawer for mobile/desktop
+- Smart search indicators
+
+✅ PERFORMANCE:
+- Minimal re-renders
+- Conditional badge rendering
+- Clean state management
+
+NEXT: Phase 4 will optimize the service grid layout
+*/

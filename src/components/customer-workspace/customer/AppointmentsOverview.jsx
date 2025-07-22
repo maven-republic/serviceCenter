@@ -50,7 +50,7 @@ export const AppointmentsOverview = () => {
   // Valid session - show appointments
   return (
     <div className="space-y-6">
-      <AppointmentsHeader customerInformation={customerInformation} />
+      {/* <AppointmentsHeader customerInformation={customerInformation} /> */}
       
       <AppointmentsList 
         appointments={appointments}

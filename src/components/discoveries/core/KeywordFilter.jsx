@@ -459,12 +459,7 @@ const KeywordFilter = ({ className = "" }) => {
         </div>
       )}
       
-      {/* Debug info in development */}
-      {process.env.NODE_ENV === 'development' && (
-        <div className="mt-2 text-xs text-muted-foreground">
-          {keywords.length} keywords loaded {error && '(fallback mode)'}
-        </div>
-      )}
+     
     </div>
   );
 };

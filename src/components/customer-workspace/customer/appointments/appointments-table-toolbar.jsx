@@ -13,7 +13,11 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Search, SlidersHorizontal, Eye } from "lucide-react";
+import { 
+  Search, 
+  SlidersHorizontal, 
+  Eye
+} from "lucide-react";
 import { statusOptions } from "./columns/appointments-columns";
 import { DataTableFacetedFilter } from "./data-table-faceted-filter";
 
@@ -34,7 +38,7 @@ export function AppointmentsTableToolbar({
             placeholder="Search appointments..."
             value={globalFilter ?? ""}
             onChange={(event) => setGlobalFilter(String(event.target.value))}
-            className="pl-8"
+            className="pl-8 h-8"
           />
         </div>
 
@@ -63,7 +67,7 @@ export function AppointmentsTableToolbar({
         )}
       </div>
 
-      {/* Column Visibility Toggle */}
+      {/* Right Side Actions */}
       <div className="flex items-center space-x-2">
         {/* Active Filters Display */}
         {table.getState().columnFilters.length > 0 && (
@@ -85,15 +89,16 @@ export function AppointmentsTableToolbar({
           </div>
         )}
 
+        {/* Column Visibility Toggle */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button
               variant="outline"
               size="sm"
-              className="ml-auto h-8 lg:flex"
+              className="h-8 lg:flex"
             >
               <SlidersHorizontal className="mr-2 h-4 w-4" />
-              View
+              <span className="hidden lg:inline">View</span>
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-[200px]">

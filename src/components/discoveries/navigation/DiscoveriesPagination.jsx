@@ -1,3 +1,8 @@
+// ============================================================================
+// Connected Pagination Component - navigation/DiscoveriesPagination.jsx
+// Properly integrated with SearchContext and URL state
+// ============================================================================
+
 "use client";
 
 import { useState, useEffect } from "react";
@@ -10,24 +15,34 @@ import {
   MoreHorizontal
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useSearch } from '../context/SearchContext';
+import { useRouter, useSearchParams } from 'next/navigation';
 
-export default function Pagination1({ 
+export default function DiscoveriesPagination({ 
   totalItems, 
-  itemsPerPage = 20, 
-  onPageChange,
-  currentPage: externalCurrentPage 
+  itemsPerPage = 24 
 }) {
-  const [currentPage, setCurrentPage] = useState(externalCurrentPage || 1);
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const { query, filters, performSearch } = useSearch();
+  
+  // Get current page from URL or default to 1
+  const [currentPage, setCurrentPage] = useState(() => {
+    const urlPage = searchParams.get('page');
+    return urlPage ? parseInt(urlPage, 10) : 1;
+  });
   
   // Calculate total pages
   const totalPages = Math.ceil(totalItems / itemsPerPage);
   
-  // Sync with external current page if provided
+  // Sync with URL parameters
   useEffect(() => {
-    if (externalCurrentPage && externalCurrentPage !== currentPage) {
-      setCurrentPage(externalCurrentPage);
+    const urlPage = searchParams.get('page');
+    const pageFromUrl = urlPage ? parseInt(urlPage, 10) : 1;
+    if (pageFromUrl !== currentPage) {
+      setCurrentPage(pageFromUrl);
     }
-  }, [externalCurrentPage]);
+  }, [searchParams]);
 
   // Generate page numbers array with ellipsis logic
   const getPageNumbers = () => {
@@ -75,12 +90,36 @@ export default function Pagination1({
     return rangeWithDots;
   };
   
-  // Handle page change
-  const handlePageChange = (page) => {
+  // Handle page change with SearchContext integration
+  const handlePageChange = async (page) => {
     if (page >= 1 && page <= totalPages && page !== currentPage) {
       setCurrentPage(page);
-      if (onPageChange) {
-        onPageChange(page);
+      
+      // Update URL with new page
+      const params = new URLSearchParams(searchParams.toString());
+      if (page === 1) {
+        params.delete('page'); // Clean URL for page 1
+      } else {
+        params.set('page', String(page));
+      }
+      
+      // Update URL
+      const queryString = params.toString();
+      const newUrl = `/customer/workspace${queryString ? `?${queryString}` : ''}`;
+      router.push(newUrl);
+      
+      // Trigger new search with pagination
+      try {
+        const searchOptions = {
+          keywords: true,
+          fuzzy: true,
+          limit: itemsPerPage,
+          offset: (page - 1) * itemsPerPage
+        };
+        
+        await performSearch(query, searchOptions);
+      } catch (error) {
+        console.error('Pagination search failed:', error);
       }
     }
   };
@@ -193,3 +232,34 @@ export default function Pagination1({
     </div>
   );
 }
+
+/* 
+🎯 PAGINATION INTEGRATION FEATURES:
+
+✅ SEARCHCONTEXT INTEGRATION:
+- Uses useSearch hook for query and filters
+- Calls performSearch with pagination params
+- Maintains search state across page changes
+
+✅ URL SYNCHRONIZATION:
+- Reads current page from URL parameters
+- Updates URL when page changes
+- Clean URLs (no ?page=1 for first page)
+
+✅ API INTEGRATION:
+- Sends limit and offset to search API
+- Maintains search query and filters
+- Handles pagination responses properly
+
+✅ STATE MANAGEMENT:
+- Syncs with URL parameters
+- Updates local state correctly
+- Handles page navigation smoothly
+
+USAGE IN DISCOVERIES:
+Just pass totalItems and itemsPerPage:
+<DiscoveriesPagination
+  totalItems={totalResults}
+  itemsPerPage={24}
+/>
+*/

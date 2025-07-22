@@ -28,11 +28,8 @@ export default function CustomerWorkspaceLayout({ children }) {
   }, [theme, setTheme]);
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
-      {/* <CustomerHeader /> */}
-      <CustomerWorkspaceStructure>
-        {children}
-      </CustomerWorkspaceStructure>
-    </div>
+    <CustomerWorkspaceStructure>
+      {children}
+    </CustomerWorkspaceStructure>
   );
 }

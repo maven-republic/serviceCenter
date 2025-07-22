@@ -1,28 +1,24 @@
 // src/components/customer-workspace/customer/appointments/AppointmentsHeader.jsx
 "use client";
 
-import { useRouter } from 'next/navigation';
-import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { CheckCircle } from 'lucide-react';
+import { CheckCircle, Calendar, TrendingUp } from 'lucide-react';
+import { Card, CardContent } from '@/components/ui/card';
 
-export const AppointmentsHeader = ({ customerInformation }) => {
-  const router = useRouter();
-
+export const AppointmentsHeader = ({ customerInformation, appointmentsCount = 0 }) => {
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold">Appointments</h1>
-          <p className="text-muted-foreground">
-            Manage your service requests and professional responses
-          </p>
-        </div>
-        <Button onClick={() => router.push('/customer/workspace')}>
-          Create New Appointment
-        </Button>
-      </div>
+      {/* Welcome Message */}
+      {customerInformation && (
+        <Alert className="border-primary/20 bg-primary/5">
+          <CheckCircle className="h-4 w-4 text-primary" />
+          <AlertDescription className="text-primary">
+            Welcome back, {customerInformation.first_name}! Manage your service appointments and bookings below.
+          </AlertDescription>
+        </Alert>
+      )}
+
+
     </div>
   );
 };
