@@ -1,3 +1,8 @@
+// ============================================================================
+// Fixed Manifest Component - legacy/Manifest.jsx
+// Corrected service links to match your app structure
+// ============================================================================
+
 "use client";
 
 import Image from "next/image";
@@ -77,7 +82,7 @@ export default function Manifest({ data }) {
 
   return (
     <Link 
-      href={`/services/${serviceInformation.id}`}
+      href={`/customer/services/${serviceInformation.id}`}
       className="block group"
     >
       <div className="space-y-3">
@@ -128,3 +133,12 @@ export default function Manifest({ data }) {
     </Link>
   );
 }
+
+/*
+🎯 KEY FIX:
+- Changed from: href={`/services/${serviceInformation.id}`}
+- Changed to: href={`/customer/services/${serviceInformation.id}`}
+
+This matches your app structure:
+src/app/(customer-workspace)/customer/services/[id]/page.jsx
+*/

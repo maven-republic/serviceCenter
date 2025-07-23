@@ -18,15 +18,24 @@ import {
   BarChart3,
   Briefcase,
   ChevronRight,
-  Activity
+  Activity,
+  Search,
+  User,
+  Clock,
+  MessageSquare,
+  CreditCard,
+  FileText,
+  Plus,
+  Save
 } from "lucide-react"
 
 export default function DashboardSidebar() {
   const pathname = usePathname()
 
-  // Enhanced icon mapping
+  // Enhanced icon mapping with new semantic names
   const getIconComponent = (iconString) => {
     const iconMap = {
+      // Legacy flaticon names (backward compatibility)
       'flaticon-home': Home,
       'flaticon-dashboard': BarChart3,
       'flaticon-appointment': Calendar,
@@ -37,16 +46,54 @@ export default function DashboardSidebar() {
       'flaticon-analytics': BarChart3,
       'flaticon-briefcase': Briefcase,
       'flaticon-logout': LogOut,
+      
+      // New semantic names
+      'analytics': BarChart3,
+      'calendar': Calendar,
+      'profile': User,
+      'schedule': Clock,
+      'logout': LogOut,
+      'search': Search,
+      'explore': Search,
+      'dashboard': BarChart3,
+      'settings': Settings,
+      'messages': MessageSquare,
+      'notifications': Activity,
+      'support': Users,
+      'payments': CreditCard,
+      'billing': CreditCard,
+      'invoices': FileText,
+      'add': Plus,
+      'create': Plus,
+      'save': Save,
+      'account': User,
+      'stats': BarChart3,
+      'reports': FileText,
+      'insights': BarChart3
     }
     
     return iconMap[iconString] || Activity
+  }
+
+  // Flatten the navigation object into a single array
+  const getNavigationItems = () => {
+    if (!professionalNavigation) return []
+    
+    // Handle both old array format and new object format
+    if (Array.isArray(professionalNavigation)) {
+      return professionalNavigation
+    }
+    
+    // New object format - flatten all sections
+    const sections = Object.values(professionalNavigation)
+    return sections.flat()
   }
 
   // Enhanced navigation item component
   const NavItem = ({ item, isActive }) => {
     const IconComponent = getIconComponent(item.icon)
     
-    if (item.name === "Logout") {
+    if (item.name === "Logout" || item.action === "logout") {
       return (
         <form className="w-full">
           <Button
@@ -55,7 +102,7 @@ export default function DashboardSidebar() {
               "w-full justify-start h-11 px-3 font-medium",
               "text-muted-foreground hover:text-foreground",
               "hover:bg-accent/50 transition-all duration-200",
-              "group relative overflow-hidden"
+              "group relative overflow-hidden border shadow-none"
             )}
             formAction={logout}
           >
@@ -75,11 +122,11 @@ export default function DashboardSidebar() {
       <Link
         href={item.path}
         className={cn(
-          "flex items-center w-full h-11 px-3 rounded-lg font-medium",
+          "flex items-center w-full h-11 px-3 rounded-lg font-medium border shadow-none",
           "transition-all duration-200 group relative overflow-hidden",
           "hover:bg-accent/50 hover:text-foreground",
           isActive 
-            ? "bg-primary text-primary-foreground shadow-sm" 
+            ? "bg-primary text-primary-foreground" 
             : "text-muted-foreground"
         )}
       >
@@ -99,7 +146,7 @@ export default function DashboardSidebar() {
           <Badge 
             variant={isActive ? "outline" : "secondary"} 
             className={cn(
-              "h-5 px-1.5 text-xs ml-2",
+              "h-5 px-1.5 text-xs ml-2 border shadow-none",
               isActive && "border-primary-foreground/30 text-primary-foreground"
             )}
           >
@@ -117,12 +164,84 @@ export default function DashboardSidebar() {
     )
   }
 
+  // Group navigation items by section for better organization
+  const NavigationSection = ({ title, items }) => {
+    if (!items || items.length === 0) return null
+    
+    return (
+      <div className="space-y-1">
+        {title && (
+          <>
+            <h3 className="px-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+              {title}
+            </h3>
+            <div className="space-y-1">
+              {items.map((item, index) => (
+                <NavItem 
+                  key={item.id || item.path || index} 
+                  item={item} 
+                  isActive={pathname === item.path}
+                />
+              ))}
+            </div>
+            <div className="py-2">
+              <Separator />
+            </div>
+          </>
+        )}
+        {!title && items.map((item, index) => (
+          <NavItem 
+            key={item.id || item.path || index} 
+            item={item} 
+            isActive={pathname === item.path}
+          />
+        ))}
+      </div>
+    )
+  }
+
+  // Render sections if using new object format, otherwise render flat list
+  const renderNavigation = () => {
+    if (!professionalNavigation) return null
+    
+    // Handle old array format
+    if (Array.isArray(professionalNavigation)) {
+      return (
+        <NavigationSection items={professionalNavigation} />
+      )
+    }
+    
+    // Handle new object format with sections
+    return (
+      <>
+        {professionalNavigation.dashboard && (
+          <NavigationSection 
+            title="Dashboard" 
+            items={professionalNavigation.dashboard} 
+          />
+        )}
+        {professionalNavigation.account && (
+          <NavigationSection 
+            title="Account" 
+            items={professionalNavigation.account} 
+          />
+        )}
+        {professionalNavigation.settings && (
+          <NavigationSection 
+            title="Settings" 
+            items={professionalNavigation.settings} 
+          />
+        )}
+      </>
+    )
+  }
+
   return (
-    <div className="flex flex-col h-full bg-card border-r border-border">
+    <div className="flex flex-col h-full bg-card border-r border-border shadow-none">
       {/* Header */}
       <div className="p-6 border-b border-border">
         <div className="flex items-center space-x-3">
-          <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center shadow-lg">
+          <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center border shadow-none">
             <Briefcase className="h-5 w-5 text-primary-foreground" />
           </div>
           <div className="space-y-0.5">
@@ -134,20 +253,14 @@ export default function DashboardSidebar() {
 
       {/* Navigation */}
       <ScrollArea className="flex-1 px-4">
-        <div className="space-y-1 py-4">
-          {professionalNavigation?.map((item, index) => (
-            <NavItem 
-              key={item.path || index} 
-              item={item} 
-              isActive={pathname === item.path}
-            />
-          ))}
+        <div className="py-4">
+          {renderNavigation()}
         </div>
       </ScrollArea>
 
       {/* Footer */}
       <div className="p-4 border-t border-border">
-        <div className="flex items-center space-x-2 px-3 py-2 rounded-lg bg-muted/50">
+        <div className="flex items-center space-x-2 px-3 py-2 rounded-lg bg-muted/50 border shadow-none">
           <div className="h-2 w-2 rounded-full bg-green-500 animate-pulse" />
           <span className="text-xs text-muted-foreground font-medium">
             Professional Mode

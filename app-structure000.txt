@@ -166,6 +166,7 @@ C:\Users\adrom\Downloads\serviceCenter\src\app\(customer-workspace)\customer\add
 C:\Users\adrom\Downloads\serviceCenter\src\app\(customer-workspace)\customer\appointments\page.jsx
 C:\Users\adrom\Downloads\serviceCenter\src\app\(customer-workspace)\customer\appointments\[id]
 C:\Users\adrom\Downloads\serviceCenter\src\app\(customer-workspace)\customer\appointments\[id]\interests
+C:\Users\adrom\Downloads\serviceCenter\src\app\(customer-workspace)\customer\appointments\[id]\page.jsx
 C:\Users\adrom\Downloads\serviceCenter\src\app\(customer-workspace)\customer\appointments\[id]\interests\page.jsx
 C:\Users\adrom\Downloads\serviceCenter\src\app\(customer-workspace)\customer\explore\layout.jsx
 C:\Users\adrom\Downloads\serviceCenter\src\app\(customer-workspace)\customer\explore\nearest
@@ -566,6 +567,7 @@ C:\Users\adrom\Downloads\serviceCenter\src\components\customer-workspace\collect
 C:\Users\adrom\Downloads\serviceCenter\src\components\customer-workspace\collections\ErrorState.jsx
 C:\Users\adrom\Downloads\serviceCenter\src\components\customer-workspace\collections\LoadingSkeleton.jsx
 C:\Users\adrom\Downloads\serviceCenter\src\components\customer-workspace\collections\ResultsSummaryBar.jsx
+C:\Users\adrom\Downloads\serviceCenter\src\components\customer-workspace\collections\ServiceCollections.jsx
 C:\Users\adrom\Downloads\serviceCenter\src\components\customer-workspace\collections\ServicesList.jsx
 C:\Users\adrom\Downloads\serviceCenter\src\components\customer-workspace\collections\ViewControls.jsx
 C:\Users\adrom\Downloads\serviceCenter\src\components\customer-workspace\customer\appointments
@@ -573,11 +575,16 @@ C:\Users\adrom\Downloads\serviceCenter\src\components\customer-workspace\custome
 C:\Users\adrom\Downloads\serviceCenter\src\components\customer-workspace\customer\auth
 C:\Users\adrom\Downloads\serviceCenter\src\components\customer-workspace\customer\debug
 C:\Users\adrom\Downloads\serviceCenter\src\components\customer-workspace\customer\appointments\AppointmentCard.jsx
+C:\Users\adrom\Downloads\serviceCenter\src\components\customer-workspace\customer\appointments\appointments-data-table.jsx
+C:\Users\adrom\Downloads\serviceCenter\src\components\customer-workspace\customer\appointments\appointments-table-toolbar.jsx
 C:\Users\adrom\Downloads\serviceCenter\src\components\customer-workspace\customer\appointments\AppointmentsEmpty.jsx
 C:\Users\adrom\Downloads\serviceCenter\src\components\customer-workspace\customer\appointments\AppointmentsError.jsx
 C:\Users\adrom\Downloads\serviceCenter\src\components\customer-workspace\customer\appointments\AppointmentsHeader.jsx
 C:\Users\adrom\Downloads\serviceCenter\src\components\customer-workspace\customer\appointments\AppointmentsList.jsx
 C:\Users\adrom\Downloads\serviceCenter\src\components\customer-workspace\customer\appointments\AppointmentsTable.jsx
+C:\Users\adrom\Downloads\serviceCenter\src\components\customer-workspace\customer\appointments\columns
+C:\Users\adrom\Downloads\serviceCenter\src\components\customer-workspace\customer\appointments\data-table-faceted-filter.jsx
+C:\Users\adrom\Downloads\serviceCenter\src\components\customer-workspace\customer\appointments\columns\appointments-columns.jsx
 C:\Users\adrom\Downloads\serviceCenter\src\components\customer-workspace\customer\auth\Authentication.jsx
 C:\Users\adrom\Downloads\serviceCenter\src\components\customer-workspace\customer\auth\AuthenticationSentinel.jsx
 C:\Users\adrom\Downloads\serviceCenter\src\components\customer-workspace\customer\auth\Session.jsx
@@ -1203,6 +1210,7 @@ C:\Users\adrom\Downloads\serviceCenter\src\components\ui\dropdown-menu.jsx
 C:\Users\adrom\Downloads\serviceCenter\src\components\ui\input.jsx
 C:\Users\adrom\Downloads\serviceCenter\src\components\ui\label.jsx
 C:\Users\adrom\Downloads\serviceCenter\src\components\ui\optimized-image.jsx
+C:\Users\adrom\Downloads\serviceCenter\src\components\ui\popover.jsx
 C:\Users\adrom\Downloads\serviceCenter\src\components\ui\progress.jsx
 C:\Users\adrom\Downloads\serviceCenter\src\components\ui\scroll-area.jsx
 C:\Users\adrom\Downloads\serviceCenter\src\components\ui\select.jsx

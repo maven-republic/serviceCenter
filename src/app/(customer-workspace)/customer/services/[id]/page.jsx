@@ -274,44 +274,16 @@ export default function ProfessionalCollectionInterface() {
       {/* Main Content */}
       {!locationFromQuery ? (
         <div className="max-w-2xl mx-auto">
-          {/* DEBUG INFO */}
-          {process.env.NODE_ENV === 'development' && (
-            <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded">
-              <h3 className="font-bold text-yellow-800">🔍 Debug Info:</h3>
-              <ul className="text-sm text-yellow-700 mt-2 space-y-1">
-                <li>Service ID: {serviceId}</li>
-                <li>Location from URL: {locationFromQuery ? 'Found' : 'Missing'}</li>
-                <li>Lat: {lat || 'Missing'}</li>
-                <li>Lng: {lng || 'Missing'}</li>
-                <li>User Email: {user?.email || 'No user'}</li>
-                <li>Account ID: {accountId || 'No account'}</li>
-                <li>Is Logged In: {isLoggedIn ? 'YES' : 'NO'}</li>
-                <li>Should show AddressConfirmation: {!locationFromQuery ? 'YES' : 'NO'}</li>
-              </ul>
-            </div>
-          )}
+       
 
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <MapPin className="h-5 w-5 text-primary" />
-                Choose Service Location
-              </CardTitle>
-            </CardHeader>
+           
             <CardContent>
-              {console.log('🏠 Rendering AddressConfirmation with:', { 
-                accountId,
-                isLoggedIn,
-                userEmail: user?.email,
-                onLocationConfirmed: typeof handleAddressConfirmed 
-              })}
-              
+                           
               <AddressConfirmation 
                 accountId={accountId} 
                 onLocationConfirmed={handleAddressConfirmed} 
               />
             </CardContent>
-          </Card>
         </div>
       ) : loading ? (
         <div className="space-y-3">
