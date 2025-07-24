@@ -288,7 +288,7 @@ export default function CustomerAvailabilityCalendar({
     <div className={cn("h-full flex flex-col gap-4", className)}>
       
       {/* Mode Indicator */}
-      {isMarketplaceMode && (
+      {/* {isMarketplaceMode && (
         <Alert className="border-blue-200 bg-blue-50">
           <Info className="h-4 w-4 text-blue-600" />
           <AlertDescription className="text-blue-800">
@@ -296,7 +296,7 @@ export default function CustomerAvailabilityCalendar({
           </AlertDescription>
         </Alert>
       )}
-      
+       */}
       <div className="flex flex-col lg:flex-row gap-6">
         {/* Calendar Section */}
         <Card className="flex-1 min-h-0">

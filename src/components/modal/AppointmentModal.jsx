@@ -61,8 +61,7 @@ export default function AppointmentModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-5xl max-h-[95vh] overflow-hidden flex flex-col p-0 gap-0">
-        
+<DialogContent className="max-w-7xl max-h-[95vh] w-[92vw] h-[92vh] overflow-hidden flex flex-col p-0 gap-0">        
         {/* Updated DialogHeader with dynamic content */}
         <DialogHeader className="sr-only">
           <DialogTitle>{modalTitle}</DialogTitle>

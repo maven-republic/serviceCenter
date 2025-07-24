@@ -487,94 +487,69 @@ if (formData.attachments && formData.attachments.length > 0) {
  return (
    <div className="flex flex-col h-full max-h-[95vh]">
      
-     {/* Fixed Header with Progress and Step Navigation */}
-     <div className="flex-shrink-0 bg-background border-b p-6">
-       <div className="w-full max-w-4xl mx-auto space-y-6">
-         
-         {/* Workflow Type Indicator - ENHANCED */}
-         <div className="flex items-center justify-between">
-           <div className="flex items-center gap-3">
-             {isMarketplace ? (
-               <>
-                 <Users className="h-5 w-5 text-blue-600" />
-                 <div>
-                   <h3 className="font-semibold text-blue-900">
-                     {isTargetedMarketplace ? 'Targeted Request' : 'Service Request'}
-                   </h3>
-                   <p className="text-sm text-blue-600">{getWorkflowDescription()}</p>
-                 </div>
-               </>
-             ) : (
-               <>
-                 <CheckCircle className="h-5 w-5 text-green-600" />
-                 <div>
-                   <h3 className="font-semibold text-green-900">Direct Booking</h3>
-                   <p className="text-sm text-green-600">{getWorkflowDescription()}</p>
-                 </div>
-               </>
-             )}
-           </div>
-           
-           <div className="flex items-center gap-2">
-             {isTargetedMarketplace && (
-               <Badge variant="outline" className="text-xs">
-                 {selectedProfessionals.length} Selected
-               </Badge>
-             )}
-             <Badge variant={isMarketplace ? "default" : "secondary"} className="text-sm">
-               {isTargetedMarketplace ? "Targeted" : isOpenMarketplace ? "Marketplace" : "Direct"}
-             </Badge>
-           </div>
-         </div>
-         
-         {/* Progress Bar */}
-         <div className="space-y-3">
+     {/* Conditional Compact Header for Schedule Step */}
+     <div className={cn(
+       "flex-shrink-0 bg-background border-b",
+       currentStep === 3 ? "p-2" : "p-6"
+     )}>
+       {currentStep === 3 ? (
+         // Minimal header for schedule
+         <div className="space-y-1">
            <div className="flex justify-between items-center">
-             <span className="text-sm text-muted-foreground">
-               Step {currentStep} of {steps.length}
+             <span className="text-xs text-muted-foreground">
+               Step {currentStep} of {steps.length} - Schedule
              </span>
-             <span className="text-sm text-muted-foreground">
-               {Math.round(calculateProgress())}% Complete
-             </span>
+             <Progress value={calculateProgress()} className="h-0.5 w-20" />
            </div>
-           <Progress value={calculateProgress()} className="h-2" />
          </div>
+       ) : (
+         // Full header for other steps
+         <>
+           <div className="space-y-2">
+             <div className="flex justify-between items-center">
+               <span className="text-xs text-muted-foreground">
+                 Step {currentStep} of {steps.length}
+               </span>
+             </div>
+             <Progress value={calculateProgress()} className="h-1" />
+           </div>
+           <Separator className="my-3" />
 
-         {/* Step Navigation */}
-         <div className="grid grid-cols-5 gap-2">
-           {steps.map((step) => {
-             const status = getStepStatus(step.id);
-             const StepIcon = step.icon;
-             
-             return (
-               <button
-                 key={step.id}
-                 type="button"
-                 onClick={() => goToStep(step.id)}
-                 disabled={status === 'pending'}
-                 className={cn(
-                   "flex flex-col items-center gap-2 p-3 rounded-lg transition-all text-center",
-                   status === 'active' && "bg-primary text-primary-foreground",
-                   status === 'completed' && "bg-green-100 text-green-700 hover:bg-green-200",
-                   status === 'available' && "bg-orange-50 text-orange-700 hover:bg-orange-100",
-                   status === 'pending' && "bg-muted text-muted-foreground cursor-not-allowed opacity-50"
-                 )}
-               >
-                 <StepIcon className="h-5 w-5" />
-                 <div>
-                   <div className="font-medium text-sm">{step.title}</div>
-                   <div className="text-xs opacity-80">{step.description}</div>
-                 </div>
-               </button>
-             );
-           })}
-         </div>
-       </div>
+           <div className="grid grid-cols-5 gap-1">
+             {steps.map((step) => {
+               const status = getStepStatus(step.id);
+               const StepIcon = step.icon;
+               
+               return (
+                 <button
+                   key={step.id}
+                   type="button"
+                   onClick={() => goToStep(step.id)}
+                   disabled={status === 'pending'}
+                   className={cn(
+                     "flex flex-col items-center gap-1 p-2 rounded text-center transition-all",
+                     status === 'active' && "bg-primary text-primary-foreground",
+                     status === 'completed' && "bg-green-100 text-green-700 hover:bg-green-200",
+                     status === 'available' && "bg-orange-50 text-orange-700 hover:bg-orange-100",
+                     status === 'pending' && "bg-muted text-muted-foreground cursor-not-allowed opacity-50"
+                   )}
+                 >
+                   <StepIcon className="h-3 w-3" />
+                   <div className="text-xs font-medium">{step.title}</div>
+                 </button>
+               );
+             })}
+           </div>
+         </>
+       )}
      </div>
 
      {/* Scrollable Content Area */}
      <div className="flex-1 overflow-y-auto">
-       <div className="w-full max-w-4xl mx-auto p-6">
+       <div className={cn(
+         "mx-auto",
+         currentStep === 3 ? "w-full p-0" : "w-full max-w-4xl p-6"
+       )}>
          <div className="space-y-6">
            
            {/* Step 1: Project Description */}
@@ -679,23 +654,23 @@ if (formData.attachments && formData.attachments.length > 0) {
              </Card>
            )}
 
-           {/* Step 3: Schedule Selection */}
+           {/* Step 3: Schedule Selection - COMPACT HEADER DESIGN */}
            {currentStep === 3 && (
-             <Card className="overflow-hidden">
-               <CardHeader className="border-b bg-muted/30">
-                 <CardTitle className="text-lg flex items-center gap-2">
+             <Card className="overflow-hidden border-0 shadow-none">
+               <CardHeader className="border-0 bg-muted/30 px-6 py-4">
+                 {/* <CardTitle className="text-lg flex items-center gap-2">
                    <Calendar className="h-5 w-5" />
                    {isMarketplace ? 'When do you need this done?' : 'Select Assessment Time'}
-                 </CardTitle>
-                 <p className="text-sm text-muted-foreground">
+                 </CardTitle> */}
+                 {/* <p className="text-sm text-muted-foreground">
                    {isMarketplace 
                      ? 'Choose your preferred timeframe for the work to be completed'
                      : 'Choose when you\'d like the professional to assess your project'
                    }
-                 </p>
+                 </p> */}
                </CardHeader>
                
-               <div className="h-[500px] overflow-hidden">
+               <div className="h-[600px] overflow-hidden">
                  <CustomerAvailabilityCalendar
                    professionalId={isMarketplace ? null : professional?.professional_id}
                    onSlotSelect={handleSlotSelect}
@@ -1009,9 +984,9 @@ if (formData.attachments && formData.attachments.length > 0) {
        </div>
      </div>
 
-     {/* Fixed Footer with Action Buttons */}
+     {/* Fixed Footer with Action Buttons - REDUCED HEIGHT */}
      <div className="flex-shrink-0 bg-background border-t shadow-lg">
-       <div className="w-full max-w-4xl mx-auto p-6">
+       <div className="w-full max-w-4xl mx-auto p-1">
          <div className="flex justify-between items-center">
            <div className="flex gap-2">
              {currentStep > 1 && (
