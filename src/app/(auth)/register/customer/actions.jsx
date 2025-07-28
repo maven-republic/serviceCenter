@@ -72,6 +72,9 @@ export async function signupCustomer(formData) {
     redirect('/register/customer?error=' + encodeURIComponent('Passwords do not match.'))
   }
 
+  // Variable to track where to redirect at the end
+  let redirectPath = '/register/customer?error=' + encodeURIComponent('Registration failed')
+
   try {
     // Step 1: Create Supabase Auth user
     console.log('🔐 Creating Supabase Auth user...')
@@ -86,7 +89,8 @@ export async function signupCustomer(formData) {
 
     if (error || !data?.user) {
       console.error('❌ Supabase auth signup failed:', error)
-      redirect('/register/customer?error=' + encodeURIComponent(error?.message || 'Signup failed.'))
+      redirectPath = '/register/customer?error=' + encodeURIComponent(error?.message || 'Signup failed.')
+      redirect(redirectPath)
     }
 
     const userId = data.user.id
@@ -106,7 +110,8 @@ export async function signupCustomer(formData) {
     
     if (accountError) {
       console.error('❌ Account creation failed:', accountError)
-      redirect('/register/customer?error=' + encodeURIComponent('Failed to create account.'))
+      redirectPath = '/register/customer?error=' + encodeURIComponent('Failed to create account.')
+      redirect(redirectPath)
     }
     console.log('✅ Account record created')
 
@@ -120,7 +125,8 @@ export async function signupCustomer(formData) {
     
     if (roleError) {
       console.error('❌ Role assignment failed:', roleError)
-      redirect('/register/customer?error=' + encodeURIComponent('Failed to assign customer role.'))
+      redirectPath = '/register/customer?error=' + encodeURIComponent('Failed to assign customer role.')
+      redirect(redirectPath)
     }
     console.log('✅ Customer role assigned')
 
@@ -135,21 +141,18 @@ export async function signupCustomer(formData) {
     
     if (phoneError) {
       console.error('❌ Phone record creation failed:', phoneError)
-      redirect('/register/customer?error=' + encodeURIComponent('Failed to save phone number.'))
+      redirectPath = '/register/customer?error=' + encodeURIComponent('Failed to save phone number.')
+      redirect(redirectPath)
     }
     console.log('✅ Phone record created')
 
-    // Step 5: Create CUSTOMER profile (FIXED TABLE NAME)
+    // Step 5: Create INDIVIDUAL_CUSTOMER profile
     console.log('🏠 Creating customer profile...')
     const { data: customerProfile, error: customerError } = await supabase
-      .from('customer') // FIXED: Changed from 'individual_customer' to 'customer'
+      .from('individual_customer')
       .insert([{
         account_id: userId,
-        gender,
-        customer_type: 'individual', // Add this if your schema requires it
-        status: 'active', // Add this if your schema requires it
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
+        gender
       }])
       .select()
       .single()
@@ -162,7 +165,8 @@ export async function signupCustomer(formData) {
         hint: customerError.hint,
         code: customerError.code
       })
-      redirect('/register/customer?error=' + encodeURIComponent('Failed to create customer profile.'))
+      redirectPath = '/register/customer?error=' + encodeURIComponent('Failed to create customer profile.')
+      redirect(redirectPath)
     }
     
     console.log('✅ Customer profile created:', customerProfile?.customer_id)
@@ -208,51 +212,49 @@ export async function signupCustomer(formData) {
 
       if (addressError) {
         console.error('❌ Address creation failed:', addressError)
-        redirect('/register/customer?error=' + encodeURIComponent('Failed to save address.'))
+        redirectPath = '/register/customer?error=' + encodeURIComponent('Failed to save address.')
+        redirect(redirectPath)
       }
       console.log('✅ Address record created')
     }
 
-    // Step 7: Verify the complete registration
+    // Step 7: Verify the complete registration (SIMPLE AND RELIABLE)
     console.log('🔍 Verifying complete registration...')
     const { data: verificationData, error: verificationError } = await supabase
-      .from('customer')
-      .select(`
-        customer_id,
-        account_id,
-        gender,
-        customer_type,
-        status,
-        account:account_id (
-          account_id,
-          email,
-          first_name,
-          last_name,
-          account_status
-        )
-      `)
+      .from('individual_customer')
+      .select('customer_id, account_id, gender')
       .eq('account_id', userId)
       .single()
 
     if (verificationError || !verificationData) {
       console.error('❌ Registration verification failed:', verificationError)
-      redirect('/register/customer?error=' + encodeURIComponent('Registration incomplete - please contact support.'))
+      redirectPath = '/register/customer?error=' + encodeURIComponent('Registration incomplete - please contact support.')
+      redirect(redirectPath)
     }
 
     console.log('✅ Registration verification successful:', {
       customer_id: verificationData.customer_id,
       account_id: verificationData.account_id,
-      email: verificationData.account?.email,
-      status: verificationData.status
+      gender: verificationData.gender
     })
 
     console.log('🎉 Customer registration completed successfully!')
     
-    // Redirect to login with success message
-    redirect('/login?message=' + encodeURIComponent('Account created successfully! Please check your email to verify your account.'))
+    // Set success redirect path
+    redirectPath = '/login?message=' + encodeURIComponent('Account created successfully! Please check your email to verify your account.')
 
   } catch (error) {
+    // Check if this is a Next.js redirect error (which is expected)
+    if (error.message === 'NEXT_REDIRECT' || error.digest?.includes('NEXT_REDIRECT')) {
+      // This is expected - let it propagate to perform the redirect
+      throw error
+    }
+    
+    // Handle actual unexpected errors
     console.error('💥 Unexpected error during registration:', error)
-    redirect('/register/customer?error=' + encodeURIComponent(`Registration failed: ${error.message}`))
+    redirectPath = '/register/customer?error=' + encodeURIComponent(`Registration failed: ${error.message}`)
   }
+
+  // Perform the redirect outside of try-catch
+  redirect(redirectPath)
 }

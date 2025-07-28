@@ -187,17 +187,59 @@ export default function ProfessionalAccountCreation({
     const { formatted_address, geometry, place_id, address_components } = place
     const lat = geometry.location.lat()
     const lng = geometry.location.lng()
-    const getComp = t => address_components.find(c => c.types.includes(t))?.long_name || ''
+    
+    // Improved address component extraction
+    const getComp = (type) => {
+      const component = address_components.find(c => c.types.includes(type))
+      return component?.long_name || ''
+    }
+    
+    // Build street address more reliably
+    const streetNumber = getComp('street_number')
+    const route = getComp('route')
+    const streetAddress = [streetNumber, route].filter(Boolean).join(' ') || formatted_address
+    
+    // Get city with fallbacks
+    const city = getComp('locality') || 
+                 getComp('sublocality_level_1') || 
+                 getComp('administrative_area_level_2') || 
+                 'Kingston' // Default for Jamaica
+    
+    // Get parish/state
+    const parish = getComp('administrative_area_level_1') || 'Kingston'
+    
+    console.log('📍 Address selected:', {
+      streetAddress,
+      city,
+      parish,
+      lat,
+      lng,
+      formatted_address
+    })
+    
     setFormData(fd => ({
       ...fd,
-      streetAddress: getComp('route') + ' ' + getComp('street_number'),
-      city: getComp('locality') || getComp('sublocality') || '',
-      parish: getComp('administrative_area_level_1') || '',
+      streetAddress,
+      city,
+      parish,
       formattedAddress: formatted_address,
       placeId: place_id,
-      latitude: lat,
-      longitude: lng,
-      rawGoogleData: JSON.stringify({ formatted_address, place_id, geometry })
+      latitude: lat.toString(),
+      longitude: lng.toString(),
+      rawGoogleData: JSON.stringify({ 
+        formatted_address, 
+        place_id, 
+        geometry, 
+        address_components 
+      })
+    }))
+    
+    // Clear any address-related errors
+    setErrors(err => ({
+      ...err,
+      streetAddress: '',
+      city: '',
+      parish: ''
     }))
   }
 
@@ -246,6 +288,16 @@ export default function ProfessionalAccountCreation({
         return
       }
       setCurrentStep(3)
+    } else if (currentStep === 3) {
+      // Validate address step
+      if (!formData.latitude || !formData.longitude) {
+        setErrors(err => ({ 
+          ...err, 
+          address: 'Please select an address from the dropdown to get valid coordinates.' 
+        }))
+        return
+      }
+      setCurrentStep(4)
     } else {
       setCurrentStep(s => s + 1)
     }
@@ -262,6 +314,15 @@ export default function ProfessionalAccountCreation({
     setLoading(true)
 
     try {
+      console.log('📋 Submitting form data:', {
+        latitude: formData.latitude,
+        longitude: formData.longitude,
+        streetAddress: formData.streetAddress,
+        city: formData.city,
+        parish: formData.parish,
+        formattedAddress: formData.formattedAddress
+      })
+
       const form = document.querySelector('form')
       if (!form) return
       const data = new FormData(form)
@@ -303,6 +364,13 @@ export default function ProfessionalAccountCreation({
             <Alert variant="destructive">
               <AlertCircle className="h-4 w-4" />
               <AlertDescription>{errors.submit}</AlertDescription>
+            </Alert>
+          )}
+
+          {errors.address && (
+            <Alert variant="destructive">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>{errors.address}</AlertDescription>
             </Alert>
           )}
 

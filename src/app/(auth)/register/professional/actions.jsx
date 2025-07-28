@@ -121,22 +121,36 @@ export async function signupProfessional(formData) {
     }
     console.log('✅ Phone number saved')
 
-    // Step 5: Insert Professional Address
-    if (streetAddress && city && parish && latitude && longitude) {
+    // Step 5: Insert Professional Address (FIXED VALIDATION)
+    console.log('📍 Address validation check:', {
+      streetAddress: !!streetAddress,
+      city: !!city,
+      parish: !!parish,
+      latitude: !!latitude,
+      longitude: !!longitude,
+      formattedAddress: !!formattedAddress
+    })
+
+    // Use formattedAddress as fallback for streetAddress
+    const finalStreetAddress = streetAddress || formattedAddress || 'Address not specified'
+    const finalCity = city || 'Kingston' // Default city for Jamaica
+    const finalParish = parish || 'Kingston' // Default parish for Jamaica
+
+    if (latitude && longitude) {
       const { error: addressErr } = await supabase.from('address').insert({
         account_id: userId,
-        address_type: 'business', // Professional's business address
+        address_type: 'business',
         is_primary: true,
-        street_address: streetAddress,
-        city: city,
-        parish: parish,
+        street_address: finalStreetAddress,
+        city: finalCity,
+        parish: finalParish,
         community: community || null,
         landmark: landmark || null,
         is_rural: isRural,
         latitude: parseFloat(latitude),
         longitude: parseFloat(longitude),
         place_id: placeId || null,
-        formatted_address: formattedAddress || null,
+        formatted_address: formattedAddress || finalStreetAddress,
         google_place_data: rawGoogleData ? JSON.parse(rawGoogleData) : null
       })
       
@@ -147,14 +161,21 @@ export async function signupProfessional(formData) {
       
       console.log('✅ Professional address saved successfully')
     } else {
-      console.warn('⚠️ Missing required address fields:', {
-        streetAddress: !!streetAddress,
-        city: !!city,
-        parish: !!parish,
-        latitude: !!latitude,
-        longitude: !!longitude
+      const missing = []
+      if (!latitude) missing.push('latitude')
+      if (!longitude) missing.push('longitude')
+      
+      console.error('❌ Missing required coordinates:', missing.join(', '))
+      console.error('Address data received:', {
+        streetAddress: finalStreetAddress,
+        city: finalCity,
+        parish: finalParish,
+        latitude,
+        longitude,
+        formattedAddress
       })
-      throw new Error('Professional address is required but missing required fields')
+      
+      throw new Error('Professional address requires valid coordinates. Please select an address from the dropdown or enter coordinates manually.')
     }
 
     // Step 6: Insert Individual Professional Profile
