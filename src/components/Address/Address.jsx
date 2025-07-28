@@ -140,7 +140,7 @@ const Address = forwardRef(({
         <div className="absolute inset-0 bg-background/50 rounded-md flex items-center justify-center">
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <Loader2 className="h-4 w-4 animate-spin" />
-            <span>Loading maps...</span>
+            <span>LOADING MAPS........</span>
           </div>
         </div>
       )}

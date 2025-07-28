@@ -47,14 +47,14 @@ export async function signupProfessional(formData) {
     ? 'https://app.mavenrepublic.com' // Replace with your actual production domain
     : 'http://localhost:3000'
 
-  console.log('🔗 Email redirect URL:', `${origin}/auth/confirm`)
+  console.log('🔗 Email redirect URL:', `${origin}auth/confirm`)
 
   // Step 1: Create Supabase Auth User
   const { data, error } = await supabase.auth.signUp({
     email: userEmail,
     password,
     options: {
-      emailRedirectTo: `${origin}/auth/confirm`,
+      emailRedirectTo: `${origin}auth/confirm`,
       data: {
         first_name: firstName,
         last_name: lastName,
