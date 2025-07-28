@@ -2,6 +2,30 @@
 
 import { createClient } from '@/utils/supabase/server'
 
+// 🔧 BULLETPROOF URL CONSTRUCTION
+function buildRedirectUrl() {
+  // Get the base URL from environment
+  let baseUrl = process.env.NEXT_PUBLIC_SITE_URL;
+  
+  // Fallback logic for different environments
+  if (!baseUrl || baseUrl === 'undefined' || baseUrl.trim() === '') {
+    // Detect environment and set appropriate fallback
+    if (process.env.NODE_ENV === 'production') {
+      baseUrl = 'https://app.mavenrepublic.com';
+    } else {
+      baseUrl = 'http://localhost:3000';
+    }
+  }
+  
+  // Clean up the URL - remove trailing slashes
+  baseUrl = baseUrl.replace(/\/+$/, '');
+  
+  // Construct the full URL
+  const fullUrl = `${baseUrl}/auth/confirm`;
+  
+  return fullUrl;
+}
+
 export async function signupProfessional(formData) {
   const supabase = await createClient()
 
@@ -48,11 +72,9 @@ export async function signupProfessional(formData) {
   console.log('- NEXT_PUBLIC_SITE_URL raw:', process.env.NEXT_PUBLIC_SITE_URL)
   console.log('- NEXT_PUBLIC_SITE_URL type:', typeof process.env.NEXT_PUBLIC_SITE_URL)
   
-  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'
-  const fullUrl = `${baseUrl}/auth/confirm`
+  const fullUrl = buildRedirectUrl();
   
-  console.log('- Base URL:', baseUrl)
-  console.log('- Full redirect URL:', fullUrl)
+  console.log('- Final redirect URL:', fullUrl)
   console.log('- URL has double slash?:', fullUrl.includes('//auth'))
 
   // Step 1: Create Supabase Auth User
