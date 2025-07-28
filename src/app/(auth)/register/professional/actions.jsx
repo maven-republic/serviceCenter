@@ -44,7 +44,7 @@ export async function signupProfessional(formData) {
 
   // Set email redirect URL
   const origin = process.env.NODE_ENV === 'production' 
-    ? 'https://yourdomain.com' // Replace with your actual production domain
+    ? 'https://app.mavenrepublic.com' // Replace with your actual production domain
     : 'http://localhost:3000'
 
   console.log('🔗 Email redirect URL:', `${origin}/auth/confirm`)
