@@ -60,6 +60,7 @@ C:\Users\adrom\Downloads\serviceCenter\src\app\(auth)\login\LoginForm.jsx
 C:\Users\adrom\Downloads\serviceCenter\src\app\(auth)\login\page.jsx
 C:\Users\adrom\Downloads\serviceCenter\src\app\(auth)\logout\actions.jsx
 C:\Users\adrom\Downloads\serviceCenter\src\app\(auth)\register\actions.jsx
+C:\Users\adrom\Downloads\serviceCenter\src\app\(auth)\register\CreateAccountSelection.jsx
 C:\Users\adrom\Downloads\serviceCenter\src\app\(auth)\register\customer
 C:\Users\adrom\Downloads\serviceCenter\src\app\(auth)\register\page.jsx
 C:\Users\adrom\Downloads\serviceCenter\src\app\(auth)\register\professional
@@ -68,6 +69,8 @@ C:\Users\adrom\Downloads\serviceCenter\src\app\(auth)\register\customer\Address.
 C:\Users\adrom\Downloads\serviceCenter\src\app\(auth)\register\customer\CustomerAccountCreationForm.jsx
 C:\Users\adrom\Downloads\serviceCenter\src\app\(auth)\register\customer\layout.jsx
 C:\Users\adrom\Downloads\serviceCenter\src\app\(auth)\register\customer\page.jsx
+C:\Users\adrom\Downloads\serviceCenter\src\app\(auth)\register\customer\success
+C:\Users\adrom\Downloads\serviceCenter\src\app\(auth)\register\customer\success\page.jsx
 C:\Users\adrom\Downloads\serviceCenter\src\app\(auth)\register\professional\account-creation-functions
 C:\Users\adrom\Downloads\serviceCenter\src\app\(auth)\register\professional\actions.jsx
 C:\Users\adrom\Downloads\serviceCenter\src\app\(auth)\register\professional\increment
@@ -422,7 +425,10 @@ C:\Users\adrom\Downloads\serviceCenter\src\app\api\search\keywords\route.js
 C:\Users\adrom\Downloads\serviceCenter\src\app\api\search\suggestions\route.js
 C:\Users\adrom\Downloads\serviceCenter\src\app\api\services\categories
 C:\Users\adrom\Downloads\serviceCenter\src\app\api\services\route.js
+C:\Users\adrom\Downloads\serviceCenter\src\app\api\services\[id]
 C:\Users\adrom\Downloads\serviceCenter\src\app\api\services\categories\route.js
+C:\Users\adrom\Downloads\serviceCenter\src\app\api\services\[id]\marketplace-availability
+C:\Users\adrom\Downloads\serviceCenter\src\app\api\services\[id]\marketplace-availability\route.js
 C:\Users\adrom\Downloads\serviceCenter\src\app\api\valuation-units\route.js
 C:\Users\adrom\Downloads\serviceCenter\src\app\auth\confirm
 C:\Users\adrom\Downloads\serviceCenter\src\app\auth\confirm\route.js
@@ -458,6 +464,7 @@ C:\Users\adrom\Downloads\serviceCenter\src\components\card
 C:\Users\adrom\Downloads\serviceCenter\src\components\ClientProviders.jsx
 C:\Users\adrom\Downloads\serviceCenter\src\components\customer-workspace
 C:\Users\adrom\Downloads\serviceCenter\src\components\debug
+C:\Users\adrom\Downloads\serviceCenter\src\components\DebugSupabaseTest.jsx
 C:\Users\adrom\Downloads\serviceCenter\src\components\discoveries
 C:\Users\adrom\Downloads\serviceCenter\src\components\dropdown
 C:\Users\adrom\Downloads\serviceCenter\src\components\element
@@ -613,6 +620,8 @@ C:\Users\adrom\Downloads\serviceCenter\src\components\customer-workspace\section
 C:\Users\adrom\Downloads\serviceCenter\src\components\customer-workspace\section\CustomerAccountInformation.jsx
 C:\Users\adrom\Downloads\serviceCenter\src\components\customer-workspace\section\CustomerAccountOverview.jsx
 C:\Users\adrom\Downloads\serviceCenter\src\components\customer-workspace\section\CustomerSearchInterface.jsx
+C:\Users\adrom\Downloads\serviceCenter\src\components\customer-workspace\section\SessionDebugger.jsx
+C:\Users\adrom\Downloads\serviceCenter\src\components\customer-workspace\section\SessionVerification.jsx
 C:\Users\adrom\Downloads\serviceCenter\src\components\customer-workspace\section\SkeletonTemplate.jsx
 C:\Users\adrom\Downloads\serviceCenter\src\components\customer-workspace\sidebar\CustomerWorkspaceNavigation .jsx
 C:\Users\adrom\Downloads\serviceCenter\src\components\debug\AuthDebug.jsx
@@ -1316,5 +1325,6 @@ C:\Users\adrom\Downloads\serviceCenter\src\utils\services\addressService.js
 C:\Users\adrom\Downloads\serviceCenter\src\utils\services\AnalyticsDataService.js
 C:\Users\adrom\Downloads\serviceCenter\src\utils\supabase\api.js
 C:\Users\adrom\Downloads\serviceCenter\src\utils\supabase\client.js
+C:\Users\adrom\Downloads\serviceCenter\src\utils\supabase\DebugSupabaseTest.jsx
 C:\Users\adrom\Downloads\serviceCenter\src\utils\supabase\middleware.js
 C:\Users\adrom\Downloads\serviceCenter\src\utils\supabase\server.js
