@@ -292,5 +292,5 @@ export async function signupCustomer(formData) {
   }
 
   // Perform the redirect outside of try-catch
-  redirect(redirectPath)
+redirect(redirectPath)
 }
