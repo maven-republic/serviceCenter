@@ -83,7 +83,7 @@ export async function signupCustomer(formData) {
       password,
       options: {
         shouldPersistSession: true,
-        emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/confirm`
+        emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/auth/confirm`
       }
     })
 
