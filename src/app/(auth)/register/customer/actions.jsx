@@ -79,23 +79,18 @@ export async function signupCustomer(formData) {
     // Step 1: Create Supabase Auth user
     console.log('🔐 Creating Supabase Auth user...')
     
-    // Debug environment variable and construct URL
-console.log('🔍 DEBUGGING EMAIL REDIRECT URL:')
-console.log('- NODE_ENV:', process.env.NODE_ENV)
-console.log('- NEXT_PUBLIC_SITE_URL:', process.env.NEXT_PUBLIC_SITE_URL)
-console.log('- VERCEL_URL:', process.env.VERCEL_URL)
-console.log('- All env keys with SITE:', Object.keys(process.env).filter(k => k.includes('SITE')))
-
-// Use multiple fallbacks for the base URL
-const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 
-                process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 
-                (process.env.NODE_ENV === 'production' ? 'https://app.mavenrepublic.com' : 'http://localhost:3000')
-
-const fullUrl = `${baseUrl}/auth/confirm`
-
-console.log('- Final base URL:', baseUrl)
-console.log('- Final redirect URL:', fullUrl)
-console.log('- URL has double slash?:', fullUrl.includes('//auth'))
+    // Debug environment variable
+    console.log('🔍 DEBUGGING EMAIL REDIRECT URL:')
+    console.log('- NODE_ENV:', process.env.NODE_ENV)
+    console.log('- NEXT_PUBLIC_SITE_URL raw:', process.env.NEXT_PUBLIC_SITE_URL)
+    console.log('- NEXT_PUBLIC_SITE_URL type:', typeof process.env.NEXT_PUBLIC_SITE_URL)
+    
+    const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'
+    const fullUrl = `${baseUrl}/auth/confirm`
+    
+    console.log('- Base URL:', baseUrl)
+    console.log('- Full redirect URL:', fullUrl)
+    console.log('- URL has double slash?:', fullUrl.includes('//auth'))
 
     const { data, error } = await supabase.auth.signUp({
       email: userEmail,
