@@ -42,19 +42,25 @@ export async function signupProfessional(formData) {
   const certifications = JSON.parse(formData.get('certifications') || '[]')
   const workExperience = JSON.parse(formData.get('workExperience') || '[]')
 
-  // Set email redirect URL
-  const origin = process.env.NODE_ENV === 'production' 
-    ? 'https://app.mavenrepublic.com' // Replace with your actual production domain
-    : 'http://localhost:3000'
-
-  console.log('🔗 Email redirect URL:', `${origin}auth/confirm`)
+  // Debug environment variable and construct URL
+  console.log('🔍 DEBUGGING EMAIL REDIRECT URL:')
+  console.log('- NODE_ENV:', process.env.NODE_ENV)
+  console.log('- NEXT_PUBLIC_SITE_URL raw:', process.env.NEXT_PUBLIC_SITE_URL)
+  console.log('- NEXT_PUBLIC_SITE_URL type:', typeof process.env.NEXT_PUBLIC_SITE_URL)
+  
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'
+  const fullUrl = `${baseUrl}/auth/confirm`
+  
+  console.log('- Base URL:', baseUrl)
+  console.log('- Full redirect URL:', fullUrl)
+  console.log('- URL has double slash?:', fullUrl.includes('//auth'))
 
   // Step 1: Create Supabase Auth User
   const { data, error } = await supabase.auth.signUp({
     email: userEmail,
     password,
     options: {
-      emailRedirectTo: `${origin}auth/confirm`,
+      emailRedirectTo: fullUrl,
       data: {
         first_name: firstName,
         last_name: lastName,

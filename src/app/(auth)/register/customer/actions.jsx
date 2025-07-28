@@ -78,12 +78,26 @@ export async function signupCustomer(formData) {
   try {
     // Step 1: Create Supabase Auth user
     console.log('🔐 Creating Supabase Auth user...')
+    
+    // Debug environment variable
+    console.log('🔍 DEBUGGING EMAIL REDIRECT URL:')
+    console.log('- NODE_ENV:', process.env.NODE_ENV)
+    console.log('- NEXT_PUBLIC_SITE_URL raw:', process.env.NEXT_PUBLIC_SITE_URL)
+    console.log('- NEXT_PUBLIC_SITE_URL type:', typeof process.env.NEXT_PUBLIC_SITE_URL)
+    
+    const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'
+    const fullUrl = `${baseUrl}/auth/confirm`
+    
+    console.log('- Base URL:', baseUrl)
+    console.log('- Full redirect URL:', fullUrl)
+    console.log('- URL has double slash?:', fullUrl.includes('//auth'))
+
     const { data, error } = await supabase.auth.signUp({
       email: userEmail,
       password,
       options: {
         shouldPersistSession: true,
-        emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/auth/confirm`
+        emailRedirectTo: fullUrl
       }
     })
 
