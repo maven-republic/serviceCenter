@@ -4,32 +4,20 @@
 import { useEffect } from 'react';
 import { useTheme } from '@/components/theme-provider';
 import CustomerWorkspaceStructure from '@/components/customer-workspace/CustomerWorkspaceStructure';
-import CustomerHeader from '@/components/customer-workspace/navigation/CustomerHeader';
 
 export default function CustomerWorkspaceLayout({ children }) {
-  const { theme, setTheme } = useTheme();
+  const { setTheme, actualTheme } = useTheme();
 
-  // Force light theme for customer workspace
+  // Optional: Set default theme preference for customer workspace
+  // But don't force it - let the theme provider handle the logic
   useEffect(() => {
-    // Force light theme for customer workspace
-    if (theme === 'dark') {
-      setTheme('light');
-    }
-    
-    // Ensure DOM classes are correct
-    const root = document.documentElement;
-    root.classList.remove('dark');
-    root.classList.add('light');
-    
-    return () => {
-      // Cleanup when leaving customer workspace
-      root.classList.remove('light');
-    };
-  }, [theme, setTheme]);
+    // Only set a preference if no theme is set
+    // Remove the forcing logic and let users choose
+    console.log('Customer workspace loaded, current theme:', actualTheme);
+  }, [actualTheme]);
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      {/* <CustomerHeader /> */}
       <CustomerWorkspaceStructure>
         {children}
       </CustomerWorkspaceStructure>

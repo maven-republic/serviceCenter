@@ -107,7 +107,7 @@ export default function Manifest({ data }) {
       <div className="flex-1 space-y-2">
         {/* Title */}
         <Link 
-          href={`services/${serviceInformation.id}`}
+          href={`/customer/services/${serviceInformation.id}`}  // ✅ Correct
           className="block group/link"
         >
           <h3 className="font-medium text-sm text-gray-900 group-hover/link:text-gray-600 transition-colors duration-200 leading-snug">

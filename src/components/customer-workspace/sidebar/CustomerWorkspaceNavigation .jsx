@@ -1,118 +1,76 @@
+// src/components/customer-workspace/sidebar/CustomerWorkspaceNavigation.jsx
 "use client";
 
-import { logout } from "@/app/(auth)/logout/actions";
-import { customerNavigation } from "@/data/dashboard";
-import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
-import { cn } from "@/lib/utils";
+import { customerNavigation } from "@/data/dashboard";
+import SidebarLogo from "./navigation/SidebarLogo";
+import NavigationSection from "./navigation/NavigationSection";
+import NavigationItem from "./navigation/NavigationItem";
+import LogoutButton from "./navigation/LogoutButton";
+import { getIconComponent } from "./navigation/iconMapper";
 
 export default function CustomerWorkspaceNavigation() {
   const pathname = usePathname();
 
-  const NavigationItem = ({ item, isActive = false }) => (
-    <Link
-      href={item.path}
-      className={cn(
-        "flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-all hover:bg-accent hover:text-accent-foreground",
-        isActive && "bg-accent text-accent-foreground font-medium"
-      )}
-    >
-      <i className={item.icon} />
-      {item.name}
-    </Link>
+  // Get specific navigation items
+  const accountInfoItem = customerNavigation.account?.find(
+    item => item.name === "Account Information"
+  );
+  
+  const logoutItem = customerNavigation.settings?.find(
+    item => item.name === "Logout"
   );
 
-  const LogoutButton = ({ item, isActive = false }) => (
-    <form>
-      <Button
-        variant="ghost"
-        className={cn(
-          "w-full justify-start gap-3 h-auto px-3 py-2 text-sm font-normal",
-          isActive && "bg-accent text-accent-foreground font-medium"
-        )}
-        formAction={logout}
-      >
-        <i className={item.icon} />
-        {item.name}
-      </Button>
-    </form>
-  );
+  // Get account items excluding Account Information (since it's in bottom section)
+  const filteredAccountItems = customerNavigation.account?.filter(
+    item => item.name !== "Account Information"
+  ) || [];
 
   return (
-    // WORKING: Sticky sidebar that stays fixed while content scrolls
-    <div className="hidden lg:block w-64 border-r bg-background sticky top-0 h-screen z-10">
-      <div className="flex h-full flex-col">
-        <div className="flex-1 overflow-y-auto scrollbar-thin">
-          <nav className="p-4 space-y-6">
-            {/* Workspace Section */}
-            <div className="space-y-2">
-              <h4 className="text-sm font-medium text-muted-foreground px-3">
-                Workspace
-              </h4>
-              <div className="space-y-1">
-                {customerNavigation.workspace?.map((item, i) => (
-                  <NavigationItem
-                    key={`workspace-${i}`}
-                    item={item}
-                    isActive={pathname === item.path}
-                  />
-                ))}
-              </div>
-            </div>
+    <div className="hidden lg:block w-28 bg-white sticky top-0 h-screen z-10 border-r border-gray-200">
+      <div className="flex h-full flex-col items-center">
+        
+        {/* Logo Section */}
+        <SidebarLogo variant="default" />
 
-            <Separator />
+        {/* Main Navigation */}
+        <nav className="flex flex-col items-center space-y-3 flex-1 mt-6">
+          {/* Workspace Items */}
+          <NavigationSection 
+            items={customerNavigation.workspace || []}
+            variant="default"
+            spacing="space-y-3"
+          />
 
-            {/* Account Section */}
-            <div className="space-y-2">
-              <h4 className="text-sm font-medium text-muted-foreground px-3">
-                Account
-              </h4>
-              <div className="space-y-1">
-                {customerNavigation.account?.map((item, i) => (
-                  <NavigationItem
-                    key={`account-${i}`}
-                    item={item}
-                    isActive={pathname === item.path}
-                  />
-                ))}
-              </div>
-            </div>
+          {/* Account Items (excluding Account Information) */}
+          <NavigationSection 
+            items={filteredAccountItems.slice(0, 2)}
+            variant="default" 
+            spacing="space-y-3"
+          />
+        </nav>
 
-            <Separator />
+        {/* Bottom Section */}
+        <div className="flex flex-col items-center space-y-3 pb-4">
+          {/* Account Information */}
+          {accountInfoItem && (
+            <NavigationItem
+              item={accountInfoItem}
+              isActive={pathname === accountInfoItem.path}
+              IconComponent={getIconComponent(accountInfoItem.icon)}
+              showTooltip={true}
+              variant="default"
+            />
+          )}
 
-            {/* Settings Section */}
-            <div className="space-y-2">
-              <h4 className="text-sm font-medium text-muted-foreground px-3">
-                Settings
-              </h4>
-              <div className="space-y-1">
-                {customerNavigation.settings?.map((item, i) => (
-                  <div key={`settings-${i}`}>
-                    {item.name === "Logout" ? (
-                      <LogoutButton
-                        item={item}
-                        isActive={pathname === item.path}
-                      />
-                    ) : (
-                      <NavigationItem
-                        item={item}
-                        isActive={pathname === item.path}
-                      />
-                    )}
-                  </div>
-                ))}
-              </div>
-            </div>
-          </nav>
-        </div>
-
-        {/* Fixed Footer */}
-        <div className="p-4 border-t border-border bg-background/95">
-          <div className="text-xs text-muted-foreground text-center">
-            Customer Portal
-          </div>
+          {/* Logout */}
+          {logoutItem && (
+            <LogoutButton 
+              item={logoutItem}
+              IconComponent={getIconComponent(logoutItem.icon)}
+              variant="default"
+            />
+          )}
         </div>
       </div>
     </div>

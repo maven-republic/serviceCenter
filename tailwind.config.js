@@ -20,10 +20,8 @@ module.exports = {
     },
     extend: {
       colors: {
-        blue: {
-          500: 'hsl(0 0% 14.9%)',
-          600: 'hsl(0 0% 14.9%)',
-        },
+        // FIXED: Remove broken blue color overrides
+        // Let Tailwind use proper blue colors
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",

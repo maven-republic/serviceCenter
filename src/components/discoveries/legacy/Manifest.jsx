@@ -77,8 +77,8 @@ export default function Manifest({ data }) {
 
   return (
     <Link 
-      href={`/services/${serviceInformation.id}`}
-      className="block group"
+href={`/customer/services/${serviceInformation.id}`}      
+className="block group"
     >
       <div className="space-y-3">
         {/* Flat Card Section */}

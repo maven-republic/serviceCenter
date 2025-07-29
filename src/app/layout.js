@@ -24,8 +24,8 @@ export default async function InterfaceFoundation({ children }) {
   }
 
   return (
-    <html lang="en" className="dark" suppressHydrationWarning={true}>
-      <body className={`${dmSans.className} min-h-screen`}>
+    <html lang="en" suppressHydrationWarning={true}>
+      <body className={`${dmSans.className} min-h-screen bg-background text-foreground`}>
         <ClientProviders initialSession={initialSession}>
           {children}
         </ClientProviders>

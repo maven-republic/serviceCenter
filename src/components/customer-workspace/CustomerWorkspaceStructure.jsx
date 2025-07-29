@@ -32,12 +32,12 @@ export default function CustomerWorkspaceStructure({ children }) {
     <div className="min-h-screen bg-background">
       <div className="flex">
         {/* Sidebar Container - FIXED: Removed h-full that was causing issues */}
-        <div className={cn(
-          "transition-all duration-300 ease-in-out flex-shrink-0",
-          isActive ? "w-0 overflow-hidden" : "w-64"
-        )}>
-          <CustomerWorkspaceNavigation />
-        </div>
+       <div className={cn(
+  "transition-all duration-300 ease-in-out flex-shrink-0",
+  isActive ? "w-0 overflow-hidden" : "w-28"  // ✅ Updated to match sidebar
+)}>
+  <CustomerWorkspaceNavigation />
+</div>
         
         {/* Main Content Area - FIXED: Removed overflow-hidden and flex constraints */}
         <div className="flex-1 min-h-screen">

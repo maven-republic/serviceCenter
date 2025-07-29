@@ -24,14 +24,7 @@ export const AppointmentsHeader = ({ customerInformation }) => {
         </Button>
       </div>
 
-      {/* Success Status */}
-      <Alert className="border-green-200 bg-green-50">
-        <CheckCircle className="h-4 w-4 text-green-600" />
-        <AlertDescription className="text-green-800">
-          <strong>✅ Authentication Successful!</strong> 
-          <p>Logged in as customer ID: {customerInformation?.customer_id}</p>
-        </AlertDescription>
-      </Alert>
+      
     </div>
   );
 };
