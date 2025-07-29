@@ -1,3 +1,43 @@
+/* ===== THEME CONSISTENCY FIX FOR VERCEL ===== */
+/* This section ensures light theme by default across all environments */
+
+:root {
+  color-scheme: light;
+  /* Explicit default background to prevent flash */
+  background: hsl(0 0% 100%);
+  color: hsl(0 0% 3.9%);
+}
+
+/* Override system dark mode preference unless explicitly set */
+@media (prefers-color-scheme: dark) {
+  :root:not(.dark):not(.professional-workspace) {
+    color-scheme: light !important;
+    background: hsl(0 0% 100%) !important;
+    color: hsl(0 0% 3.9%) !important;
+  }
+}
+
+/* Ensure HTML starts with light theme */
+html {
+  background-color: hsl(0 0% 100%);
+  color: hsl(0 0% 3.9%);
+}
+
+/* Dark theme only when explicitly applied */
+html.dark {
+  color-scheme: dark;
+  background-color: hsl(0 0% 3.9%);
+  color: hsl(0 0% 98%);
+}
+
+/* Professional workspace always dark */
+html.professional-workspace,
+html.dark.professional-workspace {
+  color-scheme: dark !important;
+  background-color: hsl(0 0% 3.9%) !important;
+  color: hsl(0 0% 98%) !important;
+}
+
 /* ===== UNIFIED TAILWIND + SHADCN/UI SYSTEM ===== */
 @tailwind base;
 @tailwind components;
@@ -49,17 +89,16 @@
     --sidebar-ring: 0 0% 3.9%;
     --sidebar-width: 16rem;
     --sidebar-width-mobile: 18rem;
-    --sidebar-width-icon: 3rem
-    ;
+    --sidebar-width-icon: 3rem;
 
-    /* Breakpoints (for JavaScript usage) */
+    /* ===== RESPONSIVE BREAKPOINTS ===== */
     --breakpoint-sm: 640px;
     --breakpoint-md: 768px;
     --breakpoint-lg: 1024px;
     --breakpoint-xl: 1280px;
     --breakpoint-2xl: 1536px;
     
-    /* Mobile-first spacing system */
+    /* ===== MOBILE-FIRST SPACING SYSTEM ===== */
     --spacing-mobile-xs: 0.5rem;   /* 8px */
     --spacing-mobile-sm: 0.75rem;  /* 12px */
     --spacing-mobile-md: 1rem;     /* 16px */
@@ -72,27 +111,27 @@
     --spacing-desktop-lg: 2rem;    /* 32px */
     --spacing-desktop-xl: 3rem;    /* 48px */
     
-    /* Touch-friendly sizes */
+    /* ===== TOUCH-FRIENDLY SIZES ===== */
     --touch-target-min: 44px;
     --touch-target-comfortable: 48px;
     --touch-target-large: 52px;
     
-    /* Navigation heights */
+    /* ===== NAVIGATION HEIGHTS ===== */
     --nav-height-mobile: 64px;
     --nav-height-tablet: 72px;
     --nav-height-desktop: 80px;
     
-    /* Bottom navigation */
+    /* ===== BOTTOM NAVIGATION ===== */
     --bottom-nav-height: 64px;
     --bottom-nav-safe-area: env(safe-area-inset-bottom, 0px);
     
-    /* Update your existing sidebar variables to these responsive ones */
+    /* ===== RESPONSIVE SIDEBAR VARIABLES ===== */
     --sidebar-width-mobile: 300px;
     --sidebar-width-tablet: 280px;
     --sidebar-width-desktop: 320px;
     --sidebar-width-icon: 64px;
     
-    /* Container widths */
+    /* ===== CONTAINER WIDTHS ===== */
     --container-mobile: 100%;
     --container-sm: 640px;
     --container-md: 768px;
@@ -100,7 +139,7 @@
     --container-xl: 1280px;
     --container-2xl: 1536px;
     
-    /* Z-index scale */
+    /* ===== Z-INDEX SCALE ===== */
     --z-dropdown: 1000;
     --z-sticky: 1020;
     --z-fixed: 1030;
@@ -161,21 +200,20 @@
     color: hsl(var(--foreground));
     font-family: var(--font-dm-sans), -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
     font-feature-settings: "rlig" 1, "calt" 1;
+    /* Prevent transition flash during theme changes */
+    transition: none;
   }
 
-  /* ===== PROFESSIONAL WORKSPACE FORCE DARK ===== */
+  /* ===== PROFESSIONAL WORKSPACE THEME ===== */
   .professional-workspace {
     color-scheme: dark;
-    /* Inherits all dark theme variables automatically */
+    /* Inherits dark theme variables when .dark class is applied */
   }
-
-  
 }
 
 @layer components {
   /* ===== PROFESSIONAL WORKSPACE COMPONENTS ===== */
   
-  /* Sidebar Components */
   .professional-sidebar {
     @apply bg-sidebar border-r border-sidebar-border text-sidebar-foreground;
     @apply transition-all duration-200 ease-in-out;
@@ -188,13 +226,11 @@
     @apply data-[active=true]:bg-sidebar-primary data-[active=true]:text-sidebar-primary-foreground data-[active=true]:font-semibold;
   }
 
-  /* Card Components */
   .professional-card {
     @apply bg-card border border-border rounded-lg shadow-sm;
     @apply text-card-foreground;
   }
 
-  /* Button Components */
   .professional-button-primary {
     @apply bg-primary text-primary-foreground border border-primary;
     @apply rounded-md px-4 py-2 font-medium;
@@ -211,7 +247,6 @@
     @apply transition-colors duration-200;
   }
 
-  /* Form Components */
   .professional-input {
     @apply bg-background border border-border text-foreground;
     @apply rounded-md px-3 py-2;
@@ -268,26 +303,25 @@
     animation: shimmer 2s infinite;
   }
 
-  /* Brand specific components */
   .brand-button {
     background-color: var(--brand-primary);
     @apply text-white rounded-md px-4 py-2 font-medium;
     @apply hover:opacity-90 transition-opacity duration-200;
   }
 
-  /* Error states */
   .error-state {
     @apply bg-destructive/10 border border-destructive/20 text-destructive;
     @apply rounded-md p-4;
   }
 
-  /* Success states */
   .success-state {
     @apply bg-green-50 border border-green-200 text-green-800;
     @apply dark:bg-green-950 dark:border-green-800 dark:text-green-200;
     @apply rounded-md p-4;
   }
 
+  /* ===== RESPONSIVE CONTAINERS ===== */
+  
   .mobile-container {
     @apply w-full mx-auto px-4;
     max-width: var(--container-mobile);
@@ -329,7 +363,7 @@
     }
   }
 
- /* ===== TOUCH-FRIENDLY COMPONENTS ===== */
+  /* ===== TOUCH-FRIENDLY COMPONENTS ===== */
   
   .touch-target {
     min-height: var(--touch-target-min);
@@ -554,12 +588,9 @@
   }
 }
 
-
-
 @layer utilities {
-  /* ===== CUSTOM UTILITIES ===== */
+  /* ===== PROFESSIONAL WORKSPACE UTILITIES ===== */
   
-  /* Professional workspace utilities */
   .professional-workspace .scrollbar-thin {
     scrollbar-width: thin;
     scrollbar-color: hsl(var(--muted-foreground)) hsl(var(--muted));
@@ -582,12 +613,14 @@
     background: hsl(var(--foreground));
   }
 
-  /* Text utilities */
+  /* ===== BRAND UTILITIES ===== */
+  
   .text-brand-primary {
     color: var(--brand-primary);
   }
 
-  /* Animations */
+  /* ===== ANIMATION UTILITIES ===== */
+  
   .animate-fade-in {
     animation: fade-in 0.2s ease-out;
   }
@@ -600,7 +633,8 @@
     animation: scale-in 0.2s ease-out;
   }
 
-  /* Spacing utilities */
+  /* ===== SPACING UTILITIES ===== */
+  
   .space-mobile {
     @apply space-y-3 sm:space-y-4 lg:space-y-6;
   }
@@ -621,7 +655,8 @@
     @apply py-4 sm:py-6 lg:py-8;
   }
   
-  /* Safe area utilities for iOS */
+  /* ===== SAFE AREA UTILITIES ===== */
+  
   .pb-safe {
     padding-bottom: var(--bottom-nav-safe-area);
   }
@@ -630,7 +665,8 @@
     margin-bottom: var(--bottom-nav-safe-area);
   }
   
-  /* Touch utilities */
+  /* ===== TOUCH UTILITIES ===== */
+  
   .touch-none {
     touch-action: none;
   }
@@ -647,7 +683,8 @@
     touch-action: manipulation;
   }
   
-  /* Visibility utilities */
+  /* ===== VISIBILITY UTILITIES ===== */
+  
   .mobile-only {
     @apply block sm:hidden;
   }
@@ -660,13 +697,15 @@
     @apply hidden lg:block;
   }
   
-  /* Scroll utilities */
+  /* ===== SCROLL UTILITIES ===== */
+  
   .scroll-smooth-mobile {
     scroll-behavior: smooth;
     -webkit-overflow-scrolling: touch;
   }
   
-  /* Animation utilities */
+  /* ===== MOBILE ANIMATION UTILITIES ===== */
+  
   .animate-slide-up-mobile {
     animation: slide-up-mobile 0.3s ease-out;
   }
@@ -680,8 +719,8 @@
   }
 }
 
-
 /* ===== KEYFRAME ANIMATIONS ===== */
+
 @keyframes shimmer {
   100% {
     transform: translateX(100%);
@@ -719,7 +758,6 @@
   }
 }
 
-/* ===== MOBILE-FIRST KEYFRAMES ===== */
 @keyframes slide-up-mobile {
   from {
     opacity: 0;
@@ -751,10 +789,9 @@
   }
 }
 
+/* ===== GLOBAL PORTAL COMPONENT FIXES ===== */
 
-/* ===== GLOBAL FIXES FOR PORTAL COMPONENTS ===== */
-
-/* Dropdown menus (rendered in portal) */
+/* Dropdown menus (Radix UI portals) */
 [data-radix-dropdown-menu-content] {
   @apply bg-popover text-popover-foreground border border-border rounded-md shadow-lg;
   @apply p-1 min-w-32 z-50;
@@ -784,6 +821,7 @@
 }
 
 /* ===== ACCESSIBILITY IMPROVEMENTS ===== */
+
 @media (prefers-reduced-motion: reduce) {
   *,
   ::before,
@@ -813,7 +851,9 @@
   }
 }
 
+/* ===== MOBILE DEVICE OPTIMIZATIONS ===== */
 
+/* iOS Safari specific fixes */
 @supports (-webkit-touch-callout: none) {
   .mobile-input,
   .mobile-textarea {
@@ -827,7 +867,7 @@
   }
 }
 
-/* Android specific fixes */
+/* Android Chrome specific fixes */
 @media screen and (-webkit-min-device-pixel-ratio: 0) {
   .mobile-input,
   .mobile-textarea {
@@ -835,12 +875,14 @@
   }
 }
 
-/* High DPI displays */
+/* High DPI displays optimization */
 @media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
   .mobile-card {
     @apply shadow-sm;
   }
 }
+
+/* ===== RESPONSIVE LAYOUT OPTIMIZATIONS ===== */
 
 /* Landscape phone optimization */
 @media (max-height: 500px) and (orientation: landscape) {
@@ -857,14 +899,22 @@
   }
 }
 
-/* Tablet landscape specific */
+/* Tablet landscape specific adjustments */
 @media (min-width: 768px) and (max-width: 1023px) and (orientation: landscape) {
   .sidebar-desktop {
     width: 240px;
   }
 }
 
-/* Print styles */
+/* Large screen optimizations */
+@media (min-width: 1920px) {
+  .responsive-container {
+    max-width: 1800px;
+  }
+}
+
+/* ===== PRINT STYLES ===== */
+
 @media print {
   .mobile-header,
   .mobile-bottom-nav,
@@ -878,5 +928,91 @@
     @apply overflow-visible;
     padding-bottom: 0;
   }
+  
+  /* Ensure light theme for printing */
+  * {
+    background: white !important;
+    color: black !important;
+    box-shadow: none !important;
+  }
 }
 
+/* ===== THEME TRANSITION ENHANCEMENTS ===== */
+
+/* Smooth theme transitions for non-professional workspace */
+:root:not(.professional-workspace) {
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+:root:not(.professional-workspace) *:not(.no-transition) {
+  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+}
+
+/* Disable transitions during initial load */
+.no-transition,
+.no-transition * {
+  transition: none !important;
+}
+
+/* ===== CUSTOM SCROLLBAR STYLES ===== */
+
+/* Default scrollbar for light theme */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: hsl(var(--muted));
+}
+
+::-webkit-scrollbar-thumb {
+  background: hsl(var(--muted-foreground) / 0.5);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--muted-foreground) / 0.7);
+}
+
+/* Firefox scrollbar */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: hsl(var(--muted-foreground) / 0.5) hsl(var(--muted));
+}
+
+/* ===== SELECTION STYLES ===== */
+
+::selection {
+  background-color: hsl(var(--primary) / 0.2);
+  color: hsl(var(--primary-foreground));
+}
+
+::-moz-selection {
+  background-color: hsl(var(--primary) / 0.2);
+  color: hsl(var(--primary-foreground));
+}
+
+/* ===== CUSTOM UTILITIES FOR DEVELOPMENT ===== */
+
+/* Debug outline for development */
+.debug-outline {
+  outline: 2px solid red !important;
+  outline-offset: 2px;
+}
+
+.debug-grid {
+  background-image: 
+    linear-gradient(rgba(255, 0, 0, 0.1) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 0, 0, 0.1) 1px, transparent 1px);
+  background-size: 10px 10px;
+}
+
+/* Hide debug utilities in production */
+@media not all and (min-width: 0) {
+  .debug-outline,
+  .debug-grid {
+    outline: none !important;
+    background-image: none !important;
+  }
+}

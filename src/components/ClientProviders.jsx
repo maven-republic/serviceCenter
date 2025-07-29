@@ -16,9 +16,10 @@ export default function ClientProviders({ children, initialSession }) {
     >
       <ThemeProvider
         attribute="class"
-        defaultTheme="dark" // or "system" or "light"
-        enableSystem={false}
-        disableTransitionOnChange
+        defaultTheme="light" // CHANGED: Set to light instead of dark
+        enableSystem={true} // Allow system theme option
+        disableTransitionOnChange={false} // Allow smooth transitions
+        storageKey="ui-theme"
       >
         {children}
       </ThemeProvider>
