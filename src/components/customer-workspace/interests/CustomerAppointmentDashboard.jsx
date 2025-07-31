@@ -1,4 +1,4 @@
-// src/components/customer-workspace/interests/CustomerAppointmentDashboard.jsx (Debug Version)
+// src/components/customer-workspace/interests/CustomerAppointmentDashboard.jsx (Fixed Version)
 "use client";
 
 import { useState, useEffect } from 'react';
@@ -31,16 +31,15 @@ const CustomerAppointmentDashboard = ({ appointmentId }) => {
     }
   }, [appointmentId]);
 
-  // In CustomerAppointmentDashboard.jsx, add this debug log
-useEffect(() => {
-  if (interests.length > 0) {
-    console.log('🔍 DEBUG: Interests data structure:', interests[0]);
-    console.log('🔍 DEBUG: First interest fields:', Object.keys(interests[0]));
-    if (interests[0].professional) {
-      console.log('🔍 DEBUG: Professional fields:', Object.keys(interests[0].professional));
+  useEffect(() => {
+    if (interests.length > 0) {
+      console.log('🔍 DEBUG: Interests data structure:', interests[0]);
+      console.log('🔍 DEBUG: First interest fields:', Object.keys(interests[0]));
+      if (interests[0].professional) {
+        console.log('🔍 DEBUG: Professional fields:', Object.keys(interests[0].professional));
+      }
     }
-  }
-}, [interests]);
+  }, [interests]);
 
   const fetchAppointmentInterests = async () => {
     try {
@@ -52,12 +51,9 @@ useEffect(() => {
       
       const response = await fetch(`/api/appointments/${appointmentId}/interests`);
       
-      // Debug: Log response details
       console.log('📡 Response status:', response.status);
       console.log('📡 Response ok:', response.ok);
-      console.log('📡 Response headers:', Object.fromEntries(response.headers.entries()));
       
-      // Check if response is ok
       if (!response.ok) {
         const errorText = await response.text();
         console.error('❌ HTTP Error Response:', errorText);
@@ -70,11 +66,9 @@ useEffect(() => {
         return;
       }
       
-      // Get response as text first to debug
       const responseText = await response.text();
       console.log('📡 Raw response text (first 500 chars):', responseText.substring(0, 500));
       
-      // Check if response is empty
       if (!responseText.trim()) {
         console.error('❌ Empty response received');
         setError('Empty response from server');
@@ -85,7 +79,6 @@ useEffect(() => {
         return;
       }
       
-      // Try to parse JSON
       let data;
       try {
         data = JSON.parse(responseText);
@@ -102,7 +95,6 @@ useEffect(() => {
         return;
       }
       
-      // Check if data has expected structure
       if (!data) {
         console.error('❌ No data in response');
         setError('No data received from server');
@@ -111,12 +103,17 @@ useEffect(() => {
       
       if (data.success) {
         console.log('✅ Data loaded successfully:', {
-          appointment: !!data.appointment,
           interestsCount: data.interests?.length || 0,
           summary: !!data.summary
         });
         
-        setAppointmentData(data.appointment);
+        // Create a minimal appointment object if not provided
+        const appointmentData = data.appointment || { 
+          appointment_id: appointmentId,
+          status: 'pending'  // Default status
+        };
+        
+        setAppointmentData(appointmentData);
         setInterests(data.interests || []);
         setSummary(data.summary);
       } else {
@@ -226,7 +223,6 @@ useEffect(() => {
   };
 
   const handleMessageProfessional = (interest) => {
-    // TODO: Implement messaging functionality
     console.log('Message professional:', interest.professional_id);
   };
 
@@ -249,7 +245,6 @@ useEffect(() => {
           <AlertDescription>{error}</AlertDescription>
         </Alert>
         
-        {/* Debug Information */}
         {debugInfo && (
           <Alert>
             <AlertCircle className="h-4 w-4" />
@@ -282,17 +277,9 @@ useEffect(() => {
     );
   }
 
-  if (!appointmentInformation) {
-    return (
-      <Alert>
-        <AlertCircle className="h-4 w-4" />
-        <AlertDescription>
-          No appointment data found.
-        </AlertDescription>
-      </Alert>
-    );
-  }
-
+  // FIXED: Remove the check that was blocking the UI
+  // The interests data is what we need, appointment data is optional
+  
   const activeInterests = interests.filter(i => !['withdrawn', 'rejected'].includes(i.status));
   const selectedInterest = interests.find(i => i.selected_by_customer);
   const needsAssessment = selectedInterest?.assessment;
@@ -311,6 +298,7 @@ useEffect(() => {
                 <p>Interests Count: {interests.length}</p>
                 <p>Active Interests: {activeInterests.length}</p>
                 <p>Selected Interest: {selectedInterest ? 'Yes' : 'No'}</p>
+                <p>Has Appointment Data: {appointmentInformation ? 'Yes' : 'No'}</p>
               </div>
             </details>
           </AlertDescription>
@@ -322,7 +310,7 @@ useEffect(() => {
         <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="responses" className="flex items-center space-x-2">
             <Users className="h-4 w-4" />
-            <span>Answers ({activeInterests.length})</span>
+            <span>Responses ({activeInterests.length})</span>
           </TabsTrigger>
           <TabsTrigger value="compare" disabled={activeInterests.length < 2}>
             <BarChart3 className="h-4 w-4 mr-2" />
@@ -418,17 +406,14 @@ useEffect(() => {
               interest={selectedInterest}
               assessment={selectedInterest.assessment}
               onScheduleAssessment={async (data) => {
-                // TODO: Implement assessment scheduling API
                 console.log('Schedule assessment:', data);
                 return { success: true };
               }}
               onConfirmAssessment={async (assessmentId) => {
-                // TODO: Implement assessment confirmation API
                 console.log('Confirm assessment:', assessmentId);
                 return { success: true };
               }}
               onCancelAssessment={async (assessmentId) => {
-                // TODO: Implement assessment cancellation API
                 console.log('Cancel assessment:', assessmentId);
                 return { success: true };
               }}

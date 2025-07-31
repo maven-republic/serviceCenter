@@ -5,8 +5,167 @@ import { NextResponse } from 'next/server'
 
 export const dynamic = 'force-dynamic'
 
+// POST - Customer selects/rejects professionals
+export async function POST(request, { params }) {
+  console.log('🔵 POST /api/appointments/[id]/interests - Customer selecting professional')
+  
+  try {
+    const resolvedParams = await params
+    const appointmentId = resolvedParams.id
+    
+    console.log('📝 Appointment ID:', appointmentId)
+    
+    if (!appointmentId) {
+      console.error('❌ Missing appointment ID')
+      return NextResponse.json(
+        { success: false, error: 'Appointment ID is required' },
+        { status: 400 }
+      )
+    }
+
+    // Parse request body
+    let body
+    try {
+      body = await request.json()
+      console.log('📝 Request body:', {
+        action: body.action,
+        interest_ids: body.interest_ids,
+        hasCustomerNotes: !!body.data?.customer_notes
+      })
+    } catch (parseError) {
+      console.error('❌ Failed to parse request body:', parseError)
+      return NextResponse.json(
+        { success: false, error: 'Invalid JSON in request body' },
+        { status: 400 }
+      )
+    }
+
+    const { action, interest_ids, data } = body
+
+    // Validate required fields
+    if (!action) {
+      return NextResponse.json(
+        { success: false, error: 'Action is required' },
+        { status: 400 }
+      )
+    }
+
+    if (!interest_ids || !Array.isArray(interest_ids) || interest_ids.length === 0) {
+      return NextResponse.json(
+        { success: false, error: 'At least one interest ID is required' },
+        { status: 400 }
+      )
+    }
+
+    // Initialize Supabase client
+    const supabase = await createClient()
+    console.log('✅ Supabase client created')
+
+    if (action === 'select_professional') {
+      console.log('🎯 Selecting professional(s):', interest_ids)
+
+      // Update the selected interest(s)
+      const { data: updatedInterests, error: updateError } = await supabase
+        .from('interest')
+        .update({
+          selected_by_customer: true,
+          customer_selected_at: new Date().toISOString(),
+          customer_notes: data?.customer_notes || null,
+          status: 'selected',
+          updated_at: new Date().toISOString()
+        })
+        .in('interest_id', interest_ids)
+        .eq('appointment_id', appointmentId)
+        .select()
+
+      if (updateError) {
+        console.error('❌ Database error updating interests:', updateError)
+        return NextResponse.json(
+          { success: false, error: 'Failed to select professional', details: updateError.message },
+          { status: 500 }
+        )
+      }
+
+      console.log('✅ Professional(s) selected successfully:', updatedInterests?.length || 0)
+
+      // Update appointment status if needed
+      const { error: appointmentError } = await supabase
+        .from('appointment')
+        .update({
+          status: 'quoted',
+          updated_at: new Date().toISOString()
+        })
+        .eq('appointment_id', appointmentId)
+
+      if (appointmentError) {
+        console.warn('⚠️ Failed to update appointment status:', appointmentError)
+        // Don't fail the request for this
+      }
+
+      return NextResponse.json({
+        success: true,
+        message: 'Professional selected successfully',
+        selected_interests: updatedInterests,
+        action: 'select_professional'
+      })
+    }
+
+    if (action === 'reject_interests') {
+      console.log('❌ Rejecting interests:', interest_ids)
+
+      const { data: rejectedInterests, error: rejectError } = await supabase
+        .from('interest')
+        .update({
+          status: 'rejected',
+          customer_rejected_at: new Date().toISOString(),
+          rejection_reason: data?.rejection_reason || 'Not selected',
+          updated_at: new Date().toISOString()
+        })
+        .in('interest_id', interest_ids)
+        .eq('appointment_id', appointmentId)
+        .select()
+
+      if (rejectError) {
+        console.error('❌ Database error rejecting interests:', rejectError)
+        return NextResponse.json(
+          { success: false, error: 'Failed to reject interests', details: rejectError.message },
+          { status: 500 }
+        )
+      }
+
+      console.log('✅ Interests rejected successfully:', rejectedInterests?.length || 0)
+
+      return NextResponse.json({
+        success: true,
+        message: 'Interests rejected successfully',
+        rejected_interests: rejectedInterests,
+        action: 'reject_interests'
+      })
+    }
+
+    // Unknown action
+    return NextResponse.json(
+      { success: false, error: `Unknown action: ${action}` },
+      { status: 400 }
+    )
+
+  } catch (error) {
+    console.error('❌ API Error in POST /api/appointments/[id]/interests:', error)
+    console.error('❌ Error stack:', error.stack)
+    return NextResponse.json(
+      { 
+        success: false, 
+        error: 'Internal server error',
+        details: error.message 
+      },
+      { status: 500 }
+    )
+  }
+}
+
+// PUT - Professional responds to customer selection
 export async function PUT(request, { params }) {
-  console.log('🔵 PUT /api/appointments/[id]/interests - Starting request')
+  console.log('🔵 PUT /api/appointments/[id]/interests - Professional response')
   
   try {
     const resolvedParams = await params
@@ -67,17 +226,8 @@ export async function PUT(request, { params }) {
     }
 
     // Initialize Supabase client with error handling
-    let supabase
-    try {
-      supabase = createClient()
-      console.log('✅ Supabase client created')
-    } catch (supabaseError) {
-      console.error('❌ Failed to create Supabase client:', supabaseError)
-      return NextResponse.json(
-        { success: false, error: 'Database connection failed' },
-        { status: 500 }
-      )
-    }
+    const supabase = await createClient()
+    console.log('✅ Supabase client created')
 
     // Find the interest record with enhanced error handling
     console.log('🔍 Finding interest record...')
@@ -153,6 +303,113 @@ export async function PUT(request, { params }) {
   }
 }
 
+// GET - Fetch interests for an appointment
+export async function GET(request, { params }) {
+  try {
+    console.log('🎯 GET /api/appointments/[id]/interests called')
+    
+    const resolvedParams = await params
+    const appointmentId = resolvedParams.id
+
+    if (!appointmentId) {
+      return NextResponse.json(
+        { success: false, error: 'Appointment ID is required' },
+        { status: 400 }
+      )
+    }
+
+    const supabase = await createClient()
+    console.log('✅ Supabase client created successfully')
+
+    // Fetch interests for the appointment
+    const { data: interests, error } = await supabase
+      .from('interest')
+      .select('*')
+      .eq('appointment_id', appointmentId)
+      .order('created_at', { ascending: false })
+
+    if (error) {
+      console.error('❌ Failed to fetch interests:', error)
+      return NextResponse.json(
+        { 
+          success: false, 
+          error: 'Failed to fetch interests',
+          details: error.message 
+        },
+        { status: 500 }
+      )
+    }
+
+    console.log(`✅ Found ${interests?.length || 0} interests for appointment ${appointmentId}`)
+
+    // Fetch professional data separately to avoid relationship conflicts
+    let enrichedInterests = interests || []
+
+    if (interests && interests.length > 0) {
+      // Get unique professional IDs
+      const professionalIds = [...new Set(interests.map(i => i.professional_id))]
+      
+      if (professionalIds.length > 0) {
+        // Get professionals separately
+        const { data: professionals } = await supabase
+          .from('individual_professional')
+          .select('professional_id, account_id, bio, verification_status, hourly_rate')
+          .in('professional_id', professionalIds)
+
+        // Get professional account data separately
+        const accountIds = professionals?.map(p => p.account_id) || []
+        let accounts = []
+        if (accountIds.length > 0) {
+          const { data: accountsData } = await supabase
+            .from('account')
+            .select('account_id, first_name, last_name, email, profile_picture_url')
+            .in('account_id', accountIds)
+          accounts = accountsData || []
+        }
+
+        // Enrich interests with professional data
+        enrichedInterests = interests.map(interest => {
+          const professional = professionals?.find(p => p.professional_id === interest.professional_id)
+          const account = accounts?.find(a => a.account_id === professional?.account_id)
+
+          return {
+            ...interest,
+            professional: professional ? {
+              ...professional,
+              account: account || null
+            } : null
+          }
+        })
+      }
+    }
+
+    console.log(`✅ Successfully enriched ${enrichedInterests.length} interests with professional data`)
+
+    return NextResponse.json({
+      success: true,
+      interests: enrichedInterests
+    })
+
+  } catch (error) {
+    console.error('❌ API Error in GET /api/appointments/[id]/interests:', error)
+    console.error('❌ Error details:', {
+      message: error.message,
+      stack: error.stack,
+      name: error.name
+    })
+    return NextResponse.json(
+      { 
+        success: false, 
+        error: 'Internal server error',
+        details: error.message 
+      },
+      { status: 500 }
+    )
+  }
+}
+
+// Helper Functions
+
 async function handleDeclineSelection(supabase, interest, body) {
   const { 
     decline_reason, 
@@ -170,16 +427,15 @@ async function handleDeclineSelection(supabase, interest, body) {
   try {
     // Prepare update data - using ONLY existing database fields
     const updateData = {
-      status: 'rejected',                           // ✅ Existing enum value
-      response: 'declined',                         // ✅ Existing enum value  
-      rejection_reason: decline_reason,             // ✅ Existing field
-      customer_rejected_at: new Date().toISOString(), // ✅ Existing field
-      updated_at: new Date().toISOString()         // ✅ Existing field
+      status: 'declined_by_professional',           // Status for professional decline
+      response: 'declined',                         // Response status
+      rejection_reason: decline_reason,             // Decline reason
+      updated_at: new Date().toISOString()         // Updated timestamp
     }
 
     // Add decline message to existing notes field
     if (decline_message) {
-      updateData.notes = decline_message // ✅ Using existing 'notes' field
+      updateData.notes = decline_message
     }
 
     // Store referral suggestions in customer_notes as JSON if provided
@@ -190,7 +446,7 @@ async function handleDeclineSelection(supabase, interest, body) {
         referral_suggestions,
         declined_at: new Date().toISOString()
       }
-      updateData.customer_notes = JSON.stringify(referralData) // ✅ Existing field
+      updateData.customer_notes = JSON.stringify(referralData)
     }
 
     console.log('📝 Update data prepared:', updateData)
@@ -205,12 +461,6 @@ async function handleDeclineSelection(supabase, interest, body) {
 
     if (updateError) {
       console.error('❌ Database error updating interest:', updateError)
-      console.error('❌ Update error details:', {
-        code: updateError.code,
-        message: updateError.message,
-        details: updateError.details
-      })
-      
       return NextResponse.json(
         { 
           success: false, 
@@ -277,14 +527,14 @@ async function handleAcceptSelection(supabase, interest, body) {
   try {
     // Update the interest record with acceptance
     const updateData = {
-      response: 'confirmed',                        // ✅ Existing enum value
-      customer_selected_at: new Date().toISOString(), // ✅ Existing field
-      replied: new Date().toISOString(),           // ✅ Existing field
-      updated_at: new Date().toISOString()         // ✅ Existing field
+      response: 'confirmed',                        // Professional confirmed
+      status: 'confirmed',                          // Status updated to confirmed
+      replied: new Date().toISOString(),           // Reply timestamp
+      updated_at: new Date().toISOString()         // Updated timestamp
     }
 
     if (response_message) {
-      updateData.customer_notes = response_message // ✅ Existing field
+      updateData.customer_notes = response_message
     }
 
     // Add updated quote if provided
@@ -377,68 +627,6 @@ async function handleAcceptSelection(supabase, interest, body) {
       { 
         success: false, 
         error: 'Failed to process acceptance',
-        details: error.message 
-      },
-      { status: 500 }
-    )
-  }
-}
-
-// GET method to fetch interests for an appointment
-export async function GET(request, { params }) {
-  try {
-    const resolvedParams = await params
-    const appointmentId = resolvedParams.id
-
-    if (!appointmentId) {
-      return NextResponse.json(
-        { success: false, error: 'Appointment ID is required' },
-        { status: 400 }
-      )
-    }
-
-    const supabase = createClient()
-
-    const { data: interests, error } = await supabase
-      .from('interest')
-      .select(`
-        *,
-        professional:individual_professional!interest_professional_id_fkey(
-          professional_id,
-          account:account!individual_professional_account_id_fkey(
-            first_name,
-            last_name,
-            email,
-            profile_picture_url
-          )
-        )
-      `)
-      .eq('appointment_id', appointmentId)
-      .order('created_at', { ascending: false })
-
-    if (error) {
-      console.error('❌ Failed to fetch interests:', error)
-      return NextResponse.json(
-        { 
-          success: false, 
-          error: 'Failed to fetch interests',
-          details: error.message 
-        },
-        { status: 500 }
-      )
-    }
-
-    return NextResponse.json({
-      success: true,
-      interests: interests || []
-    })
-
-  } catch (error) {
-    console.error('❌ API Error in GET /api/appointments/[id]/interests:', error)
-    return NextResponse.json(
-      { 
-        success: false, 
-        error: 'Internal server error',
         details: error.message 
       },
       { status: 500 }

@@ -5,11 +5,14 @@ import { NextResponse } from 'next/server'
 export const dynamic = 'force-dynamic'
 
 export async function GET(request, { params }) {
-  const { id: customer_id } = params
+  // ✅ FIX: Await params first to resolve Next.js warning
+  const resolvedParams = await params
+  const { id: customer_id } = resolvedParams
+  
   console.log('🎯 Customer Appointments API called for:', customer_id)
   
   try {
-    // FIX: Await the createClient() function since it's async
+    // ✅ FIX: Await the createClient() function since it's async
     const supabase = await createClient()
     console.log('✅ Supabase client created successfully')
 
