@@ -1,20 +1,23 @@
-// src/components/customer-workspace/interests/CustomerAppointmentDashboard.jsx (Fixed Version)
+// src/components/customer-workspace/interests/CustomerAppointmentDashboard.jsx (Updated with Quote Approval)
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Separator } from '@/components/ui/separator';
 import { 
   AlertCircle,
   Users,
   BarChart3,
   User,
-  Clock
+  Clock,
+  AlertTriangle
 } from 'lucide-react';
 
 import InterestSelectionCard from './InterestSelectionCard';
 import InterestComparisonView from './InterestComparisonView';
 import AssessmentScheduler from './AssessmentScheduler';
+import CustomerQuoteComparison from './CustomerQuoteComparison';
 
 const CustomerAppointmentDashboard = ({ appointmentId }) => {
   const [appointmentInformation, setAppointmentData] = useState(null);
@@ -222,6 +225,112 @@ const CustomerAppointmentDashboard = ({ appointmentId }) => {
     }
   };
 
+  // ✅ NEW: Quote Update Approval Handler
+  const handleApproveQuoteUpdate = useCallback(async (interestId, customerNotes = '') => {
+    try {
+      setActionLoading(true);
+      console.log('✅ Approving quote update:', { interestId, customerNotes });
+      
+      const response = await fetch(`/api/appointments/${appointmentId}/interests/${interestId}/quote-approval`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'approve',
+          customer_notes: customerNotes
+        })
+      });
+
+      console.log('📡 Approval response status:', response.status);
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('❌ Approval HTTP Error:', errorText);
+        return { success: false, error: `HTTP ${response.status}: ${errorText}` };
+      }
+
+      const responseText = await response.text();
+      let result;
+      
+      try {
+        result = JSON.parse(responseText);
+      } catch (parseError) {
+        console.error('❌ Approval JSON Parse Error:', parseError);
+        return { success: false, error: 'Invalid response format' };
+      }
+
+      if (result.success) {
+        console.log('✅ Quote update approved successfully');
+        await fetchAppointmentInterests(); // Refresh data
+        
+        // Show success message
+        alert('Quote update approved! The professional has been notified and the project is confirmed.');
+        
+        return { success: true };
+      } else {
+        console.error('❌ Approval failed:', result.error);
+        return { success: false, error: result.error };
+      }
+    } catch (error) {
+      console.error('💥 Approval error:', error);
+      return { success: false, error: 'Approval failed: ' + error.message };
+    } finally {
+      setActionLoading(false);
+    }
+  }, [appointmentId, fetchAppointmentInterests]);
+
+  // ✅ NEW: Quote Update Decline Handler
+  const handleDeclineQuoteUpdate = useCallback(async (interestId, customerNotes = '') => {
+    try {
+      setActionLoading(true);
+      console.log('❌ Declining quote update:', { interestId, customerNotes });
+      
+      const response = await fetch(`/api/appointments/${appointmentId}/interests/${interestId}/quote-approval`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'decline',
+          customer_notes: customerNotes
+        })
+      });
+
+      console.log('📡 Decline response status:', response.status);
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('❌ Decline HTTP Error:', errorText);
+        return { success: false, error: `HTTP ${response.status}: ${errorText}` };
+      }
+
+      const responseText = await response.text();
+      let result;
+      
+      try {
+        result = JSON.parse(responseText);
+      } catch (parseError) {
+        console.error('❌ Decline JSON Parse Error:', parseError);
+        return { success: false, error: 'Invalid response format' };
+      }
+
+      if (result.success) {
+        console.log('✅ Quote update declined successfully');
+        await fetchAppointmentInterests(); // Refresh data
+        
+        // Show success message
+        alert('Quote update declined. The professional will need to provide a new response.');
+        
+        return { success: true };
+      } else {
+        console.error('❌ Decline failed:', result.error);
+        return { success: false, error: result.error };
+      }
+    } catch (error) {
+      console.error('💥 Decline error:', error);
+      return { success: false, error: 'Decline failed: ' + error.message };
+    } finally {
+      setActionLoading(false);
+    }
+  }, [appointmentId, fetchAppointmentInterests]);
+
   const handleMessageProfessional = (interest) => {
     console.log('Message professional:', interest.professional_id);
   };
@@ -277,12 +386,12 @@ const CustomerAppointmentDashboard = ({ appointmentId }) => {
     );
   }
 
-  // FIXED: Remove the check that was blocking the UI
-  // The interests data is what we need, appointment data is optional
-  
   const activeInterests = interests.filter(i => !['withdrawn', 'rejected'].includes(i.status));
   const selectedInterest = interests.find(i => i.selected_by_customer);
   const needsAssessment = selectedInterest?.assessment;
+  
+  // ✅ NEW: Count quote updates pending approval
+  const quoteUpdatesCount = interests.filter(i => i.status === 'updated_quote').length;
 
   return (
     <div className="space-y-6">
@@ -297,6 +406,7 @@ const CustomerAppointmentDashboard = ({ appointmentId }) => {
                 <p>Appointment ID: {appointmentId}</p>
                 <p>Interests Count: {interests.length}</p>
                 <p>Active Interests: {activeInterests.length}</p>
+                <p>Quote Updates Pending: {quoteUpdatesCount}</p>
                 <p>Selected Interest: {selectedInterest ? 'Yes' : 'No'}</p>
                 <p>Has Appointment Data: {appointmentInformation ? 'Yes' : 'No'}</p>
               </div>
@@ -311,6 +421,12 @@ const CustomerAppointmentDashboard = ({ appointmentId }) => {
           <TabsTrigger value="responses" className="flex items-center space-x-2">
             <Users className="h-4 w-4" />
             <span>Responses ({activeInterests.length})</span>
+            {/* ✅ NEW: Quote update indicator */}
+            {quoteUpdatesCount > 0 && (
+              <span className="ml-1 px-1.5 py-0.5 text-xs bg-orange-500 text-white rounded-full">
+                {quoteUpdatesCount}
+              </span>
+            )}
           </TabsTrigger>
           <TabsTrigger value="compare" disabled={activeInterests.length < 2}>
             <BarChart3 className="h-4 w-4 mr-2" />
@@ -336,6 +452,39 @@ const CustomerAppointmentDashboard = ({ appointmentId }) => {
 
         {/* Professional Responses Tab */}
         <TabsContent value="responses" className="space-y-4">
+          {/* ✅ NEW: Quote Updates Section */}
+          {interests.some(i => i.status === 'updated_quote') && (
+            <div className="space-y-4">
+              <div className="flex items-center space-x-2">
+                <div className="p-2 rounded-full bg-orange-100">
+                  <AlertTriangle className="h-5 w-5 text-orange-600" />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-orange-800">Quote Updates Pending Your Approval</h3>
+                  <p className="text-sm text-orange-600">
+                    {interests.filter(i => i.status === 'updated_quote').length} professional(s) have updated their quotes
+                  </p>
+                </div>
+              </div>
+              
+              {interests
+                .filter(i => i.status === 'updated_quote')
+                .map((interest) => (
+                  <CustomerQuoteComparison
+                    key={interest.interest_id}
+                    interest={interest}
+                    onApprove={handleApproveQuoteUpdate}
+                    onDecline={handleDeclineQuoteUpdate}
+                    isLoading={actionLoading}
+                  />
+                ))
+              }
+              
+              <Separator className="my-6" />
+            </div>
+          )}
+
+          {/* Regular Interests Section */}
           {activeInterests.length === 0 ? (
             <Alert>
               <AlertCircle className="h-4 w-4" />
@@ -345,16 +494,19 @@ const CustomerAppointmentDashboard = ({ appointmentId }) => {
             </Alert>
           ) : (
             <div className="space-y-4">
-              {activeInterests.map((interest) => (
-                <InterestSelectionCard 
-                  key={interest.interest_id}
-                  interest={interest}
-                  onSelect={handleSelectProfessional}
-                  onReject={handleRejectProfessional}
-                  onMessage={handleMessageProfessional}
-                  isLoading={actionLoading}
-                />
-              ))}
+              {activeInterests
+                .filter(i => i.status !== 'updated_quote') // Exclude quote updates from regular list
+                .map((interest) => (
+                  <InterestSelectionCard 
+                    key={interest.interest_id}
+                    interest={interest}
+                    onSelect={handleSelectProfessional}
+                    onReject={handleRejectProfessional}
+                    onMessage={handleMessageProfessional}
+                    isLoading={actionLoading}
+                  />
+                ))
+              }
             </div>
           )}
         </TabsContent>

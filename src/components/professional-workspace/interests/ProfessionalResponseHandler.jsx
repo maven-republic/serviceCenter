@@ -19,6 +19,8 @@ import {
   useProfessionalResponseHandlers
 } from '@/primitives/professional'
 
+import QuoteUpdateForm from './forms/QuoteUpdate'
+
 // Import render components
 import {
   ProjectDetails,
@@ -239,14 +241,17 @@ export default function ProfessionalResponseHandler({
             />
           )}
 
-          {/* Update Quote Form - TODO: Create QuoteUpdateForm component */}
-          {currentView === 'update_quote' && (
-            <div className="p-4 bg-muted/20 border border-border rounded-md">
-              <p className="text-muted-foreground">
-                📝 QuoteUpdateForm component needs to be created
-              </p>
-            </div>
-          )}
+         {/* Update Quote Form - TODO: Create QuoteUpdateForm component */}
+{/* Quote Update Form */}
+{currentView === 'update_quote' && (
+  <QuoteUpdateForm
+    interest={interest}
+    responseMessage={responseMessage}
+    setResponseMessage={setResponseMessage}
+    onSubmit={handleUpdateQuote}
+    loading={loading}
+  />
+)}
         </div>
 
         {/* Footer Actions */}

@@ -190,7 +190,9 @@ export async function PUT(request, { params }) {
         professional_id: body.professional_id,
         decline_reason: body.decline_reason,
         hasMessage: !!body.decline_message,
-        hasReferrals: !!body.referral_suggestions
+        hasReferrals: !!body.referral_suggestions,
+        hasUpdatedQuote: !!body.updated_quote,
+        hasQuoteUpdateReason: !!body.quote_update_reason
       })
     } catch (parseError) {
       console.error('❌ Failed to parse request body:', parseError)
@@ -509,12 +511,14 @@ async function handleDeclineSelection(supabase, interest, body) {
   }
 }
 
+// ✅ ENHANCED handleAcceptSelection with Quote Change Detection
 async function handleAcceptSelection(supabase, interest, body) {
   const { 
     response_message,
     updated_quote,
     schedule_assessment,
-    assessment_details 
+    assessment_details,
+    quote_update_reason  // NEW: Reason for quote changes
   } = body
 
   console.log('✅ Processing accept selection:', {
@@ -525,16 +529,85 @@ async function handleAcceptSelection(supabase, interest, body) {
   })
 
   try {
-    // Update the interest record with acceptance
+    // ✅ NEW: Detect if quote has meaningful changes
+    const hasQuoteChanges = updated_quote && (
+      (updated_quote.amount && Math.abs(updated_quote.amount - (interest.amount || 0)) > 0.01) ||
+      (updated_quote.duration_hours && updated_quote.duration_hours !== interest.estimated_duration_hours) ||
+      (updated_quote.price_min && updated_quote.price_min !== interest.price_range_min) ||
+      (updated_quote.price_max && updated_quote.price_max !== interest.price_range_max) ||
+      updated_quote.scope_changes ||
+      updated_quote.timeline_changes
+    )
+
+    console.log('🔍 Quote change detection:', {
+      hasQuoteChanges,
+      originalAmount: interest.amount,
+      newAmount: updated_quote?.amount,
+      originalDuration: interest.estimated_duration_hours,
+      newDuration: updated_quote?.duration_hours
+    })
+
+    // ✅ NEW: Calculate price change percentage for validation
+    let priceChangePercent = 0
+    if (hasQuoteChanges && updated_quote.amount && interest.amount) {
+      priceChangePercent = ((updated_quote.amount - interest.amount) / interest.amount) * 100
+      console.log('💰 Price change percentage:', priceChangePercent.toFixed(2) + '%')
+    }
+
+    // ✅ NEW: Validate quote changes against business rules
+    if (hasQuoteChanges) {
+      // Rule 1: Require justification for price increases >20%
+      if (priceChangePercent > 20 && !quote_update_reason) {
+        return NextResponse.json(
+          { 
+            success: false, 
+            error: 'Quote increases over 20% require detailed justification',
+            price_change_percent: priceChangePercent.toFixed(2)
+          },
+          { status: 400 }
+        )
+      }
+
+      // Rule 2: Limit extreme price increases (>50%)
+      if (priceChangePercent > 50) {
+        return NextResponse.json(
+          { 
+            success: false, 
+            error: 'Quote increases over 50% are not permitted. Please contact customer directly.',
+            price_change_percent: priceChangePercent.toFixed(2)
+          },
+          { status: 400 }
+        )
+      }
+    }
+
+    // ✅ NEW: Determine appropriate status based on changes
+    const newStatus = hasQuoteChanges ? 'updated_quote' : 'confirmed'
+    
+    console.log('📋 Status determination:', {
+      hasQuoteChanges,
+      newStatus,
+      requiresCustomerApproval: hasQuoteChanges
+    })
+
+    // Update the interest record
     const updateData = {
-      response: 'confirmed',                        // Professional confirmed
-      status: 'confirmed',                          // Status updated to confirmed
-      replied: new Date().toISOString(),           // Reply timestamp
-      updated_at: new Date().toISOString()         // Updated timestamp
+      response: 'confirmed',
+      status: newStatus,  // ✅ NEW: Dynamic status based on changes
+      replied: new Date().toISOString(),
+      updated_at: new Date().toISOString()
     }
 
     if (response_message) {
       updateData.customer_notes = response_message
+    }
+
+    // ✅ NEW: Store original values before updating (for history)
+    const originalQuote = {
+      amount: interest.amount,
+      duration_hours: interest.estimated_duration_hours,
+      price_range_min: interest.price_range_min,
+      price_range_max: interest.price_range_max
     }
 
     // Add updated quote if provided
@@ -564,14 +637,65 @@ async function handleAcceptSelection(supabase, interest, body) {
       )
     }
 
-    // Update appointment to assign professional
+    // ✅ NEW: Create quote update history record if changes were made
+    if (hasQuoteChanges) {
+      console.log('📝 Creating quote update history record')
+      
+      const { error: historyError } = await supabase
+        .from('quote_update_history')
+        .insert({
+          interest_id: interest.interest_id,
+          appointment_id: interest.appointment_id,
+          professional_id: interest.professional_id,
+          
+          // Original values
+          original_amount: originalQuote.amount,
+          original_duration_hours: originalQuote.duration_hours,
+          original_price_range_min: originalQuote.price_range_min,
+          original_price_range_max: originalQuote.price_range_max,
+          
+          // Updated values
+          updated_amount: updated_quote.amount,
+          updated_duration_hours: updated_quote.duration_hours,
+          updated_price_range_min: updated_quote.price_min,
+          updated_price_range_max: updated_quote.price_max,
+          
+          // Change metadata
+          price_change_percent: priceChangePercent,
+          update_reason: quote_update_reason,
+          scope_changes: updated_quote.scope_changes,
+          timeline_changes: updated_quote.timeline_changes,
+          professional_justification: response_message,
+          
+          created_at: new Date().toISOString()
+        })
+
+      if (historyError) {
+        console.warn('⚠️ Failed to create quote history record:', historyError)
+        // Don't fail the main operation for history tracking failure
+      } else {
+        console.log('✅ Quote update history created successfully')
+      }
+    }
+
+    // ✅ NEW: Conditional appointment update based on quote changes
+    const appointmentUpdateData = {
+      updated_at: new Date().toISOString()
+    }
+
+    // Only assign professional and confirm if no quote changes (immediate confirmation)
+    if (!hasQuoteChanges) {
+      appointmentUpdateData.professional_id = interest.professional_id
+      appointmentUpdateData.status = 'confirmed'
+      console.log('✅ Immediate confirmation - no quote changes')
+    } else {
+      console.log('⏳ Pending customer approval - quote changes detected')
+      // Keep appointment in current status, don't assign professional yet
+    }
+
     const { error: appointmentError } = await supabase
       .from('appointment')
-      .update({
-        professional_id: interest.professional_id,
-        status: 'confirmed',
-        updated_at: new Date().toISOString()
-      })
+      .update(appointmentUpdateData)
       .eq('appointment_id', interest.appointment_id)
 
     if (appointmentError) {
@@ -579,14 +703,14 @@ async function handleAcceptSelection(supabase, interest, body) {
       return NextResponse.json(
         { 
           success: false, 
-          error: 'Failed to assign appointment',
+          error: 'Failed to update appointment',
           details: appointmentError.message 
         },
         { status: 500 }
       )
     }
 
-    // Create assessment if requested
+    // Create assessment if requested (regardless of quote changes)
     if (schedule_assessment && assessment_details) {
       console.log('📅 Creating assessment record')
       
@@ -614,12 +738,29 @@ async function handleAcceptSelection(supabase, interest, body) {
 
     console.log('✅ Professional acceptance processed successfully')
 
-    return NextResponse.json({
+    // ✅ NEW: Enhanced response with quote change information
+    const response = {
       success: true,
-      message: 'Selection accepted successfully',
+      message: hasQuoteChanges 
+        ? 'Quote updated successfully. Customer approval required.'
+        : 'Selection accepted successfully',
       interest: updatedInterest,
-      action: 'accept_selection'
-    })
+      action: 'accept_selection',
+      
+      // NEW: Quote change metadata
+      quote_changes: hasQuoteChanges ? {
+        has_changes: true,
+        price_change_percent: priceChangePercent,
+        requires_customer_approval: true,
+        original_quote: originalQuote,
+        updated_quote: updated_quote
+      } : {
+        has_changes: false,
+        requires_customer_approval: false
+      }
+    }
+
+    return NextResponse.json(response)
 
   } catch (error) {
     console.error('❌ Error in handleAcceptSelection:', error)

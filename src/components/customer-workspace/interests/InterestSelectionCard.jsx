@@ -1,4 +1,4 @@
-// Enhanced InterestSelectionCard.jsx - Now supports price ranges
+// Enhanced InterestSelectionCard.jsx - Now supports price ranges and quote updates
 "use client";
 
 import { useState } from 'react';
@@ -23,7 +23,9 @@ import {
   TrendingUp,
   Info,
   Eye,
-  Phone
+  Phone,
+  AlertTriangle,
+  CheckCircle
 } from 'lucide-react';
 
 const InterestSelectionCard = ({ 
@@ -81,13 +83,25 @@ const InterestSelectionCard = ({
     }).format(amount);
   };
 
+  // ✅ ENHANCED: Updated status badge with new quote update statuses
   const getStatusBadge = (status) => {
     const statusConfig = {
       interested: { variant: 'secondary', label: 'Interested' },
       quoted: { variant: 'default', label: 'Quoted' },
       selected: { variant: 'default', label: '✅ Selected', className: 'bg-green-100 text-green-800' },
+      updated_quote: { 
+        variant: 'destructive', 
+        label: '⚠️ Quote Updated', 
+        className: 'bg-orange-100 text-orange-800 border-orange-300 animate-pulse' 
+      },
+      confirmed: { 
+        variant: 'default', 
+        label: '✅ Confirmed', 
+        className: 'bg-green-100 text-green-800' 
+      },
       rejected: { variant: 'destructive', label: 'Rejected' },
-      withdrawn: { variant: 'outline', label: 'Withdrawn' }
+      withdrawn: { variant: 'outline', label: 'Withdrawn' },
+      declined_by_professional: { variant: 'outline', label: 'Declined' }
     };
 
     const config = statusConfig[status] || { variant: 'secondary', label: status };
@@ -110,6 +124,71 @@ const InterestSelectionCard = ({
                          interest.assessment_justification || 
                          interest.price_range_min || 
                          interest.price_range_max;
+
+    // ✅ NEW: Handle quote update status
+    if (interest.status === 'updated_quote') {
+      return (
+        <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center space-x-2">
+              <AlertTriangle className="h-5 w-5 text-orange-600" />
+              <div>
+                <h4 className="font-semibold text-orange-800">Quote Updated - Approval Required</h4>
+                <p className="text-sm text-orange-700">Professional has updated their quote and needs your approval</p>
+              </div>
+            </div>
+            <div className="text-right">
+              <div className="text-xl font-bold text-orange-700">
+                {formatCurrency(interest.amount)}
+              </div>
+              <Badge className="bg-orange-100 text-orange-800 border-orange-300">
+                Updated Quote
+              </Badge>
+            </div>
+          </div>
+          
+          {interest.estimated_duration_hours && (
+            <div className="text-sm text-orange-600 mb-2">
+              <Clock className="h-4 w-4 inline mr-1" />
+              Estimated Duration: {interest.estimated_duration_hours} hours
+            </div>
+          )}
+
+          <Alert className="bg-orange-100 border-orange-300">
+            <Info className="h-4 w-4 text-orange-600" />
+            <AlertDescription className="text-orange-800 text-sm">
+              <strong>Action Required:</strong> This quote has been updated and requires your approval before proceeding.
+              Please review the changes in the detailed comparison view.
+            </AlertDescription>
+          </Alert>
+        </div>
+      );
+    }
+
+    // ✅ NEW: Handle confirmed status
+    if (interest.status === 'confirmed') {
+      return (
+        <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-2">
+              <CheckCircle className="h-5 w-5 text-green-600" />
+              <div>
+                <h4 className="font-semibold text-green-800">Project Confirmed</h4>
+                <p className="text-sm text-green-700">Quote approved and professional assigned</p>
+              </div>
+            </div>
+            <div className="text-right">
+              <div className="text-2xl font-bold text-green-700">
+                {formatCurrency(interest.amount)}
+              </div>
+              <Badge className="bg-green-100 text-green-800 border-green-300">
+                Final Price
+              </Badge>
+            </div>
+          </div>
+        </div>
+      );
+    }
 
     // Scenario 1: Exact quote provided (no assessment needed)
     if (interest.amount && !hasAssessment) {
@@ -176,7 +255,7 @@ const InterestSelectionCard = ({
       );
     }
 
-    // Scenario 3: NEW - Price range (assessment required, no preliminary quote)
+    // Scenario 3: Price range (assessment required, no preliminary quote)
     if (hasAssessment && interest.price_range_min && interest.price_range_max) {
       return (
         <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
@@ -262,8 +341,16 @@ const InterestSelectionCard = ({
     );
   };
 
+  // ✅ NEW: Determine if actions should be disabled for quote updates
+  const isQuoteUpdatePending = interest.status === 'updated_quote';
+  const isConfirmedOrCompleted = ['confirmed', 'completed'].includes(interest.status);
+
   return (
-    <Card className={`transition-all hover:shadow-md ${interest.selected_by_customer ? 'ring-2 ring-green-300' : ''} ${className}`}>
+    <Card className={`transition-all hover:shadow-md ${
+      interest.selected_by_customer ? 'ring-2 ring-green-300' : ''
+    } ${
+      isQuoteUpdatePending ? 'ring-2 ring-orange-300 bg-orange-50/30' : ''
+    } ${className}`}>
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between">
           <div className="flex items-center space-x-3">
@@ -329,6 +416,17 @@ const InterestSelectionCard = ({
       </CardHeader>
 
       <CardContent className="space-y-4">
+        {/* ✅ NEW: Quote update alert */}
+        {isQuoteUpdatePending && (
+          <Alert className="bg-orange-100 border-orange-300">
+            <AlertTriangle className="h-4 w-4 text-orange-600" />
+            <AlertDescription className="text-orange-800">
+              <strong>Quote Update Pending:</strong> This professional has updated their quote. 
+              Please review the changes in the detailed comparison view above before making a decision.
+            </AlertDescription>
+          </Alert>
+        )}
+
         {/* Pricing Section - The main enhancement */}
         {getPricingSection()}
 
@@ -383,7 +481,7 @@ const InterestSelectionCard = ({
         <Separator />
 
         {/* Action Buttons */}
-        {showActions && !interest.selected_by_customer && (
+        {showActions && !interest.selected_by_customer && !isConfirmedOrCompleted && (
           <div className="flex items-center justify-between pt-2">
             <div className="flex items-center space-x-2">
               <Button
@@ -391,6 +489,7 @@ const InterestSelectionCard = ({
                 size="sm"
                 onClick={() => onMessage(interest)}
                 className="flex items-center space-x-1"
+                disabled={isQuoteUpdatePending}
               >
                 <MessageCircle className="h-3 w-3" />
                 <span>Message</span>
@@ -400,83 +499,104 @@ const InterestSelectionCard = ({
                 variant="outline"
                 size="sm"
                 className="flex items-center space-x-1"
+                disabled={isQuoteUpdatePending}
               >
                 <Phone className="h-3 w-3" />
                 <span>Call</span>
               </Button>
             </div>
             
-            <div className="flex items-center space-x-2">
-              {!showConfirmReject ? (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setShowConfirmReject(true)}
-                  disabled={isLoading || actionLoading}
-                >
-                  <X className="h-3 w-3 mr-1" />
-                  Reject
-                </Button>
-              ) : (
-                <div className="flex items-center space-x-1">
+            {/* ✅ NEW: Conditional action buttons based on status */}
+            {!isQuoteUpdatePending ? (
+              <div className="flex items-center space-x-2">
+                {!showConfirmReject ? (
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => setShowConfirmReject(false)}
+                    onClick={() => setShowConfirmReject(true)}
+                    disabled={isLoading || actionLoading}
                   >
-                    Cancel
+                    <X className="h-3 w-3 mr-1" />
+                    Reject
                   </Button>
-                  <Button
-                    variant="destructive"
-                    size="sm"
-                    onClick={handleReject}
-                    disabled={actionLoading}
-                  >
-                    {actionLoading ? 'Rejecting...' : 'Confirm'}
-                  </Button>
-                </div>
-              )}
-              
-              {!showConfirmSelect ? (
-                <Button
-                  size="sm"
-                  onClick={() => setShowConfirmSelect(true)}
-                  disabled={isLoading || actionLoading}
-                  className="bg-green-600 hover:bg-green-700"
-                >
-                  <Check className="h-3 w-3 mr-1" />
-                  Select Professional
-                </Button>
-              ) : (
-                <div className="flex items-center space-x-1">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setShowConfirmSelect(false)}
-                  >
-                    Cancel
-                  </Button>
+                ) : (
+                  <div className="flex items-center space-x-1">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setShowConfirmReject(false)}
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      onClick={handleReject}
+                      disabled={actionLoading}
+                    >
+                      {actionLoading ? 'Rejecting...' : 'Confirm'}
+                    </Button>
+                  </div>
+                )}
+                
+                {!showConfirmSelect ? (
                   <Button
                     size="sm"
-                    onClick={handleSelect}
-                    disabled={actionLoading}
+                    onClick={() => setShowConfirmSelect(true)}
+                    disabled={isLoading || actionLoading}
                     className="bg-green-600 hover:bg-green-700"
                   >
-                    {actionLoading ? 'Selecting...' : 'Confirm Selection'}
+                    <Check className="h-3 w-3 mr-1" />
+                    Select Professional
                   </Button>
-                </div>
-              )}
-            </div>
+                ) : (
+                  <div className="flex items-center space-x-1">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setShowConfirmSelect(false)}
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      size="sm"
+                      onClick={handleSelect}
+                      disabled={actionLoading}
+                      className="bg-green-600 hover:bg-green-700"
+                    >
+                      {actionLoading ? 'Selecting...' : 'Confirm Selection'}
+                    </Button>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <Alert className="bg-orange-100 border-orange-300 flex-1 max-w-md">
+                <AlertTriangle className="h-4 w-4 text-orange-600" />
+                <AlertDescription className="text-orange-800 text-sm">
+                  Please review the updated quote above before taking action.
+                </AlertDescription>
+              </Alert>
+            )}
           </div>
         )}
 
         {/* Selected Professional Message */}
-        {interest.selected_by_customer && (
+        {interest.selected_by_customer && !isQuoteUpdatePending && (
           <Alert className="bg-green-50 border-green-200">
             <Check className="h-4 w-4 text-green-600" />
             <AlertDescription className="text-green-800">
               <strong>✅ Professional Selected!</strong> 
               {interest.assessment ? ' Next step: Schedule your assessment.' : ' You can now proceed with this project.'}
+            </AlertDescription>
+          </Alert>
+        )}
+
+        {/* ✅ NEW: Confirmed Project Message */}
+        {isConfirmedOrCompleted && (
+          <Alert className="bg-green-50 border-green-200">
+            <CheckCircle className="h-4 w-4 text-green-600" />
+            <AlertDescription className="text-green-800">
+              <strong>🎉 Project Confirmed!</strong> Your quote has been approved and the professional is ready to begin work.
             </AlertDescription>
           </Alert>
         )}
