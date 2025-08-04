@@ -10,7 +10,7 @@ export default function AddServiceInformation() {
       <div className="container-fluid">
         <div className="row pb40 align-items-center">
           <div className="col-lg-9">
-            <DashboardNavigation />
+            {/* <DashboardNavigation /> */}
             <div className="dashboard_title_area mt-3">
               <h2>Add Services</h2>
               {/* <p className="text">Add new services you offer.</p> */}

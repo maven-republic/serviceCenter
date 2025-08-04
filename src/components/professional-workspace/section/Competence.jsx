@@ -4,15 +4,19 @@ import React, { useState, useEffect } from 'react'
 import { useUserStore } from '@/store/userStore'
 import { useSupabaseClient } from '@supabase/auth-helpers-react'
 import ServiceInformation from '../section/ServiceInformation'
-
-const serviceColors = [
-  'bg-info-subtle text-info',
-  'bg-success-subtle text-success',
-  'bg-warning-subtle text-warning',
-  'bg-danger-subtle text-danger',
-  'bg-primary-subtle text-primary',
-  'bg-secondary-subtle text-secondary'
-]
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
+import { 
+  Plus, 
+  Wrench, 
+  DollarSign, 
+  Clock, 
+  Layers, 
+  FolderOpen,
+  AlertTriangle,
+  Loader2
+} from 'lucide-react'
 
 export default function ProfessionalServices() {
   const { user } = useUserStore()
@@ -148,120 +152,115 @@ export default function ProfessionalServices() {
     fetchServices()
   }, [user?.account?.account_id, supabase])
 
-  const Header = (
-    <div className="d-flex justify-content-between align-items-center bdrb1 pb15 mb25">
-      <h5 className="list-title mb-0">Professional Services</h5>
-      <button
-        className="btn btn-sm btn-outline-primary rounded-circle d-flex align-items-center justify-content-center"
-        style={{ width: '36px', height: '36px' }}
-        onClick={() => setShowModal(true)}
-        aria-label="Add or Manage Services"
-      >
-        <i className="fa fa-plus fs-5"></i>
-      </button>
-    </div>
-  )
-
   return (
     <>
-      <div className="ps-widget bgc-white bdrs4 p30 mb30 overflow-hidden position-relative">
-        {Header}
-
-        {isLoading ? (
-          <div className="text-center py-4">
-            <div className="spinner-border spinner-border-sm text-primary" role="status">
-              <span className="visually-hidden">Loading...</span>
-            </div>
-            <p className="mt-2 mb-0">Loading services...</p>
-          </div>
-        ) : error ? (
-          <div className="alert alert-danger">
-            <i className="fas fa-exclamation-triangle me-2"></i>
-            Error loading services: {error}
-          </div>
-        ) : services.length === 0 ? (
-          <div className="text-center py-5">
-            <i className="fas fa-tools text-muted mb-3" style={{ fontSize: '48px' }}></i>
-            <h6 className="text-muted">No Services Added Yet</h6>
-            <p className="text-muted small mb-3">
-              Add services to showcase your professional expertise
-            </p>
-            <button 
-              className="btn btn-primary btn-sm"
+      <Card className="mb-6">
+        <CardHeader>
+          <div className="flex justify-between items-center">
+            <CardTitle className="text-xl font-semibold">Professional Services</CardTitle>
+            <Button
+              size="icon"
+              variant="outline"
+              className="h-9 w-9 rounded-full"
               onClick={() => setShowModal(true)}
+              aria-label="Add or Manage Services"
             >
-              <i className="fas fa-plus me-2"></i>
-              Add Your First Service
-            </button>
+              <Plus className="h-4 w-4" />
+            </Button>
           </div>
-        ) : (
-          <div className="row g-3">
-            {services.map((service, i) => (
-    <div key={service.service_id} className="col-6 col-md-4 col-lg-3">
-      <div className="card border-0 h-100">
-        <div className="card-body p-3">
-          
-          {/* 🎯 PRIMARY: Service Name (Most Important) */}
-          <h6 className="card-title fw-bold text-dark mb-2 lh-sm">
-            {service.name}
-          </h6>
-          
-          {/* 🎯 SECONDARY: Vertical (Business Context) */}
-          <div className="mb-2">
-            <span className="badge bg-primary-subtle text-primary px-2 py-1 fw-semibold rounded-pill">
-              <i className="fas fa-layer-group me-1" style={{ fontSize: '0.75rem' }}></i>
-              {service.vertical}
-            </span>
-          </div>
-          
-          {/* 🎯 TERTIARY: Portfolio (Specific Category) */}
-          <div className="mb-3">
-            <small className="text-muted fw-medium d-block">
-              <i className="fas fa-folder-open me-1"></i>
-              {service.portfolio}
-            </small>
-          </div>
-          
-          {/* 🎯 SUPPORTING: Service Details */}
-          <div className="d-flex flex-column gap-1 mt-auto">
-            {service.customPrice && (
-              <div className="small text-success fw-semibold">
-                <i className="fas fa-dollar-sign me-1"></i>
-                J$ {service.customPrice.toFixed(2)}
-              </div>
-            )}
-            {service.customDuration && (
-              <div className="small text-info">
-                <i className="fas fa-clock me-1"></i>
-                {service.customDuration} min
-              </div>
-            )}
-          </div>
-          
-        </div>
-      </div>
-    </div>
-  ))}                                                                                                                                                                                    
-</div>
-        )}
-      </div>
+        </CardHeader>
+
+        <CardContent>
+          {isLoading ? (
+            <div className="flex flex-col items-center justify-center py-8">
+              <Loader2 className="h-8 w-8 animate-spin text-primary mb-4" />
+              <p className="text-muted-foreground">Loading services...</p>
+            </div>
+          ) : error ? (
+            <div className="flex items-center gap-2 p-4 border border-destructive/20 bg-destructive/5 rounded-lg text-destructive">
+              <AlertTriangle className="h-4 w-4 flex-shrink-0" />
+              <span className="text-sm">Error loading services: {error}</span>
+            </div>
+          ) : services.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-12 text-center">
+              <Wrench className="h-12 w-12 text-muted-foreground mb-4" />
+              <h3 className="text-lg font-medium text-foreground mb-2">No Services Added Yet</h3>
+              <p className="text-muted-foreground text-sm mb-4 max-w-sm">
+                Add services to showcase your professional expertise and attract more clients
+              </p>
+              <Button onClick={() => setShowModal(true)} className="gap-2">
+                <Plus className="h-4 w-4" />
+                Add Your First Service
+              </Button>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+              {services.map((service, i) => (
+                <Card key={service.service_id} className="h-full hover:shadow-md transition-shadow duration-200">
+                  <CardContent className="p-4 flex flex-col h-full">
+                    
+                    {/* 🎯 PRIMARY: Service Name (Most Important) */}
+                    <h3 className="font-semibold text-foreground mb-3 line-clamp-2 text-sm leading-tight">
+                      {service.name}
+                    </h3>
+                    
+                    {/* 🎯 SECONDARY: Vertical (Business Context) */}
+                    <div className="mb-3">
+                      <Badge variant="default" className="gap-1 text-xs">
+                        <Layers className="h-3 w-3" />
+                        {service.vertical}
+                      </Badge>
+                    </div>
+                    
+                    {/* 🎯 TERTIARY: Portfolio (Specific Category) */}
+                    <div className="mb-4">
+                      <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                        <FolderOpen className="h-3 w-3" />
+                        <span className="truncate">{service.portfolio}</span>
+                      </div>
+                    </div>
+                    
+                    {/* 🎯 SUPPORTING: Service Details */}
+                    <div className="flex flex-col gap-2 mt-auto">
+                      {service.customPrice && (
+                        <div className="flex items-center gap-1 text-xs text-primary font-medium">
+                          <DollarSign className="h-3 w-3" />
+                          J$ {service.customPrice.toFixed(2)}
+                        </div>
+                      )}
+                      {service.customDuration && (
+                        <div className="flex items-center gap-1 text-xs text-primary">
+                          <Clock className="h-3 w-3" />
+                          {service.customDuration} min
+                        </div>
+                      )}
+                    </div>
+                    
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       {/* Service modal using ServiceInformation */}
       {showModal && (
-        <div className="modal fade show d-block" style={{ backgroundColor: 'rgba(0,0,0,0.4)' }}>
-          <div className="modal-dialog modal-xl modal-dialog-centered">
-            <div className="modal-content p-3">
-              <div className="modal-header">
-                <h5 className="modal-title">Manage Services</h5>
-                <button 
-                  type="button" 
-                  className="btn-close" 
-                  onClick={() => setShowModal(false)} 
-                />
-              </div>
-              <div className="modal-body">
-                <ServiceInformation />
-              </div>
+        <div className="fixed inset-0 z-50 bg-black/40 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0">
+          <div className="fixed left-[50%] top-[50%] z-50 w-full max-w-6xl translate-x-[-50%] translate-y-[-50%] bg-background p-6 shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%] rounded-lg border max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-semibold">Manage Services</h2>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setShowModal(false)}
+                className="h-6 w-6"
+              >
+                <Plus className="h-4 w-4 rotate-45" />
+              </Button>
+            </div>
+            <div>
+              <ServiceInformation />
             </div>
           </div>
         </div>

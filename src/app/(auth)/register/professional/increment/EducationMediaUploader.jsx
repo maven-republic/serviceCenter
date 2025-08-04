@@ -1,9 +1,13 @@
 'use client'
 
 import { useRef, useState } from 'react'
-import Modal from 'react-bootstrap/Modal'
-import Button from 'react-bootstrap/Button'
-import styles from './Education.module.css'
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Textarea } from "@/components/ui/textarea"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
+import { Card, CardContent } from "@/components/ui/card"
+import { Upload, FileText, Image } from "lucide-react"
 
 export default function EducationMediaUploader({ onUploadDraft }) {
   const fileInputRef = useRef(null)
@@ -36,83 +40,122 @@ export default function EducationMediaUploader({ onUploadDraft }) {
     onUploadDraft(mediaDraft)
     setShowModal(false)
     setSelectedFile(null)
+    setTitle('')
+    setDescription('')
+  }
+
+  const resetModal = () => {
+    setShowModal(false)
+    setSelectedFile(null)
+    setTitle('')
+    setDescription('')
   }
 
   return (
-    <div className="mt-4">
-      <label className={styles.label}>Add media like images, documents, or presentations.</label>
-
-      <div className="d-flex align-items-center gap-3 flex-wrap">
-        <button
-          type="button"
-          className={styles.mediaButton}
-          onClick={() => fileInputRef.current?.click()}
-        >
-          <span>+ Add Media</span>
-        </button>
-
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept="image/*,.pdf,.doc,.docx"
-          onChange={handleFileSelect}
-          className="d-none"
-        />
+    <div className="space-y-3">
+      <div className="text-sm text-muted-foreground">
+        Add media like images, documents, or presentations to support your education entry.
       </div>
 
-      <Modal show={showModal} onHide={() => setShowModal(false)} centered>
-        <Modal.Header closeButton>
-          <Modal.Title>Add Media</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          {selectedFile && (
-            <div className="mb-3">
-              {selectedFile.type.startsWith('image') ? (
-                <img
-                  src={URL.createObjectURL(selectedFile)}
-                  alt="preview"
-                  className="img-thumbnail"
-                  style={{ maxHeight: '200px', objectFit: 'contain' }}
-                />
-              ) : (
-                <div className="bg-light border rounded p-3 text-center">
-                  <i className="fas fa-file-alt fa-2x text-secondary" />
-                  <p className="small mt-2 mb-0">{selectedFile.name}</p>
-                </div>
-              )}
+      <Button
+        type="button"
+        variant="outline"
+        onClick={() => fileInputRef.current?.click()}
+        className="border-dashed"
+      >
+        <Upload className="h-4 w-4 mr-2" />
+        Add Media
+      </Button>
+
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*,.pdf,.doc,.docx"
+        onChange={handleFileSelect}
+        className="hidden"
+      />
+
+      <Dialog open={showModal} onOpenChange={resetModal}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Upload className="h-5 w-5" />
+              Add Media
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            {selectedFile && (
+              <Card>
+                <CardContent className="p-4">
+                  {selectedFile.type.startsWith('image') ? (
+                    <div className="space-y-3">
+                      <img
+                        src={URL.createObjectURL(selectedFile)}
+                        alt="preview"
+                        className="w-full h-32 object-cover rounded-md"
+                      />
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <Image className="h-4 w-4" />
+                        {selectedFile.name}
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-3 p-4 bg-muted rounded-md">
+                      <FileText className="h-8 w-8 text-muted-foreground" />
+                      <div>
+                        <p className="font-medium text-sm">{selectedFile.name}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {(selectedFile.size / 1024 / 1024).toFixed(2)} MB
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            )}
+
+            <div className="space-y-2">
+              <Label htmlFor="media-title" className="text-sm font-medium">
+                Title
+              </Label>
+              <Input
+                id="media-title"
+                type="text"
+                value={title}
+                onChange={e => setTitle(e.target.value)}
+                placeholder="Enter a descriptive title"
+              />
             </div>
-          )}
 
-          <div className="mb-3">
-            <label className={styles.label}>Title</label>
-            <input
-              type="text"
-              className={styles.input}
-              value={title}
-              onChange={e => setTitle(e.target.value)}
-            />
+            <div className="space-y-2">
+              <Label htmlFor="media-description" className="text-sm font-medium">
+                Description (Optional)
+              </Label>
+              <Textarea
+                id="media-description"
+                rows={3}
+                value={description}
+                onChange={e => setDescription(e.target.value)}
+                placeholder="Add a description or context for this media"
+              />
+            </div>
           </div>
 
-          <div className="mb-3">
-            <label className={styles.label}>Description</label>
-            <textarea
-              className={styles.input}
-              rows={3}
-              value={description}
-              onChange={e => setDescription(e.target.value)}
-            />
-          </div>
-        </Modal.Body>
-        <Modal.Footer>
-          <Button variant="secondary" onClick={() => setShowModal(false)}>
-            Cancel
-          </Button>
-          <Button variant="primary" onClick={handleDraftUpload}>
-            Save Draft
-          </Button>
-        </Modal.Footer>
-      </Modal>
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={resetModal}>
+              Cancel
+            </Button>
+            <Button 
+              type="button" 
+              onClick={handleDraftUpload}
+              disabled={!title.trim()}
+            >
+              Save Draft
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
-

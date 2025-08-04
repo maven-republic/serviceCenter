@@ -3,11 +3,17 @@
 import { useState, useEffect } from 'react'
 import { useSupabaseClient } from '@supabase/auth-helpers-react'
 import Select from 'react-select'
-import styles from './Education.module.css'
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Textarea } from "@/components/ui/textarea"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
+import { Checkbox } from "@/components/ui/checkbox"
+import { Badge } from "@/components/ui/badge"
+import { GraduationCap, Plus, X, Edit2, Trash2, Upload, Calendar, Building, BookOpen } from "lucide-react"
 import EducationCompetenceSelector from './EducationCompetenceSelector'
 import EducationMediaUploader from './EducationMediaUploader'
-import Modal from 'react-bootstrap/Modal'
-import Button from 'react-bootstrap/Button'
 import AcademicExperienceOverview from '@/components/professional-workspace/input/AcademicExperienceOverview'
 
 export default function Education({ formData, updateFormData }) {
@@ -52,9 +58,10 @@ export default function Education({ formData, updateFormData }) {
     fetchDegrees()
     fetchFields()
     fetchCompetences()
-  }, [])
+  }, [supabase])
 
   const buildDegreeOptions = () => degrees.map(degree => ({ value: degree.degree_id, label: degree.name }))
+  
   const buildGroupedFieldOptions = () => {
     const groups = {}
     for (const field of fieldsOfStudy) {
@@ -63,6 +70,7 @@ export default function Education({ formData, updateFormData }) {
     }
     return Object.entries(groups).map(([category, options]) => ({ label: category, options }))
   }
+  
   const buildInstitutionOptions = () => [
     ...institutions.map(inst => ({ value: inst.institution_id, label: `🎓 ${inst.name}` })),
     { value: '__new', label: '+ Add a new institution' }
@@ -127,212 +135,296 @@ export default function Education({ formData, updateFormData }) {
   }
 
   return (
-    <div className="container py-3">
-      <h4 className="fw-bold mb-4">Formal Education</h4>
-
-      {education.map((entry, index) => (
-        <div className="border rounded p-3 mb-4" key={index}>
-          {/* Institution */}
-          <div className={styles.fieldGroup}>
-            <label className={styles.label}>Institution</label>
-            <Select
-              className="react-select-container"
-              classNamePrefix="react-select"
-              options={buildInstitutionOptions()}
-              value={buildInstitutionOptions().find(opt => opt.value === entry.institutionId) || null}
-              onChange={selected => handleChange(index, 'institutionId', selected.value)}
-              placeholder="Search or select institution"
-              isSearchable
-            />
-          </div>
-
-          {entry.institutionId === '__new' && (
-            <div className={styles.fieldGroup}>
-              <label className={styles.label}>New Institution Name</label>
-              <input
-                type="text"
-                className={styles.input}
-                value={entry.institutionName}
-                onChange={e => handleChange(index, 'institutionName', e.target.value)}
-              />
-            </div>
-          )}
-
-          {/* Degree */}
-          <div className={styles.fieldGroup}>
-            <label className={styles.label}>Degree</label>
-            <Select
-              className="react-select-container"
-              classNamePrefix="react-select"
-              options={buildDegreeOptions()}
-              value={buildDegreeOptions().find(opt => opt.value === entry.degreeId) || null}
-              onChange={selected => handleChange(index, 'degreeId', selected.value)}
-              placeholder="Select degree"
-              isSearchable
-            />
-          </div>
-
-          {/* Field of Study */}
-          <div className={styles.fieldGroup}>
-            <label className={styles.label}>Field of Study</label>
-            <Select
-              className="react-select-container"
-              classNamePrefix="react-select"
-              options={buildGroupedFieldOptions()}
-              value={buildGroupedFieldOptions().flatMap(group => group.options).find(opt => opt.value === entry.fieldOfStudyId) || null}
-              onChange={selected => handleChange(index, 'fieldOfStudyId', selected.value)}
-              placeholder="Select field of study"
-              isSearchable
-            />
-          </div>
-
-          {/* Education Level */}
-          <div className={styles.fieldGroup}>
-            <label className={styles.label}>Education Level</label>
-            <Select
-              className="react-select-container"
-              classNamePrefix="react-select"
-              options={educationLevelOptions}
-              value={educationLevelOptions.find(opt => opt.value === entry.educationLevel) || null}
-              onChange={selected => handleChange(index, 'educationLevel', selected.value)}
-              placeholder="Select education level"
-              isSearchable
-            />
-          </div>
-
-          {/* Dates */}
-          <div className="row mb-3">
-            <div className="col-md-6">
-              <label className={styles.label}>Start Date</label>
-              <input
-                type="date"
-                className={styles.input}
-                value={entry.startDate}
-                onChange={e => handleChange(index, 'startDate', e.target.value)}
-              />
-            </div>
-            <div className="col-md-6">
-              <label className={styles.label}>End Date</label>
-              <input
-                type="date"
-                className={styles.input}
-                value={entry.endDate}
-                onChange={e => handleChange(index, 'endDate', e.target.value)}
-              />
-            </div>
-          </div>
-
-          <div className="form-check mb-3">
-            <input
-              className="form-check-input"
-              type="checkbox"
-              id={`current-${index}`}
-              checked={!entry.endDate}
-              onChange={e => handleChange(index, 'endDate', e.target.checked ? '' : new Date().toISOString().split('T')[0])}
-            />
-            <label className="form-check-label" htmlFor={`current-${index}`}>I'm currently attending</label>
-          </div>
-
-          <EducationCompetenceSelector
-            selected={entry.competenceIds || []}
-            allCompetences={competences}
-            onSelect={id => toggleEducationCompetence(index, id)}
-            onRemove={id => toggleEducationCompetence(index, id)}
-          />
-
-          <EducationMediaUploader onUploadDraft={media => handleAddMediaDraft(index, media)} />
-
-          {/* Uploaded Media */}
-          {entry.media?.length > 0 && (
-            <div className="mt-3">
-              <label className={styles.label}>Uploaded Media</label>
-              <div className="d-flex flex-wrap gap-3">
-                {entry.media.map((item, i) => (
-                  <div
-                    key={i}
-                    className="border rounded p-2 shadow-sm d-flex flex-column align-items-center"
-                    style={{ width: '150px' }}
-                  >
-                    {item.media_type === 'image' ? (
-                      <img src={item.previewUrl} alt={item.title} className="img-fluid rounded mb-2" />
-                    ) : (
-                      <div className="text-center mb-2 w-100 text-truncate" title={item.title}>
-                        <i className="fas fa-file-alt fa-2x text-muted" />
-                        <div className="small mt-1 mb-0">{item.title}</div>
-                      </div>
-                    )}
-
-                    <div className="d-flex gap-2">
-                      <button
-                        className="btn btn-outline-secondary btn-sm"
-                        onClick={() => setEditModal({ show: true, index, mediaIndex: i, title: item.title, description: item.description || '' })}
-                      >
-                        Edit
-                      </button>
-                      <button
-                        className="btn btn-outline-danger btn-sm"
-                        onClick={() => handleDeleteMedia(index, i)}
-                      >
-                        Delete
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          <div className="mt-4 mb-4">
-            <AcademicExperienceOverview
-              value={entry.description}
-              onChange={value => handleChange(index, 'description', value)}
-            />
-          </div>
-
-          <div className="text-end mt-3">
-            <button type="button" className="btn btn-outline-danger btn-sm" onClick={() => removeEntry(index)}>
-              Remove
-            </button>
-          </div>
+    <div className="w-full max-w-5xl mx-auto p-6 space-y-6">
+      <div className="space-y-2">
+        <div className="flex items-center gap-2">
+          <GraduationCap className="h-6 w-6 text-primary" />
+          <h2 className="text-2xl font-bold">Formal Education</h2>
         </div>
-      ))}
+        <p className="text-muted-foreground">
+          Add your educational background to showcase your qualifications to potential clients.
+        </p>
+      </div>
 
-      <button type="button" className="btn btn-outline-primary" onClick={addEntry}>+ Add Education</button>
+      <div className="space-y-6">
+        {education.map((entry, index) => (
+          <Card key={index} className="relative">
+            <CardHeader className="pb-4">
+              <CardTitle className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Building className="h-5 w-5" />
+                  Education Entry {index + 1}
+                </div>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => removeEntry(index)}
+                  className="text-destructive hover:text-destructive"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </CardTitle>
+            </CardHeader>
+            
+            <CardContent className="space-y-6">
+              {/* Institution Selection */}
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">Institution</Label>
+                <Select
+                  className="react-select-container"
+                  classNamePrefix="react-select"
+                  options={buildInstitutionOptions()}
+                  value={buildInstitutionOptions().find(opt => opt.value === entry.institutionId) || null}
+                  onChange={selected => handleChange(index, 'institutionId', selected.value)}
+                  placeholder="Search or select institution"
+                  isSearchable
+                />
+              </div>
 
-      <Modal show={editModal.show} onHide={() => setEditModal({ show: false, index: null, mediaIndex: null, title: '', description: '' })} centered>
-        <Modal.Header closeButton>
-          <Modal.Title>Edit Media</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          <div className="mb-3">
-            <label className={styles.label}>Title</label>
-            <input
-              type="text"
-              className={styles.input}
-              value={editModal.title}
-              onChange={e => setEditModal(prev => ({ ...prev, title: e.target.value }))}
-            />
+              {/* New Institution Name */}
+              {entry.institutionId === '__new' && (
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium">New Institution Name</Label>
+                  <Input
+                    type="text"
+                    value={entry.institutionName}
+                    onChange={e => handleChange(index, 'institutionName', e.target.value)}
+                    placeholder="Enter institution name"
+                  />
+                </div>
+              )}
+
+              {/* Degree and Field Grid */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Degree */}
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium">Degree</Label>
+                  <Select
+                    className="react-select-container"
+                    classNamePrefix="react-select"
+                    options={buildDegreeOptions()}
+                    value={buildDegreeOptions().find(opt => opt.value === entry.degreeId) || null}
+                    onChange={selected => handleChange(index, 'degreeId', selected.value)}
+                    placeholder="Select degree"
+                    isSearchable
+                  />
+                </div>
+
+                {/* Field of Study */}
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium">Field of Study</Label>
+                  <Select
+                    className="react-select-container"
+                    classNamePrefix="react-select"
+                    options={buildGroupedFieldOptions()}
+                    value={buildGroupedFieldOptions().flatMap(group => group.options).find(opt => opt.value === entry.fieldOfStudyId) || null}
+                    onChange={selected => handleChange(index, 'fieldOfStudyId', selected.value)}
+                    placeholder="Select field of study"
+                    isSearchable
+                  />
+                </div>
+              </div>
+
+              {/* Education Level */}
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">Education Level</Label>
+                <Select
+                  className="react-select-container"
+                  classNamePrefix="react-select"
+                  options={educationLevelOptions}
+                  value={educationLevelOptions.find(opt => opt.value === entry.educationLevel) || null}
+                  onChange={selected => handleChange(index, 'educationLevel', selected.value)}
+                  placeholder="Select education level"
+                  isSearchable
+                />
+              </div>
+
+              {/* Date Range */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium flex items-center gap-2">
+                    <Calendar className="h-4 w-4" />
+                    Start Date
+                  </Label>
+                  <Input
+                    type="date"
+                    value={entry.startDate}
+                    onChange={e => handleChange(index, 'startDate', e.target.value)}
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium flex items-center gap-2">
+                    <Calendar className="h-4 w-4" />
+                    End Date
+                  </Label>
+                  <Input
+                    type="date"
+                    value={entry.endDate}
+                    onChange={e => handleChange(index, 'endDate', e.target.value)}
+                    disabled={!entry.endDate && entry.startDate}
+                  />
+                </div>
+              </div>
+
+              {/* Currently Attending Checkbox */}
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id={`current-${index}`}
+                  checked={!entry.endDate}
+                  onCheckedChange={(checked) => 
+                    handleChange(index, 'endDate', checked ? '' : new Date().toISOString().split('T')[0])
+                  }
+                />
+                <Label htmlFor={`current-${index}`} className="text-sm cursor-pointer">
+                  I'm currently attending this program
+                </Label>
+              </div>
+
+              {/* Competence Selector */}
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">Skills & Competences</Label>
+                <EducationCompetenceSelector
+                  selected={entry.competenceIds || []}
+                  allCompetences={competences}
+                  onSelect={id => toggleEducationCompetence(index, id)}
+                  onRemove={id => toggleEducationCompetence(index, id)}
+                />
+              </div>
+
+              {/* Media Uploader */}
+              <div className="space-y-2">
+                <Label className="text-sm font-medium flex items-center gap-2">
+                  <Upload className="h-4 w-4" />
+                  Supporting Documents
+                </Label>
+                <EducationMediaUploader onUploadDraft={media => handleAddMediaDraft(index, media)} />
+              </div>
+
+              {/* Uploaded Media Display */}
+              {entry.media?.length > 0 && (
+                <div className="space-y-3">
+                  <Label className="text-sm font-medium">Uploaded Media</Label>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                    {entry.media.map((item, i) => (
+                      <Card key={i} className="relative group">
+                        <CardContent className="p-3">
+                          {item.media_type === 'image' ? (
+                            <img 
+                              src={item.previewUrl} 
+                              alt={item.title} 
+                              className="w-full h-20 object-cover rounded mb-2" 
+                            />
+                          ) : (
+                            <div className="w-full h-20 bg-muted rounded mb-2 flex items-center justify-center">
+                              <BookOpen className="h-8 w-8 text-muted-foreground" />
+                            </div>
+                          )}
+                          
+                          <p className="text-xs font-medium truncate mb-1">{item.title}</p>
+                          
+                          <div className="flex gap-1">
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              onClick={() => setEditModal({ 
+                                show: true, 
+                                index, 
+                                mediaIndex: i, 
+                                title: item.title, 
+                                description: item.description || '' 
+                              })}
+                              className="h-6 w-6 p-0"
+                            >
+                              <Edit2 className="h-3 w-3" />
+                            </Button>
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleDeleteMedia(index, i)}
+                              className="h-6 w-6 p-0 text-destructive hover:text-destructive"
+                            >
+                              <X className="h-3 w-3" />
+                            </Button>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Academic Experience Overview */}
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">Description</Label>
+                <AcademicExperienceOverview
+                  value={entry.description}
+                  onChange={value => handleChange(index, 'description', value)}
+                />
+              </div>
+
+            </CardContent>
+          </Card>
+        ))}
+
+        {/* Add Education Button */}
+        <Button 
+          type="button" 
+          variant="outline" 
+          onClick={addEntry}
+          className="w-full border-dashed border-2 h-12"
+        >
+          <Plus className="h-4 w-4 mr-2" />
+          Add Education Entry
+        </Button>
+      </div>
+
+      {/* Edit Media Modal */}
+      <Dialog open={editModal.show} onOpenChange={(open) => !open && setEditModal({ show: false, index: null, mediaIndex: null, title: '', description: '' })}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit Media</DialogTitle>
+          </DialogHeader>
+          
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label className="text-sm font-medium">Title</Label>
+              <Input
+                type="text"
+                value={editModal.title}
+                onChange={e => setEditModal(prev => ({ ...prev, title: e.target.value }))}
+                placeholder="Enter media title"
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label className="text-sm font-medium">Description</Label>
+              <Textarea
+                rows={3}
+                value={editModal.description}
+                onChange={e => setEditModal(prev => ({ ...prev, description: e.target.value }))}
+                placeholder="Enter media description"
+              />
+            </div>
           </div>
-          <div className="mb-3">
-            <label className={styles.label}>Description</label>
-            <textarea
-              className={styles.input}
-              rows={3}
-              value={editModal.description}
-              onChange={e => setEditModal(prev => ({ ...prev, description: e.target.value }))}
-            />
-          </div>
-        </Modal.Body>
-        <Modal.Footer>
-          <Button variant="secondary" onClick={() => setEditModal({ show: false, index: null, mediaIndex: null, title: '', description: '' })}>
-            Cancel
-          </Button>
-          <Button variant="primary" onClick={handleEditMedia}>
-            Save Changes
-          </Button>
-        </Modal.Footer>
-      </Modal>
+
+          <DialogFooter>
+            <Button 
+              type="button" 
+              variant="outline" 
+              onClick={() => setEditModal({ show: false, index: null, mediaIndex: null, title: '', description: '' })}
+            >
+              Cancel
+            </Button>
+            <Button type="button" onClick={handleEditMedia}>
+              Save Changes
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
-

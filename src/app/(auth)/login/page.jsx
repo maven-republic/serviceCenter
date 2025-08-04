@@ -20,11 +20,11 @@ function LoginInner() {
 
   return (
     <div>
-      <Header20 />
+      {/* <Header20 /> */}
       <section className="our-login">
         <LoginForm errorMessage={errorMessage} />
       </section>
-      <Footer />
+      {/* <Footer /> */}
     </div>
   )
 }

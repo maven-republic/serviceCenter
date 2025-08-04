@@ -1,0 +1,449 @@
+/* professional.css - Updated with shadcn/ui Sidebar Integration */
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ===== PROFESSIONAL WORKSPACE SCOPED VARIABLES ===== */
+.professional-workspace {
+  /* Dark theme CSS variables - ONLY for professional workspace */
+  --background: 0 0% 3.9%;
+  --foreground: 0 0% 98%;
+  --card: 0 0% 3.9%;
+  --card-foreground: 0 0% 98%;
+  --popover: 0 0% 3.9%;
+  --popover-foreground: 0 0% 98%;
+  --primary: 0 0% 98%;
+  --primary-foreground: 0 0% 9%;
+  --secondary: 0 0% 14.9%;
+  --secondary-foreground: 0 0% 98%;
+  --muted: 0 0% 14.9%;
+  --muted-foreground: 0 0% 63.9%;
+  
+  /* 🎯 CRITICAL FIX: Force accent to be dark gray to prevent green hover */
+  --accent: 0 0% 14.9% !important;
+  --accent-foreground: 0 0% 98% !important;
+  
+  --destructive: 0 62.8% 30.6%;
+  --destructive-foreground: 0 0% 98%;
+  --border: 0 0% 14.9%;
+  --input: 0 0% 14.9%;
+  --ring: 0 0% 83.1%;
+  --radius: 0.5rem;
+  
+  /* 🆕 SIDEBAR-SPECIFIC VARIABLES */
+  --sidebar-background: 0 0% 3.9%;
+  --sidebar-foreground: 0 0% 98%;
+  --sidebar-primary: 0 0% 98%;
+  --sidebar-primary-foreground: 0 0% 9%;
+  --sidebar-accent: 0 0% 14.9%;
+  --sidebar-accent-foreground: 0 0% 98%;
+  --sidebar-border: 0 0% 14.9%;
+  --sidebar-ring: 0 0% 83.1%;
+  --sidebar-width: 16rem;
+  --sidebar-width-mobile: 18rem;
+  --sidebar-width-icon: 3rem;
+  
+  /* Dark chart colors */
+  --chart-1: 0 0% 98%;
+  --chart-2: 0 0% 83.1%;
+  --chart-3: 0 0% 63.9%;
+  --chart-4: 0 0% 45.1%;
+  --chart-5: 0 0% 32.1%;
+  
+  /* Apply dark theme to the workspace */
+  background: hsl(var(--background));
+  color: hsl(var(--foreground));
+}
+
+/* ===== PROFESSIONAL SIDEBAR COMPONENT INTEGRATION ===== */
+
+/* Sidebar container - Professional styling with dark theme */
+.professional-workspace [data-sidebar="sidebar"] {
+  background: hsl(var(--sidebar-background)) !important;
+  border-right: 1px solid hsl(var(--sidebar-border)) !important;
+  color: hsl(var(--sidebar-foreground)) !important;
+  transition: all 0.2s ease !important;
+}
+
+/* Sidebar header styling */
+.professional-workspace [data-sidebar="header"] {
+  background: hsl(var(--sidebar-background)) !important;
+  border-bottom: 1px solid hsl(var(--sidebar-border)) !important;
+  padding: 1rem !important;
+}
+
+/* Sidebar content area */
+.professional-workspace [data-sidebar="content"] {
+  background: hsl(var(--sidebar-background)) !important;
+  padding: 0.5rem !important;
+}
+
+/* Sidebar footer */
+.professional-workspace [data-sidebar="footer"] {
+  background: hsl(var(--sidebar-background)) !important;
+  border-top: 1px solid hsl(var(--sidebar-border)) !important;
+  padding: 1rem !important;
+}
+
+/* Sidebar menu buttons - Professional dark theme */
+.professional-workspace [data-sidebar="menu-button"] {
+  background: transparent !important;
+  color: hsl(var(--sidebar-foreground)) !important;
+  border-radius: calc(var(--radius) - 2px) !important;
+  transition: all 0.2s ease !important;
+  padding: 0.5rem 0.75rem !important;
+  margin: 0.125rem 0 !important;
+  font-weight: 500 !important;
+}
+
+/* Sidebar menu button hover states - NO GREEN HOVER */
+.professional-workspace [data-sidebar="menu-button"]:hover {
+  background: hsl(var(--sidebar-accent)) !important;
+  color: hsl(var(--sidebar-accent-foreground)) !important;
+}
+
+/* Sidebar menu button active states */
+.professional-workspace [data-sidebar="menu-button"][data-active="true"] {
+  background: hsl(var(--sidebar-primary)) !important;
+  color: hsl(var(--sidebar-primary-foreground)) !important;
+  font-weight: 600 !important;
+}
+
+/* Sidebar group labels */
+.professional-workspace [data-sidebar="group-label"] {
+  color: hsl(var(--muted-foreground)) !important;
+  font-size: 0.75rem !important;
+  font-weight: 600 !important;
+  padding: 0.5rem 0.75rem 0.25rem !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.05em !important;
+}
+
+/* Sidebar trigger button */
+.professional-workspace [data-sidebar="trigger"] {
+  background: hsl(var(--sidebar-background)) !important;
+  border: 1px solid hsl(var(--sidebar-border)) !important;
+  color: hsl(var(--sidebar-foreground)) !important;
+  border-radius: calc(var(--radius) - 2px) !important;
+  transition: all 0.2s ease !important;
+}
+
+.professional-workspace [data-sidebar="trigger"]:hover {
+  background: hsl(var(--sidebar-accent)) !important;
+  color: hsl(var(--sidebar-accent-foreground)) !important;
+}
+
+/* Professional Sidebar collapsed state */
+.professional-workspace [data-state="collapsed"] [data-sidebar="menu-button"] {
+  padding: 0.5rem !important;
+  justify-content: center !important;
+}
+
+.professional-workspace [data-state="collapsed"] [data-sidebar="group-label"] {
+  display: none !important;
+}
+
+/* Sidebar separator */
+.professional-workspace [data-sidebar="separator"] {
+  background: hsl(var(--sidebar-border)) !important;
+  margin: 0.5rem 0 !important;
+}
+
+/* Sidebar mobile overlay */
+.professional-workspace [data-mobile="true"] {
+  background: hsl(var(--sidebar-background)) !important;
+  border: 1px solid hsl(var(--sidebar-border)) !important;
+}
+
+/* ===== SIDEBAR RESPONSIVE BEHAVIOR ===== */
+@media (max-width: 768px) {
+  .professional-workspace [data-sidebar="sidebar"] {
+    position: fixed !important;
+    left: 0 !important;
+    top: 0 !important;
+    height: 100vh !important;
+    width: var(--sidebar-width-mobile) !important;
+    z-index: 50 !important;
+    transform: translateX(-100%) !important;
+    transition: transform 0.3s ease !important;
+  }
+  
+  .professional-workspace [data-sidebar="sidebar"][data-state="open"] {
+    transform: translateX(0) !important;
+  }
+}
+
+/* ===== SIDEBAR SCROLLBAR STYLING ===== */
+.professional-workspace [data-sidebar="sidebar"] ::-webkit-scrollbar {
+  width: 6px !important;
+}
+
+.professional-workspace [data-sidebar="sidebar"] ::-webkit-scrollbar-track {
+  background: hsl(var(--sidebar-background)) !important;
+}
+
+.professional-workspace [data-sidebar="sidebar"] ::-webkit-scrollbar-thumb {
+  background: hsl(var(--sidebar-border)) !important;
+  border-radius: 3px !important;
+}
+
+.professional-workspace [data-sidebar="sidebar"] ::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--sidebar-accent)) !important;
+}
+
+/* ===== GLOBAL DROPDOWN FIXES (FOR PORTALS) ===== */
+/* These need to be global because dropdowns render outside the workspace scope */
+
+/* 🎯 CRITICAL: Professional workspace specific dropdown detection */
+/* When professional workspace is active, style ALL dropdowns globally */
+body:has(.professional-workspace) [data-radix-dropdown-menu-content],
+[data-radix-dropdown-menu-content][data-professional="true"] {
+  background: hsl(0 0% 3.9%) !important;  /* Dark background */
+  color: hsl(0 0% 98%) !important;         /* Light text */
+  border: 1px solid hsl(0 0% 14.9%) !important;  /* Dark border */
+  border-radius: 0.375rem !important;
+  box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -2px rgb(0 0 0 / 0.1) !important;
+  z-index: 9999 !important;
+  padding: 0.25rem !important;
+  min-width: 8rem !important;
+  backdrop-filter: blur(8px) !important;
+}
+
+/* Dropdown content wrapper - Global fix */
+body:has(.professional-workspace) [data-radix-popper-content-wrapper],
+[data-radix-popper-content-wrapper][data-professional="true"] {
+  z-index: 9999 !important;
+}
+
+body:has(.professional-workspace) [data-radix-popper-content-wrapper] > div,
+[data-radix-popper-content-wrapper][data-professional="true"] > div {
+  background: hsl(0 0% 3.9%) !important;
+  color: hsl(0 0% 98%) !important;
+  border: 1px solid hsl(0 0% 14.9%) !important;
+  border-radius: 0.375rem !important;
+  box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -2px rgb(0 0 0 / 0.1) !important;
+  z-index: 9999 !important;
+}
+
+/* 🚀 DROPDOWN MENU ITEMS - FIXED GREEN HOVER ISSUE */
+body:has(.professional-workspace) [data-radix-dropdown-menu-item],
+[data-radix-dropdown-menu-item][data-professional="true"] {
+  background: transparent !important;
+  color: hsl(0 0% 98%) !important;
+  padding: 0.375rem 0.5rem !important;
+  cursor: pointer !important;
+  border-radius: 0.25rem !important;
+  transition: background-color 0.15s ease !important;
+  margin: 0.125rem !important;
+  font-size: 0.875rem !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.5rem !important;
+}
+
+/* 🎯 CRITICAL FIX: Dropdown hover - Force dark gray, prevent green */
+body:has(.professional-workspace) [data-radix-dropdown-menu-item]:hover,
+body:has(.professional-workspace) [data-radix-dropdown-menu-item]:focus,
+body:has(.professional-workspace) [data-radix-dropdown-menu-item][data-state="open"],
+[data-radix-dropdown-menu-item][data-professional="true"]:hover,
+[data-radix-dropdown-menu-item][data-professional="true"]:focus,
+[data-radix-dropdown-menu-item][data-professional="true"][data-state="open"] {
+  background: hsl(0 0% 14.9%) !important;  /* 🚫 NO GREEN - Force dark gray */
+  color: hsl(0 0% 98%) !important;
+  outline: none !important;
+}
+
+/* Extra specificity for stubborn dropdown items */
+.professional-workspace [data-radix-dropdown-menu-item]:hover,
+.professional-workspace [data-radix-dropdown-menu-item]:focus {
+  background: hsl(0 0% 14.9%) !important;  /* Force dark gray */
+  color: hsl(0 0% 98%) !important;
+}
+
+/* Dropdown separator - Global fix */
+body:has(.professional-workspace) [data-radix-dropdown-menu-separator],
+[data-radix-dropdown-menu-separator][data-professional="true"] {
+  height: 1px !important;
+  background: hsl(0 0% 14.9%) !important;
+  margin: 0.25rem 0 !important;
+}
+
+/* ===== SHEET/DIALOG COMPONENT FIXES FOR SIDEBAR ===== */
+/* Mobile sidebar uses Sheet component - ensure professional styling */
+body:has(.professional-workspace) [data-radix-dialog-content],
+[data-radix-dialog-content][data-professional="true"] {
+  background: hsl(0 0% 3.9%) !important;
+  color: hsl(0 0% 98%) !important;
+  border: 1px solid hsl(0 0% 14.9%) !important;
+}
+
+body:has(.professional-workspace) [data-radix-dialog-overlay],
+[data-radix-dialog-overlay][data-professional="true"] {
+  background: rgb(0 0 0 / 0.8) !important;
+}
+
+/* ===== FALLBACK: Direct CSS Variable Injection ===== */
+/* For cases where :has() selector isn't supported */
+[data-radix-dropdown-menu-content] {
+  --dropdown-bg: 0 0% 3.9%;
+  --dropdown-fg: 0 0% 98%;
+  --dropdown-border: 0 0% 14.9%;
+  --dropdown-accent: 0 0% 14.9%;  /* Force dark gray accent */
+}
+
+[data-radix-dropdown-menu-content]:not([data-customer="true"]) {
+  background: hsl(var(--dropdown-bg)) !important;
+  color: hsl(var(--dropdown-fg)) !important;
+  border: 1px solid hsl(var(--dropdown-border)) !important;
+  border-radius: 0.375rem !important;
+  box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -2px rgb(0 0 0 / 0.1) !important;
+  z-index: 9999 !important;
+  padding: 0.25rem !important;
+  min-width: 8rem !important;
+}
+
+[data-radix-dropdown-menu-item]:not([data-customer="true"]) {
+  background: transparent !important;
+  color: hsl(var(--dropdown-fg)) !important;
+  padding: 0.375rem 0.5rem !important;
+  cursor: pointer !important;
+  border-radius: 0.25rem !important;
+  transition: background-color 0.15s ease !important;
+  margin: 0.125rem !important;
+  font-size: 0.875rem !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.5rem !important;
+}
+
+[data-radix-dropdown-menu-item]:not([data-customer="true"]):hover,
+[data-radix-dropdown-menu-item]:not([data-customer="true"]):focus {
+  background: hsl(var(--dropdown-accent)) !important;  /* Dark gray accent */
+  color: hsl(var(--dropdown-fg)) !important;
+  outline: none !important;
+}
+
+/* ===== ADDITIONAL GREEN HOVER PREVENTION ===== */
+/* Override any focus:bg-accent classes that might be causing green */
+.professional-workspace .focus\:bg-accent:focus,
+.professional-workspace .focus\:bg-accent:hover,
+.professional-workspace .hover\:bg-accent:hover {
+  background: hsl(0 0% 14.9%) !important;  /* Force dark gray */
+  color: hsl(0 0% 98%) !important;
+}
+
+/* Prevent button hover from showing green */
+.professional-workspace button:hover {
+  --accent: 0 0% 14.9% !important;
+  --accent-foreground: 0 0% 98% !important;
+}
+
+/* ===== DEPRECATED: OLD SIDEBAR UTILITIES (Keep for backward compatibility) ===== */
+.professional-workspace.dashboard-sidebar-hidden .dashboard__sidebar {
+  transform: translateX(-100%);
+}
+
+.professional-workspace.dashboard-sidebar-hidden .flex-1 {
+  margin-left: 0 !important;
+}
+
+.professional-workspace .dashboard__sidebar {
+  width: 280px !important;
+  position: fixed !important;
+  left: 0 !important;
+  top: 0 !important;
+  height: 100vh !important;
+  z-index: 40 !important;
+}
+
+/* ===== SCOPED TABLE IMPROVEMENTS ===== */
+.professional-workspace table {
+  background: transparent !important;
+  border-collapse: collapse !important;
+}
+
+.professional-workspace th {
+  background: transparent !important;
+  color: hsl(var(--muted-foreground)) !important;
+  border-bottom: 1px solid hsl(var(--border)) !important;
+}
+
+.professional-workspace td {
+  background: transparent !important;
+  color: hsl(var(--foreground)) !important;
+  border-bottom: 1px solid hsl(var(--border)) !important;
+}
+
+.professional-workspace tr:hover {
+  background: hsl(var(--muted) / 0.5) !important;
+}
+
+.professional-workspace tr[data-state="selected"] {
+  background: hsl(var(--muted)) !important;
+}
+
+/* ===== SCOPED BUTTON IMPROVEMENTS ===== */
+.professional-workspace button[data-state="open"] {
+  background: hsl(var(--accent)) !important;
+  color: hsl(var(--accent-foreground)) !important;
+}
+
+/* ===== SCOPED TOOLTIP FIXES ===== */
+.professional-workspace [data-radix-tooltip-content] {
+  background: hsl(var(--popover)) !important;
+  color: hsl(var(--popover-foreground)) !important;
+  border: 1px solid hsl(var(--border)) !important;
+  border-radius: calc(var(--radius) - 2px) !important;
+  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1) !important;
+  z-index: 9999 !important;
+  padding: 0.375rem 0.75rem !important;
+  font-size: 0.875rem !important;
+}
+
+/* ===== SCOPED SCROLLBAR STYLING ===== */
+.professional-workspace ::-webkit-scrollbar {
+  width: 8px;
+}
+
+.professional-workspace ::-webkit-scrollbar-track {
+  background: hsl(var(--muted));
+}
+
+.professional-workspace ::-webkit-scrollbar-thumb {
+  background: hsl(var(--muted-foreground));
+  border-radius: 4px;
+}
+
+.professional-workspace ::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--foreground));
+}
+
+/* ===== SCOPED FOCUS VISIBLE IMPROVEMENTS ===== */
+.professional-workspace *:focus-visible {
+  outline: 2px solid hsl(var(--ring)) !important;
+  outline-offset: 2px !important;
+  border-radius: calc(var(--radius) - 2px);
+}
+
+/* ===== SCOPED ANIMATION IMPROVEMENTS ===== */
+.professional-workspace * {
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ===== MOBILE RESPONSIVE IMPROVEMENTS ===== */
+@media (max-width: 768px) {
+  .professional-workspace .dashboard__sidebar {
+    width: 280px !important;
+  }
+  
+  body:has(.professional-workspace) [data-radix-dropdown-menu-content],
+  [data-radix-dropdown-menu-content]:not([data-customer="true"]) {
+    max-width: calc(100vw - 2rem) !important;
+    min-width: 10rem !important;
+  }
+  
+  .professional-workspace .space-y-6 {
+    gap: 1rem !important;
+  }
+}

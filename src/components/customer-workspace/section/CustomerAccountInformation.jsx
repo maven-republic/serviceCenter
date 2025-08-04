@@ -1,9 +1,18 @@
 "use client";
+
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useUserStore } from "@/store/userStore";
 import { createClient } from '@supabase/supabase-js';
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Separator } from "@/components/ui/separator";
+import { CheckCircle, Edit3, User, Mail, Phone, Shield } from "lucide-react";
 
 // Supabase client setup (typically in a separate utility file)
 const supabase = createClient(
@@ -65,97 +74,159 @@ export default function CustomerAccountInformation() {
   };
 
   return (
-    <>
-    <div className="ps-widget bgc-white bdrs4 p30 mb30 overflow-hidden position-relative">
-      <div className="bdrb1 pb15 mb25">
-        <h5 className="list-title">Customer Information</h5>
-      </div>
-      <div className="col-xl-7">
-        <div className="profile-box d-sm-flex align-items-center mb30">
-          <div className="profile-img mb20-sm">
-            <Image
-              height={71}
-              width={71}
-              className="rounded-circle wa-xs"
-              src={selectedImage || "/images/team/customer-default.png"}
-              style={{
-                height: "71px",
-                width: "71px",
-                objectFit: "cover",
-              }}
-              alt="Headshot of Customer"
-            />
+    <Card className="w-full max-w-4xl mx-auto">
+      <CardHeader className="space-y-1">
+        <CardTitle className="text-2xl font-semibold flex items-center gap-2">
+          <User className="h-6 w-6" />
+          Customer Information
+        </CardTitle>
+        <p className="text-sm text-muted-foreground">
+          View and manage your account details
+        </p>
+      </CardHeader>
+      
+      <Separator />
+      
+      <CardContent className="p-6">
+        {/* Profile Section */}
+        <div className="space-y-6">
+          {/* Avatar Section */}
+          <div className="flex items-center gap-6">
+            <Avatar className="h-20 w-20">
+              <AvatarImage 
+                src={selectedImage || "/images/team/customer-default.png"}
+                alt="Customer Profile"
+              />
+              <AvatarFallback className="text-lg">
+                {user?.account?.first_name?.[0]}{user?.account?.last_name?.[0]}
+              </AvatarFallback>
+            </Avatar>
+            
+            <div className="space-y-2">
+              <h3 className="text-lg font-medium">
+                {user?.account?.first_name} {user?.account?.last_name}
+              </h3>
+              <p className="text-sm text-muted-foreground">
+                Customer Account
+              </p>
+              <Button variant="outline" size="sm" className="gap-2">
+                <Edit3 className="h-4 w-4" />
+                Change Photo
+              </Button>
+            </div>
           </div>
-        </div>
-      </div>
-      <div className="col-lg-7">
-        <form className="form-style1">
-          <div className="row">
-            <div className="col-sm-6">
-              <div className="mb20">
-                <label className="heading-color ff-heading fw500 mb10">
-                  Name
-                </label>
-                <input
-                  type="text"
-                  className="form-control" 
-                  value={`${user?.account?.first_name || ''} ${user?.account?.last_name || ''}`}
-                  disabled
-                />
-              </div>
+
+          <Separator />
+
+          {/* Account Details */}
+          <div className="grid gap-6 md:grid-cols-2">
+            {/* Full Name */}
+            <div className="space-y-2">
+              <Label className="text-sm font-medium flex items-center gap-2">
+                <User className="h-4 w-4" />
+                Full Name
+              </Label>
+              <Input
+                value={`${user?.account?.first_name || ''} ${user?.account?.last_name || ''}`}
+                disabled
+                className="bg-muted"
+              />
             </div>
-            <div className="col-sm-6">
-              <div className="mb20">
-                <label className="heading-color ff-heading fw500 mb10">
-                  Email Address {user?.email_confirmed_at && <span style={{color: "green"}}>(Verified)</span>}
-                </label>
-                <input
-                  type="email"
-                  className="form-control" 
-                  value={user?.email || user?.account?.email}
-                  disabled
-                />
-              </div>
+
+            {/* Email Address */}
+            <div className="space-y-2">
+              <Label className="text-sm font-medium flex items-center gap-2">
+                <Mail className="h-4 w-4" />
+                Email Address
+                {user?.email_confirmed_at && (
+                  <Badge variant="default" className="ml-2 gap-1">
+                    <CheckCircle className="h-3 w-3" />
+                    Verified
+                  </Badge>
+                )}
+              </Label>
+              <Input
+                type="email"
+                value={user?.email || user?.account?.email || ''}
+                disabled
+                className="bg-muted"
+              />
             </div>
-            <div className="col-sm-6">
-              <div className="mb20">
-                <label className="heading-color ff-heading fw500 mb10">
-                  Phone Number
-                </label>
-                <input
-                  type="text"
-                  className="form-control" 
-                  value={phoneLoading ? 'Loading...' : (phoneNumber || 'No phone number exists')}
-                  disabled
-                />
-              </div>
+
+            {/* Phone Number */}
+            <div className="space-y-2">
+              <Label className="text-sm font-medium flex items-center gap-2">
+                <Phone className="h-4 w-4" />
+                Phone Number
+              </Label>
+              <Input
+                value={phoneLoading ? 'Loading...' : (phoneNumber || 'No phone number exists')}
+                disabled
+                className="bg-muted"
+              />
             </div>
-            <div className="col-sm-6">
-              <div className="mb20">
-                <label className="heading-color ff-heading fw500 mb10">
-                  Membership
-                </label>
-                <input
-                  type="text"
-                  className="form-control"
+
+            {/* Membership */}
+            <div className="space-y-2">
+              <Label className="text-sm font-medium flex items-center gap-2">
+                <Shield className="h-4 w-4" />
+                Membership
+              </Label>
+              <div className="flex items-center gap-2">
+                <Input
                   value="Customer"
                   disabled
+                  className="bg-muted flex-1"
                 />
-              </div>
-            </div>
-            <div className="col-md-12">
-              <div className="text-start">
-                <Link className="ud-btn btn-thm" href="/dashboard/edit-profile">
-                  Edit Profile
-                  <i className="fal fa-arrow-right-long" />
-                </Link>
+                <Badge variant="secondary">Active</Badge>
               </div>
             </div>
           </div>
-        </form>
-      </div>
-    </div>
-    </>
+
+          <Separator />
+
+          {/* Account Statistics */}
+          <div className="grid gap-4 md:grid-cols-3">
+            <Card className="bg-primary/5 border-primary/20">
+              <CardContent className="p-4 text-center">
+                <div className="text-2xl font-bold text-primary">0</div>
+                <div className="text-sm text-muted-foreground">Active Bookings</div>
+              </CardContent>
+            </Card>
+            
+            <Card className="bg-secondary/5 border-secondary/20">
+              <CardContent className="p-4 text-center">
+                <div className="text-2xl font-bold">0</div>
+                <div className="text-sm text-muted-foreground">Completed Services</div>
+              </CardContent>
+            </Card>
+            
+            <Card className="bg-accent/5 border-accent/20">
+              <CardContent className="p-4 text-center">
+                <div className="text-2xl font-bold">5.0</div>
+                <div className="text-sm text-muted-foreground">Average Rating</div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Action Buttons */}
+          <div className="flex flex-col sm:flex-row gap-3 pt-4">
+            <Button asChild className="gap-2">
+              <Link href="/customer/edit-profile">
+                <Edit3 className="h-4 w-4" />
+                Edit Profile
+              </Link>
+            </Button>
+            
+            <Button variant="outline" asChild className="gap-2">
+              <Link href="/customer/settings">
+                <Shield className="h-4 w-4" />
+                Account Settings
+              </Link>
+            </Button>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
   );
 }
-

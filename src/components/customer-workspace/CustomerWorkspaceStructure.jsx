@@ -1,83 +1,54 @@
 "use client";
 
 import toggleStore from "@/store/toggleStore";
-import CustomerSideNavigation from "./sidebar/CustomerSideNavigation";
+import CustomerWorkspaceNavigation from "./sidebar/CustomerWorkspaceNavigation ";
 import { useUserStore } from "@/store/userStore";
-import { getSession } from '@/utils/supabase/client';
+import { createClient } from '@/utils/supabase/client';
 import { useEffect } from "react";
-import GlobalSearch from "@/components/customer-workspace/element/GlobalSearch";
-import Link from 'next/link';
-import { Bell, User } from 'lucide-react';
-import Axis from "./header/Axis";
+import { cn } from "@/lib/utils";
 
-export default function CustomerWorkspaceLayout({ children }) {
+export default function CustomerWorkspaceStructure({ children }) {
   const isActive = toggleStore((state) => state.isDasboardSidebarActive); 
-  const { user, fetchUser } = useUserStore()
+  const { user, fetchUser } = useUserStore();
 
   useEffect(() => {    
     async function setUser() {
-      const session = await getSession()
-      if (session) {
+      const supabase = createClient();
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (session?.user) {
         console.log("session.user: ", session.user);
-        fetchUser(session.user) 
+        await fetchUser(session.user, supabase);
       }
     }  
 
-    user === null && 
-    setUser()  
-  }, [])
+    if (user === null) {
+      setUser();
+    }
+  }, [user, fetchUser]);
 
   return (
-    <>
-    <Axis/>
-      {/* Dashboard Header with Search */}
-      <header className="bg-white border-b border-gray-200 sticky top-0 z-30">
-        <div className="container mx-auto px-4 py-3 flex items-center justify-between">
-          {/* Logo */}
-          <Link href="/customer" className="font-bold text-xl text-blue-600">
-            {/* ServiceMarket */}
-          </Link>
-          
-          {/* Search */}
-         
-          
-          {/* User Menu
-          <div className="flex items-center space-x-4">
-            <Link
-              href="/customer/notifications"
-              className="p-2 text-gray-600 hover:text-blue-600 relative"
-            >
-              <Bell size={20} />
-              Notification indicator
-              {user?.notifications > 0 && (
-                <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
-              )}
-            </Link>
-            
-            <Link
-              href="/customer/account"
-              className="p-2 text-gray-600 hover:text-blue-600"
-            >
-              <User size={20} />
-            </Link>
-          </div> */}
-        </div>
-      </header>
-
-      <div className="dashboard_content_wrapper">
-        <div
-          className={`dashboard dashboard_wrapper pr30 pr0-xl ${
-            isActive ? "dsh_board_sidebar_hidden" : ""
-          }`}
-        >
-          <CustomerSideNavigation />
-          <div className="dashboard__main pl0-md">
-            {children}
-          </div>
-          <CustomerSideNavigation />
+    // FIXED: Removed h-screen and overflow constraints to allow sticky positioning
+    <div className="min-h-screen bg-background">
+      <div className="flex">
+        {/* Sidebar Container - FIXED: Removed h-full that was causing issues */}
+       <div className={cn(
+  "transition-all duration-300 ease-in-out flex-shrink-0",
+  isActive ? "w-0 overflow-hidden" : "w-28"  // ✅ Updated to match sidebar
+)}>
+  <CustomerWorkspaceNavigation />
+</div>
+        
+        {/* Main Content Area - FIXED: Removed overflow-hidden and flex constraints */}
+        <div className="flex-1 min-h-screen">
+          {/* Main Content */}
+          <main className="p-6">
+            <div className="max-w-7xl mx-auto">
+              {children}
+            </div>
+          </main>
         </div>
       </div>
-    </>
+    </div>
   );
 }
-

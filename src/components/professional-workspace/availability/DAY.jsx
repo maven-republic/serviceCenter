@@ -1,37 +1,183 @@
 'use client'
 
-import { format, parse, parseISO, isValid } from 'date-fns'
+import { Badge } from '@/components/ui/badge'
+import { 
+  Clock, 
+  Circle,
+  CheckCircle
+} from 'lucide-react'
 
-function formatTime12(timeStr) {
+// Helper functions to replace date-fns
+const formatDayAndDate = (date) => {
+  const dayName = date.toLocaleDateString('en-US', { weekday: 'short' })
+  const dayNumber = date.getDate()
+  return `${dayName} ${dayNumber}`
+}
+
+const formatTime12 = (timeStr) => {
   if (!timeStr) return ''
   try {
-    let parsed
-    if (typeof timeStr === 'string' && timeStr.length <= 5 && timeStr.includes(':')) {
-      parsed = parse(timeStr, 'HH:mm', new Date())
-    } else {
-      parsed = parseISO(timeStr)
-    }
-    return isValid(parsed) ? format(parsed, 'h:mm a') : ''
+    const [hours, minutes] = timeStr.split(':')
+    const hour24 = parseInt(hours, 10)
+    const hour12 = hour24 % 12 || 12
+    const ampm = hour24 >= 12 ? 'PM' : 'AM'
+    return `${hour12}:${minutes} ${ampm}`
   } catch {
-    return ''
+    return timeStr
   }
 }
 
-export default function Day({ date, isToday, slots = [] }) {
+export default function Day({ 
+  date, 
+  isToday = false, 
+  isSelected = false,
+  slots = [],
+  onClick,
+  className = '',
+  showTimes = false,
+  size = 'default' // 'sm', 'default', 'lg'
+}) {
+  const hasSlots = slots && slots.length > 0
+  const dayName = date.toLocaleDateString('en-US', { weekday: 'short' })
+  const dayNumber = date.getDate()
+
+  // Size configurations
+  const sizeClasses = {
+    sm: 'h-16 text-xs',
+    default: 'h-20 text-sm', 
+    lg: 'h-24 text-base'
+  }
+
+  const handleClick = (e) => {
+    e.stopPropagation()
+    onClick?.(date)
+  }
+
   return (
     <div
-      className={`px-1 py-1 text-muted small d-flex flex-column justify-content-between border rounded-0 ${
-        isToday ? 'bg-primary text-white' : 'bg-white'
-      }`}
-      style={{ height: '80px', fontSize: '0.75rem' }}
+      className={`
+        ${sizeClasses[size]}
+        relative flex flex-col justify-between p-2 border rounded-lg transition-all duration-200
+        ${onClick ? 'cursor-pointer hover:shadow-sm hover:border-primary/50' : ''}
+        ${isToday ? 'bg-primary/5 border-primary ring-1 ring-primary/20' : 'bg-background border-border'}
+        ${isSelected ? 'ring-2 ring-primary bg-primary/10' : ''}
+        ${hasSlots ? 'border-green-200 bg-green-50/30' : ''}
+        ${className}
+      `}
+      onClick={handleClick}
     >
-      <div className="fw-semibold">{format(date, 'EEE dd')}</div>
+      {/* Date Header */}
+      <div className="flex items-center justify-between">
+        <div className={`
+          flex flex-col items-center justify-center
+          ${isToday ? 'text-primary font-bold' : 'text-foreground font-medium'}
+        `}>
+          <div className="text-xs text-muted-foreground">{dayName}</div>
+          <div className={`
+            ${size === 'lg' ? 'text-lg' : size === 'sm' ? 'text-sm' : 'text-base'}
+            leading-none
+          `}>
+            {dayNumber}
+          </div>
+        </div>
 
-      {slots.length === 0 ? (
-        <div style={{ fontSize: '0.65rem' }}>–</div>
-      ) : (
-        <span className="text-success">●</span>
+        {/* Status Indicator */}
+        <div className="flex flex-col items-center gap-1">
+          {isToday && (
+            <Badge variant="default" className="text-xs px-1 py-0 h-4">
+              Today
+            </Badge>
+          )}
+          
+          {hasSlots ? (
+            <div className="flex items-center gap-1">
+              <Circle className="h-2 w-2 fill-green-500 text-green-500" />
+              {size !== 'sm' && (
+                <span className="text-xs text-primary font-medium">
+                  {slots.length}
+                </span>
+              )}
+            </div>
+          ) : (
+            <div className="h-2 w-2 rounded-full bg-muted" />
+          )}
+        </div>
+      </div>
+
+      {/* Slots Content */}
+      <div className="flex-1 flex flex-col justify-center min-h-0">
+        {hasSlots ? (
+          <div className="space-y-1">
+            {showTimes && size !== 'sm' ? (
+              // Show actual times
+              <>
+                {slots.slice(0, size === 'lg' ? 3 : 2).map((slot, i) => (
+                  <div 
+                    key={i}
+                    className="text-xs text-green-700 bg-green-100 px-1 py-0.5 rounded truncate"
+                  >
+                    {formatTime12(slot.start_time)}
+                  </div>
+                ))}
+                {slots.length > (size === 'lg' ? 3 : 2) && (
+                  <div className="text-xs text-muted-foreground text-center">
+                    +{slots.length - (size === 'lg' ? 3 : 2)} more
+                  </div>
+                )}
+              </>
+            ) : (
+              // Show availability indicator
+              <div className="text-center">
+                <CheckCircle className="h-4 w-4 text-primary mx-auto mb-1" />
+                <div className="text-xs text-primary font-medium">
+                  Available
+                </div>
+                {size === 'lg' && (
+                  <div className="text-xs text-muted-foreground">
+                    {slots.length} slot{slots.length !== 1 ? 's' : ''}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        ) : (
+          // No availability
+          <div className="text-center">
+            <div className="text-xs text-muted-foreground">
+              {size === 'sm' ? '–' : 'No availability'}
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Hover Overlay */}
+      {onClick && (
+        <div className="absolute inset-0 bg-primary/5 opacity-0 hover:opacity-100 transition-opacity duration-200 rounded-lg pointer-events-none" />
+      )}
+
+      {/* Selection Ring */}
+      {isSelected && (
+        <div className="absolute inset-0 border-2 border-primary rounded-lg pointer-events-none" />
       )}
     </div>
   )
 }
+
+// Preset variants for common use cases - FIXED with proper display names
+const DaySmall = (props) => <Day {...props} size="sm" />
+DaySmall.displayName = 'Day.Small'
+
+const DayLarge = (props) => <Day {...props} size="lg" showTimes />
+DayLarge.displayName = 'Day.Large'
+
+const DayInteractive = (props) => <Day {...props} onClick={props.onClick || (() => {})} />
+DayInteractive.displayName = 'Day.Interactive'
+
+const DayReadOnly = (props) => <Day {...props} onClick={undefined} />
+DayReadOnly.displayName = 'Day.ReadOnly'
+
+// Attach the variants to the main component
+Day.Small = DaySmall
+Day.Large = DayLarge
+Day.Interactive = DayInteractive
+Day.ReadOnly = DayReadOnly

@@ -1,28 +1,29 @@
 // Updated navigation data structure with Service Pricing added
+// src/data/dashboard.js (Updated customer navigation)
 export const customerNavigation = {
   workspace: [
     {
       id: 1,
-      name: 'Search',
+      name: 'Explore',
       icon: 'flaticon-search',
       path: "/customer/workspace",
     },
     {
-      id: 4,
-      name: "Explore",
-      icon: "flaticon-rocket",
-      path: "/customer/explore",
+      id: 2,
+      name: 'Appointments', // 🆕 NEW
+      icon: 'flaticon-calendar',
+      path: "/customer/appointments",
     }
   ],
   account: [
     {
-      id: 2,
+      id: 3,
       name: "Analytics",
       icon: "flaticon-home",
       path: "/customer/analytics",
     },
     {
-      id: 3,
+      id: 4,
       name: "Account Information",
       icon: "flaticon-photo",
       path: "/customer/account-information",
@@ -45,85 +46,92 @@ export const professionalNavigation = [
     icon: "flaticon-home",
     path: "/professional/workspace",
   },
+
   {
     id: 2,
-    name: "Projects",
-    icon: "flaticon-document",
-    path: "/professional/projects",
+    name: "Appointments", // 🆕 NEW APPOINTMENT LINK
+    icon: "flaticon-appointment",
+    path: "/professional/manage-appointments",
   },
-  {
-    id: 3,
-    name: "Saved",
-    icon: "flaticon-like",
-    path: "/saved",
-  },
-  {
-    id: 4,
-    name: "Message",
-    icon: "flaticon-chat",
-    path: "/message",
-  },
-  {
-    id: 5,
-    name: "Reviews",
-    icon: "flaticon-review-1",
-    path: "/reviews",
-  },
-  {
-    id: 6,
-    name: "Invoice",
-    icon: "flaticon-receipt",
-    path: "/invoice",
-  },
-  {
-    id: 7,
-    name: "Payouts",
-    icon: "flaticon-dollar",
-    path: "/payouts",
-  },
-  {
-    id: 8,
-    name: "Statements",
-    icon: "flaticon-web",
-    path: "/statements",
-  },
-  {
-    id: 9,
-    name: "Manage Services",
-    icon: "flaticon-presentation",
-    path: "/professional/manage-services",
-  },
-  {
-    id: 10,
-    name: "Manage Jobs",
-    icon: "flaticon-briefcase",
-    path: "/manage-jobs",
-  },
-  {
-    id: 11,
-    name: "Manage Project",
-    icon: "flaticon-content",
-    path: "/manage-projects",
-  },
-  {
-    id: 12,
-    name: "Add Services",
-    icon: "flaticon-document",
-    path: "/professional/add-services",
-  },
-  {
-    id: 13,
-    name: "Quotations",
-    icon: "flaticon-content",
-    path: "/professional/manage-quotations",
-  },
-  // ✅ NEW: Service Pricing with quantification
-  {
-    id: 14,
-    name: "Valuation",
-    icon: "flaticon-price-tag",
-    path: "/professional/service-pricing",
-  },
+
+  // {
+    // id: 2,
+    // name: "Projects",
+    // icon: "flaticon-document",
+    // path: "/professional/projects",
+  // },
+  // {
+    // id: 3,
+    // name: "Saved",
+    // icon: "flaticon-like",
+    // path: "/saved",
+  // },
+  // {
+    // id: 4,
+    // name: "Message",
+    // icon: "flaticon-chat",
+    // path: "/message",
+  // },
+  // {
+    // id: 5,
+    // name: "Reviews",
+    // icon: "flaticon-review-1",
+    // path: "/reviews",
+  // },
+  // {
+    // id: 6,
+    // name: "Invoice",
+    // icon: "flaticon-receipt",
+    // path: "/invoice",
+  // },
+  // {
+    // id: 7,
+    // name: "Payouts",
+    // icon: "flaticon-dollar",
+    // path: "/payouts",
+  // },
+  // {
+    // id: 8,
+    // name: "Statements",
+    // icon: "flaticon-web",
+    // path: "/statements",
+  // },
+  // {
+    // id: 9,
+    // name: "Manage Services",
+    // icon: "flaticon-presentation",
+    // path: "/professional/manage-services",
+  // },
+  // {
+    // id: 10,
+    // name: "Manage Jobs",
+    // icon: "flaticon-briefcase",
+    // path: "/manage-jobs",
+  // },
+  // {
+    // id: 11,
+    // name: "Manage Project",
+    // icon: "flaticon-content",
+    // path: "/manage-projects",
+  // },
+  // {
+    // id: 12,
+    // name: "Add Services",
+    // icon: "flaticon-document",
+    // path: "/professional/add-services",
+  // },
+  // {
+  //   id: 13,
+  //   name: "Quotations",
+  //   icon: "flaticon-content",
+  //   path: "/professional/manage-quotations",
+  // },
+  // {
+  //   id: 14,
+  //   name: "Valuation",
+  //   icon: "flaticon-price-tag",
+  //   path: "/professional/service-pricing",
+  // },
   {
     id: 15,
     name: "Account Information",

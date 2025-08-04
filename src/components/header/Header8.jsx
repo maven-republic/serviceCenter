@@ -3,7 +3,7 @@ import Link from "next/link";
 import Image from "next/image";
 import Navigation from "./Navigation";
 import Mega from "./Mega";
-import useStickyMenu from "@/hook/useStickyMenu";
+import useStickyMenu from "@/primitives/useStickyMenu";
 import MobileNavigation1 from "./MobileNavigation1";
 
 export default function Header8() {

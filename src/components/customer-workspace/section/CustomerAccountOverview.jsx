@@ -26,24 +26,15 @@ export default function CustomerAccountOverview() {
 
   return (
     <>
-      <div className="dashboard__content hover-bgc-color">
+      <div className="dashboard__content ">
         <div className="row pb40">
           <div className="col-lg-12">
             {/* <CustomerNavigation /> */}
           </div>
           <div className="col-lg-9">
             <div className="dashboard_title_area">
-            {/* <div className="mb20">
-               Welcome
-                <input
-                  type="text"
-                  className="form-control" 
-                  value={`${user?.account?.first_name || ''} ${user?.account?.last_name || ''}`}
-                  disabled
-                />
-              </div> */}
-
-              <h2>Welcome! {`${user?.account?.first_name || ''} ${user?.account?.last_name || ''}`}</h2>
+    
+              {/* <h2>Welcome! {`${user?.account?.first_name || ''} ${user?.account?.last_name || ''}`}</h2> */}
 
               {/* <p className="text">Lorem ipsum dolor sit amet, consectetur.</p> */}
             </div>
@@ -52,13 +43,7 @@ export default function CustomerAccountOverview() {
         <div className="row">
           <div className="col-xl-12">
             <CustomerAccountInformation />
-            {/* <Competence />
-            <Education />
-            <WorkExperience />
-            <Award />
-            <ChangePassword />
-            <ConfirmPassword /> */}
-          </div>
+                    </div>
         </div>
       </div>
     </>

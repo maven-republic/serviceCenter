@@ -1,4 +1,4 @@
-import DashboardLayout from "@/components/professional-workspace/DashboardLayout";
+import ProfessionalWorkspace from "@/components/professional-workspace/ProfessionalWorkspace";
 import ReviewsInfo from "@/components/professional-workspace/section/ReviewsInfo";
 
 import MobileNavigation2 from "@/components/header/MobileNavigation2";
@@ -12,9 +12,9 @@ export default function page() {
     <>
     
     <MobileNavigation2 />
-      <DashboardLayout>
+      <ProfessionalWorkspace>
         <ReviewsInfo />
-      </DashboardLayout>
+      </ProfessionalWorkspace>
     </>
   );
 }

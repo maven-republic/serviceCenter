@@ -2,6 +2,8 @@
 
 import { useEffect, useRef, useState } from 'react'
 import Script from 'next/script'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 
 export default function Address({ onSelect }) {
   const inputRef = useRef(null)
@@ -9,6 +11,7 @@ export default function Address({ onSelect }) {
 
   useEffect(() => {
     if (typeof window === 'undefined' || !window.google?.maps) return
+    
     const autocomplete = new window.google.maps.places.Autocomplete(inputRef.current, {
       types: ['address'],
       componentRestrictions: { country: 'jm' },
@@ -21,7 +24,7 @@ export default function Address({ onSelect }) {
         onSelect(place)
       }
     })
-  }, [scriptLoaded])
+  }, [scriptLoaded, onSelect])
 
   return (
     <>
@@ -32,17 +35,21 @@ export default function Address({ onSelect }) {
         onLoad={() => setScriptLoaded(true)}
       />
 
-      <div className="mb25 form-floating">
-        <input
+      <div className="space-y-2">
+        <Label htmlFor="addressInput" className="text-sm font-medium text-foreground">
+          Address
+        </Label>
+        <Input
           ref={inputRef}
           type="text"
           id="addressInput"
           placeholder="Enter your address"
-          className="form-control has-value"
+          className="w-full"
         />
-        <label htmlFor="addressInput" className="form-label fw500 dark-color">Address</label>
+        <p className="text-xs text-muted-foreground">
+          Start typing your address and select from the suggestions
+        </p>
       </div>
     </>
   )
 }
-

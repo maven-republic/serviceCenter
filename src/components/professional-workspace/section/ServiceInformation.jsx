@@ -5,7 +5,7 @@ import { createClient } from '@/utils/supabase/client'
 import { useUserStore } from '@/store/userStore'
 import { toast } from "sonner"
 import ServiceAddForm from "@/components/professional-workspace/forms/ServiceAddForm"
-import ServiceCollections from "@/components/collections/ServiceCollections"
+// import ServiceCollections from "@/components/customer-workspace/collections/ServiceCollections"
 
 export default function ServiceInformation() {
   const supabase = createClient()
@@ -302,7 +302,7 @@ export default function ServiceInformation() {
         />
       )}
 
-      <ServiceCollections services={professionalServices} onDelete={refreshServices} />
+      {/* <ServiceCollections services={professionalServices} onDelete={refreshServices} /> */}
     </div>
   )
 }

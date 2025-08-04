@@ -1,5 +1,8 @@
 'use client'
 
+import { Calendar } from "lucide-react"
+import { cn } from "@/lib/utils"
+
 export default function CalendarInput({ 
   selectedDate, 
   placeholder, 
@@ -8,42 +11,41 @@ export default function CalendarInput({
   formatDisplayDate 
 }) {
   
-  const handleMouseEnter = (e) => {
-    if (!isMobile) {
-      e.target.style.borderColor = '#0d6efd'
-      e.target.style.boxShadow = '0 0 0 0.2rem rgba(13, 110, 253, 0.15)'
-    }
-  }
-
-  const handleMouseLeave = (e) => {
-    if (!isMobile) {
-      e.target.style.borderColor = '#ced4da'
-      e.target.style.boxShadow = 'none'
-    }
-  }
-
   return (
     <div
-      className="form-control rounded-3 px-3 py-2 d-flex justify-content-between align-items-center"
-      style={{ 
-        cursor: 'pointer',
-        transition: 'all 0.2s ease',
-        minHeight: isMobile ? '48px' : 'auto'
-      }}
+      className={cn(
+        "flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background",
+        "cursor-pointer transition-colors",
+        "hover:border-primary hover:ring-2 hover:ring-primary/20",
+        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+        "disabled:cursor-not-allowed disabled:opacity-50",
+        "justify-between items-center",
+        isMobile && "h-12 text-base"
+      )}
       onClick={onClick}
-      onMouseEnter={handleMouseEnter}
-      onMouseLeave={handleMouseLeave}
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault()
+          onClick()
+        }
+      }}
     >
       <span 
-        className={selectedDate ? 'text-dark' : 'text-muted'}
-        style={{ fontSize: isMobile ? '16px' : '14px' }}
+        className={cn(
+          "flex-1",
+          selectedDate ? "text-foreground" : "text-muted-foreground"
+        )}
       >
         {selectedDate ? formatDisplayDate(selectedDate) : placeholder}
       </span>
       
-      <i 
-        className="fas fa-calendar-alt text-muted" 
-        style={{ fontSize: isMobile ? '18px' : '14px' }}
+      <Calendar 
+        className={cn(
+          "h-4 w-4 text-muted-foreground",
+          isMobile && "h-5 w-5"
+        )}
       />
     </div>
   )

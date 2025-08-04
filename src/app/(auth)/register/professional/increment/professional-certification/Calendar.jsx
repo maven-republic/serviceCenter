@@ -1,17 +1,72 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import CalendarInput from './calendar/CalendarInput'
-import CalendarDropdown from './calendar/CalendarDropdown'
-import { useCalendar } from './calendar/useCalendar'
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Card, CardContent, CardHeader } from "@/components/ui/card"
+import { 
+  Calendar as CalendarIcon, 
+  ChevronLeft, 
+  ChevronRight, 
+  ChevronDown,
+  X
+} from "lucide-react"
+import { cn } from "@/lib/utils"
 
+// Custom hook for calendar logic
+const useCalendar = (selectedDate) => {
+  const [currentDate, setCurrentDate] = useState(() => {
+    if (selectedDate) {
+      return new Date(selectedDate.getFullYear(), selectedDate.getMonth(), 1)
+    }
+    return new Date(new Date().getFullYear(), new Date().getMonth(), 1)
+  })
+
+  const formatDate = (date) => {
+    return date.toISOString().split('T')[0]
+  }
+
+  const formatDisplayDate = (date) => {
+    return date.toLocaleDateString('en-US', {
+      weekday: 'short',
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
+    })
+  }
+
+  return {
+    currentDate,
+    setCurrentDate,
+    formatDate,
+    formatDisplayDate
+  }
+}
+
+// Calendar input component
+const CalendarInput = ({ selectedDate, placeholder, onClick, formatDisplayDate }) => {
+  return (
+    <div className="relative">
+      <Input
+        type="text"
+        readOnly
+        value={selectedDate ? formatDisplayDate(selectedDate) : ''}
+        placeholder={placeholder}
+        onClick={onClick}
+        className="cursor-pointer pr-10"
+      />
+      <CalendarIcon className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+    </div>
+  )
+}
+
+// Main Calendar component
 export default function Calendar({ value, onChange, placeholder = "Select date" }) {
   // State management
   const [isOpen, setIsOpen] = useState(false)
   const [selectedDate, setSelectedDate] = useState(value ? new Date(value) : null)
   const [showMonthDropdown, setShowMonthDropdown] = useState(false)
   const [showYearDropdown, setShowYearDropdown] = useState(false)
-  const [isMobile, setIsMobile] = useState(false)
   
   // Refs
   const calendarRef = useRef(null)
@@ -23,18 +78,6 @@ export default function Calendar({ value, onChange, placeholder = "Select date" 
     formatDate,
     formatDisplayDate
   } = useCalendar(selectedDate)
-
-  // Mobile detection
-  useEffect(() => {
-    const checkMobile = () => {
-      setIsMobile(window.innerWidth <= 768)
-    }
-    
-    checkMobile()
-    window.addEventListener('resize', checkMobile)
-    
-    return () => window.removeEventListener('resize', checkMobile)
-  }, [])
 
   // Sync selected date with prop value
   useEffect(() => {
@@ -59,26 +102,73 @@ export default function Calendar({ value, onChange, placeholder = "Select date" 
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
 
+  // Generate calendar days
+  const generateCalendarDays = () => {
+    const year = currentDate.getFullYear()
+    const month = currentDate.getMonth()
+    
+    const firstDayOfMonth = new Date(year, month, 1)
+    const lastDayOfMonth = new Date(year, month + 1, 0)
+    const firstDayOfWeek = firstDayOfMonth.getDay()
+    const daysInMonth = lastDayOfMonth.getDate()
+    
+    const days = []
+    
+    // Previous month days
+    const prevMonth = new Date(year, month - 1, 0)
+    for (let i = firstDayOfWeek - 1; i >= 0; i--) {
+      const day = prevMonth.getDate() - i
+      days.push({
+        date: new Date(year, month - 1, day),
+        isCurrentMonth: false,
+        isToday: false
+      })
+    }
+    
+    // Current month days
+    const today = new Date()
+    for (let day = 1; day <= daysInMonth; day++) {
+      const date = new Date(year, month, day)
+      days.push({
+        date,
+        isCurrentMonth: true,
+        isToday: date.toDateString() === today.toDateString()
+      })
+    }
+    
+    // Next month days
+    const remainingDays = 42 - days.length
+    for (let day = 1; day <= remainingDays; day++) {
+      days.push({
+        date: new Date(year, month + 1, day),
+        isCurrentMonth: false,
+        isToday: false
+      })
+    }
+    
+    return days
+  }
+
   // Event handlers
   const handleInputClick = () => {
     setIsOpen(!isOpen)
   }
 
   const handleDateSelect = (dayObj) => {
-    const selectedDate = dayObj.date
+    const date = dayObj.date
     
     if (!dayObj.isCurrentMonth) {
-      setCurrentDate(new Date(selectedDate.getFullYear(), selectedDate.getMonth(), 1))
+      setCurrentDate(new Date(date.getFullYear(), date.getMonth(), 1))
     }
     
-    setSelectedDate(selectedDate)
-    onChange(formatDate(selectedDate))
+    setSelectedDate(date)
+    onChange(formatDate(date))
     setIsOpen(false)
   }
 
   const handleTodayClick = () => {
     const today = new Date()
-    setCurrentDate(today)
+    setCurrentDate(new Date(today.getFullYear(), today.getMonth(), 1))
     handleDateSelect({ date: today, isCurrentMonth: true })
   }
 
@@ -86,16 +176,6 @@ export default function Calendar({ value, onChange, placeholder = "Select date" 
     setSelectedDate(null)
     onChange('')
     setIsOpen(false)
-  }
-
-  const handleMonthChange = (monthIndex) => {
-    setCurrentDate(prev => new Date(prev.getFullYear(), monthIndex, 1))
-    setShowMonthDropdown(false)
-  }
-
-  const handleYearChange = (year) => {
-    setCurrentDate(prev => new Date(year, prev.getMonth(), 1))
-    setShowYearDropdown(false)
   }
 
   const navigateMonth = (direction) => {
@@ -114,50 +194,211 @@ export default function Calendar({ value, onChange, placeholder = "Select date" 
     })
   }
 
-  // Dropdown state handlers
-  const toggleMonthDropdown = () => {
-    setShowMonthDropdown(!showMonthDropdown)
-    setShowYearDropdown(false)
-  }
+  // Generate months and years for dropdowns
+  const months = [
+    'January', 'February', 'March', 'April', 'May', 'June',
+    'July', 'August', 'September', 'October', 'November', 'December'
+  ]
 
-  const toggleYearDropdown = () => {
-    setShowYearDropdown(!showYearDropdown)
-    setShowMonthDropdown(false)
-  }
+  const currentYear = new Date().getFullYear()
+  const years = Array.from({ length: 20 }, (_, i) => currentYear - 10 + i)
 
-  // Calendar props to pass to sub-components
-  const calendarProps = {
-    selectedDate,
-    currentDate,
-    isMobile,
-    isOpen,
-    showMonthDropdown,
-    showYearDropdown,
-    onDateSelect: handleDateSelect,
-    onTodayClick: handleTodayClick,
-    onClearClick: handleClearClick,
-    onMonthChange: handleMonthChange,
-    onYearChange: handleYearChange,
-    onNavigateMonth: navigateMonth,
-    onNavigateYear: navigateYear,
-    onToggleMonthDropdown: toggleMonthDropdown,
-    onToggleYearDropdown: toggleYearDropdown
-  }
+  const weekDays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+  const calendarDays = generateCalendarDays()
 
   return (
-    <div className="position-relative" ref={calendarRef}>
+    <div className="relative" ref={calendarRef}>
       <CalendarInput
         selectedDate={selectedDate}
         placeholder={placeholder}
-        isMobile={isMobile}
         onClick={handleInputClick}
         formatDisplayDate={formatDisplayDate}
       />
 
       {isOpen && (
-        <CalendarDropdown
-          {...calendarProps}
-        />
+        <Card className="absolute top-full left-0 z-50 mt-1 w-80 shadow-lg animate-in fade-in-0 slide-in-from-top-1">
+          <CardHeader className="pb-3">
+            {/* Navigation Header */}
+            <div className="flex items-center justify-between">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => navigateYear(-1)}
+                className="h-8 w-8 p-0"
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+
+              <div className="flex items-center gap-1">
+                {/* Month Dropdown */}
+                <div className="relative">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => {
+                      setShowMonthDropdown(!showMonthDropdown)
+                      setShowYearDropdown(false)
+                    }}
+                    className="flex items-center gap-1"
+                  >
+                    {months[currentDate.getMonth()]}
+                    <ChevronDown className="h-3 w-3" />
+                  </Button>
+                  
+                  {showMonthDropdown && (
+                    <Card className="absolute top-full left-0 mt-1 z-10 max-h-48 overflow-y-auto">
+                      <CardContent className="p-1">
+                        {months.map((month, index) => (
+                          <Button
+                            key={month}
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => {
+                              setCurrentDate(prev => new Date(prev.getFullYear(), index, 1))
+                              setShowMonthDropdown(false)
+                            }}
+                            className="w-full justify-start text-sm"
+                          >
+                            {month}
+                          </Button>
+                        ))}
+                      </CardContent>
+                    </Card>
+                  )}
+                </div>
+
+                {/* Year Dropdown */}
+                <div className="relative">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => {
+                      setShowYearDropdown(!showYearDropdown)
+                      setShowMonthDropdown(false)
+                    }}
+                    className="flex items-center gap-1"
+                  >
+                    {currentDate.getFullYear()}
+                    <ChevronDown className="h-3 w-3" />
+                  </Button>
+                  
+                  {showYearDropdown && (
+                    <Card className="absolute top-full left-0 mt-1 z-10 max-h-48 overflow-y-auto">
+                      <CardContent className="p-1">
+                        {years.map((year) => (
+                          <Button
+                            key={year}
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => {
+                              setCurrentDate(prev => new Date(year, prev.getMonth(), 1))
+                              setShowYearDropdown(false)
+                            }}
+                            className="w-full justify-start text-sm"
+                          >
+                            {year}
+                          </Button>
+                        ))}
+                      </CardContent>
+                    </Card>
+                  )}
+                </div>
+              </div>
+
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => navigateYear(1)}
+                className="h-8 w-8 p-0"
+              >
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
+
+            {/* Month Navigation */}
+            <div className="flex items-center justify-between">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => navigateMonth(-1)}
+                className="h-8 w-8 p-0"
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => navigateMonth(1)}
+                className="h-8 w-8 p-0"
+              >
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
+          </CardHeader>
+
+          <CardContent className="p-0">
+            {/* Week Days Header */}
+            <div className="grid grid-cols-7 border-b">
+              {weekDays.map((day) => (
+                <div
+                  key={day}
+                  className="p-2 text-center text-sm font-medium text-muted-foreground"
+                >
+                  {day}
+                </div>
+              ))}
+            </div>
+
+            {/* Calendar Grid */}
+            <div className="grid grid-cols-7">
+              {calendarDays.map((dayObj, index) => {
+                const isSelected = selectedDate && 
+                  dayObj.date.toDateString() === selectedDate.toDateString()
+                
+                return (
+                  <Button
+                    key={index}
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleDateSelect(dayObj)}
+                    className={cn(
+                      "h-9 w-full p-0 font-normal",
+                      !dayObj.isCurrentMonth && "text-muted-foreground",
+                      dayObj.isToday && "bg-accent text-accent-foreground",
+                      isSelected && "bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground"
+                    )}
+                  >
+                    {dayObj.date.getDate()}
+                  </Button>
+                )
+              })}
+            </div>
+
+            {/* Footer Actions */}
+            <div className="flex items-center justify-between p-3 border-t">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleTodayClick}
+              >
+                Today
+              </Button>
+              
+              {selectedDate && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleClearClick}
+                  className="text-destructive hover:text-destructive"
+                >
+                  <X className="h-3 w-3 mr-1" />
+                  Clear
+                </Button>
+              )}
+            </div>
+          </CardContent>
+        </Card>
       )}
     </div>
   )

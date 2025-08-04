@@ -2,6 +2,12 @@
 
 import { useEffect, useState } from 'react'
 import { useSupabaseClient } from '@supabase/auth-helpers-react'
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Badge } from "@/components/ui/badge"
+import { Card, CardContent } from "@/components/ui/card"
+import { Plus, X, Tag } from "lucide-react"
 
 export default function CertificationServiceSelector({ selected, onSelect, onRemove }) {
   const supabase = useSupabaseClient()
@@ -30,72 +36,102 @@ export default function CertificationServiceSelector({ selected, onSelect, onRem
     .slice(0, 5)
 
   return (
-    <div className="mb-4">
-      <div className="d-flex flex-column gap-2 align-items-start mb-3">
-        <label className="form-label small text-muted">
+    <div className="space-y-4">
+      <div className="space-y-3">
+        <Label className="text-sm font-medium flex items-center gap-2">
+          <Tag className="h-4 w-4" />
+          Related Services
+        </Label>
+        <p className="text-sm text-muted-foreground">
           Tag services or work types this credential qualifies you for
-        </label>
+        </p>
 
         {!showInput ? (
-          <button
+          <Button
             type="button"
-            className="btn btn-outline-primary btn-sm rounded-pill px-3 py-2"
+            variant="outline"
+            size="sm"
             onClick={() => setShowInput(true)}
+            className="border-dashed"
           >
-            + Add Service
-          </button>
+            <Plus className="h-4 w-4 mr-2" />
+            Add Service
+          </Button>
         ) : (
-          <>
-            <input
+          <div className="space-y-3">
+            <Input
               type="text"
-              className="form-control rounded-pill px-3 py-2 "
               placeholder="Search services..."
               value={input}
               onChange={(e) => setInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Escape') {
+                  setInput('')
+                  setShowInput(false)
+                }
+              }}
             />
 
             {suggestions.length > 0 && (
-              <ul className="list-group w-100 mt-2">
-                {suggestions.map(service => (
-                  <li
-                    key={service.service_id}
-                    className="list-group-item list-group-item-action"
-                    style={{ cursor: 'pointer' }}
-                    onClick={() => {
-                      onSelect(service.service_id)
-                      setInput('')
-                      setShowInput(false)
-                    }}
-                  >
-                    {service.name}
-                  </li>
-                ))}
-              </ul>
+              <Card>
+                <CardContent className="p-2">
+                  <div className="space-y-1">
+                    {suggestions.map(service => (
+                      <button
+                        key={service.service_id}
+                        type="button"
+                        className="w-full text-left px-3 py-2 text-sm rounded-md hover:bg-accent hover:text-accent-foreground transition-colors"
+                        onClick={() => {
+                          onSelect(service.service_id)
+                          setInput('')
+                          setShowInput(false)
+                        }}
+                      >
+                        {service.name}
+                      </button>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
             )}
-          </>
+
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                setInput('')
+                setShowInput(false)
+              }}
+            >
+              Cancel
+            </Button>
+          </div>
         )}
       </div>
 
       {selected.length > 0 && (
-        <div className="d-flex flex-wrap gap-2 mt-2">
-          {selected.map(id => {
-            const svc = allServices.find(s => s.service_id === id)
-            if (!svc) return null
-            return (
-              <button
-                key={id}
-                type="button"
-                className="d-inline-flex align-items-center gap-2 px-3 py-1 bg-light border rounded-pill text-primary small fw-medium "
-                onClick={() => onRemove(id)}
-              >
-                {svc.name}
-                <i className="fas fa-times-circle ms-1" />
-              </button>
-            )
-          })}
+        <div className="space-y-2">
+          <Label className="text-sm font-medium">Selected Services:</Label>
+          <div className="flex flex-wrap gap-2">
+            {selected.map(id => {
+              const svc = allServices.find(s => s.service_id === id)
+              if (!svc) return null
+              return (
+                <Badge
+                  key={id}
+                  variant="secondary"
+                  className="cursor-pointer hover:bg-destructive hover:text-destructive-foreground transition-colors"
+                  onClick={() => onRemove(id)}
+                >
+                  {svc.name}
+                  <X className="h-3 w-3 ml-1" />
+                </Badge>
+              )
+            })}
+          </div>
         </div>
       )}
     </div>
   )
 }
-

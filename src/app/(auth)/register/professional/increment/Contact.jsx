@@ -1,5 +1,10 @@
 'use client'
 
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Phone, CheckCircle, AlertCircle } from "lucide-react"
+import { cn } from "@/lib/utils"
+
 export default function Contact({
   formData,
   errors,
@@ -7,28 +12,42 @@ export default function Contact({
   handleBlur
 }) {
   return (
-    <div className="mb-3">
-      <label className="form-label fw-semibold">Phone Number</label>
-      <input
-        name="phone"
+    <div className="space-y-1">
+      <Label htmlFor="phone" className="text-sm font-medium flex items-center gap-2">
+        <Phone className="h-4 w-4" />
+        Phone Number
+      </Label>
+      <Input
         type="tel"
+        id="phone"
+        name="phone"
         value={formData.phone}
         onChange={updateFormData}
         onBlur={handleBlur}
-        className={`form-control ${errors.phone ? 'is-invalid' : formData.phone ? 'is-valid' : ''}`}
         placeholder="876-123-4567"
-        required
-        aria-describedby="phoneFeedback"
+        className={cn(
+          errors.phone && 'border-destructive focus-visible:ring-destructive',
+          formData.phone && !errors.phone && 'border-green-500 focus-visible:ring-green-500'
+        )}
       />
+      
       {errors.phone && (
-        <div id="phoneFeedback" className="invalid-feedback">
+        <p className="text-xs text-destructive flex items-center gap-1">
+          <AlertCircle className="h-3 w-3" />
           {errors.phone}
-        </div>
+        </p>
       )}
-      <small className="form-text text-muted">
+      
+      {formData.phone && !errors.phone && (
+        <p className="text-xs text-green-600 flex items-center gap-1">
+          <CheckCircle className="h-3 w-3" />
+          Valid phone number
+        </p>
+      )}
+      
+      <p className="text-xs text-muted-foreground">
         Enter a valid phone number (e.g., 8761234567)
-      </small>
+      </p>
     </div>
   )
 }
-

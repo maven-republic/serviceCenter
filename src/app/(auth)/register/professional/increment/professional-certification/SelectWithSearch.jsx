@@ -1,6 +1,11 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Card, CardContent } from "@/components/ui/card"
+import { Loader2, Search, AlertCircle } from "lucide-react"
+import { cn } from "@/lib/utils"
 
 export default function SelectWithSearch({
   label,
@@ -55,133 +60,63 @@ export default function SelectWithSearch({
     setShowDropdown(false)
   }
 
-  const DropdownItem = ({ option, onClick }) => (
-    <div
-      className="px-2 py-1 border-bottom"
-      style={{
-        transition: 'all 0.2s ease',
-        fontSize: '13px',
-        cursor: 'pointer',
-        borderBottomColor: '#e9ecef'
-      }}
-      onMouseEnter={(e) => {
-        e.target.style.backgroundColor = '#f8f9fa'
-        e.target.style.color = '#0d6efd'
-      }}
-      onMouseLeave={(e) => {
-        e.target.style.backgroundColor = 'transparent'
-        e.target.style.color = '#212529'
-      }}
-      onMouseDown={onClick}
-    >
-      <div className="fw-medium">{option[displayField]}</div>
-      {option.subtitle && <small className="text-muted d-block">{option.subtitle}</small>}
-    </div>
-  )
-
   return (
-    <>
-      <style>{`
-        @keyframes fadeInDown {
-          from {
-            opacity: 0;
-            transform: translateY(-10px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-        
-        .dropdown-enter {
-          animation: fadeInDown 0.2s ease-out;
-        }
-        
-        .enhanced-input:focus {
-          border-color: #0d6efd !important;
-          box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25) !important;
-        }
-        
-        .enhanced-input.has-dropdown {
-          border-color: #0d6efd !important;
-          box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.15) !important;
-        }
-        
-        .thin-scrollbar {
-          scrollbar-width: thin;
-          scrollbar-color: #cbd5e0 transparent;
-        }
-        
-        .thin-scrollbar::-webkit-scrollbar {
-          width: 6px;
-        }
-        
-        .thin-scrollbar::-webkit-scrollbar-track {
-          background: transparent;
-        }
-        
-        .thin-scrollbar::-webkit-scrollbar-thumb {
-          background-color: #cbd5e0;
-          border-radius: 3px;
-        }
-        
-        .thin-scrollbar::-webkit-scrollbar-thumb:hover {
-          background-color: #a0aec0;
-        }
-      `}</style>
-
-      <div className="mb-4 position-relative">
-        <label className="form-label small text-muted">{label}</label>
-        <input
+    <div className="space-y-2 relative">
+      <Label className="text-sm font-medium">{label}</Label>
+      
+      <div className="relative">
+        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+        <Input
           type="text"
-          className={`form-control rounded-3 px-3 py-2 shadow-sm enhanced-input ${showDropdown ? 'has-dropdown' : ''}`}
           placeholder={placeholder}
           value={query}
           onChange={handleInputChange}
           onFocus={() => query.trim() && setShowDropdown(true)}
           onBlur={() => setTimeout(() => setShowDropdown(false), 150)}
-          style={{
-            transition: 'all 0.2s ease'
-          }}
+          className={cn(
+            "pl-10 transition-all duration-200",
+            showDropdown && "ring-2 ring-ring ring-offset-2"
+          )}
         />
-
-        {showDropdown && (
-          <div 
-            className="position-absolute bg-white border rounded-3 shadow-lg w-100 dropdown-enter thin-scrollbar" 
-            style={{ 
-              zIndex: 1000, 
-              maxHeight: '200px', 
-              overflowY: 'auto',
-              borderColor: '#e9ecef',
-              top: 'calc(100% + 8px)'
-            }}
-          >
-            {isLoading && (
-              <div className="px-2 py-1 text-center text-muted">
-                <i className="fas fa-spinner fa-spin me-1"></i>
-                <small>Loading...</small>
-              </div>
-            )}
-
-            {!isLoading && filteredOptions.length === 0 && query.trim() && (
-              <div className="px-2 py-1 text-center text-muted">
-                <i className="fas fa-search me-1"></i>
-                <small>{noResultsMessage}</small>
-              </div>
-            )}
-
-            {!isLoading && filteredOptions.length > 0 && 
-              filteredOptions.map((option, index) => (
-                <DropdownItem
-                  key={option.id || option[valueField] || index}
-                  option={option}
-                  onClick={() => handleOptionSelect(option)}
-                />
-              ))
-            }
-          </div>
-        )}
       </div>
-    </>
+
+      {showDropdown && (
+        <Card className="absolute top-full left-0 right-0 z-50 mt-1 max-h-48 overflow-hidden shadow-lg animate-in fade-in-0 slide-in-from-top-1">
+          <CardContent className="p-0">
+            <div className="max-h-48 overflow-y-auto">
+              {isLoading && (
+                <div className="flex items-center justify-center py-4 text-muted-foreground">
+                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                  <span className="text-sm">Loading...</span>
+                </div>
+              )}
+
+              {!isLoading && filteredOptions.length === 0 && query.trim() && (
+                <div className="flex items-center justify-center py-4 text-muted-foreground">
+                  <AlertCircle className="h-4 w-4 mr-2" />
+                  <span className="text-sm">{noResultsMessage}</span>
+                </div>
+              )}
+
+              {!isLoading && filteredOptions.length > 0 && 
+                filteredOptions.map((option, index) => (
+                  <button
+                    key={option.id || option[valueField] || index}
+                    type="button"
+                    className="w-full text-left px-4 py-3 hover:bg-accent hover:text-accent-foreground transition-colors border-b border-border last:border-b-0 focus:bg-accent focus:text-accent-foreground focus:outline-none"
+                    onMouseDown={() => handleOptionSelect(option)}
+                  >
+                    <div className="font-medium text-sm">{option[displayField]}</div>
+                    {option.subtitle && (
+                      <div className="text-xs text-muted-foreground mt-1">{option.subtitle}</div>
+                    )}
+                  </button>
+                ))
+              }
+            </div>
+          </CardContent>
+        </Card>
+      )}
+    </div>
   )
 }

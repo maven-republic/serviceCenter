@@ -1,7 +1,6 @@
 import { Suspense } from 'react';
 import { createClient } from '@/utils/supabase/server'
 // In app/(customer-workspace)/customer/search/page.jsx
-import SearchResults from '@/components/customer-workspace/section/SearchResults';
 // import SearchFilters from '@/components/customer-workspace/section/ServiceFilters';
 // import LoadingResults from '@/components/section/LoadingResults';
 

@@ -1,229 +1,294 @@
 "use client";
-import { deliveryTime } from "@/data/listing";
+
+import { useState, useEffect } from "react";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Separator } from "@/components/ui/separator";
+import { Slider } from "@/components/ui/slider";
+import { 
+  SlidersHorizontal, 
+  Filter, 
+  ChevronDown, 
+  X,
+  RotateCcw
+} from "lucide-react";
 import toggleStore from "@/store/toggleStore";
-import Image from "next/image";
 import listingStore from "@/store/listingStore";
-import { useEffect, useState } from "react";
 import priceStore from "@/store/priceStore";
-import ReactSlider from "react-slider";
-import Undo from "../button/Undo";
-import SortOption1 from "../option/SortOption1";
 import Classification from "../option/Classification";
+import { cn } from "@/lib/utils";
 
 export default function Sift() {
-  const [getDelivery, SetDelivery] = useState("");
+  const [priceRange, setPriceRange] = useState([0, 100000]);
+  const [deliveryFilter, setDeliveryFilter] = useState("");
 
-  const [getPrice, setPrice] = useState({
-    min: 0,
-    max: 100000,
-  });
-
-  const priceRange = priceStore((state) => state.priceRange);
-  const setPriceRange = priceStore((state) => state.priceRangeHandler);
+  // Store state
+  const priceStoreRange = priceStore((state) => state.priceRange);
+  const setPriceStoreRange = priceStore((state) => state.priceRangeHandler);
   const listingToggle = toggleStore((state) => state.listingToggleHandler);
-  const setOurDeliveryTime = listingStore((state) => state.setDeliveryTime);
+  const setDeliveryTime = listingStore((state) => state.setDeliveryTime);
   const getDeliveryTime = listingStore((state) => state.getDeliveryTime);
+  const getCategory = listingStore((state) => state.getCategory);
+  const resetAllFilters = listingStore((state) => state.resetAllFilters);
 
-  // filters handler
-  const deliveryHandler = (data) => {
-    SetDelivery(data);
-  };
+  // Sync with store
+  useEffect(() => {
+    setPriceRange([priceStoreRange.min, priceStoreRange.max]);
+  }, [priceStoreRange]);
 
   useEffect(() => {
-    SetDelivery(getDeliveryTime);
+    setDeliveryFilter(getDeliveryTime);
   }, [getDeliveryTime]);
 
-  const priceHandler = (data) => {
-    setPrice({
-      min: data[0],
-      max: data[1],
+  // Handle price change
+  const handlePriceChange = (values) => {
+    setPriceRange(values);
+    setPriceStoreRange({
+      min: values[0],
+      max: values[1]
     });
   };
 
-  useEffect(() => {
-    setPrice(priceRange);
-  }, [priceRange]);
+  // Handle delivery time change
+  const handleDeliveryChange = (value) => {
+    setDeliveryFilter(value);
+    setDeliveryTime(value);
+  };
+
+  // Check if filters are active
+  const hasActiveFilters = () => {
+    return (
+      getCategory?.length > 0 ||
+      priceRange[0] > 0 ||
+      priceRange[1] < 100000 ||
+      deliveryFilter !== "" ||
+      getDeliveryTime !== ""
+    );
+  };
+
+  // Sort options
+  const sortOptions = [
+    { value: "recommended", label: "Recommended" },
+    { value: "price-low", label: "Price: Low to High" },
+    { value: "price-high", label: "Price: High to Low" },
+    { value: "rating", label: "Highest Rated" },
+    { value: "newest", label: "Newest First" },
+    { value: "popular", label: "Most Popular" }
+  ];
+
+  // Delivery time options
+  const deliveryOptions = [
+    { value: "", label: "Any time" },
+    { value: "24h", label: "Within 24 hours" },
+    { value: "3days", label: "Within 3 days" },
+    { value: "1week", label: "Within 1 week" },
+    { value: "1month", label: "Within 1 month" }
+  ];
 
   return (
-    <>
-      <div className="row align-items-center mb20">
-        <div className="col-6 col-sm-6 col-lg-9 pe-0">
-          <div className="text-center text-sm-start">
-            <div className="dropdown-lists">
-              <ul className="p-0 mb-0 text-center text-sm-start">
-                <li className="list-inline-item">
-                  <button
-                    onClick={listingToggle}
-                    type="button"
-                    className="open-btn filter-btn-left mb10"
+    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 py-4">
+      {/* Left Side - Filters */}
+      <div className="flex flex-wrap items-center gap-3">
+        
+        {/* All Filters Sheet (Mobile + Desktop) */}
+        <Sheet>
+          <SheetTrigger asChild>
+            <Button variant="outline" className="gap-2">
+              <SlidersHorizontal className="h-4 w-4" />
+              All Filters
+              {hasActiveFilters() && (
+                <Badge variant="destructive" className="ml-1 h-4 w-4 rounded-full p-0 text-xs">
+                  !
+                </Badge>
+              )}
+            </Button>
+          </SheetTrigger>
+          <SheetContent side="left" className="w-80 sm:w-96">
+            <SheetHeader>
+              <SheetTitle>Filter Services</SheetTitle>
+              <SheetDescription>
+                Refine your search to find the perfect service
+              </SheetDescription>
+            </SheetHeader>
+            
+            <div className="mt-6 space-y-6">
+              {/* Categories */}
+              <div className="space-y-3">
+                <h3 className="font-medium text-sm">Categories</h3>
+                <Classification />
+              </div>
+
+              <Separator />
+
+              {/* Price Range */}
+              <div className="space-y-4">
+                <h3 className="font-medium text-sm">Price Range</h3>
+                <div className="px-2">
+                  <Slider
+                    value={priceRange}
+                    onValueChange={handlePriceChange}
+                    max={100000}
+                    min={0}
+                    step={100}
+                    className="w-full"
+                  />
+                  <div className="flex justify-between items-center mt-3">
+                    <div className="text-sm font-medium">
+                      ${priceRange[0].toLocaleString()}
+                    </div>
+                    <div className="text-sm font-medium">
+                      ${priceRange[1].toLocaleString()}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <Separator />
+
+              {/* Delivery Time */}
+              <div className="space-y-3">
+                <h3 className="font-medium text-sm">Delivery Time</h3>
+                <Select value={deliveryFilter} onValueChange={handleDeliveryChange}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select delivery time" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {deliveryOptions.map((option) => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Clear Filters */}
+              {hasActiveFilters() && (
+                <>
+                  <Separator />
+                  <Button 
+                    variant="outline" 
+                    onClick={resetAllFilters}
+                    className="w-full gap-2"
                   >
-                    <Image
-                      height={18}
-                      width={18}
-                      className="me-2"
-                      src="/images/icon/all-filter-icon.svg"
-                      alt="icon"
-                    />
-                    All Filter
-                  </button>
-                </li>
-<li className="list-inline-item position-relative d-none d-xl-inline-block">
-  <button
-    className="open-btn mb10 dropdown-toggle"
-    type="button"
-    data-bs-toggle="dropdown"
-    data-bs-auto-close="outside"
-  >
-    Category
-    <i className="fa fa-angle-down ms-2" />
-  </button>
-  <div className="dropdown-menu">
-    <div className="widget-wrapper pb25 mb0">
-      <div className="checkbox-style1 mb15">
-        <Classification />
+                    <RotateCcw className="h-4 w-4" />
+                    Clear All Filters
+                  </Button>
+                </>
+              )}
+            </div>
+          </SheetContent>
+        </Sheet>
+
+        {/* Category Dropdown (Desktop Only) */}
+        <div className="hidden lg:block">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" className="gap-2">
+                Categories
+                <ChevronDown className="h-4 w-4" />
+                {getCategory?.length > 0 && (
+                  <Badge variant="secondary" className="ml-1">
+                    {getCategory.length}
+                  </Badge>
+                )}
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent className="w-64" align="start">
+              <DropdownMenuLabel>Select Categories</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <div className="p-2">
+                <Classification />
+              </div>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+
+        {/* Clear Filters Button (when filters active) */}
+        {hasActiveFilters() && (
+          <Button 
+            variant="ghost" 
+            size="sm"
+            onClick={resetAllFilters}
+            className="gap-2 text-muted-foreground hover:text-foreground"
+          >
+            <X className="h-4 w-4" />
+            Clear Filters
+          </Button>
+        )}
+
+        {/* Active Filter Indicators */}
+        <div className="flex flex-wrap gap-2">
+          {getCategory?.map((category) => (
+            <Badge key={category} variant="secondary" className="gap-1">
+              {category}
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-3 w-3 p-0 hover:bg-transparent"
+                onClick={() => {
+                  // Remove this category from the filter
+                  // This would need to be implemented in your store
+                }}
+              >
+                <X className="h-2 w-2" />
+              </Button>
+            </Badge>
+          ))}
+          
+          {(priceRange[0] > 0 || priceRange[1] < 100000) && (
+            <Badge variant="secondary">
+              ${priceRange[0].toLocaleString()} - ${priceRange[1].toLocaleString()}
+            </Badge>
+          )}
+          
+          {deliveryFilter && (
+            <Badge variant="secondary">
+              {deliveryOptions.find(opt => opt.value === deliveryFilter)?.label}
+            </Badge>
+          )}
+        </div>
+      </div>
+
+      {/* Right Side - Sort */}
+      <div className="flex items-center gap-3">
+        <span className="text-sm text-muted-foreground hidden sm:block">Sort by:</span>
+        <Select defaultValue="recommended">
+          <SelectTrigger className="w-40">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {sortOptions.map((option) => (
+              <SelectItem key={option.value} value={option.value}>
+                {option.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
     </div>
-    <button
-      className="done-btn ud-btn btn-thm drop_btn"
-    >
-      Apply
-      <i className="fal fa-arrow-right-long" />
-    </button>
-  </div>
-</li>
-                {/* <li className="list-inline-item position-relative d-none d-xl-inline-block">
-                  <button
-                    className="open-btn mb10 dropdown-toggle"
-                    type="button"
-                    data-bs-toggle="dropdown"
-                    data-bs-auto-close="outside"
-                  >
-                    Delivery Time
-                    <i className="fa fa-angle-down ms-2" />
-                  </button>
-
-                  
-
-                  <div className="dropdown-menu">
-                    <div className="widget-wrapper pb25 mb0">
-                      <div className="radio-element">
-                        {deliveryTime.map((item,i) => (
-                          <div
-                            key={ i }
-                            className="form-check d-flex align-items-center mb10"
-                          >
-                            <input
-                              className="form-check-input"
-                              type="radio"
-                              name="flexRadioDefault"
-                              id={`flexRadioDefault1${item.id}`}
-                              checked={getDelivery === item.value}
-                              onChange={() => deliveryHandler(item.value)}
-                            />
-                            <label
-                              className="form-check-label"
-                              htmlFor={`flexRadioDefault1${item.id}`}
-                            >
-                              {item.title}
-                            </label>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                    <button
-                      onClick={() => setOurDeliveryTime(getDelivery)}
-                      className="done-btn ud-btn btn-thm drop_btn"
-                    >
-                      Apply
-                      <i className="fal fa-arrow-right-long" />
-                    </button>
-                  </div>
-                </li> */}
-{/* 
-                <li className="list-inline-item position-relative d-none d-xl-inline-block">
-                  <button
-                    className="open-btn mb10 dropdown-toggle"
-                    type="button"
-                    data-bs-toggle="dropdown"
-                    data-bs-auto-close="outside"
-                  >
-                    Budget
-                    <i className="fa fa-angle-down ms-2" />
-                  </button>
-                  <div className="dropdown-menu dd3">
-                    <div className="widget-wrapper pb25 mb0 pr20">
-                      <div className="range-slider-style1">
-                        <div className="range-wrapper">
-                          <div className="price__range__box">
-                            <ReactSlider
-                              className="horizontal-slider"
-                              thumbClassName="example-thumb"
-                              trackClassName="example-track"
-                              value={[getPrice.min, getPrice.max]}
-                              min={0}
-                              max={100000}
-                              onChange={priceHandler}
-                              minDistance={10}
-                            />
-                          </div>
-                          <div className="d-flex gap-1 align-items-center pt-4">
-                            <input
-                              type="number"
-                              className="amount w-100"
-                              placeholder="$20"
-                              min={0}
-                              value={getPrice.min}
-                              onChange={(e) =>
-                                setPrice({
-                                  ...getPrice,
-                                  min: e.target.value,
-                                })
-                              }
-                            />
-                            <span className="fa-sharp fa-solid fa-minus mx-1 dark-color" />
-                            <input
-                              type="number"
-                              className="amount2 w-100"
-                              placeholder="$100000"
-                              min={0}
-                              max={100000}
-                              value={getPrice.max}
-                              onChange={(e) =>
-                                setPrice({
-                                  ...getPrice,
-                                  max: e.target.value,
-                                })
-                              }
-                            />
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                    <button
-                      onClick={() => setPriceRange(getPrice.min, getPrice.max)}
-                      className="done-btn ud-btn btn-thm drop_btn3"
-                    >
-                      Apply
-                      <i className="fal fa-arrow-right-long" />
-                    </button>
-                  </div>
-                </li> */}
-
-
-                <li className="list-inline-item position-relative d-none d-xl-inline-block">
-                  <Undo />
-                </li>
-              </ul>
-            </div>
-          </div>
-        </div>
-        <div className="col-6 col-sm-6 col-lg-3 px-0">
-          <div className="page_control_shorting mb10 d-flex align-items-center justify-content-center justify-content-sm-end">
-            <SortOption1 />
-          </div>
-        </div>
-      </div>
-    </>
   );
 }
-

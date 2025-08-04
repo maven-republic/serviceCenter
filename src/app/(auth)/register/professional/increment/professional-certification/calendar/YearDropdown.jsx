@@ -1,5 +1,7 @@
 'use client'
 
+import { Button } from "@/components/ui/button"
+import { cn } from "@/lib/utils"
 import { getYearRange } from './calendarUtils'
 
 export default function YearDropdown({
@@ -17,49 +19,32 @@ export default function YearDropdown({
     onYearChange(year)
   }
 
-  const handleMouseEnter = (e, year) => {
-    e.target.style.backgroundColor = '#f8f9fa'
-    e.target.style.color = '#0d6efd'
-  }
-
-  const handleMouseLeave = (e, year) => {
-    e.target.style.backgroundColor = 'transparent'
-    e.target.style.color = year === currentYear ? '#0d6efd' : '#212529'
-  }
-
   return (
     <div 
-      className="position-absolute bg-white border rounded-2 shadow-lg py-1"
-      style={{ 
-        top: '100%', 
-        right: '0', 
-        zIndex: 1001,
-        width: isMobile ? '100px' : '80px',
-        maxHeight: isMobile ? '200px' : '180px',
-        overflowY: 'auto'
-      }}
+      className={cn(
+        "absolute top-full right-0 z-50 bg-popover border rounded-md shadow-lg py-1",
+        "animate-in fade-in-0 zoom-in-95 slide-in-from-top-2",
+        isMobile ? "w-24 max-h-52" : "w-20 max-h-48",
+        "overflow-y-auto"
+      )}
     >
-      {years.map(year => (
-        <button
-          key={year}
-          type="button"
-          className={`btn btn-link text-start w-100 text-decoration-none border-0 ${
-            year === currentYear ? 'text-primary' : 'text-dark'
-          }`}
-          onClick={() => handleYearClick(year)}
-          onMouseEnter={(e) => handleMouseEnter(e, year)}
-          onMouseLeave={(e) => handleMouseLeave(e, year)}
-          style={{ 
-            transition: 'all 0.2s ease',
-            fontSize: isMobile ? '14px' : '12px',
-            fontWeight: 'normal',
-            padding: isMobile ? '12px 16px' : '8px 12px',
-            minHeight: isMobile ? '44px' : 'auto'
-          }}
-        >
-          {year}
-        </button>
-      ))}
+      <div className="p-1 space-y-1">
+        {years.map(year => (
+          <Button
+            key={year}
+            variant="ghost"
+            size={isMobile ? "default" : "sm"}
+            onClick={() => handleYearClick(year)}
+            className={cn(
+              "w-full justify-start font-normal text-xs",
+              isMobile && "text-sm h-11",
+              year === currentYear && "bg-accent text-accent-foreground"
+            )}
+          >
+            {year}
+          </Button>
+        ))}
+      </div>
     </div>
   )
 }

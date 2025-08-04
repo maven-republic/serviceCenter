@@ -1,40 +1,26 @@
-// app/(professional-workspace)/professional/workspace/layout.jsx
-import { redirect } from 'next/navigation'
-import { createClient } from '@/utils/supabase/server'
-import CustomerWorkspaceStructure from "@/components/customer-workspace/CustomerWorkspaceStructure"
-import MobileNavigation2 from "@/components/header/MobileNavigation2"
+// src/app/(customer-workspace)/customer/layout.jsx
+'use client';
 
-export const metadata = {
-  title: "Customer Workspace",
-};
+import { useEffect } from 'react';
+import { useTheme } from '@/components/theme-provider';
+import CustomerWorkspaceStructure from '@/components/customer-workspace/CustomerWorkspaceStructure';
 
-export default async function WorkspaceLayout({ children }) {
-  const supabase = await createClient()
-  const { data, error } = await supabase.auth.getUser()
-  
-  if (error || !data?.user) {
-    redirect('/login')
-  }
-  
-  // Optional: Check if user has professional role
-  const { data: roleData } = await supabase
-    .from('account_role')
-    .select('role_type')
-    .eq('account_id', data.user.id)
-    .eq('is_primary', true)
-    .single()
-  
-  if (roleData?.role_type !== 'customer') {
-    redirect('/login')
-  }
+export default function CustomerWorkspaceLayout({ children }) {
+  const { setTheme, actualTheme } = useTheme();
+
+  // Optional: Set default theme preference for customer workspace
+  // But don't force it - let the theme provider handle the logic
+  useEffect(() => {
+    // Only set a preference if no theme is set
+    // Remove the forcing logic and let users choose
+    console.log('Customer workspace loaded, current theme:', actualTheme);
+  }, [actualTheme]);
 
   return (
-    <>
-      <MobileNavigation2 />
+    <div className="min-h-screen bg-background text-foreground">
       <CustomerWorkspaceStructure>
         {children}
       </CustomerWorkspaceStructure>
-    </>
+    </div>
   );
 }
-

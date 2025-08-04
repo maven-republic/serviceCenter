@@ -3,13 +3,16 @@
 import { useRouter } from 'next/navigation'
 import { useSupabaseClient } from '@supabase/auth-helpers-react'
 import { signupProfessional } from './actions'
+import { useState, useEffect } from 'react'
+
+import { Alert, AlertDescription } from "@/components/ui/alert"
+import { AlertCircle } from "lucide-react"
 
 import Account from './increment/Account'
 import Personal from './increment/Personal'
 import GeneralAddress from './increment/GeneralAddress'
 import Services from './increment/Services'
 import SelectedServices from './increment/SelectedServices'
-// import Education from './increment/Education'
 import CertificationInterface from './increment/professional-certification/CertificationInterface'
 import WorkExperienceInterface from './increment/professional-work-experience/WorkExperienceInterface'
 import AvailabilityInterface from './increment/professional-availability/AvailabilityInterface'
@@ -26,17 +29,16 @@ import {
   validateCity,
   validateParish,
   validatePhone,
-  // validateDegree,
-  // validateInstitutionId,
-  // validateFieldOfStudy,
-  // validateEndDate,
   validateWorkExperienceEntry
 } from '@/utils/validation'
 
-import designs from './ProfessionalForm.module.css'
-import { useState, useEffect } from 'react'
-
-export default function ProfessionalAccountCreation({ errorMessage, currentStep, setCurrentStep, nextStep, prevStep }) {
+export default function ProfessionalAccountCreation({ 
+  errorMessage, 
+  currentStep, 
+  setCurrentStep, 
+  nextStep, 
+  prevStep 
+}) {
   const router = useRouter()
   const supabase = useSupabaseClient()
 
@@ -63,7 +65,6 @@ export default function ProfessionalAccountCreation({ errorMessage, currentStep,
     dailyRate: '',
     serviceRadius: '',
     phone: '',
-    // education: [],
     certifications: [],
     workExperience: [],
     availability: [],
@@ -80,7 +81,7 @@ export default function ProfessionalAccountCreation({ errorMessage, currentStep,
 
   const [errors, setErrors] = useState({})
   
-  // ✅ Updated state for new architecture
+  // Updated state for new architecture
   const [verticals, setVerticals] = useState([])
   const [portfolios, setPortfolios] = useState([])
   const [servicesList, setServicesList] = useState([])
@@ -90,7 +91,7 @@ export default function ProfessionalAccountCreation({ errorMessage, currentStep,
   const [dropdownOpen, setDropdownOpen] = useState(false)
   const [isCheckingEmail, setIsCheckingEmail] = useState(false)
 
-  // ✅ Updated data fetching for new architecture
+  // Updated data fetching for new architecture
   useEffect(() => {
     async function loadData() {
       setLoading(true)
@@ -186,17 +187,59 @@ export default function ProfessionalAccountCreation({ errorMessage, currentStep,
     const { formatted_address, geometry, place_id, address_components } = place
     const lat = geometry.location.lat()
     const lng = geometry.location.lng()
-    const getComp = t => address_components.find(c => c.types.includes(t))?.long_name || ''
+    
+    // Improved address component extraction
+    const getComp = (type) => {
+      const component = address_components.find(c => c.types.includes(type))
+      return component?.long_name || ''
+    }
+    
+    // Build street address more reliably
+    const streetNumber = getComp('street_number')
+    const route = getComp('route')
+    const streetAddress = [streetNumber, route].filter(Boolean).join(' ') || formatted_address
+    
+    // Get city with fallbacks
+    const city = getComp('locality') || 
+                 getComp('sublocality_level_1') || 
+                 getComp('administrative_area_level_2') || 
+                 'Kingston' // Default for Jamaica
+    
+    // Get parish/state
+    const parish = getComp('administrative_area_level_1') || 'Kingston'
+    
+    console.log('📍 Address selected:', {
+      streetAddress,
+      city,
+      parish,
+      lat,
+      lng,
+      formatted_address
+    })
+    
     setFormData(fd => ({
       ...fd,
-      streetAddress: getComp('route') + ' ' + getComp('street_number'),
-      city: getComp('locality') || getComp('sublocality') || '',
-      parish: getComp('administrative_area_level_1') || '',
+      streetAddress,
+      city,
+      parish,
       formattedAddress: formatted_address,
       placeId: place_id,
-      latitude: lat,
-      longitude: lng,
-      rawGoogleData: JSON.stringify({ formatted_address, place_id, geometry })
+      latitude: lat.toString(),
+      longitude: lng.toString(),
+      rawGoogleData: JSON.stringify({ 
+        formatted_address, 
+        place_id, 
+        geometry, 
+        address_components 
+      })
+    }))
+    
+    // Clear any address-related errors
+    setErrors(err => ({
+      ...err,
+      streetAddress: '',
+      city: '',
+      parish: ''
     }))
   }
 
@@ -245,6 +288,16 @@ export default function ProfessionalAccountCreation({ errorMessage, currentStep,
         return
       }
       setCurrentStep(3)
+    } else if (currentStep === 3) {
+      // Validate address step
+      if (!formData.latitude || !formData.longitude) {
+        setErrors(err => ({ 
+          ...err, 
+          address: 'Please select an address from the dropdown to get valid coordinates.' 
+        }))
+        return
+      }
+      setCurrentStep(4)
     } else {
       setCurrentStep(s => s + 1)
     }
@@ -261,6 +314,15 @@ export default function ProfessionalAccountCreation({ errorMessage, currentStep,
     setLoading(true)
 
     try {
+      console.log('📋 Submitting form data:', {
+        latitude: formData.latitude,
+        longitude: formData.longitude,
+        streetAddress: formData.streetAddress,
+        city: formData.city,
+        parish: formData.parish,
+        formattedAddress: formData.formattedAddress
+      })
+
       const form = document.querySelector('form')
       if (!form) return
       const data = new FormData(form)
@@ -285,114 +347,129 @@ export default function ProfessionalAccountCreation({ errorMessage, currentStep,
   }
 
   return (
-    <form className={designs.outer}>
+    <div className="min-h-screen bg-background">
+      {/* Reduced container padding for availability step */}
+      <div className={`mx-auto py-4 max-w-7xl ${currentStep === 7 ? 'px-2' : 'container px-1'}`}>
+        <form className="space-y-4" onSubmit={handleSubmit}>
+          
+          {/* Error Messages */}
+          {errorMessage && (
+            <Alert variant="destructive">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>{errorMessage}</AlertDescription>
+            </Alert>
+          )}
+          
+          {errors.submit && (
+            <Alert variant="destructive">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>{errors.submit}</AlertDescription>
+            </Alert>
+          )}
 
-         {/* <form> */}
+          {errors.address && (
+            <Alert variant="destructive">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>{errors.address}</AlertDescription>
+            </Alert>
+          )}
 
-      {errorMessage && <div className="alert alert-danger mb-4">{errorMessage}</div>}
-      {errors.submit && <div className="alert alert-danger mb-4">{errors.submit}</div>}
+          {/* Step Content - Minimal padding for availability */}
+          <div className={`bg-card rounded-lg border shadow-sm ${currentStep === 7 ? 'p-2 md:p-3' : 'p-6 md:p-8'}`}>
+            {currentStep === 1 && (
+              <Account 
+                formData={formData} 
+                errors={errors} 
+                updateFormData={updateFormData} 
+                handleBlur={handleBlur} 
+                isCheckingEmail={isCheckingEmail} 
+              />
+            )}
 
-      {currentStep === 1 && (
-        <Account 
-          formData={formData} 
-          errors={errors} 
-          updateFormData={updateFormData} 
-          handleBlur={handleBlur} 
-          isCheckingEmail={isCheckingEmail} 
-        />
-      )}
+            {currentStep === 2 && (
+              <Personal 
+                formData={formData} 
+                errors={errors} 
+                updateFormData={updateFormData} 
+                handleBlur={handleBlur} 
+              />
+            )}
 
-      {currentStep === 2 && (
-        <Personal 
-          formData={formData} 
-          errors={errors} 
-          updateFormData={updateFormData} 
-          handleBlur={handleBlur} 
-        />
-      )}
+            {currentStep === 3 && (
+              <GeneralAddress 
+                formData={formData} 
+                errors={errors} 
+                handleAddressSelect={handleAddressSelect} 
+                updateFormData={updateFormData} 
+              />
+            )}
 
-      {currentStep === 3 && (
-        <GeneralAddress 
-          formData={formData} 
-          errors={errors} 
-          handleAddressSelect={handleAddressSelect} 
-          updateFormData={updateFormData} 
-        />
-      )}
+            {currentStep === 4 && (
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                <div className="lg:col-span-5">
+                  <Services 
+                    verticals={verticals}
+                    portfolios={portfolios}
+                    services={servicesList}
+                    loading={loading} 
+                    dropdownOpen={dropdownOpen} 
+                    searchTerm={searchTerm} 
+                    setSearchTerm={setSearchTerm} 
+                    setDropdownOpen={setDropdownOpen} 
+                    toggleService={toggleService} 
+                    selectedServices={formData.services} 
+                    formData={formData} 
+                    updateFormData={updateFormData} 
+                    errors={errors.services} 
+                  />
+                </div>
+                <div className="lg:col-span-7">
+                  <SelectedServices 
+                    selected={formData.services} 
+                    toggleService={toggleService} 
+                    services={servicesList} 
+                    formData={formData} 
+                    updateFormData={updateFormData} 
+                  />
+                </div>
+              </div>
+            )}
 
-      {currentStep === 4 && (
-        <div className="row">
-          <div className="col-md-5">
-            {/* ✅ Updated Services component with new props */}
-            <Services 
-              verticals={verticals}           // ✅ Changed from categories
-              portfolios={portfolios}         // ✅ New prop
-              services={servicesList}         // ✅ Keep existing
-              loading={loading} 
-              dropdownOpen={dropdownOpen} 
-              searchTerm={searchTerm} 
-              setSearchTerm={setSearchTerm} 
-              setDropdownOpen={setDropdownOpen} 
-              toggleService={toggleService} 
-              selectedServices={formData.services} 
-              formData={formData} 
-              updateFormData={updateFormData} 
-              errors={errors.services} 
-            />
+            {currentStep === 5 && (
+              <CertificationInterface 
+                formData={formData} 
+                updateFormData={updateFormData} 
+              />
+            )}
+
+            {currentStep === 6 && (
+              <WorkExperienceInterface 
+                formData={formData} 
+                updateFormData={updateFormData} 
+              />
+            )}
+
+            {currentStep === 7 && (
+              <AvailabilityInterface 
+                formData={formData} 
+                updateFormData={updateFormData} 
+              />
+            )}
           </div>
-          <div className="col-md-7">
-            <SelectedServices 
-              selected={formData.services} 
-              toggleService={toggleService} 
-              services={servicesList} 
-              formData={formData} 
-              updateFormData={updateFormData} 
-            />
-          </div>
-        </div>
-      )}
 
-      {/* {currentStep === 5 && (
-        <Education 
-          formData={formData} 
-          errors={errors} 
-          updateFormData={updateFormData} 
-          handleBlur={handleBlur} 
-          allServices={servicesList} 
-        />
-      )} */}
+          {/* Spacer for fixed navigation */}
+          <div className="h-16" />
 
-      {currentStep === 5 && (
-        <CertificationInterface 
-          formData={formData} 
-          updateFormData={updateFormData} 
-        />
-      )}
-
-      {currentStep === 6 && (
-        <WorkExperienceInterface 
-          formData={formData} 
-          updateFormData={updateFormData} 
-        />
-      )}
-
-      {currentStep === 7 && (
-        <AvailabilityInterface 
-          formData={formData} 
-          updateFormData={updateFormData} 
-        />
-      )}
-
-      <div style={{ height: '80px' }} />
-
-      <NavigationSelectors
-        currentStep={currentStep}
-        nextStep={handleNextStep}
-        prevStep={handlePrevStep}
-        onSubmit={handleSubmit}
-        totalSteps={7}
-        loading={loading}
-      />
-    </form>
+          <NavigationSelectors
+            currentStep={currentStep}
+            nextStep={handleNextStep}
+            prevStep={handlePrevStep}
+            onSubmit={handleSubmit}
+            totalSteps={7}
+            loading={loading}
+          />
+        </form>
+      </div>
+    </div>
   )
 }

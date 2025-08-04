@@ -1,96 +1,115 @@
 'use client'
 
+import { Label } from "@/components/ui/label"
+import { Input } from "@/components/ui/input"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Clock, Shield, Users } from "lucide-react"
+
 export default function AvailabilityProtocol({ rules, setRules }) {
   const updateRule = (name, value) => {
     setRules(prev => ({ ...prev, [name]: parseInt(value) }))
   }
 
   return (
-    <div className="container py-4 px-2 px-md-4">
-      <div className="mb-5">
-        <h2 className="fw-bold mb-1">Availability Protocol</h2>
-        <p className="text-muted">Set your scheduling preferences just like on Calendly.</p>
+    <div className="space-y-4">
+      
+      {/* Default Event Duration */}
+      <div className="space-y-2">
+        <div className="flex items-center gap-2">
+          <Clock className="h-3 w-3 text-primary" />
+          <Label className="text-sm font-medium">Event Duration</Label>
+        </div>
+        <Select
+          value={rules.default_event_duration?.toString() || ''}
+          onValueChange={(value) => updateRule('default_event_duration', value)}
+        >
+          <SelectTrigger className="h-9">
+            <SelectValue placeholder="Select duration" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="15">15 minutes</SelectItem>
+            <SelectItem value="30">30 minutes</SelectItem>
+            <SelectItem value="45">45 minutes</SelectItem>
+            <SelectItem value="60">1 hour</SelectItem>
+            <SelectItem value="90">1.5 hours</SelectItem>
+            <SelectItem value="120">2 hours</SelectItem>
+          </SelectContent>
+        </Select>
+        <p className="text-xs text-muted-foreground">
+          Standard booking length
+        </p>
       </div>
 
-      {/* Rule Group */}
-      <div className="border-top pt-4">
-        {/* Default Event Duration */}
-        <div className="row align-items-center mb-4">
-          <div className="col-md-5">
-            <label className="form-label fw-semibold mb-1">Default Event Duration</label>
-            <p className="text-muted small mb-0">How long each session lasts.</p>
-          </div>
-          <div className="col-md-4">
-            <select
-              className="form-select"
-              value={rules.default_event_duration || ''}
-              onChange={e => updateRule('default_event_duration', e.target.value)}
-            >
-              <option value="">Select duration</option>
-              <option value={15}>15 minutes</option>
-              <option value={30}>30 minutes</option>
-              <option value={60}>60 minutes</option>
-            </select>
-          </div>
+      {/* Minimum Notice */}
+      <div className="space-y-2">
+        <div className="flex items-center gap-2">
+          <Shield className="h-3 w-3 text-primary" />
+          <Label className="text-sm font-medium">Min Notice (hours)</Label>
         </div>
+        <Input
+          type="number"
+          min="0"
+          max="168"
+          placeholder="e.g. 12"
+          value={rules.min_notice_hours || ''}
+          onChange={(e) => updateRule('min_notice_hours', e.target.value)}
+          className="h-9"
+        />
+        <p className="text-xs text-muted-foreground">
+          Advance booking requirement
+        </p>
+      </div>
 
-        {/* Minimum Notice */}
-        <div className="row align-items-center mb-4">
-          <div className="col-md-5">
-            <label className="form-label fw-semibold mb-1">Minimum Scheduling Notice</label>
-            <p className="text-muted small mb-0">Prevent last-minute bookings.</p>
-          </div>
-          <div className="col-md-4 d-flex align-items-center">
-            <input
-              type="number"
-              min={0}
-              className="form-control me-2"
-              value={rules.min_notice_hours || ''}
-              onChange={e => updateRule('min_notice_hours', e.target.value)}
-              placeholder="e.g. 12"
-            />
-            <span className="text-muted">hours</span>
-          </div>
+      {/* Buffer Time */}
+      <div className="space-y-2">
+        <div className="flex items-center gap-2">
+          <Clock className="h-3 w-3 text-primary" />
+          <Label className="text-sm font-medium">Buffer (minutes)</Label>
         </div>
+        <Input
+          type="number"
+          min="0"
+          max="120"
+          placeholder="e.g. 15"
+          value={rules.buffer_minutes || ''}
+          onChange={(e) => updateRule('buffer_minutes', e.target.value)}
+          className="h-9"
+        />
+        <p className="text-xs text-muted-foreground">
+          Break between bookings
+        </p>
+      </div>
 
-        {/* Buffer Time */}
-        <div className="row align-items-center mb-4">
-          <div className="col-md-5">
-            <label className="form-label fw-semibold mb-1">Buffer Between Bookings</label>
-            <p className="text-muted small mb-0">Break time before or after events.</p>
-          </div>
-          <div className="col-md-4 d-flex align-items-center">
-            <input
-              type="number"
-              min={0}
-              className="form-control me-2"
-              value={rules.buffer_minutes || ''}
-              onChange={e => updateRule('buffer_minutes', e.target.value)}
-              placeholder="e.g. 15"
-            />
-            <span className="text-muted">minutes</span>
-          </div>
+      {/* Max Bookings Per Day */}
+      <div className="space-y-2">
+        <div className="flex items-center gap-2">
+          <Users className="h-3 w-3 text-primary" />
+          <Label className="text-sm font-medium">Daily Limit</Label>
         </div>
+        <Input
+          type="number"
+          min="1"
+          max="20"
+          placeholder="e.g. 5 (optional)"
+          value={rules.max_bookings_per_day || ''}
+          onChange={(e) => updateRule('max_bookings_per_day', e.target.value)}
+          className="h-9"
+        />
+        <p className="text-xs text-muted-foreground">
+          Max bookings per day
+        </p>
+      </div>
 
-        {/* Max Bookings Per Day */}
-        <div className="row align-items-center mb-2">
-          <div className="col-md-5">
-            <label className="form-label fw-semibold mb-1">Max Bookings Per Day</label>
-            <p className="text-muted small mb-0">Optional limit to avoid overbooking.</p>
-          </div>
-          <div className="col-md-4">
-            <input
-              type="number"
-              min={1}
-              className="form-control"
-              value={rules.max_bookings_per_day || ''}
-              onChange={e => updateRule('max_bookings_per_day', e.target.value)}
-              placeholder="e.g. 3"
-            />
-          </div>
+      {/* Compact Info */}
+      <div className="mt-4 p-2 bg-blue-50 border border-blue-200 rounded text-xs">
+        <div className="font-medium text-blue-900 mb-1">💡 Quick Tips:</div>
+        <div className="text-blue-800 space-y-0.5">
+          <div>• Duration: Default length for all appointments</div>
+          <div>• Notice: Prevent last-minute bookings</div>
+          <div>• Buffer: Automatic break time between sessions</div>
+          <div>• Limit: Maximum appointments per day</div>
         </div>
       </div>
     </div>
   )
 }
-
