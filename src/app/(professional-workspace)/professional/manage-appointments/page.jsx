@@ -1,7 +1,7 @@
 // src/app/(professional-workspace)/professional/manage-appointments/page.jsx
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { useUserStore } from '@/store/userStore'
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -49,7 +49,7 @@ export default function ManageAppointments() {
     assigned: 0
   })
 
-  // ✅ NEW: Use table hooks for enhanced functionality
+  // ✅ Use table hooks for enhanced functionality
   const currentData = activeTab === 'interests' ? interests : appointments
   
   const {
@@ -135,7 +135,7 @@ export default function ManageAppointments() {
     clearSelection() // Clear any selections on refresh
   }, [pagination.page, clearSelection])
 
-  // ✅ Fetch available appointments with invitation detection
+  // ✅ UPDATED: Fetch available appointments with interest data for state detection
   const fetchAvailableAppointments = useCallback(async (page = 1) => {
     if (!user?.profile?.professional_id) return
 
@@ -147,11 +147,12 @@ export default function ManageAppointments() {
         professional_filter: 'available',
         professional_id: user.profile.professional_id,
         status: 'pending',
+        include_interests: 'true', // ✅ NEW: Include interest data for response state detection
         limit: pagination.limit.toString(),
         offset: ((page - 1) * pagination.limit).toString()
       })
 
-      console.log('🔍 Fetching available appointments with invitations:', params.toString())
+      console.log('🔍 Fetching available appointments with interests:', params.toString())
 
       const response = await fetch(`/api/appointments?${params}`)
       
@@ -176,7 +177,11 @@ export default function ManageAppointments() {
       
       const invitationCount = data.appointments?.filter(apt => apt.is_invited)?.length || 0
       const openCount = data.appointments?.filter(apt => !apt.is_invited)?.length || 0
-      console.log('🎯 Invitations found:', invitationCount, 'Open marketplace:', openCount)
+      const respondedCount = data.appointments?.filter(apt => 
+        apt.interests?.some(i => i.professional_id === user.profile.professional_id)
+      )?.length || 0
+      
+      console.log('🎯 Invitations found:', invitationCount, 'Open marketplace:', openCount, 'Already responded:', respondedCount)
 
       setAppointments(data.appointments || [])
       setPagination(prev => ({
@@ -408,7 +413,7 @@ export default function ManageAppointments() {
     fetchProfessionalData()
   }, [activeTab, fetchData, fetchTabCounts, fetchProfessionalData])
 
-  // ✅ Express interest with invitation awareness
+  // ✅ UPDATED: Express interest with enhanced feedback and auto-redirect
   const handleExpressInterest = useCallback(async (appointmentId, interestData) => {
     if (!appointmentId) return
 
@@ -451,9 +456,10 @@ export default function ManageAppointments() {
       console.log('✅ Interest expressed successfully:', data)
 
       const successMessage = isInvitation 
-        ? 'Response to invitation sent successfully!'
-        : 'Interest expressed successfully!'
+        ? '🎉 Response to invitation sent successfully!'
+        : '✅ Interest expressed successfully!'
 
+      // ✅ UPDATED: Enhanced refresh and user feedback
       handleRefresh()
       clearSelection()
 
@@ -462,7 +468,13 @@ export default function ManageAppointments() {
         setSelectedAppointment(null)
       }
 
-      alert(successMessage)
+      // ✅ NEW: Show success message with next steps
+      alert(`${successMessage}\n\nYou can track your response in the "My Interests" tab.`)
+
+      // ✅ NEW: Auto-switch to interests tab after successful submission
+      setTimeout(() => {
+        setActiveTab('interests')
+      }, 100)
 
     } catch (err) {
       console.error('❌ Error expressing interest:', err)
@@ -585,6 +597,50 @@ export default function ManageAppointments() {
     setAttachmentViewerOpen(true)
   }, [])
 
+  // ✅ UPDATED: Handle actions - Open detailed form instead of auto-submitting
+  const handleAction = useCallback(async (actionType, item) => {
+    try {
+      console.log('🎯 Handling action:', actionType, 'for item:', item.appointment_id)
+      
+      switch (actionType) {
+        case 'express_interest':
+          // ✅ FIXED: Open detailed form instead of auto-submitting
+          console.log('🎯 Opening detailed form for:', item.appointment_id)
+          await handleViewAppointment(item.appointment_id)
+          break
+        case 'respond_to_selection':
+          // Open professional response handler
+          handleViewAppointment(item.appointment?.appointment_id)
+          break
+        case 'update_interest':
+          await handleUpdateInterest(item.interest_id)
+          break
+        case 'reapply':
+          await handleExpressInterest(item.appointment?.appointment_id, { intent: 'standard' })
+          break
+        case 'accept':
+          await handleAppointmentAction(item.appointment_id, 'accept')
+          break
+        case 'decline':
+          await handleAppointmentAction(item.appointment_id, 'decline')
+          break
+        case 'share':
+          // Handle share functionality
+          console.log('Share:', item)
+          break
+        default:
+          console.warn('Unknown action:', actionType)
+      }
+      
+      // ✅ UPDATED: Only refresh if we actually performed an action (not just opened a form)
+      if (!['express_interest', 'respond_to_selection'].includes(actionType)) {
+        handleRefresh()
+      }
+    } catch (error) {
+      console.error('Action failed:', actionType, error)
+    }
+  }, [handleViewAppointment, handleUpdateInterest, handleExpressInterest, handleAppointmentAction, handleRefresh])
+
   // ✅ Handle bulk actions
   const handleBulkAction = useCallback(async (action, selectedIds) => {
     console.log(`🔄 Performing bulk ${action} on:`, selectedIds)
@@ -648,16 +704,6 @@ export default function ManageAppointments() {
 
   return (
     <div className="space-y-3 p-6 bg-background min-h-screen">
-      {/* Professional Header */}
-      {/* <div className="space-y-2">
-        <h1 className="text-3xl font-bold tracking-tight text-foreground">
-          Manage Appointments
-        </h1>
-        <p className="text-muted-foreground leading-relaxed">
-          Discover new opportunities, manage your interests, and track your assigned appointments.
-        </p>
-      </div> */}
-
       {/* Error State */}
       {error && (
         <AppointmentErrorState 
@@ -705,7 +751,7 @@ export default function ManageAppointments() {
           </TabsTrigger>
         </TabsList>
 
-        {/* ✅ Updated Search with Full Hook Integration */}
+        {/* ✅ Search with Full Hook Integration */}
         <AppointmentSearch
           searchQuery={searchQuery}
           appointments={currentData}
@@ -743,8 +789,6 @@ export default function ManageAppointments() {
               <AppointmentLoadingState />
             ) : processedData.length === 0 ? (
               <AppointmentEmptyState
-                
-                
                 mode={activeTab}
                 emptyMessage="No available appointments in your area"
                 emptyDescription="Check back later for new appointment opportunities and invitations"
@@ -756,15 +800,13 @@ export default function ManageAppointments() {
                   professionalId={user?.profile?.professional_id}
                   professional={professional}
                   onView={handleViewAppointment}
-                  onExpressInterest={handleExpressInterest}
+                  onExpressInterest={handleAction} // ✅ FIXED: Use handleAction instead of direct call
                   onViewAttachments={handleViewAttachments}
                   onRefresh={handleRefresh}
                   loading={loading}
-                  // ✅ Use internal pagination from useTableData
                   pagination={paginationInfo}
                   onPageChange={goToPage}
                   mode="available"
-                  // ✅ Pass selection state
                   selectionState={selectionState}
                   onSelectionChange={toggleSelection}
                   onSelectAll={toggleSelectAll}

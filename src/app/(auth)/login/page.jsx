@@ -1,16 +1,34 @@
 'use client'
 
-import Footer from "@/components/footer/Footer"
-import Header20 from "@/components/header/Header20"
-import LoginForm from './LoginForm'
 import { useSearchParams } from 'next/navigation'
 import { Suspense } from 'react'
+import LoginForm from './LoginForm'
 
 export default function LoginPage() {
   return (
-    <Suspense fallback={<div>Loading...</div>}>
-      <LoginInner />
-    </Suspense>
+    <div className="auth-workspace">
+      <Suspense fallback={<LoginLoadingFallback />}>
+        <LoginInner />
+      </Suspense>
+    </div>
+  )
+}
+
+function LoginLoadingFallback() {
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-background">
+      <div className="w-full max-w-md p-6">
+        <div className="auth-card animate-pulse">
+          <div className="p-6 space-y-4">
+            <div className="h-8 bg-muted rounded w-3/4 mx-auto"></div>
+            <div className="h-4 bg-muted rounded w-full"></div>
+            <div className="h-10 bg-muted rounded w-full"></div>
+            <div className="h-10 bg-muted rounded w-full"></div>
+            <div className="h-11 bg-muted rounded w-full"></div>
+          </div>
+        </div>
+      </div>
+    </div>
   )
 }
 
@@ -19,12 +37,8 @@ function LoginInner() {
   const errorMessage = searchParams.get('error')
 
   return (
-    <div>
-      {/* <Header20 /> */}
-      <section className="our-login">
-        <LoginForm errorMessage={errorMessage} />
-      </section>
-      {/* <Footer /> */}
-    </div>
+    <section className="our-login min-h-screen">
+      <LoginForm errorMessage={errorMessage} />
+    </section>
   )
 }

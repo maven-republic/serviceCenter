@@ -1,3 +1,4 @@
+// ===== UPDATED LoginForm.jsx =====
 'use client'
 
 import { useState } from 'react'
@@ -10,58 +11,38 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Checkbox } from '@/components/ui/checkbox'
-import { Skeleton } from '@/components/ui/skeleton'
 import Link from 'next/link'
-import { Loader2, ArrowRight } from 'lucide-react'
+import { Loader2, Mail, Lock, Eye, EyeOff, AlertCircle } from 'lucide-react'
+import { cn } from '@/lib/utils'
 
-// Loading Skeleton Component
+// Loading Skeleton - Pure Tailwind
 function LoginFormSkeleton() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-background px-4 py-12">
       <div className="w-full max-w-md space-y-6">
         {/* Header Skeleton */}
-        <div className="text-center space-y-2 flex flex-col items-center">
-          <Skeleton className="h-16 w-80" /> {/* maven republic skeleton */}
-          <Skeleton className="h-4 w-64" /> {/* subtitle skeleton */}
+        <div className="text-center space-y-4">
+          <div className="h-16 bg-muted rounded w-80 mx-auto animate-pulse" />
         </div>
 
-        {/* Login Card Skeleton */}
-        <Card className="border border-border shadow-sm">
-          <CardHeader className="space-y-1">
-            <Skeleton className="h-8 w-32" /> {/* title skeleton */}
-            <Skeleton className="h-4 w-full" /> {/* description skeleton */}
+        {/* Card Skeleton */}
+        <Card className="bg-card border-border">
+          <CardHeader className="text-center space-y-2">
+            <div className="h-6 bg-muted rounded w-24 mx-auto animate-pulse" />
+            <div className="h-4 bg-muted rounded w-full animate-pulse" />
           </CardHeader>
           <CardContent className="space-y-4">
-            {/* Email Field Skeleton */}
             <div className="space-y-2">
-              <Skeleton className="h-4 w-24" /> {/* label skeleton */}
-              <Skeleton className="h-10 w-full" /> {/* input skeleton */}
+              <div className="h-4 bg-muted rounded w-24 animate-pulse" />
+              <div className="h-10 bg-muted rounded w-full animate-pulse" />
             </div>
-
-            {/* Password Field Skeleton */}
             <div className="space-y-2">
-              <Skeleton className="h-4 w-20" /> {/* label skeleton */}
-              <Skeleton className="h-10 w-full" /> {/* input skeleton */}
+              <div className="h-4 bg-muted rounded w-20 animate-pulse" />
+              <div className="h-10 bg-muted rounded w-full animate-pulse" />
             </div>
-
-            {/* Remember Me & Forgot Password Skeleton */}
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-2">
-                <Skeleton className="h-4 w-4" /> {/* checkbox skeleton */}
-                <Skeleton className="h-4 w-24" /> {/* remember me text */}
-              </div>
-              <Skeleton className="h-4 w-28" /> {/* forgot password link */}
-            </div>
-
-            {/* Submit Button Skeleton */}
-            <Skeleton className="h-11 w-full" /> {/* button skeleton */}
+            <div className="h-11 bg-muted rounded w-full animate-pulse" />
           </CardContent>
         </Card>
-
-        {/* Sign Up Link Skeleton */}
-        <div className="text-center">
-          <Skeleton className="h-4 w-48 mx-auto" /> {/* sign up text skeleton */}
-        </div>
       </div>
     </div>
   )
@@ -70,59 +51,83 @@ function LoginFormSkeleton() {
 export default function LoginForm({ errorMessage, isLoading = false }) {
   const [loading, setLoading] = useState(false)
   const [rememberMe, setRememberMe] = useState(false)
+  const [showPassword, setShowPassword] = useState(false)
+  const [formErrors, setFormErrors] = useState({})
   const router = useRouter()
 
-  // Show skeleton while initial loading
   if (isLoading) {
     return <LoginFormSkeleton />
+  }
+
+  const validateForm = (email, password) => {
+    const errors = {}
+    
+    if (!email?.trim()) {
+      errors.email = 'Email is required'
+    } else if (!/\S+@\S+\.\S+/.test(email)) {
+      errors.email = 'Please enter a valid email address'
+    }
+    
+    if (!password?.trim()) {
+      errors.password = 'Password is required'
+    } else if (password.length < 6) {
+      errors.password = 'Password must be at least 6 characters'
+    }
+    
+    return errors
   }
 
   const handleLogin = async (e) => {
     e.preventDefault()
     setLoading(true)
+    setFormErrors({})
 
     const formData = new FormData(e.target)
-    const email = formData.get('email')
+    const email = formData.get('email')?.trim()
     const password = formData.get('password')
+
+    // Client-side validation
+    const errors = validateForm(email, password)
+    if (Object.keys(errors).length > 0) {
+      setFormErrors(errors)
+      setLoading(false)
+      return
+    }
 
     console.log('🔐 Attempting login for:', email)
 
-    const supabase = createClient()
-
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-      options: {
-        shouldPersistSession: true,
-      },
-    })
-
-    console.log('🔐 Login result:', { data: !!data, error: error?.message })
-
-    if (error) {
-      console.error('❌ Login error:', error)
-      router.push(`/login?error=${encodeURIComponent(error.message)}`)
-      setLoading(false)
-      return
-    }
-
-    if (!data?.user) {
-      console.error('❌ No user returned from login')
-      router.push(`/login?error=${encodeURIComponent('No user data returned')}`)
-      setLoading(false)
-      return
-    }
-
-    console.log('✅ Login successful for user:', data.user.email)
-
     try {
-      // Hydrate the userStore immediately after login
+      const supabase = createClient()
+
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+        options: {
+          shouldPersistSession: rememberMe,
+        },
+      })
+
+      if (error) {
+        console.error('❌ Login error:', error)
+        router.push(`/login?error=${encodeURIComponent(error.message)}`)
+        setLoading(false)
+        return
+      }
+
+      if (!data?.user) {
+        console.error('❌ No user returned from login')
+        router.push(`/login?error=${encodeURIComponent('Authentication failed')}`)
+        setLoading(false)
+        return
+      }
+
+      console.log('✅ Login successful for user:', data.user.email)
+
+      // Hydrate userStore
       const fetchUser = useUserStore.getState().fetchUser
-      console.log('🔄 Fetching user data for store...')
       await fetchUser(data.user, supabase)
 
-      // Role-based redirect
-      console.log('🔍 Looking up user role...')
+      // Get user role
       const { data: roleData, error: roleError } = await supabase
         .from('account_role')
         .select('role_type')
@@ -130,41 +135,35 @@ export default function LoginForm({ errorMessage, isLoading = false }) {
         .eq('is_primary', true)
         .single()
 
-      console.log('👤 Role lookup result:', { roleData, roleError })
-
       if (roleError || !roleData?.role_type) {
         console.error('❌ Role lookup failed:', roleError)
-        router.push('/login?error=Role lookup failed')
+        router.push('/login?error=Unable to determine account type')
         setLoading(false)
         return
       }
 
       const role = roleData.role_type
-      console.log('✅ User role determined:', role)
+      
+      // Small delay for session establishment
+      await new Promise(resolve => setTimeout(resolve, 500))
 
-      // Add a small delay to ensure session is fully established
-      await new Promise(resolve => setTimeout(resolve, 1000))
-
+      // Role-based redirect
       switch (role) {
         case 'customer':
-          console.log('↩️ Redirecting to customer workspace')
           router.replace('/customer/workspace')
           break
         case 'professional':
-          console.log('↩️ Redirecting to professional workspace')
           router.replace('/professional/workspace')
           break
         case 'admin':
-          console.log('↩️ Redirecting to admin dashboard')
           router.replace('/admin/dashboard')
           break
         default:
-          console.log('❌ Unknown role, redirecting to 404')
           router.replace('/not-found')
       }
     } catch (error) {
-      console.error('💥 Post-login processing error:', error)
-      router.push(`/login?error=${encodeURIComponent('Login processing failed: ' + error.message)}`)
+      console.error('💥 Login processing error:', error)
+      router.push(`/login?error=${encodeURIComponent('Login processing failed')}`)
     }
 
     setLoading(false)
@@ -172,55 +171,105 @@ export default function LoginForm({ errorMessage, isLoading = false }) {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background px-4 py-12">
-      <div className="w-full max-w-md space-y-6">
-        {/* Header */}
-        <div className="text-center space-y-2 flex flex-col items-center">
+      <div className="w-full max-w-md space-y-8">
+        
+        {/* Header with maven republic text */}
+        <div className="text-center space-y-4 flex flex-col items-center">
           <h1 className="text-7xl font-bold tracking-tight text-muted-foreground whitespace-nowrap">
             maven republic
           </h1>
-          
         </div>
 
-        {/* Login Card */}
-        <Card className="border border-border shadow-sm">
-          <CardHeader className="space-y-1">
-            
+        {/* Login Card - Pure shadcn/ui */}
+        <Card className="bg-card border-border shadow-sm">
+          <CardHeader className="text-center space-y-1">
+            <CardTitle className="text-xl text-card-foreground">Sign In</CardTitle>
+            <CardDescription className="text-muted-foreground">
+              Enter your credentials to continue
+            </CardDescription>
           </CardHeader>
-          <CardContent>
+          
+          <CardContent className="space-y-6">
             <form onSubmit={handleLogin} className="space-y-4">
-              {/* Email Field */}
+              
+              {/* Global Error - shadcn/ui Alert */}
+              {errorMessage && (
+                <Alert variant="destructive">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertDescription>{errorMessage}</AlertDescription>
+                </Alert>
+              )}
+
+              {/* Email Field - Pure Tailwind + shadcn/ui */}
               <div className="space-y-2">
-                <Label htmlFor="email" className="text-sm font-medium">
-                  Email address
+                <Label 
+                  htmlFor="email" 
+                  className="text-sm font-medium text-foreground"
+                >
+                  Email Address
                 </Label>
-                <Input
-                  id="email"
-                  name="email"
-                  type="email"
-                  placeholder="you@example.com"
-                  required
-                  className="w-full"
-                  disabled={loading}
-                />
+                <div className="relative">
+                  <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    id="email"
+                    name="email"
+                    type="email"
+                    placeholder="you@example.com"
+                    className={cn(
+                      "pl-10 bg-background border-border text-foreground",
+                      "placeholder:text-muted-foreground",
+                      "focus:border-ring focus:ring-2 focus:ring-ring/20",
+                      formErrors.email && "border-destructive focus:border-destructive"
+                    )}
+                    disabled={loading}
+                    required
+                  />
+                </div>
+                {formErrors.email && (
+                  <p className="text-xs text-destructive mt-1">{formErrors.email}</p>
+                )}
               </div>
 
-              {/* Password Field */}
+              {/* Password Field - Pure Tailwind + shadcn/ui */}
               <div className="space-y-2">
-                <Label htmlFor="password" className="text-sm font-medium">
+                <Label 
+                  htmlFor="password" 
+                  className="text-sm font-medium text-foreground"
+                >
                   Password
                 </Label>
-                <Input
-                  id="password"
-                  name="password"
-                  type="password"
-                  placeholder="Enter your password"
-                  required
-                  className="w-full"
-                  disabled={loading}
-                />
+                <div className="relative">
+                  <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    id="password"
+                    name="password"
+                    type={showPassword ? 'text' : 'password'}
+                    placeholder="Enter your password"
+                    className={cn(
+                      "pl-10 pr-10 bg-background border-border text-foreground",
+                      "placeholder:text-muted-foreground",
+                      "focus:border-ring focus:ring-2 focus:ring-ring/20",
+                      formErrors.password && "border-destructive focus:border-destructive"
+                    )}
+                    disabled={loading}
+                    required
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 rounded-sm"
+                    disabled={loading}
+                    tabIndex={-1}
+                  >
+                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
+                </div>
+                {formErrors.password && (
+                  <p className="text-xs text-destructive mt-1">{formErrors.password}</p>
+                )}
               </div>
 
-              {/* Remember Me & Forgot Password */}
+              {/* Remember Me & Forgot Password - Pure Tailwind */}
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-2">
                   <Checkbox
@@ -228,35 +277,27 @@ export default function LoginForm({ errorMessage, isLoading = false }) {
                     checked={rememberMe}
                     onCheckedChange={setRememberMe}
                     disabled={loading}
+                    className="data-[state=checked]:bg-primary data-[state=checked]:border-primary"
                   />
                   <Label 
                     htmlFor="remember" 
-                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                    className="text-sm font-medium text-foreground cursor-pointer select-none"
                   >
                     Remember me
                   </Label>
                 </div>
                 <Link 
                   href="/forgot-password" 
-                  className="text-sm text-primary hover:underline"
+                  className="text-sm text-primary hover:text-primary/80 transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 rounded-sm"
                 >
                   Forgot password?
                 </Link>
               </div>
 
-              {/* Error Message */}
-              {errorMessage && (
-                <Alert variant="destructive">
-                  <AlertDescription>
-                    {errorMessage}
-                  </AlertDescription>
-                </Alert>
-              )}
-
-              {/* Submit Button */}
+              {/* Submit Button - Pure shadcn/ui */}
               <Button 
                 type="submit" 
-                className="w-full h-11"
+                className="w-full h-11 bg-primary text-primary-foreground hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
                 disabled={loading}
               >
                 {loading ? (
@@ -265,26 +306,47 @@ export default function LoginForm({ errorMessage, isLoading = false }) {
                     Signing in...
                   </>
                 ) : (
-                  <>
-                    SIGN IN
-                  </>
+                  'Sign In'
                 )}
               </Button>
             </form>
           </CardContent>
         </Card>
 
-        {/* Sign Up Link */}
-        <div className="text-center">
+        {/* Footer Links - Pure Tailwind */}
+        <div className="text-center space-y-4">
           <p className="text-sm text-muted-foreground">
-            Have an account?{' '}
+            Don't have an account?{' '}
             <Link 
               href="/register" 
-              className="font-medium text-primary hover:underline"
+              className="font-medium text-primary hover:text-primary/80 transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 rounded-sm"
             >
-              Create your account
+              Create Account
             </Link>
           </p>
+          
+          <div className="flex items-center justify-center space-x-4 text-xs text-muted-foreground">
+            <Link 
+              href="/terms" 
+              className="hover:text-foreground transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 rounded-sm"
+            >
+              Terms
+            </Link>
+            <span>•</span>
+            <Link 
+              href="/privacy" 
+              className="hover:text-foreground transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 rounded-sm"
+            >
+              Privacy
+            </Link>
+            <span>•</span>
+            <Link 
+              href="/help" 
+              className="hover:text-foreground transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 rounded-sm"
+            >
+              Help
+            </Link>
+          </div>
         </div>
       </div>
     </div>
