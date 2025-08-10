@@ -1,4 +1,4 @@
-// src/app/api/appointments/[id]/route.js
+// src/app/api/appointments/[appointment-id]/route.js
 // Enhanced to support interest-based workflow
 
 import { createClient } from '@/utils/supabase/server'
@@ -6,12 +6,12 @@ import { NextResponse } from 'next/server'
 
 export const dynamic = 'force-dynamic'
 
-// GET /api/appointments/[id] - Get specific appointment details with interests
+// GET /api/appointments/[appointment-id] - Get specific appointment details with interests
 export async function GET(request, { params }) {
   const resolvedParams = await params
-  const { id } = resolvedParams
+  const appointmentId = resolvedParams['appointment-id']
   
-  console.log('🔥 Single Appointment GET API called for ID:', id)
+  console.log('🔥 Single Appointment GET API called for ID:', appointmentId)
   
   try {
     const supabase = await createClient()
@@ -20,7 +20,7 @@ export async function GET(request, { params }) {
     const { data: appointment, error: appointmentError } = await supabase
       .from('appointment')
       .select('*')
-      .eq('appointment_id', id)
+      .eq('appointment_id', appointmentId)
       .single()
 
     if (appointmentError || !appointment) {
@@ -196,12 +196,12 @@ export async function GET(request, { params }) {
   }
 }
 
-// PATCH /api/appointments/[id] - Update appointment status and details (enhanced for interests)
+// PATCH /api/appointments/[appointment-id] - Update appointment status and details (enhanced for interests)
 export async function PATCH(request, { params }) {
   const resolvedParams = await params
-  const { id } = resolvedParams
+  const appointmentId = resolvedParams['appointment-id']
   
-  console.log('🔥 Appointment PATCH API called for ID:', id)
+  console.log('🔥 Appointment PATCH API called for ID:', appointmentId)
   
   try {
     const supabase = await createClient()
@@ -213,7 +213,7 @@ export async function PATCH(request, { params }) {
     const { data: currentAppointment, error: fetchError } = await supabase
       .from('appointment')
       .select('appointment_id, professional_id, customer_id, status, service_id, address_id, interest_count')
-      .eq('appointment_id', id)
+      .eq('appointment_id', appointmentId)
       .single()
 
     if (fetchError || !currentAppointment) {
@@ -283,7 +283,7 @@ export async function PATCH(request, { params }) {
     const { data: updatedAppointment, error } = await supabase
       .from('appointment')
       .update(updateData)
-      .eq('appointment_id', id)
+      .eq('appointment_id', appointmentId)
       .select()
       .single()
 
@@ -306,7 +306,7 @@ export async function PATCH(request, { params }) {
         const { data: selectedInterest } = await supabase
           .from('interest')
           .select('professional_id, amount')
-          .eq('appointment_id', id)
+          .eq('appointment_id', appointmentId)
           .eq('selected_by_customer', true)
           .single()
 
@@ -344,7 +344,7 @@ export async function PATCH(request, { params }) {
                 professional_id: selectedInterest.professional_id,
                 converted_to_booking_at: new Date().toISOString()
               })
-              .eq('appointment_id', id)
+              .eq('appointment_id', appointmentId)
           }
         }
       } catch (bookingError) {
@@ -414,7 +414,7 @@ export async function PATCH(request, { params }) {
             )
           )
         `)
-        .eq('appointment_id', id)
+        .eq('appointment_id', appointmentId)
         .order('created_at', { ascending: false })
     ])
 
@@ -450,12 +450,12 @@ export async function PATCH(request, { params }) {
   }
 }
 
-// DELETE /api/appointments/[id] - Delete appointment (enhanced for interests)
+// DELETE /api/appointments/[appointment-id] - Delete appointment (enhanced for interests)
 export async function DELETE(request, { params }) {
   const resolvedParams = await params
-  const { id } = resolvedParams
+  const appointmentId = resolvedParams['appointment-id']
   
-  console.log('🔥 Appointment DELETE API called for ID:', id)
+  console.log('🔥 Appointment DELETE API called for ID:', appointmentId)
   
   try {
     const supabase = await createClient()
@@ -464,7 +464,7 @@ export async function DELETE(request, { params }) {
     const { data: appointment, error: fetchError } = await supabase
       .from('appointment')
       .select('appointment_id, status, customer_id, professional_id, interest_count')
-      .eq('appointment_id', id)
+      .eq('appointment_id', appointmentId)
       .single()
 
     if (fetchError || !appointment) {
@@ -488,7 +488,7 @@ export async function DELETE(request, { params }) {
       const { data: activeInterests } = await supabase
         .from('interest')
         .select('interest_id, status')
-        .eq('appointment_id', id)
+        .eq('appointment_id', appointmentId)
         .not('status', 'in', '(withdrawn,rejected)')
 
       if (activeInterests && activeInterests.length > 0) {
@@ -506,13 +506,13 @@ export async function DELETE(request, { params }) {
         status: 'withdrawn',
         updated_at: new Date().toISOString()
       })
-      .eq('appointment_id', id)
+      .eq('appointment_id', appointmentId)
 
     // Delete the appointment (will cascade to attachments)
     const { error } = await supabase
       .from('appointment')
       .delete()
-      .eq('appointment_id', id)
+      .eq('appointment_id', appointmentId)
 
     if (error) {
       console.error('❌ Error deleting appointment:', error)
@@ -522,7 +522,7 @@ export async function DELETE(request, { params }) {
       )
     }
 
-    console.log('✅ Appointment deleted:', id)
+    console.log('✅ Appointment deleted:', appointmentId)
 
     // TODO: Send cancellation notifications to all interested professionals
 

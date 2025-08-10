@@ -6,8 +6,9 @@ import { createContext, useContext, useEffect, useState } from 'react'
 const ThemeProviderContext = createContext({
   theme: "system",
   setTheme: () => null,
-  actualTheme: "light", // The actual applied theme
+  actualTheme: "light",
   isProfessionalWorkspace: false,
+  isCustomerWorkspace: false,
 })
 
 export function useTheme() {
@@ -28,39 +29,49 @@ export function ThemeProvider({
   const [theme, setTheme] = useState(defaultTheme)
   const [actualTheme, setActualTheme] = useState("light")
   const [isProfessionalWorkspace, setIsProfessionalWorkspace] = useState(false)
+  const [isCustomerWorkspace, setIsCustomerWorkspace] = useState(false)
   const [isInitialized, setIsInitialized] = useState(false)
 
-  // 🔧 CRITICAL FIX: Load saved theme from localStorage on mount
+  // Load saved theme from localStorage on mount
   useEffect(() => {
     const savedTheme = localStorage.getItem(storageKey) || defaultTheme
     setTheme(savedTheme)
     setIsInitialized(true)
   }, [storageKey, defaultTheme])
 
-  // 🎯 PROFESSIONAL WORKSPACE DETECTION
+  // WORKSPACE DETECTION - Enhanced for customer workspace
   useEffect(() => {
-    // Check current path for professional workspace
-    const checkProfessionalWorkspace = () => {
-      const isProfessional = window.location.pathname.includes('/professional')
+    const checkWorkspaceType = () => {
+      const pathname = window.location.pathname
+      
+      const isProfessional = pathname.includes('/professional')
+      const isCustomer = pathname.includes('/customer')
+      
       setIsProfessionalWorkspace(isProfessional)
-      return isProfessional
+      setIsCustomerWorkspace(isCustomer)
+      
+      console.log('🏢 Workspace Detection:', { 
+        pathname, 
+        isProfessional, 
+        isCustomer 
+      })
+      
+      return { isProfessional, isCustomer }
     }
 
     // Initial check
-    checkProfessionalWorkspace()
+    checkWorkspaceType()
 
-    // Listen for navigation changes (for SPA routing)
+    // Listen for navigation changes
     const handleRouteChange = () => {
-      checkProfessionalWorkspace()
+      checkWorkspaceType()
     }
 
-    // Listen for popstate (back/forward navigation)
     window.addEventListener('popstate', handleRouteChange)
 
-    // For Next.js router changes, we'll use a MutationObserver
-    // to detect when the URL changes without page reload
+    // Observe URL changes for SPA routing
     const observer = new MutationObserver(() => {
-      checkProfessionalWorkspace()
+      checkWorkspaceType()
     })
 
     observer.observe(document.body, {
@@ -74,46 +85,51 @@ export function ThemeProvider({
     }
   }, [])
 
-  // 🌙 THEME APPLICATION LOGIC
+  // ENHANCED THEME APPLICATION LOGIC
   useEffect(() => {
     if (!isInitialized) return
 
     const root = window.document.documentElement
     
     // Remove existing theme classes
-    root.classList.remove("light", "dark")
+    root.classList.remove("light", "dark", "professional-workspace", "customer-workspace")
 
     let appliedTheme
 
     if (isProfessionalWorkspace) {
       // 🔒 FORCE DARK THEME for professional workspace
       appliedTheme = "dark"
-      root.classList.add("dark")
+      root.classList.add("dark", "professional-workspace")
+      console.log('🏢 Applied professional workspace theme (dark)')
       
-      // Add professional workspace class for component targeting
-      root.classList.add("professional-workspace")
+    } else if (isCustomerWorkspace) {
+      // 🔒 FORCE LIGHT THEME (WHITE BACKGROUND) for customer workspace
+      appliedTheme = "light"
+      root.classList.add("light", "customer-workspace")
+      console.log('👤 Applied customer workspace theme (white)')
+      
     } else {
-      // 🎨 APPLY USER PREFERENCE for other areas
-      root.classList.remove("professional-workspace")
-      
+      // 🎨 APPLY USER PREFERENCE for other areas (homepage, etc.)
       if (theme === "system") {
         const systemTheme = window.matchMedia("(prefers-color-scheme: dark)").matches
           ? "dark"
           : "light"
         appliedTheme = systemTheme
         root.classList.add(systemTheme)
+        console.log('🌓 Applied system theme:', systemTheme)
       } else {
         appliedTheme = theme
         root.classList.add(theme)
+        console.log('🎨 Applied user theme:', theme)
       }
     }
 
     setActualTheme(appliedTheme)
-  }, [theme, isProfessionalWorkspace, isInitialized])
+  }, [theme, isProfessionalWorkspace, isCustomerWorkspace, isInitialized])
 
-  // 🎧 SYSTEM THEME CHANGE LISTENER
+  // System theme change listener (only for non-workspace areas)
   useEffect(() => {
-    if (theme !== "system" || isProfessionalWorkspace) return
+    if (theme !== "system" || isProfessionalWorkspace || isCustomerWorkspace) return
 
     const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)")
     
@@ -131,14 +147,19 @@ export function ThemeProvider({
     return () => {
       mediaQuery.removeEventListener("change", handleSystemThemeChange)
     }
-  }, [theme, isProfessionalWorkspace])
+  }, [theme, isProfessionalWorkspace, isCustomerWorkspace])
 
   const value = {
     theme,
     setTheme: (newTheme) => {
-      // 🚫 Prevent theme change in professional workspace
-      if (isProfessionalWorkspace && newTheme !== "dark") {
+      // 🚫 Prevent theme change in workspaces
+      if (isProfessionalWorkspace) {
         console.warn("Theme switching is disabled in professional workspace (always dark)")
+        return
+      }
+      
+      if (isCustomerWorkspace) {
+        console.warn("Theme switching is disabled in customer workspace (always white)")
         return
       }
       
@@ -147,9 +168,10 @@ export function ThemeProvider({
     },
     actualTheme,
     isProfessionalWorkspace,
+    isCustomerWorkspace,
   }
 
-  // 🚫 Prevent flash of unstyled content
+  // Prevent flash of unstyled content
   if (!isInitialized) {
     return (
       <div style={{ visibility: 'hidden', position: 'absolute' }}>

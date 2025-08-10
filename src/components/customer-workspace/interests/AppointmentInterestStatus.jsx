@@ -12,13 +12,19 @@ import {
   AlertTriangle,
   Calendar,
   Award,
-  Loader2
+  Loader2,
+  Eye,
+  XCircle,
+  Shield,
+  MessageCircle,
+  RefreshCw
 } from 'lucide-react';
 
 const AppointmentInterestStatus = ({ 
   status, 
   interestCount = 0, 
-  selectedInterest = null 
+  selectedInterest = null,
+  hasQuoteUpdates = false // NEW: Flag for quote updates pending
 }) => {
   const getStatusConfig = (appointmentStatus) => {
     const configs = {
@@ -27,56 +33,81 @@ const AppointmentInterestStatus = ({
         description: 'Waiting for qualified professionals to respond to your request',
         color: 'bg-yellow-500',
         icon: Clock,
-        progress: 20
+        progress: 20,
+        priority: 'medium'
       },
       'interested': {
         label: 'Professionals Interested',
         description: `${interestCount} professional${interestCount !== 1 ? 's have' : ' has'} shown interest`,
         color: 'bg-blue-500',
         icon: Users,
-        progress: 40
+        progress: 40,
+        priority: 'medium'
       },
       'competing': {
         label: 'Multiple Responses Received',
         description: `${interestCount} professionals are competing for your project`,
         color: 'bg-purple-500',
         icon: Users,
-        progress: 60
+        progress: 60,
+        priority: 'medium'
       },
       'evaluating': {
         label: 'Assessment in Progress',
         description: 'Professional is evaluating your project requirements',
         color: 'bg-orange-500',
         icon: Calendar,
-        progress: 80
+        progress: 80,
+        priority: 'medium'
       },
       'quoted': {
         label: 'Quote Received',
         description: 'Professional has provided a detailed quote',
         color: 'bg-green-500',
         icon: Award,
-        progress: 90
+        progress: 90,
+        priority: 'medium'
       },
       'selected': {
         label: 'Professional Selected',
         description: 'You have selected a professional for this project',
         color: 'bg-green-600',
         icon: CheckCircle,
-        progress: 100
+        progress: 95,
+        priority: 'high'
+      },
+      // 🔥 NEW: Reviewing status for quote updates
+      'reviewing': {
+        label: 'Quote Update Under Review',
+        description: 'Professional has updated their quote and is waiting for your approval',
+        color: 'bg-orange-500',
+        icon: AlertTriangle,
+        progress: 85,
+        priority: 'urgent'
+      },
+      'confirmed': {
+        label: 'Project Confirmed',
+        description: 'Quote approved and professional is ready to begin',
+        color: 'bg-green-700',
+        icon: CheckCircle,
+        progress: 100,
+        priority: 'high'
       },
       'cancelled': {
         label: 'Appointment Cancelled',
         description: 'This appointment has been cancelled',
         color: 'bg-red-500',
         icon: AlertTriangle,
-        progress: 0
+        progress: 0,
+        priority: 'low'
       },
       'completed': {
         label: 'Project Completed',
         description: 'Project has been successfully completed',
         color: 'bg-green-700',
         icon: CheckCircle,
-        progress: 100
+        progress: 100,
+        priority: 'low'
       }
     };
 
@@ -85,7 +116,8 @@ const AppointmentInterestStatus = ({
       description: 'Status information not available',
       color: 'bg-gray-500',
       icon: AlertTriangle,
-      progress: 0
+      progress: 0,
+      priority: 'low'
     };
   };
 
@@ -94,11 +126,13 @@ const AppointmentInterestStatus = ({
 
   const getStatusBadgeVariant = (status) => {
     switch (status) {
-      case 'selected':
+      case 'confirmed':
       case 'completed':
         return 'default';
       case 'cancelled':
         return 'destructive';
+      case 'reviewing': // NEW: Orange styling for reviewing
+        return 'secondary';
       case 'pending':
         return 'secondary';
       default:
@@ -106,30 +140,63 @@ const AppointmentInterestStatus = ({
     }
   };
 
-  const getProgressColor = (progress) => {
-    if (progress <= 25) return 'bg-red-500';
-    if (progress <= 50) return 'bg-yellow-500';
-    if (progress <= 75) return 'bg-blue-500';
-    return 'bg-green-500';
+  const getStatusBadgeClass = (status) => {
+    switch (status) {
+      case 'reviewing':
+        return 'bg-orange-100 text-orange-800 border-orange-300 animate-pulse';
+      case 'confirmed':
+      case 'completed':
+        return 'bg-green-100 text-green-800 border-green-300';
+      case 'cancelled':
+        return 'bg-red-100 text-red-800 border-red-300';
+      default:
+        return '';
+    }
+  };
+
+  const getPriorityBorder = (priority) => {
+    switch (priority) {
+      case 'urgent':
+        return 'border-l-4 border-l-orange-500';
+      case 'high':
+        return 'border-l-4 border-l-green-500';
+      case 'medium':
+        return 'border-l-4 border-l-blue-500';
+      default:
+        return 'border-l-4 border-l-gray-300';
+    }
   };
 
   return (
     <div className="space-y-4">
       {/* Main Status Card */}
-      <Card>
+      <Card className={getPriorityBorder(statusConfig.priority)}>
         <CardContent className="p-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
-              <div className={`p-3 rounded-full ${statusConfig.color.replace('bg-', 'bg-')} bg-opacity-10`}>
+              <div className={`p-3 rounded-full ${statusConfig.color.replace('bg-', 'bg-')} bg-opacity-10 ${
+                statusConfig.priority === 'urgent' ? 'animate-pulse' : ''
+              }`}>
                 <StatusIcon className={`h-6 w-6 ${statusConfig.color.replace('bg-', 'text-')}`} />
               </div>
               
               <div className="space-y-1">
                 <div className="flex items-center space-x-3">
                   <h3 className="text-lg font-semibold">{statusConfig.label}</h3>
-                  <Badge variant={getStatusBadgeVariant(status)} className="capitalize">
-                    {status.replace('_', ' ')}
+                  <Badge 
+                    variant={getStatusBadgeVariant(status)} 
+                    className={`capitalize ${getStatusBadgeClass(status)}`}
+                  >
+                    {status === 'reviewing' ? 'Needs Review' : status.replace('_', ' ')}
                   </Badge>
+                  
+                  {/* NEW: Quote update indicator */}
+                  {hasQuoteUpdates && (
+                    <Badge className="bg-orange-100 text-orange-800 border-orange-300">
+                      <RefreshCw className="h-3 w-3 mr-1" />
+                      Quote Updated
+                    </Badge>
+                  )}
                 </div>
                 <p className="text-muted-foreground">{statusConfig.description}</p>
               </div>
@@ -143,7 +210,7 @@ const AppointmentInterestStatus = ({
               <div className="w-24">
                 <Progress 
                   value={statusConfig.progress} 
-                  className="h-2"
+                  className={`h-2 ${statusConfig.priority === 'urgent' ? 'bg-orange-100' : ''}`}
                 />
               </div>
             </div>
@@ -202,12 +269,35 @@ const AppointmentInterestStatus = ({
         </Alert>
       )}
 
+      {/* 🔥 NEW: Reviewing status alert */}
+      {status === 'reviewing' && selectedInterest && (
+        <Alert className="border-orange-200 bg-orange-50 animate-pulse">
+          <AlertTriangle className="h-4 w-4 text-orange-600" />
+          <AlertDescription className="text-orange-800">
+            <strong>Quote Update Pending Review:</strong> {selectedInterest.professional?.business_name || 'The selected professional'} 
+            has updated their quote and requires your approval before proceeding. 
+            <strong className="block mt-2">⚠️ Assessment scheduling is temporarily blocked</strong> until you review the changes above.
+          </AlertDescription>
+        </Alert>
+      )}
+
       {status === 'selected' && selectedInterest && (
         <Alert className="border-green-200 bg-green-50">
           <CheckCircle className="h-4 w-4 text-green-600" />
           <AlertDescription className="text-green-800">
             <strong>Professional selected:</strong> You've chosen {selectedInterest.professional?.business_name || 'a professional'} 
             for this project. {selectedInterest.assessment ? 'The next step is scheduling the site assessment.' : 'You can now proceed with project planning.'}
+          </AlertDescription>
+        </Alert>
+      )}
+
+      {/* 🔥 NEW: Confirmed status alert */}
+      {status === 'confirmed' && selectedInterest && (
+        <Alert className="border-green-200 bg-green-50">
+          <CheckCircle className="h-4 w-4 text-green-600" />
+          <AlertDescription className="text-green-800">
+            <strong>Project confirmed:</strong> Your quote has been approved and {selectedInterest.professional?.business_name || 'the professional'} 
+            is ready to begin work. {selectedInterest.assessment ? 'You can now schedule the assessment.' : 'Project can proceed as planned.'}
           </AlertDescription>
         </Alert>
       )}
@@ -264,6 +354,31 @@ const AppointmentInterestStatus = ({
         </div>
       )}
 
+      {/* 🔥 NEW: Action blockers for reviewing status */}
+      {status === 'reviewing' && (
+        <Card className="border-orange-200 bg-orange-50">
+          <CardContent className="p-4">
+            <div className="flex items-center space-x-3">
+              <XCircle className="h-5 w-5 text-orange-600" />
+              <div>
+                <h4 className="font-semibold text-orange-800">Actions Currently Blocked</h4>
+                <p className="text-sm text-orange-700 mt-1">
+                  The following actions are temporarily unavailable while the quote update is under review:
+                </p>
+                <ul className="text-sm text-orange-700 mt-2 space-y-1">
+                  <li>• Assessment scheduling</li>
+                  <li>• Project timeline planning</li>
+                  <li>• Additional professional selection</li>
+                </ul>
+                <p className="text-sm text-orange-700 mt-2 font-medium">
+                  Please review and approve/decline the quote changes above to continue.
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Empty State */}
       {interestCount === 0 && status === 'pending' && (
         <Card>
@@ -278,6 +393,41 @@ const AppointmentInterestStatus = ({
                   We're notifying qualified professionals in your area. 
                   Most customers receive their first response within 2 hours.
                 </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* 🔥 NEW: Quote update summary card */}
+      {status === 'reviewing' && hasQuoteUpdates && selectedInterest && (
+        <Card className="border-orange-200">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-3">
+                <RefreshCw className="h-5 w-5 text-orange-600" />
+                <div>
+                  <h4 className="font-semibold text-orange-800">Quote Changes Waiting</h4>
+                  <p className="text-sm text-orange-700">
+                    {selectedInterest.professional?.business_name || 'Professional'} has updated their quote
+                  </p>
+                </div>
+              </div>
+              <div className="text-right">
+                <div className="text-lg font-bold text-orange-700">
+                  ${selectedInterest.amount?.toLocaleString() || 'TBD'}
+                </div>
+                <div className="text-sm text-orange-600">
+                  {selectedInterest.original_amount && selectedInterest.amount && 
+                   selectedInterest.amount !== selectedInterest.original_amount ? (
+                    <>
+                      {selectedInterest.amount > selectedInterest.original_amount ? '↗️' : '↘️'} 
+                      ${Math.abs(selectedInterest.amount - selectedInterest.original_amount).toLocaleString()} change
+                    </>
+                  ) : (
+                    'Quote updated'
+                  )}
+                </div>
               </div>
             </div>
           </CardContent>

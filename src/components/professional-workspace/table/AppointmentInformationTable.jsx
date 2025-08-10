@@ -1,487 +1,162 @@
 // src/components/professional-workspace/table/AppointmentInformationTable.jsx
 'use client'
 
-import { useState, useMemo } from 'react'
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table'
+import { useCallback } from 'react'
+import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Checkbox } from '@/components/ui/checkbox'
 import { Badge } from '@/components/ui/badge'
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '@/components/ui/tooltip'
 import { Skeleton } from '@/components/ui/skeleton'
+import {
+  TooltipProvider,
+} from '@/components/ui/tooltip'
 import { cn } from '@/lib/utils'
 import {
   ArrowUpDown,
   ArrowUp,
   ArrowDown,
-  Eye,
-  Check,
-  X,
-  MoreHorizontal,
   Settings,
-  Clock,
-  AlertTriangle,
-  Flame,
-  Minus,
-  Calendar,
-  Loader2,
-  ChevronLeft,
-  ChevronRight,
-  Mail,
-  Phone,
-  MapPin,
-  Edit,
-  Trash2,
   MessageSquare,
-  Building2,
-  Paperclip,
-  Image,
-  FileText,
-  Star,
-  Heart,
-  Send,
-  UserCheck,
-  Crown,
-  CheckCircle
+  Trash2,
+  Calendar,
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react'
 
-import ProfessionalResponseHandler from '@/components/professional-workspace/interests/ProfessionalResponseHandler'
+// Import our primitive hooks
+import { useTableSelection } from './primitives/useTableSelection'
+import { useTableSorting } from './primitives/useTableSorting'
+import { useTableData } from './primitives/useTableData'
 
+// Import our column definitions
+import { getColumnsForMode } from './columns'
+
+// Basic Table components (matching your existing table.jsx structure)
+const Table = ({ className, ...props }) => (
+  <div className="relative w-full overflow-auto">
+    <table
+      className={cn("w-full caption-bottom text-sm", className)}
+      {...props}
+    />
+  </div>
+)
+
+const TableHeader = ({ className, ...props }) => (
+  <thead className={cn("[&_tr]:border-b", className)} {...props} />
+)
+
+const TableBody = ({ className, ...props }) => (
+  <tbody
+    className={cn("[&_tr:last-child]:border-0", className)}
+    {...props}
+  />
+)
+
+const TableRow = ({ className, ...props }) => (
+  <tr
+    className={cn(
+      "border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted",
+      className
+    )}
+    {...props}
+  />
+)
+
+const TableHead = ({ className, ...props }) => (
+  <th
+    className={cn(
+      "h-12 px-2 text-left align-middle font-medium text-muted-foreground [&:has([role=checkbox])]:pr-0",
+      className
+    )}
+    {...props}
+  />
+)
+
+const TableCell = ({ className, ...props }) => (
+  <td
+    className={cn(
+      "p-2 align-middle [&:has([role=checkbox])]:pr-0",
+      className
+    )}
+    {...props}
+  />
+)
+
+// Main component
 export default function AppointmentInformationTable({
   appointments = [],
   professionalId,
-  professional, // ✅ NEW: Accept full professional object
+  professional,
   onView,
   onAccept,
   onDecline,
   onExpressInterest,
   onUpdateInterest,
   onViewAttachments,
-  loading = false,
-  pagination,
-  onPageChange,
   onRefresh,
-  mode = 'assigned' // 'available', 'interests', 'assigned'
+  loading = false,
+  pagination: externalPagination,
+  onPageChange: externalPageChange,
+  mode = 'available', // 'available', 'interests', 'assigned'
+  searchQuery = '',
+  filters = {},
+  onSearchChange,
+  onFilterChange,
+  className,
+  ...props
 }) {
-  const [actionLoading, setActionLoading] = useState({})
-  const [sortConfig, setSortConfig] = useState({
-    key: 'created_at',
-    direction: 'desc'
+  // ===== PRIMITIVE HOOKS =====
+  
+  // Data management with search, filtering, and pagination
+  const {
+    processedData,
+    filteredData,
+    paginationInfo,
+    handleSearch,
+    handleFilter,
+    goToPage,
+    dataStats,
+    clearAllFilters
+  } = useTableData({
+    data: appointments,
+    mode,
+    pageSize: externalPagination?.pageSize || 10,
+    searchableFields: ['customer', 'service', 'description'],
+    filterableFields: ['status', 'urgency', 'type']
   })
-  const [selectedRows, setSelectedRows] = useState(new Set())
-  const [selectedInterest, setSelectedInterest] = useState(null)
 
-  // ✅ COMPREHENSIVE: Professional data management
-  const getProfessionalData = () => {
-    // Priority 1: Use provided professional object
-    if (professional) {
-      return {
-        ...professional,
-        // Ensure both id formats exist for compatibility
-        id: professional.id || professional.professional_id,
-        professional_id: professional.professional_id || professional.id
-      }
-    }
+  // Sorting management
+  const {
+    sortedData,
+    sortConfig,
+    handleSort,
+    getSortIcon,
+    clearSort
+  } = useTableSorting({
+    data: processedData,
+    columns: getColumnsForMode(mode),
+    defaultSort: { key: 'created_at', direction: 'desc' },
+    mode
+  })
 
-    // Priority 2: Create minimal professional object from ID
-    if (professionalId) {
-      return {
-        id: professionalId,
-        professional_id: professionalId,
-        // Add placeholder data that might be useful
-        account: {
-          first_name: 'Professional', // Fallback display name
-          last_name: ''
-        }
-      }
-    }
+  // Selection management
+  const {
+    selection,
+    selectedItems,
+    selectionState,
+    toggleSelection,
+    toggleSelectAll,
+    clearSelection,
+    isSelected,
+    bulkOperations
+  } = useTableSelection({
+    data: sortedData,
+    mode,
+    getItemId: (item) => mode === 'interests' ? item.appointment?.appointment_id : item.appointment_id
+  })
 
-    // Priority 3: Log error for debugging
-    console.error('AppointmentInformationTable: No professional data available')
-    return null
-  }
-
-  // ✅ COMPREHENSIVE: Response success handler
-  const handleResponseSuccess = (result) => {
-    console.log('Professional response successful:', result)
-    
-    // Comprehensive data refresh
-    if (onRefresh) {
-      onRefresh()
-    }
-    
-    // Clear selection
-    setSelectedInterest(null)
-    
-    // Optional: Show success feedback
-    // toast.success('Response sent successfully!')
-  }
-
-  // ✅ COMPREHENSIVE: Response error handler
-  const handleResponseError = (error) => {
-    console.error('Professional response failed:', error)
-    
-    // Keep modal open so user can retry
-    // Optional: Show error feedback
-    // toast.error('Failed to send response. Please try again.')
-  }
-
-  // Handle action with loading state per appointment
-  const handleAction = async (appointmentId, action, actionHandler) => {
-    setActionLoading(prev => ({ ...prev, [appointmentId]: action }))
-    try {
-      await actionHandler()
-    } finally {
-      setActionLoading(prev => ({ ...prev, [appointmentId]: null }))
-    }
-  }
-
-  // ✅ IMPROVED: Express interest with better error handling
-  const handleExpressInterest = (appointment) => {
-    try {
-      onView(appointment.appointment_id)
-    } catch (error) {
-      console.error('Failed to open appointment:', error)
-    }
-  }
-
-  // ✅ COMPREHENSIVE: Professional response handler
-  const handleShowResponseHandler = (interest) => {
-    const professionalData = getProfessionalData()
-    
-    if (!professionalData) {
-      console.error('Cannot show response handler: No professional data')
-      return
-    }
-
-    if (!interest?.appointment) {
-      console.error('Cannot show response handler: Invalid interest data', interest)
-      return
-    }
-
-    console.log('Opening response handler:', {
-      interest,
-      appointment: interest.appointment,
-      professional: professionalData
-    })
-
-    setSelectedInterest(interest)
-  }
-
-  // ✅ COMPREHENSIVE: Close handler with cleanup
-  const handleCloseResponseHandler = () => {
-    setSelectedInterest(null)
-    // Optional: Clear any form state or temporary data
-  }
-
-  // Sorting functionality
-  const handleSort = (key) => {
-    setSortConfig(prev => ({
-      key,
-      direction: prev.key === key && prev.direction === 'asc' ? 'desc' : 'asc'
-    }))
-  }
-
-  // Row selection
-  const handleRowSelect = (appointmentId) => {
-    const newSelected = new Set(selectedRows)
-    if (newSelected.has(appointmentId)) {
-      newSelected.delete(appointmentId)
-    } else {
-      newSelected.add(appointmentId)
-    }
-    setSelectedRows(newSelected)
-  }
-
-  const handleSelectAll = () => {
-    if (selectedRows.size === appointments.length) {
-      setSelectedRows(new Set())
-    } else {
-      setSelectedRows(new Set(appointments.map(apt => 
-        mode === 'interests' ? apt.appointment?.appointment_id : apt.appointment_id
-      )))
-    }
-  }
-
-  // Clear selection when appointments change
-  useMemo(() => {
-    setSelectedRows(new Set())
-  }, [appointments])
-
-  // Sort appointments
-  const sortedAppointments = useMemo(() => {
-    if (!sortConfig.key) return appointments
-
-    return [...appointments].sort((a, b) => {
-      const aData = mode === 'interests' ? a.appointment : a
-      const bData = mode === 'interests' ? b.appointment : b
-
-      let aValue = aData[sortConfig.key]
-      let bValue = bData[sortConfig.key]
-
-      // Handle nested values
-      if (sortConfig.key === 'customer_name') {
-        aValue = `${aData.customer?.account?.first_name || ''} ${aData.customer?.account?.last_name || ''}`.trim()
-        bValue = `${bData.customer?.account?.first_name || ''} ${bData.customer?.account?.last_name || ''}`.trim()
-      }
-
-      if (sortConfig.key === 'service_name') {
-        aValue = aData.service?.name || aData.title || ''
-        bValue = bData.service?.name || bData.title || ''
-      }
-
-      if (mode === 'interests') {
-        if (sortConfig.key === 'interest_status') {
-          aValue = a.status
-          bValue = b.status
-        }
-        if (sortConfig.key === 'interest_intent') {
-          aValue = a.intent
-          bValue = b.intent
-        }
-      }
-
-      if (sortConfig.key === 'urgency') {
-        aValue = aData.urgency || aData.priority || 'standard'
-        bValue = bData.urgency || bData.priority || 'standard'
-      }
-      if (sortConfig.key === 'appointment_time') {
-        aValue = new Date(aData.session || aData.appointment_time || 0)
-        bValue = new Date(bData.session || bData.appointment_time || 0)
-      }
-
-      // Handle dates
-      if (sortConfig.key.includes('_at') || sortConfig.key.includes('start')) {
-        aValue = new Date(aValue || 0)
-        bValue = new Date(bValue || 0)
-      }
-
-      // Handle null/undefined values
-      if (aValue == null && bValue == null) return 0
-      if (aValue == null) return 1
-      if (bValue == null) return -1
-
-      if (aValue < bValue) {
-        return sortConfig.direction === 'asc' ? -1 : 1
-      }
-      if (aValue > bValue) {
-        return sortConfig.direction === 'asc' ? 1 : -1
-      }
-      return 0
-    })
-  }, [appointments, sortConfig, mode])
-
-  // Get appointment data based on mode
-  const getAppointmentData = (item) => {
-    if (!item) return null
-    return mode === 'interests' ? item.appointment : item
-  }
-
-  // Get appointment time with multiple field fallbacks
-  const getAppointmentTime = (appointment) => {
-    if (!appointment) return null
-    
-    return appointment.session ||
-           appointment.appointment_time || 
-           appointment.scheduled_time || 
-           appointment.start_time || 
-           appointment.datetime || 
-           appointment.date || 
-           appointment.time ||
-           appointment.created_at ||
-           null
-  }
-
-  const getInvitationStatus = (appointment) => {
-    if (mode !== 'available') return false
-    return appointment.is_invited || (appointment.recipients && appointment.recipients.includes(professionalId))
-  }
-
-  // Status configuration
-  const getStatusConfig = (status) => {
-    const configs = {
-      pending: { 
-        variant: 'secondary',
-        className: 'bg-muted text-muted-foreground border-border',
-        icon: Clock,
-        label: 'Pending',
-        dotColor: 'bg-muted-foreground'
-      },
-      quoted: { 
-        variant: 'outline',
-        className: 'bg-background text-foreground border-border hover:bg-muted/50',
-        icon: Building2,
-        label: 'Quoted',
-        dotColor: 'bg-primary'
-      },
-      accepted: { 
-        variant: 'default',
-        className: 'bg-primary text-primary-foreground hover:bg-primary/90',
-        icon: Check,
-        label: 'Accepted',
-        dotColor: 'bg-primary-foreground'
-      },
-      converted: { 
-        variant: 'default',
-        className: 'bg-primary text-primary-foreground hover:bg-primary/90',
-        icon: Check,
-        label: 'Converted',
-        dotColor: 'bg-primary-foreground'
-      },
-      declined: { 
-        variant: 'secondary',
-        className: 'bg-muted text-muted-foreground border-border',
-        icon: X,
-        label: 'Declined',
-        dotColor: 'bg-muted-foreground'
-      },
-      interested: {
-        variant: 'default',
-        className: 'bg-blue-100 text-blue-800 border-blue-200',
-        icon: Heart,
-        label: 'Interested',
-        dotColor: 'bg-blue-600'
-      },
-      selected: {
-        variant: 'default',
-        className: 'bg-green-600 text-white hover:bg-green-700',
-        icon: UserCheck,
-        label: 'Selected',
-        dotColor: 'bg-white'
-      },
-      confirmed: {
-        variant: 'default',
-        className: 'bg-emerald-100 text-emerald-800 border-emerald-200',
-        icon: CheckCircle,
-        label: 'Confirmed',
-        dotColor: 'bg-emerald-600'
-      },
-      declined_by_professional: { // ✅ NEW: Add the new status
-        variant: 'secondary',
-        className: 'bg-red-100 text-red-800 border-red-200',
-        icon: X,
-        label: 'Declined',
-        dotColor: 'bg-red-600'
-      },
-      rejected: {
-        variant: 'secondary',
-        className: 'bg-red-100 text-red-800 border-red-200',
-        icon: X,
-        label: 'Rejected',
-        dotColor: 'bg-red-600'
-      }
-    }
-    return configs[status] || configs.pending
-  }
-
-  // Interest intent configuration
-  const getIntentConfig = (intent) => {
-    const configs = {
-      high: { 
-        icon: Flame,
-        className: 'bg-orange-100 text-orange-800 border-orange-200',
-        label: 'High Interest',
-        dotColor: 'bg-orange-600'
-      },
-      standard: { 
-        icon: Heart,
-        className: 'bg-blue-100 text-blue-800 border-blue-200',
-        label: 'Standard',
-        dotColor: 'bg-blue-600'
-      },
-      low: { 
-        icon: Minus,
-        className: 'bg-gray-100 text-gray-800 border-gray-200',
-        label: 'Low Interest',
-        dotColor: 'bg-gray-600'
-      }
-    }
-    return configs[intent] || configs.standard
-  }
-
-  // Format date for display
-  const formatDate = (dateString) => {
-    if (!dateString) return '-'
-    
-    try {
-      const date = new Date(dateString)
-      if (isNaN(date.getTime())) return '-'
-      
-      const now = new Date()
-      const diffTime = date.getTime() - now.getTime()
-      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
-      
-      if (diffDays === 0) {
-        return `Today ${date.toLocaleTimeString('en-US', { 
-          hour: 'numeric', 
-          minute: '2-digit', 
-          hour12: true 
-        })}`
-      } else if (diffDays === 1) {
-        return `Tomorrow ${date.toLocaleTimeString('en-US', { 
-          hour: 'numeric', 
-          minute: '2-digit', 
-          hour12: true 
-        })}`
-      } else if (diffDays === -1) {
-        return `Yesterday ${date.toLocaleTimeString('en-US', { 
-          hour: 'numeric', 
-          minute: '2-digit', 
-          hour12: true 
-        })}`
-      } else if (Math.abs(diffDays) < 7) {
-        return date.toLocaleDateString('en-US', {
-          weekday: 'short',
-          hour: 'numeric',
-          minute: '2-digit',
-          hour12: true
-        })
-      } else {
-        return date.toLocaleDateString('en-US', {
-          month: 'short',
-          day: 'numeric',
-          year: date.getFullYear() !== now.getFullYear() ? 'numeric' : undefined,
-          hour: 'numeric',
-          minute: '2-digit',
-          hour12: true
-        })
-      }
-    } catch (error) {
-      console.error('Date formatting error:', error)
-      return '-'
-    }
-  }
-
-  // Get sort icon
-  const getSortIcon = (key) => {
-    if (sortConfig.key !== key) {
-      return <ArrowUpDown className="h-4 w-4 text-muted-foreground" />
-    }
-    return sortConfig.direction === 'asc' 
-      ? <ArrowUp className="h-4 w-4 text-foreground" />
-      : <ArrowDown className="h-4 w-4 text-foreground" />
-  }
-
+  // ===== COMPUTED VALUES =====
+  const columns = getColumnsForMode(mode)
+  
   // Get table title based on mode
   const getTableTitle = () => {
     switch (mode) {
@@ -496,45 +171,177 @@ export default function AppointmentInformationTable({
     }
   }
 
-  // Loading skeleton
-  const LoadingSkeleton = () => (
-    <Card className="w-full bg-card border-border">
-      <CardHeader className="py-2 px-4 bg-muted/30 border-b border-border">
-        <div className="flex items-center justify-between">
-          <Skeleton className="h-6 w-32 bg-muted" />
-          <Skeleton className="h-8 w-24 bg-muted" />
-        </div>
-      </CardHeader>
-      <CardContent className="bg-background p-6">
-        <div className="space-y-4">
-          {[...Array(5)].map((_, i) => (
-            <div key={i} className="flex items-center space-x-4 py-4">
-              <Skeleton className="h-4 w-4 bg-muted" />
-              <div className="flex items-center space-x-3">
-                <Skeleton className="h-10 w-10 rounded-full bg-muted" />
-                <div className="space-y-2">
-                  <Skeleton className="h-4 w-32 bg-muted" />
-                  <Skeleton className="h-3 w-24 bg-muted" />
-                </div>
-              </div>
-              <Skeleton className="h-4 w-24 bg-muted" />
-              <Skeleton className="h-4 w-32 bg-muted" />
-              <Skeleton className="h-6 w-16 bg-muted" />
-              <Skeleton className="h-4 w-16 bg-muted" />
-              <Skeleton className="h-4 w-24 bg-muted" />
-              <Skeleton className="h-8 w-8 bg-muted" />
-            </div>
-          ))}
-        </div>
-      </CardContent>
-    </Card>
-  )
+  // Use external pagination if provided, otherwise use internal
+  const activePagination = externalPagination || paginationInfo
+  const activePageChange = externalPageChange || goToPage
 
-  if (loading) {
-    return <LoadingSkeleton />
+  // ===== ACTION HANDLERS =====
+  const handleAction = useCallback(async (actionType, item) => {
+    try {
+      switch (actionType) {
+        case 'express_interest':
+          await onExpressInterest?.(item.appointment_id, { intent: item.is_invited ? 'high' : 'standard' })
+          break
+        case 'respond_to_selection':
+          // Open professional response handler
+          onView?.(item.appointment?.appointment_id)
+          break
+        case 'update_interest':
+          await onUpdateInterest?.(item.interest_id)
+          break
+        case 'reapply':
+          await onExpressInterest?.(item.appointment?.appointment_id, { intent: 'standard' })
+          break
+        case 'accept':
+          await onAccept?.(item.appointment_id)
+          break
+        case 'decline':
+          await onDecline?.(item.appointment_id)
+          break
+        case 'share':
+          // Handle share functionality
+          console.log('Share:', item)
+          break
+        default:
+          console.warn('Unknown action:', actionType)
+      }
+      
+      // Refresh data after successful action
+      onRefresh?.()
+    } catch (error) {
+      console.error('Action failed:', actionType, error)
+    }
+  }, [onExpressInterest, onView, onUpdateInterest, onAccept, onDecline, onRefresh])
+
+  const handleRowClick = useCallback((item) => {
+    const appointmentId = mode === 'interests' ? item.appointment?.appointment_id : item.appointment_id
+    onView?.(appointmentId)
+  }, [mode, onView])
+
+  const handleBulkMessage = useCallback(() => {
+    const selectedIds = bulkOperations.getSelectedIds()
+    console.log('Bulk message:', selectedIds)
+    // Implement bulk messaging
+    // You can access full selected items with: selectedItems
+  }, [bulkOperations, selectedItems])
+
+  const handleBulkArchive = useCallback(() => {
+    const selectedIds = bulkOperations.getSelectedIds()
+    console.log('Bulk archive:', selectedIds)
+    // Implement bulk archiving
+    // You can access full selected items with: selectedItems
+  }, [bulkOperations, selectedItems])
+
+  const handleCustomize = useCallback(() => {
+    console.log('Customize table')
+    // Implement table customization
+  }, [])
+
+  // ===== RENDER HELPERS =====
+  const renderColumnHeader = (column) => {
+    const isSortable = column.sortable !== false
+    const sortIconData = getSortIcon(column.key)
+    
+    return (
+      <TableHead key={column.key} className={cn("py-2", column.width, column.headerClassName)}>
+        {column.key === 'selection' ? (
+          // Special handling for selection header
+          column.headerCell?.({
+            selectedCount: selectionState.selectedCount,
+            totalCount: selectionState.totalCount,
+            onSelectAll: toggleSelectAll
+          }) || null
+        ) : (
+          <div
+            className={cn(
+              "flex items-center gap-1 text-left font-medium text-muted-foreground select-none",
+              isSortable && "hover:text-foreground cursor-pointer transition-colors"
+            )}
+            onClick={isSortable ? () => handleSort(column.key) : undefined}
+          >
+            <span className="text-lg font-medium">{column.header}</span>
+            {isSortable && (
+              sortIconData.icon === 'asc' ? <ArrowUp className="h-4 w-4 text-foreground" /> :
+              sortIconData.icon === 'desc' ? <ArrowDown className="h-4 w-4 text-foreground" /> :
+              <ArrowUpDown className="h-4 w-4 text-muted-foreground" />
+            )}
+          </div>
+        )}
+      </TableHead>
+    )
   }
 
-  if (appointments.length === 0) {
+  const renderCell = (item, column) => {
+    const appointmentId = mode === 'interests' ? item.appointment?.appointment_id : item.appointment_id
+    const itemIsSelected = isSelected(appointmentId)
+    
+    // Special handling for selection cell
+    if (column.key === 'selection') {
+      return (
+        <TableCell key={column.key} className={cn("py-1", column.cellClassName)} onClick={(e) => e.stopPropagation()}>
+          {column.cell({
+            item,
+            isSelected: itemIsSelected,
+            onToggle: () => toggleSelection(appointmentId)
+          })}
+        </TableCell>
+      )
+    }
+
+    // Handle other cells
+    const value = column.accessorFn ? column.accessorFn(item, mode) : item[column.accessorKey]
+    
+    return (
+      <TableCell key={column.key} className={cn("py-1", column.width, column.cellClassName)}>
+        {column.cell({
+          item,
+          value,
+          mode,
+          onAction: handleAction,
+          onViewAttachments
+        })}
+      </TableCell>
+    )
+  }
+
+  // ===== LOADING STATE =====
+  if (loading) {
+    return (
+      <Card className={cn("w-full bg-card border-border", className)}>
+        <CardHeader className="py-2 px-4 bg-muted/30 border-b border-border">
+          <div className="flex items-center justify-between">
+            <Skeleton className="h-6 w-32 bg-muted" />
+            <Skeleton className="h-8 w-24 bg-muted" />
+          </div>
+        </CardHeader>
+        <CardContent className="bg-background p-6">
+          <div className="space-y-4">
+            {[...Array(5)].map((_, i) => (
+              <div key={i} className="flex items-center space-x-4 py-4">
+                <Skeleton className="h-4 w-4 bg-muted" />
+                <div className="flex items-center space-x-3">
+                  <Skeleton className="h-10 w-10 rounded-full bg-muted" />
+                  <div className="space-y-2">
+                    <Skeleton className="h-4 w-32 bg-muted" />
+                    <Skeleton className="h-3 w-24 bg-muted" />
+                  </div>
+                </div>
+                <Skeleton className="h-4 w-24 bg-muted" />
+                <Skeleton className="h-4 w-32 bg-muted" />
+                <Skeleton className="h-6 w-16 bg-muted" />
+                <Skeleton className="h-4 w-16 bg-muted" />
+                <Skeleton className="h-4 w-24 bg-muted" />
+                <Skeleton className="h-8 w-8 bg-muted" />
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+    )
+  }
+
+  // ===== EMPTY STATE =====
+  if (sortedData.length === 0) {
     const emptyMessages = {
       available: {
         title: 'No available appointments',
@@ -552,59 +359,100 @@ export default function AppointmentInformationTable({
 
     const message = emptyMessages[mode] || emptyMessages.assigned
 
+    // Check if it's filtered empty vs truly empty
+    const isFiltered = dataStats.hasActiveFilters
+    const actualTitle = isFiltered ? `No ${mode} appointments match your filters` : message.title
+    const actualDescription = isFiltered 
+      ? `Found ${dataStats.total} total appointments, but none match your current search or filters. Try adjusting your criteria.`
+      : message.description
+
     return (
-      <Card className="bg-card border-border">
+      <Card className={cn("bg-card border-border", className)}>
         <CardContent className="flex flex-col items-center justify-center py-16 bg-background">
           <Calendar className="h-16 w-16 text-muted-foreground mb-4" />
-          <h3 className="text-lg font-semibold mb-2 text-foreground">{message.title}</h3>
-          <p className="text-muted-foreground text-center max-w-md">
-            {message.description}
+          <h3 className="text-lg font-semibold mb-2 text-foreground">{actualTitle}</h3>
+          <p className="text-muted-foreground text-center max-w-md mb-4">
+            {actualDescription}
           </p>
+          {isFiltered && (
+            <Button 
+              variant="outline" 
+              onClick={clearAllFilters}
+              className="bg-background hover:bg-muted border-border text-foreground"
+            >
+              Clear all filters
+            </Button>
+          )}
         </CardContent>
       </Card>
     )
   }
 
+  // Filter out invalid props before passing to Card component
+  const {
+    selectionState: _selectionState,
+    onSelectionChange: _onSelectionChange,
+    onSelectAll: _onSelectAll,
+    ...cardProps
+  } = props
+
+  // ===== MAIN RENDER =====
   return (
     <TooltipProvider>
-      {/* ✅ COMPREHENSIVE: Professional Response Handler */}
-      {selectedInterest && (
-        <ProfessionalResponseHandler
-          interest={selectedInterest}
-          appointment={selectedInterest.appointment}
-          professional={getProfessionalData()}
-          onSuccess={handleResponseSuccess}
-          onError={handleResponseError}
-          onClose={handleCloseResponseHandler}
-          open={!!selectedInterest}
-        />
-      )}
-
-      <Card className="w-full bg-card border-border">
+      <Card className={cn("w-full bg-card border-border", className)} {...cardProps}>
+        {/* Enhanced Header with Stats */}
         <CardHeader className="flex-shrink-0 bg-muted/30 border-b border-border">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
-              <CardTitle className="text-lg text-foreground">{getTableTitle()}</CardTitle>
-              {selectedRows.size > 0 && (
-                <Badge variant="outline" className="text-xs bg-primary/10 text-primary border-primary/20">
-                  {selectedRows.size} of {appointments.length} selected
+              <h3 className="text-lg text-foreground font-semibold">{getTableTitle()}</h3>
+              
+              {/* Selection Badge */}
+              {selectionState.hasSelection && (
+                <Badge variant="outline" className="text-lg bg-primary/10 text-primary border-primary/20">
+                  {selectionState.selectedCount} of {selectionState.totalCount} selected
+                </Badge>
+              )}
+              
+              {/* Data Stats Badge */}
+              {dataStats.hasActiveFilters && (
+                <Badge variant="outline" className="text-xs bg-muted text-muted-foreground border-border">
+                  {dataStats.filtered} of {dataStats.total} shown
                 </Badge>
               )}
             </div>
+            
             <div className="flex items-center space-x-2">
-              {selectedRows.size > 0 && (
+              {/* Bulk Actions */}
+              {selectionState.hasSelection && (
                 <div className="flex items-center space-x-2">
-                  <Button variant="outline" size="sm" className="bg-background hover:bg-muted border-border text-foreground">
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={handleBulkMessage}
+                    className="bg-background hover:bg-muted border-border text-foreground"
+                  >
                     <MessageSquare className="h-4 w-4 mr-2" />
-                    Message ({selectedRows.size})
+                    Message ({selectionState.selectedCount})
                   </Button>
-                  <Button variant="outline" size="sm" className="bg-background hover:bg-muted border-border text-muted-foreground hover:text-destructive">
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={handleBulkArchive}
+                    className="bg-background hover:bg-muted border-border text-muted-foreground hover:text-destructive"
+                  >
                     <Trash2 className="h-4 w-4 mr-2" />
-                    Archive ({selectedRows.size})
+                    Archive ({selectionState.selectedCount})
                   </Button>
                 </div>
               )}
-              <Button variant="outline" size="sm" className="bg-background hover:bg-muted border-border text-foreground">
+              
+              {/* Customize Button */}
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={handleCustomize}
+                className="bg-background hover:bg-muted border-border text-foreground"
+              >
                 <Settings className="h-4 w-4 mr-2" />
                 Customize
               </Button>
@@ -612,457 +460,36 @@ export default function AppointmentInformationTable({
           </div>
         </CardHeader>
 
+        {/* Table Content */}
         <CardContent className="p-0 flex-1 bg-background">
-          <div className="border-0 rounded-none max-h-[600px] overflow-y-auto">
+          <div className="border-0 rounded-none max-h-[900px] overflow-y-auto">
             <Table>
               <TableHeader className="sticky top-0 bg-background/95 backdrop-blur-sm z-10 border-b border-border">
                 <TableRow className="hover:bg-transparent border-b border-border">
-                  <TableHead className="w-12 py-4 bg-background/95">
-                    <Checkbox
-                      checked={selectedRows.size === appointments.length && appointments.length > 0}
-                      onCheckedChange={handleSelectAll}
-                      aria-label="Select all appointments"
-                      className="border-border data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground"
-                    />
-                  </TableHead>
-                  
-                  {mode === 'available' && (
-                    <TableHead className="py-4 bg-background/95 text-muted-foreground font-medium w-16">
-                      Type
-                    </TableHead>
-                  )}
-                  
-                  <TableHead 
-                    className="cursor-pointer select-none hover:bg-muted/50 transition-colors py-4 bg-background/95 text-muted-foreground"
-                    onClick={() => handleSort('customer_name')}
-                  >
-                    <div className="flex items-center space-x-2">
-                      <span className="font-medium">Customer</span>
-                      {getSortIcon('customer_name')}
-                    </div>
-                  </TableHead>
-                  <TableHead 
-                    className="cursor-pointer select-none hover:bg-muted/50 transition-colors py-4 bg-background/95 text-muted-foreground"
-                    onClick={() => handleSort('service_name')}
-                  >
-                    <div className="flex items-center space-x-2">
-                      <span className="font-medium">Service</span>
-                      {getSortIcon('service_name')}
-                    </div>
-                  </TableHead>
-                  <TableHead 
-                    className="cursor-pointer select-none hover:bg-muted/50 transition-colors py-4 bg-background/95 text-muted-foreground"
-                    onClick={() => handleSort('appointment_time')}
-                  >
-                    <div className="flex items-center space-x-2">
-                      <span className="font-medium">Appointment Time</span>
-                      {getSortIcon('appointment_time')}
-                    </div>
-                  </TableHead>
-                  
-                  {mode === 'interests' ? (
-                    <>
-                      <TableHead 
-                        className="cursor-pointer select-none hover:bg-muted/50 transition-colors py-4 bg-background/95 text-muted-foreground"
-                        onClick={() => handleSort('interest_status')}
-                      >
-                        <div className="flex items-center space-x-2">
-                          <span className="font-medium">Interest Status</span>
-                          {getSortIcon('interest_status')}
-                        </div>
-                      </TableHead>
-                      <TableHead 
-                        className="cursor-pointer select-none hover:bg-muted/50 transition-colors py-4 bg-background/95 text-muted-foreground"
-                        onClick={() => handleSort('interest_intent')}
-                      >
-                        <div className="flex items-center space-x-2">
-                          <span className="font-medium">Intent</span>
-                          {getSortIcon('interest_intent')}
-                        </div>
-                      </TableHead>
-                    </>
-                  ) : (
-                    <TableHead 
-                      className="cursor-pointer select-none hover:bg-muted/50 transition-colors py-4 bg-background/95 text-muted-foreground"
-                      onClick={() => handleSort('status')}
-                    >
-                      <div className="flex items-center space-x-2">
-                        <span className="font-medium">Status</span>
-                        {getSortIcon('status')}
-                      </div>
-                    </TableHead>
-                  )}
-                  
-                  <TableHead className="py-4 bg-background/95 text-muted-foreground font-medium">
-                    Files
-                  </TableHead>
-                  
-                  <TableHead 
-                    className="cursor-pointer select-none hover:bg-muted/50 transition-colors py-4 bg-background/95 text-muted-foreground"
-                    onClick={() => handleSort('created_at')}
-                  >
-                    <div className="flex items-center space-x-2">
-                      <span className="font-medium">
-                        {mode === 'interests' ? 'Expressed' : 'Requested'}
-                      </span>
-                      {getSortIcon('created_at')}
-                    </div>
-                  </TableHead>
-                  <TableHead className="text-right w-20 py-4 bg-background/95 text-muted-foreground font-medium">
-                    Actions
-                  </TableHead>
+                  {columns.map(renderColumnHeader)}
                 </TableRow>
               </TableHeader>
 
               <TableBody>
-                {sortedAppointments.map((item) => {
-                  const appointment = getAppointmentData(item)
+                {sortedData.map((item) => {
+                  const appointmentId = mode === 'interests' ? item.appointment?.appointment_id : item.appointment_id
+                  const itemIsSelected = isSelected(appointmentId)
                   
-                  if (!appointment) {
-                    console.warn('⚠️ Skipping undefined appointment:', item)
+                  if (!appointmentId) {
+                    console.warn('⚠️ Skipping item without appointment_id:', item)
                     return null
                   }
                   
-                  const isInvitation = getInvitationStatus(appointment)
-                  const statusConfig = getStatusConfig(
-                    mode === 'interests' ? item.status : appointment.status
-                  )
-                  const intentConfig = mode === 'interests' ? getIntentConfig(item.intent) : null
-                  const itemId = appointment.appointment_id
-                  const isSelected = selectedRows.has(itemId)
-                  const attachments = appointment.attachments || []
-                  
                   return (
                     <TableRow 
-                      key={itemId}
+                      key={appointmentId}
                       className={cn(
-                        "h-20 transition-all duration-200 hover:bg-muted/50 border-b border-border group cursor-pointer",
-                        isSelected && "bg-primary/5 border-l-4 border-l-primary"
+                        "h-14 transition-all duration-200 hover:bg-muted/50 border-b border-border group cursor-pointer",
+                        itemIsSelected && "bg-primary/5 border-l-4 border-l-primary"
                       )}
-                      onClick={() => onView(itemId)}
+                      onClick={() => handleRowClick(item)}
                     >
-                      <TableCell className="py-6" onClick={(e) => e.stopPropagation()}>
-                        <Checkbox
-                          checked={isSelected}
-                          onCheckedChange={() => handleRowSelect(itemId)}
-                          aria-label={`Select appointment for ${appointment.customer?.account?.first_name} ${appointment.customer?.account?.last_name}`}
-                          className="border-border data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground"
-                        />
-                      </TableCell>
-
-                      {mode === 'available' && (
-                        <TableCell className="py-6">
-                          {isInvitation ? (
-                            <Tooltip>
-                              <TooltipTrigger>
-                                <Badge className="bg-blue-600 text-white text-xs">
-                                  <Crown className="h-3 w-3 mr-1" />
-                                  Invited
-                                </Badge>
-                              </TooltipTrigger>
-                              <TooltipContent>
-                                <p>You were specifically invited for this project</p>
-                              </TooltipContent>
-                            </Tooltip>
-                          ) : (
-                            <Badge variant="outline" className="text-xs">
-                              Open
-                            </Badge>
-                          )}
-                        </TableCell>
-                      )}
-
-                      <TableCell className="py-6">
-                        <div className="flex items-center space-x-4">
-                          <Avatar className="h-10 w-10 border border-border">
-                            <AvatarImage 
-                              src={appointment.customer?.account?.profile_picture_url} 
-                              alt={`${appointment.customer?.account?.first_name} ${appointment.customer?.account?.last_name}`}
-                            />
-                            <AvatarFallback className="text-xs font-medium bg-muted text-muted-foreground">
-                              {appointment.customer?.account?.first_name?.[0] || '?'}
-                              {appointment.customer?.account?.last_name?.[0] || ''}
-                            </AvatarFallback>
-                          </Avatar>
-                          <div className="min-w-0 flex-1 space-y-1">
-                            <div className="font-medium text-sm truncate text-foreground">
-                              {appointment.customer?.account?.first_name} {appointment.customer?.account?.last_name}
-                            </div>
-                            <div className="flex items-center space-x-1 text-xs text-muted-foreground">
-                              <Mail className="h-3 w-3" />
-                              <span className="truncate max-w-[150px]">
-                                {appointment.customer?.account?.email}
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-                      </TableCell>
-
-                      <TableCell className="py-6">
-                        <div className="min-w-0 space-y-1">
-                          <div className="font-medium text-sm truncate text-foreground">
-                            {appointment.service?.name || appointment.title || 'Untitled Service'}
-                          </div>
-                          {(appointment.description || appointment.customer_message) && (
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <div className="text-xs text-muted-foreground truncate max-w-[200px] cursor-help">
-                                  {appointment.description || appointment.customer_message}
-                                </div>
-                              </TooltipTrigger>
-                              <TooltipContent className="max-w-xs bg-popover text-popover-foreground border-border">
-                                <p>{appointment.description || appointment.customer_message}</p>
-                              </TooltipContent>
-                            </Tooltip>
-                          )}
-                        </div>
-                      </TableCell>
-
-                      <TableCell className="py-6">
-                        <div className="space-y-1">
-                          <div className="font-medium text-sm text-foreground">
-                            {formatDate(getAppointmentTime(appointment))}
-                          </div>
-                          {appointment.deadline && (
-                            <div className="text-xs text-muted-foreground flex items-center space-x-1">
-                              <AlertTriangle className="h-3 w-3" />
-                              <span>Due: {formatDate(appointment.deadline)}</span>
-                            </div>
-                          )}
-                        </div>
-                      </TableCell>
-
-                      {mode === 'interests' ? (
-                        <>
-                          <TableCell className="py-6">
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <div className="flex items-center gap-2 cursor-help w-fit">
-                                  <div className={cn("w-2 h-2 rounded-full", statusConfig.dotColor)} />
-                                  <Badge className={statusConfig.className}>
-                                    <statusConfig.icon className="h-3 w-3 mr-1" />
-                                    {statusConfig.label}
-                                  </Badge>
-                                </div>
-                              </TooltipTrigger>
-                              <TooltipContent className="bg-popover text-popover-foreground border-border">
-                                <p>Interest status: {statusConfig.label}</p>
-                              </TooltipContent>
-                            </Tooltip>
-                          </TableCell>
-
-                          <TableCell className="py-6">
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <div className="flex items-center gap-2 cursor-help w-fit">
-                                  <div className={cn("w-2 h-2 rounded-full", intentConfig.dotColor)} />
-                                  <Badge className={intentConfig.className}>
-                                    <intentConfig.icon className="h-3 w-3 mr-1" />
-                                    {intentConfig.label}
-                                  </Badge>
-                                </div>
-                              </TooltipTrigger>
-                              <TooltipContent className="bg-popover text-popover-foreground border-border">
-                                <p>Interest level: {intentConfig.label}</p>
-                              </TooltipContent>
-                            </Tooltip>
-                          </TableCell>
-                        </>
-                      ) : (
-                        <TableCell className="py-6">
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <div className="flex items-center gap-2 cursor-help w-fit">
-                                <div className={cn("w-2 h-2 rounded-full", statusConfig.dotColor)} />
-                                <Badge className={statusConfig.className}>
-                                  <statusConfig.icon className="h-3 w-3 mr-1" />
-                                  {statusConfig.label}
-                                </Badge>
-                              </div>
-                            </TooltipTrigger>
-                            <TooltipContent className="bg-popover text-popover-foreground border-border">
-                              <p>Appointment status: {statusConfig.label}</p>
-                            </TooltipContent>
-                          </Tooltip>
-                        </TableCell>
-                      )}
-
-                      <TableCell className="py-6">
-                        <div className="flex items-center space-x-2">
-                          {attachments.length > 0 && (
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  className="h-8 w-8 p-0 text-muted-foreground hover:text-foreground"
-                                  onClick={(e) => {
-                                    e.stopPropagation()
-                                    onViewAttachments?.(appointment.appointment_id)
-                                  }}
-                                >
-                                  <Paperclip className="h-4 w-4" />
-                                </Button>
-                              </TooltipTrigger>
-                              <TooltipContent className="bg-popover text-popover-foreground border-border">
-                                <p>{attachments.length} attachment{attachments.length > 1 ? 's' : ''}</p>
-                              </TooltipContent>
-                            </Tooltip>
-                          )}
-                          
-                          {attachments.some(att => att.type?.startsWith('image/')) && (
-                            <Tooltip>
-                              <TooltipTrigger>
-                                <div className="flex items-center text-xs text-muted-foreground">
-                                  <Image className="h-3 w-3 mr-1" />
-                                  <span>{attachments.filter(att => att.type?.startsWith('image/')).length}</span>
-                                </div>
-                              </TooltipTrigger>
-                              <TooltipContent className="bg-popover text-popover-foreground border-border">
-                                <p>Images attached</p>
-                              </TooltipContent>
-                            </Tooltip>
-                          )}
-                          
-                          {attachments.some(att => !att.type?.startsWith('image/')) && (
-                            <Tooltip>
-                              <TooltipTrigger>
-                                <div className="flex items-center text-xs text-muted-foreground">
-                                  <FileText className="h-3 w-3 mr-1" />
-                                  <span>{attachments.filter(att => !att.type?.startsWith('image/')).length}</span>
-                                </div>
-                              </TooltipTrigger>
-                              <TooltipContent className="bg-popover text-popover-foreground border-border">
-                                <p>Documents attached</p>
-                              </TooltipContent>
-                            </Tooltip>
-                          )}
-                          
-                          {attachments.length === 0 && (
-                            <span className="text-xs text-muted-foreground">-</span>
-                          )}
-                        </div>
-                      </TableCell>
-
-                      <TableCell className="py-6">
-                        <div className="text-sm text-muted-foreground">
-                          {formatDate(mode === 'interests' ? item.created_at : appointment.created_at)}
-                        </div>
-                      </TableCell>
-
-                      <TableCell className="text-right py-6" onClick={(e) => e.stopPropagation()}>
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button 
-                              variant="ghost" 
-                              className="h-8 w-8 p-0 hover:bg-muted text-muted-foreground hover:text-foreground"
-                              disabled={actionLoading[itemId]}
-                            >
-                              {actionLoading[itemId] ? (
-                                <Loader2 className="h-4 w-4 animate-spin" />
-                              ) : (
-                                <MoreHorizontal className="h-4 w-4" />
-                              )}
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end" className="w-48 bg-popover border-border">
-                            {mode === 'available' && (
-                              <DropdownMenuItem 
-                                className="flex items-center text-foreground hover:bg-muted"
-                                onClick={() => handleExpressInterest(appointment)}
-                              >
-                                <Heart className="h-4 w-4 mr-2" />
-                                {isInvitation ? 'Respond to Invitation' : 'Express Interest'}
-                              </DropdownMenuItem>
-                            )}
-
-                            {/* ✅ COMPREHENSIVE: Professional response actions for selected interests */}
-                            {mode === 'interests' && item.status === 'selected' && (
-                              <DropdownMenuItem 
-                                className="flex items-center text-green-600 hover:bg-green-50"
-                                onClick={() => handleShowResponseHandler(item)}
-                              >
-                                <CheckCircle className="h-4 w-4 mr-2" />
-                                Respond to Selection
-                              </DropdownMenuItem>
-                            )}
-
-                            {mode === 'interests' && ['interested', 'quoted', 'confirmed'].includes(item.status) && (
-                              <>
-                                {item.status === 'selected' && <DropdownMenuSeparator className="bg-border" />}
-                                <DropdownMenuItem 
-                                  className="flex items-center text-foreground hover:bg-muted"
-                                  onClick={() => handleAction(
-                                    itemId,
-                                    'update_interest',
-                                    () => onUpdateInterest?.(item.interest_id)
-                                  )}
-                                >
-                                  <Edit className="h-4 w-4 mr-2" />
-                                  Update Interest
-                                </DropdownMenuItem>
-                              </>
-                            )}
-
-                             {/* ✅ NEW: Reapply option for rejected interests */}
-                            {mode === 'interests' && (item.status === 'rejected' || item.status === 'declined_by_professional') && (
-                              <DropdownMenuItem 
-                                className="flex items-center text-blue-600 hover:bg-blue-50"
-                                onClick={() => handleAction(
-                                  itemId,
-                                  'reapply',
-                                  () => onExpressInterest?.(appointment.appointment_id, { intent: 'standard' })
-                                )}
-                              >
-                                {/* <Heart className="h-4 w-4 mr-2" /> */}
-                                Reapply
-                              </DropdownMenuItem>
-                            )}
-                            {mode === 'assigned' && (
-                              <>
-                                <DropdownMenuItem 
-                                  className="flex items-center text-green-600 hover:bg-green-50"
-                                  onClick={() => handleAction(
-                                    itemId,
-                                    'accept',
-                                    () => onAccept?.(itemId)
-                                  )}
-                                >
-                                  <Check className="h-4 w-4 mr-2" />
-                                  Accept Appointment
-                                </DropdownMenuItem>
-                                <DropdownMenuItem 
-                                  className="flex items-center text-red-600 hover:bg-red-50"
-                                  onClick={() => handleAction(
-                                    itemId,
-                                    'decline',
-                                    () => onDecline?.(itemId)
-                                  )}
-                                >
-                                  <X className="h-4 w-4 mr-2" />
-                                  Decline Appointment
-                                </DropdownMenuItem>
-                              </>
-                            )}
-
-                            {/* Keep Share option at the bottom */}
-                            {(mode === 'available' || 
-                              (mode === 'interests' && (item.status === 'selected' || ['interested', 'quoted', 'confirmed'].includes(item.status))) ||
-                              mode === 'assigned') && (
-                              <>
-                                <DropdownMenuSeparator className="bg-border" />
-                                <DropdownMenuItem 
-                                  className="flex items-center text-foreground hover:bg-muted"
-                                  onClick={() => {/* TODO: Share functionality */}}
-                                >
-                                  <Send className="h-4 w-4 mr-2" />
-                                  Share
-                                </DropdownMenuItem>
-                              </>
-                            )}
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </TableCell>
+                      {columns.map(column => renderCell(item, column))}
                     </TableRow>
                   )
                 })}
@@ -1071,33 +498,47 @@ export default function AppointmentInformationTable({
           </div>
         </CardContent>
 
-        {/* Pagination */}
-        {pagination && (
+        {/* Enhanced Pagination */}
+        {activePagination && activePagination.totalPages > 1 && (
           <div className="flex items-center justify-between px-6 py-4 border-t border-border bg-muted/30">
-            <div className="flex items-center space-x-2 text-sm text-muted-foreground">
+            <div className="flex items-center space-x-4 text-sm text-muted-foreground">
               <span>
-                Showing {((pagination.currentPage - 1) * pagination.pageSize) + 1} to{' '}
-                {Math.min(pagination.currentPage * pagination.pageSize, pagination.totalItems)} of{' '}
-                {pagination.totalItems} results
+                Showing {activePagination.startIndex} to {activePagination.endIndex} of {activePagination.totalItems} results
               </span>
+              
+              {/* Selection Summary */}
+              {selectionState.hasSelection && (
+                <span className="text-primary font-medium">
+                  {selectionState.selectedCount} selected
+                </span>
+              )}
+              
+              {/* Filter Summary */}
+              {dataStats.hasActiveFilters && (
+                <span className="text-amber-600">
+                  Filtered ({dataStats.filterEfficiency}% match)
+                </span>
+              )}
             </div>
+            
             <div className="flex items-center space-x-2">
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => onPageChange?.(pagination.currentPage - 1)}
-                disabled={pagination.currentPage <= 1}
+                onClick={() => activePageChange(activePagination.currentPage - 1)}
+                disabled={!activePagination.hasPreviousPage}
                 className="bg-background hover:bg-muted border-border text-foreground"
               >
                 <ChevronLeft className="h-4 w-4 mr-1" />
                 Previous
               </Button>
+              
               <div className="flex items-center space-x-1">
-                {Array.from({ length: pagination.totalPages }, (_, i) => i + 1)
+                {Array.from({ length: activePagination.totalPages }, (_, i) => i + 1)
                   .filter(page => {
-                    const current = pagination.currentPage
+                    const current = activePagination.currentPage
                     return page === 1 || 
-                           page === pagination.totalPages || 
+                           page === activePagination.totalPages || 
                            (page >= current - 1 && page <= current + 1)
                   })
                   .map((page, index, array) => (
@@ -1106,12 +547,12 @@ export default function AppointmentInformationTable({
                         <span className="px-2 text-muted-foreground">...</span>
                       )}
                       <Button
-                        variant={page === pagination.currentPage ? "default" : "outline"}
+                        variant={page === activePagination.currentPage ? "default" : "outline"}
                         size="sm"
-                        onClick={() => onPageChange?.(page)}
+                        onClick={() => activePageChange(page)}
                         className={cn(
                           "w-8 h-8 p-0",
-                          page === pagination.currentPage 
+                          page === activePagination.currentPage 
                             ? "bg-primary text-primary-foreground" 
                             : "bg-background hover:bg-muted border-border text-foreground"
                         )}
@@ -1121,11 +562,12 @@ export default function AppointmentInformationTable({
                     </div>
                   ))}
               </div>
+              
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => onPageChange?.(pagination.currentPage + 1)}
-                disabled={pagination.currentPage >= pagination.totalPages}
+                onClick={() => activePageChange(activePagination.currentPage + 1)}
+                disabled={!activePagination.hasNextPage}
                 className="bg-background hover:bg-muted border-border text-foreground"
               >
                 Next

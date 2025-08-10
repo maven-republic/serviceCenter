@@ -31,26 +31,36 @@ export default async function InterfaceFoundation({ children }) {
             __html: `
               (function() {
                 try {
-                  // Check if we're in professional workspace
-                  const isProfessional = window.location.pathname.includes('/professional');
+                  const pathname = window.location.pathname;
                   
-                  if (isProfessional) {
-                    // Force dark theme for professional workspace
-                    document.documentElement.classList.remove('light');
+                  // Remove any existing theme classes
+                  document.documentElement.classList.remove('light', 'dark', 'professional-workspace', 'customer-workspace');
+                  
+                  if (pathname.includes('/professional')) {
+                    // 🔒 PROFESSIONAL WORKSPACE - Force dark theme
                     document.documentElement.classList.add('dark', 'professional-workspace');
+                    console.log('🏢 Applied professional workspace theme (dark)');
+                    
+                  } else if (pathname.includes('/customer')) {
+                    // 🔒 CUSTOMER WORKSPACE - Force light theme (white background)
+                    document.documentElement.classList.add('light', 'customer-workspace');
+                    console.log('👤 Applied customer workspace theme (white)');
+                    
                   } else {
-                    // For all other pages, use saved theme or default to light
+                    // 🌍 PUBLIC AREAS - Use saved theme or default to light
                     const savedTheme = localStorage.getItem('ui-theme') || 'light';
-                    document.documentElement.classList.remove('dark', 'professional-workspace');
                     
                     if (savedTheme === 'system') {
                       const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
                       document.documentElement.classList.add(systemTheme);
+                      console.log('🌓 Applied system theme:', systemTheme);
                     } else {
                       document.documentElement.classList.add(savedTheme);
+                      console.log('🎨 Applied saved theme:', savedTheme);
                     }
                   }
                 } catch (e) {
+                  console.warn('Theme initialization error:', e);
                   // Fallback to light theme
                   document.documentElement.classList.add('light');
                 }

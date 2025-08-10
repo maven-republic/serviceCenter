@@ -1,23 +1,30 @@
-// src/components/customer-workspace/interests/CustomerAppointmentDashboard.jsx (Updated with Quote Approval)
+// src/components/customer-workspace/interests/CustomerAppointmentDashboard.jsx (Fixed with Quote Approval)
 "use client";
 
 import { useState, useEffect, useCallback } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Separator } from '@/components/ui/separator';
+import { Badge } from '@/components/ui/badge';
 import { 
   AlertCircle,
   Users,
   BarChart3,
   User,
   Clock,
-  AlertTriangle
+  AlertTriangle,
+  CheckCircle,
+  RefreshCw
 } from 'lucide-react';
 
 import InterestSelectionCard from './InterestSelectionCard';
 import InterestComparisonView from './InterestComparisonView';
 import AssessmentScheduler from './AssessmentScheduler';
 import CustomerQuoteComparison from './CustomerQuoteComparison';
+import AppointmentInterestStatus from './AppointmentInterestStatus';
+
+// 🔥 NEW: Import the quote approval hook
+import { useQuoteApproval } from '@/primitives/customer/useQuoteApproval';
 
 const CustomerAppointmentDashboard = ({ appointmentId }) => {
   const [appointmentInformation, setAppointmentData] = useState(null);
@@ -27,6 +34,16 @@ const CustomerAppointmentDashboard = ({ appointmentId }) => {
   const [error, setError] = useState(null);
   const [actionLoading, setActionLoading] = useState(false);
   const [debugInfo, setDebugInfo] = useState(null);
+  const [successMessage, setSuccessMessage] = useState('');
+  const [errorMessage, setErrorMessage] = useState('');
+
+  // 🔥 NEW: Use the quote approval hook
+  const { 
+    handleQuoteApproval, 
+    loading: quoteApprovalLoading, 
+    error: quoteApprovalError,
+    clearError: clearQuoteError
+  } = useQuoteApproval();
 
   useEffect(() => {
     if (appointmentId) {
@@ -43,6 +60,21 @@ const CustomerAppointmentDashboard = ({ appointmentId }) => {
       }
     }
   }, [interests]);
+
+  // 🔥 NEW: Clear success/error messages after delay
+  useEffect(() => {
+    if (successMessage) {
+      const timer = setTimeout(() => setSuccessMessage(''), 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [successMessage]);
+
+  useEffect(() => {
+    if (errorMessage) {
+      const timer = setTimeout(() => setErrorMessage(''), 8000);
+      return () => clearTimeout(timer);
+    }
+  }, [errorMessage]);
 
   const fetchAppointmentInterests = async () => {
     try {
@@ -161,6 +193,7 @@ const CustomerAppointmentDashboard = ({ appointmentId }) => {
       if (!response.ok) {
         const errorText = await response.text();
         console.error('❌ Selection HTTP Error:', errorText);
+        setErrorMessage(`Failed to select professional: ${errorText}`);
         return { success: false, error: `HTTP ${response.status}: ${errorText}` };
       }
 
@@ -171,20 +204,25 @@ const CustomerAppointmentDashboard = ({ appointmentId }) => {
         result = JSON.parse(responseText);
       } catch (parseError) {
         console.error('❌ Selection JSON Parse Error:', parseError);
+        setErrorMessage('Invalid response format');
         return { success: false, error: 'Invalid response format' };
       }
 
       if (result.success) {
         console.log('✅ Professional selected successfully');
+        setSuccessMessage('Professional selected successfully!');
         await fetchAppointmentInterests(); // Refresh data
         return { success: true };
       } else {
         console.error('❌ Selection failed:', result.error);
+        setErrorMessage(result.error || 'Failed to select professional');
         return { success: false, error: result.error };
       }
     } catch (error) {
       console.error('💥 Selection error:', error);
-      return { success: false, error: 'Selection failed: ' + error.message };
+      const errorMsg = 'Selection failed: ' + error.message;
+      setErrorMessage(errorMsg);
+      return { success: false, error: errorMsg };
     } finally {
       setActionLoading(false);
     }
@@ -205,6 +243,7 @@ const CustomerAppointmentDashboard = ({ appointmentId }) => {
 
       if (!response.ok) {
         const errorText = await response.text();
+        setErrorMessage(`Failed to reject professional: ${errorText}`);
         return { success: false, error: `HTTP ${response.status}: ${errorText}` };
       }
 
@@ -212,124 +251,52 @@ const CustomerAppointmentDashboard = ({ appointmentId }) => {
       const result = JSON.parse(responseText);
       
       if (result.success) {
+        setSuccessMessage('Professional rejected successfully');
         await fetchAppointmentInterests(); // Refresh data
         return { success: true };
       } else {
+        setErrorMessage(result.error || 'Failed to reject professional');
         return { success: false, error: result.error };
       }
     } catch (error) {
       console.error('Error rejecting professional:', error);
-      return { success: false, error: 'Rejection failed: ' + error.message };
+      const errorMsg = 'Rejection failed: ' + error.message;
+      setErrorMessage(errorMsg);
+      return { success: false, error: errorMsg };
     } finally {
       setActionLoading(false);
     }
   };
 
-  // ✅ NEW: Quote Update Approval Handler
-  const handleApproveQuoteUpdate = useCallback(async (interestId, customerNotes = '') => {
-    try {
-      setActionLoading(true);
-      console.log('✅ Approving quote update:', { interestId, customerNotes });
-      
-      const response = await fetch(`/api/appointments/${appointmentId}/interests/${interestId}/quote-approval`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          action: 'approve',
-          customer_notes: customerNotes
-        })
-      });
-
-      console.log('📡 Approval response status:', response.status);
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error('❌ Approval HTTP Error:', errorText);
-        return { success: false, error: `HTTP ${response.status}: ${errorText}` };
+  // 🔥 UPDATED: Quote approval handler using the hook
+  const handleQuoteApprovalAction = useCallback(async (interestId, action, notes = '') => {
+    clearQuoteError(); // Clear any previous errors
+    
+    const result = await handleQuoteApproval(
+      appointmentId, 
+      interestId, 
+      action, 
+      notes,
+      {
+        onSuccess: async (result) => {
+          // Refresh data and show success message
+          await fetchAppointmentInterests();
+          if (action === 'approve') {
+            setSuccessMessage('Quote update approved! The professional has been notified and the project is confirmed.');
+          } else {
+            setSuccessMessage('Quote update declined. The professional will need to provide a new response.');
+          }
+        },
+        onError: (error) => {
+          setErrorMessage(error.message || `Failed to ${action} quote update`);
+        },
+        showSuccessMessage: false, // We handle success messages manually
+        showErrorMessage: false    // We handle error messages manually
       }
+    );
 
-      const responseText = await response.text();
-      let result;
-      
-      try {
-        result = JSON.parse(responseText);
-      } catch (parseError) {
-        console.error('❌ Approval JSON Parse Error:', parseError);
-        return { success: false, error: 'Invalid response format' };
-      }
-
-      if (result.success) {
-        console.log('✅ Quote update approved successfully');
-        await fetchAppointmentInterests(); // Refresh data
-        
-        // Show success message
-        alert('Quote update approved! The professional has been notified and the project is confirmed.');
-        
-        return { success: true };
-      } else {
-        console.error('❌ Approval failed:', result.error);
-        return { success: false, error: result.error };
-      }
-    } catch (error) {
-      console.error('💥 Approval error:', error);
-      return { success: false, error: 'Approval failed: ' + error.message };
-    } finally {
-      setActionLoading(false);
-    }
-  }, [appointmentId, fetchAppointmentInterests]);
-
-  // ✅ NEW: Quote Update Decline Handler
-  const handleDeclineQuoteUpdate = useCallback(async (interestId, customerNotes = '') => {
-    try {
-      setActionLoading(true);
-      console.log('❌ Declining quote update:', { interestId, customerNotes });
-      
-      const response = await fetch(`/api/appointments/${appointmentId}/interests/${interestId}/quote-approval`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          action: 'decline',
-          customer_notes: customerNotes
-        })
-      });
-
-      console.log('📡 Decline response status:', response.status);
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error('❌ Decline HTTP Error:', errorText);
-        return { success: false, error: `HTTP ${response.status}: ${errorText}` };
-      }
-
-      const responseText = await response.text();
-      let result;
-      
-      try {
-        result = JSON.parse(responseText);
-      } catch (parseError) {
-        console.error('❌ Decline JSON Parse Error:', parseError);
-        return { success: false, error: 'Invalid response format' };
-      }
-
-      if (result.success) {
-        console.log('✅ Quote update declined successfully');
-        await fetchAppointmentInterests(); // Refresh data
-        
-        // Show success message
-        alert('Quote update declined. The professional will need to provide a new response.');
-        
-        return { success: true };
-      } else {
-        console.error('❌ Decline failed:', result.error);
-        return { success: false, error: result.error };
-      }
-    } catch (error) {
-      console.error('💥 Decline error:', error);
-      return { success: false, error: 'Decline failed: ' + error.message };
-    } finally {
-      setActionLoading(false);
-    }
-  }, [appointmentId, fetchAppointmentInterests]);
+    return result;
+  }, [appointmentId, handleQuoteApproval, fetchAppointmentInterests, clearQuoteError]);
 
   const handleMessageProfessional = (interest) => {
     console.log('Message professional:', interest.professional_id);
@@ -390,11 +357,43 @@ const CustomerAppointmentDashboard = ({ appointmentId }) => {
   const selectedInterest = interests.find(i => i.selected_by_customer);
   const needsAssessment = selectedInterest?.assessment;
   
-  // ✅ NEW: Count quote updates pending approval
-  const quoteUpdatesCount = interests.filter(i => i.status === 'updated_quote').length;
+  // 🔥 FIXED: Use 'updated' status instead of 'updated_quote'
+  const quoteUpdatesCount = interests.filter(i => i.status === 'updated').length;
+  const hasQuoteUpdates = quoteUpdatesCount > 0;
+
+  // 🔥 NEW: Determine appointment status for AppointmentInterestStatus
+  const appointmentStatus = appointmentInformation?.status || (hasQuoteUpdates ? 'reviewing' : 'pending');
 
   return (
     <div className="space-y-6">
+      {/* 🔥 NEW: Success Message */}
+      {successMessage && (
+        <Alert className="bg-green-50 border-green-200">
+          <CheckCircle className="h-4 w-4 text-green-600" />
+          <AlertDescription className="text-green-800">
+            {successMessage}
+          </AlertDescription>
+        </Alert>
+      )}
+
+      {/* 🔥 NEW: Error Message */}
+      {(errorMessage || quoteApprovalError) && (
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>
+            {errorMessage || quoteApprovalError}
+          </AlertDescription>
+        </Alert>
+      )}
+
+      {/* 🔥 NEW: Appointment Status Overview */}
+      <AppointmentInterestStatus
+        status={appointmentStatus}
+        interestCount={interests.length}
+        selectedInterest={selectedInterest}
+        hasQuoteUpdates={hasQuoteUpdates}
+      />
+
       {/* Debug Panel */}
       {process.env.NODE_ENV === 'development' && (
         <Alert>
@@ -404,11 +403,13 @@ const CustomerAppointmentDashboard = ({ appointmentId }) => {
               <summary className="cursor-pointer font-medium">Debug Info</summary>
               <div className="mt-2 text-xs">
                 <p>Appointment ID: {appointmentId}</p>
+                <p>Appointment Status: {appointmentStatus}</p>
                 <p>Interests Count: {interests.length}</p>
                 <p>Active Interests: {activeInterests.length}</p>
                 <p>Quote Updates Pending: {quoteUpdatesCount}</p>
                 <p>Selected Interest: {selectedInterest ? 'Yes' : 'No'}</p>
                 <p>Has Appointment Data: {appointmentInformation ? 'Yes' : 'No'}</p>
+                <p>Quote Approval Loading: {quoteApprovalLoading ? 'Yes' : 'No'}</p>
               </div>
             </details>
           </AlertDescription>
@@ -421,11 +422,12 @@ const CustomerAppointmentDashboard = ({ appointmentId }) => {
           <TabsTrigger value="responses" className="flex items-center space-x-2">
             <Users className="h-4 w-4" />
             <span>Responses ({activeInterests.length})</span>
-            {/* ✅ NEW: Quote update indicator */}
-            {quoteUpdatesCount > 0 && (
-              <span className="ml-1 px-1.5 py-0.5 text-xs bg-orange-500 text-white rounded-full">
+            {/* 🔥 UPDATED: Quote update indicator */}
+            {hasQuoteUpdates && (
+              <Badge className="ml-1 bg-orange-500 text-white animate-pulse">
+                <RefreshCw className="h-3 w-3 mr-1" />
                 {quoteUpdatesCount}
-              </span>
+              </Badge>
             )}
           </TabsTrigger>
           <TabsTrigger value="compare" disabled={activeInterests.length < 2}>
@@ -442,40 +444,59 @@ const CustomerAppointmentDashboard = ({ appointmentId }) => {
           </TabsTrigger>
           <TabsTrigger 
             value="assessment" 
-            disabled={!needsAssessment}
+            disabled={!needsAssessment || appointmentStatus === 'reviewing'}
             className="flex items-center space-x-2"
           >
             <Clock className="h-4 w-4" />
             <span>Assessment</span>
+            {appointmentStatus === 'reviewing' && (
+              <Badge variant="outline" className="text-xs">Blocked</Badge>
+            )}
           </TabsTrigger>
         </TabsList>
 
         {/* Professional Responses Tab */}
         <TabsContent value="responses" className="space-y-4">
-          {/* ✅ NEW: Quote Updates Section */}
-          {interests.some(i => i.status === 'updated_quote') && (
+          {/* 🔥 UPDATED: Quote Updates Section */}
+          {interests.some(i => i.status === 'updated') && (
             <div className="space-y-4">
-              <div className="flex items-center space-x-2">
-                <div className="p-2 rounded-full bg-orange-100">
-                  <AlertTriangle className="h-5 w-5 text-orange-600" />
+              <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
+                <div className="flex items-center space-x-2 mb-3">
+                  <div className="p-2 rounded-full bg-orange-100">
+                    <AlertTriangle className="h-5 w-5 text-orange-600 animate-pulse" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-orange-800 flex items-center space-x-2">
+                      <RefreshCw className="h-4 w-4" />
+                      <span>Quote Updates Pending Your Approval</span>
+                    </h3>
+                    <p className="text-sm text-orange-600">
+                      {quoteUpdatesCount} professional(s) have updated their quotes and need your approval
+                    </p>
+                  </div>
                 </div>
-                <div>
-                  <h3 className="font-semibold text-orange-800">Quote Updates Pending Your Approval</h3>
-                  <p className="text-sm text-orange-600">
-                    {interests.filter(i => i.status === 'updated_quote').length} professional(s) have updated their quotes
-                  </p>
-                </div>
+                
+                <Alert className="bg-orange-100 border-orange-300">
+                  <AlertTriangle className="h-4 w-4 text-orange-600" />
+                  <AlertDescription className="text-orange-800">
+                    <strong>Important:</strong> Assessment scheduling is blocked until you approve or decline these quote changes.
+                  </AlertDescription>
+                </Alert>
               </div>
               
               {interests
-                .filter(i => i.status === 'updated_quote')
+                .filter(i => i.status === 'updated')
                 .map((interest) => (
                   <CustomerQuoteComparison
                     key={interest.interest_id}
                     interest={interest}
-                    onApprove={handleApproveQuoteUpdate}
-                    onDecline={handleDeclineQuoteUpdate}
-                    isLoading={actionLoading}
+                    onApprove={(interestId, notes) => 
+                      handleQuoteApprovalAction(interestId, 'approve', notes)
+                    }
+                    onDecline={(interestId, notes) => 
+                      handleQuoteApprovalAction(interestId, 'decline', notes)
+                    }
+                    isLoading={actionLoading || quoteApprovalLoading}
                   />
                 ))
               }
@@ -495,7 +516,7 @@ const CustomerAppointmentDashboard = ({ appointmentId }) => {
           ) : (
             <div className="space-y-4">
               {activeInterests
-                .filter(i => i.status !== 'updated_quote') // Exclude quote updates from regular list
+                .filter(i => i.status !== 'updated') // Exclude quote updates from regular list
                 .map((interest) => (
                   <InterestSelectionCard 
                     key={interest.interest_id}
@@ -504,6 +525,8 @@ const CustomerAppointmentDashboard = ({ appointmentId }) => {
                     onReject={handleRejectProfessional}
                     onMessage={handleMessageProfessional}
                     isLoading={actionLoading}
+                    // 🔥 NEW: Disable actions during quote review
+                    showActions={appointmentStatus !== 'reviewing'}
                   />
                 ))
               }
@@ -514,7 +537,7 @@ const CustomerAppointmentDashboard = ({ appointmentId }) => {
         {/* Comparison Tab */}
         <TabsContent value="compare">
           <InterestComparisonView 
-            interests={activeInterests}
+            interests={activeInterests.filter(i => i.status !== 'updated')}
             onSelectProfessional={handleSelectProfessional}
             onRejectProfessional={handleRejectProfessional}
             isLoading={actionLoading}
@@ -525,12 +548,30 @@ const CustomerAppointmentDashboard = ({ appointmentId }) => {
         <TabsContent value="selected">
           {selectedInterest ? (
             <div className="space-y-6">
-              <Alert className="bg-green-50 border-green-200">
-                <AlertCircle className="h-4 w-4 text-green-600" />
-                <AlertDescription className="text-green-800">
-                  <strong>Professional Selected!</strong> You've chosen this professional for your project.
-                </AlertDescription>
-              </Alert>
+              {/* 🔥 NEW: Show different alerts based on status */}
+              {appointmentStatus === 'reviewing' ? (
+                <Alert className="bg-orange-50 border-orange-200">
+                  <AlertTriangle className="h-4 w-4 text-orange-600" />
+                  <AlertDescription className="text-orange-800">
+                    <strong>Quote Update In Review:</strong> Your selected professional has updated their quote. 
+                    Please review the changes in the "Responses" tab before proceeding.
+                  </AlertDescription>
+                </Alert>
+              ) : selectedInterest.status === 'confirmed' ? (
+                <Alert className="bg-green-50 border-green-200">
+                  <CheckCircle className="h-4 w-4 text-green-600" />
+                  <AlertDescription className="text-green-800">
+                    <strong>Project Confirmed!</strong> Your quote has been approved and the professional is ready to begin.
+                  </AlertDescription>
+                </Alert>
+              ) : (
+                <Alert className="bg-green-50 border-green-200">
+                  <CheckCircle className="h-4 w-4 text-green-600" />
+                  <AlertDescription className="text-green-800">
+                    <strong>Professional Selected!</strong> You've chosen this professional for your project.
+                  </AlertDescription>
+                </Alert>
+              )}
               
               <InterestSelectionCard 
                 interest={selectedInterest}
@@ -553,7 +594,15 @@ const CustomerAppointmentDashboard = ({ appointmentId }) => {
 
         {/* Assessment Tab */}
         <TabsContent value="assessment">
-          {needsAssessment && selectedInterest ? (
+          {appointmentStatus === 'reviewing' ? (
+            <Alert className="bg-orange-50 border-orange-200">
+              <AlertTriangle className="h-4 w-4 text-orange-600" />
+              <AlertDescription className="text-orange-800">
+                <strong>Assessment Scheduling Blocked:</strong> Please approve or decline the pending quote updates 
+                before scheduling an assessment.
+              </AlertDescription>
+            </Alert>
+          ) : needsAssessment && selectedInterest ? (
             <AssessmentScheduler 
               interest={selectedInterest}
               assessment={selectedInterest.assessment}

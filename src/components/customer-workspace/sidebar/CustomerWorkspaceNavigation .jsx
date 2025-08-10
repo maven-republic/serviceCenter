@@ -27,7 +27,7 @@ export default function CustomerWorkspaceNavigation() {
   ) || [];
 
   return (
-    <div className="hidden lg:block w-28 bg-white sticky top-0 h-screen z-10 border-r border-gray-200">
+<div className="hidden lg:block w-28 bg-background sticky top-0 h-screen z-10 border-r border-border">
       <div className="flex h-full flex-col items-center">
         
         {/* Logo Section */}

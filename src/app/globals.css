@@ -1,5 +1,5 @@
-/* ===== THEME CONSISTENCY FIX FOR VERCEL ===== */
-/* This section ensures light theme by default across all environments */
+/* ===== ENHANCED THEME CONSISTENCY FOR DUAL WORKSPACE SYSTEM ===== */
+/* This section ensures proper theme application across all environments */
 
 :root {
   color-scheme: light;
@@ -10,7 +10,7 @@
 
 /* Override system dark mode preference unless explicitly set */
 @media (prefers-color-scheme: dark) {
-  :root:not(.dark):not(.professional-workspace) {
+  :root:not(.dark):not(.professional-workspace):not(.customer-workspace) {
     color-scheme: light !important;
     background: hsl(0 0% 100%) !important;
     color: hsl(0 0% 3.9%) !important;
@@ -36,6 +36,20 @@ html.dark.professional-workspace {
   color-scheme: dark !important;
   background-color: hsl(0 0% 3.9%) !important;
   color: hsl(0 0% 98%) !important;
+}
+
+/* ===== NEW: Customer workspace always white ===== */
+html.customer-workspace {
+  color-scheme: light !important;
+  background-color: hsl(0 0% 100%) !important;
+  color: hsl(0 0% 3.9%) !important;
+}
+
+/* Override dark mode for customer workspace */
+html.dark.customer-workspace {
+  color-scheme: light !important;
+  background-color: hsl(0 0% 100%) !important;
+  color: hsl(0 0% 3.9%) !important;
 }
 
 /* ===== UNIFIED TAILWIND + SHADCN/UI SYSTEM ===== */
@@ -190,6 +204,64 @@ html.dark.professional-workspace {
     --sidebar-ring: 0 0% 83.1%;
   }
 
+  /* ===== CUSTOMER WORKSPACE THEME (ALWAYS WHITE) ===== */
+  .customer-workspace {
+    /* Force light theme colors for customer workspace */
+    --background: 0 0% 100% !important;           /* Pure white background */
+    --foreground: 0 0% 3.9% !important;          /* Dark text */
+    --card: 0 0% 100% !important;                /* White cards */
+    --card-foreground: 0 0% 3.9% !important;    /* Dark text on cards */
+    --popover: 0 0% 100% !important;             /* White popovers */
+    --popover-foreground: 0 0% 3.9% !important; /* Dark text on popovers */
+    
+    /* Light theme UI colors */
+    --primary: 0 0% 9% !important;
+    --primary-foreground: 0 0% 98% !important;
+    --secondary: 0 0% 96.1% !important;
+    --secondary-foreground: 0 0% 9% !important;
+    --muted: 0 0% 96.1% !important;
+    --muted-foreground: 0 0% 45.1% !important;
+    --accent: 0 0% 96.1% !important;
+    --accent-foreground: 0 0% 9% !important;
+    --destructive: 0 84.2% 60.2% !important;
+    --destructive-foreground: 0 0% 98% !important;
+    --border: 0 0% 89.8% !important;
+    --input: 0 0% 89.8% !important;
+    --ring: 0 0% 3.9% !important;
+    
+    /* Light theme sidebar colors */
+    --sidebar-background: 0 0% 100% !important;      /* Pure white sidebar */
+    --sidebar-foreground: 0 0% 9% !important;        /* Dark text */
+    --sidebar-primary: 0 0% 9% !important;
+    --sidebar-primary-foreground: 0 0% 98% !important;
+    --sidebar-accent: 0 0% 96.1% !important;
+    --sidebar-accent-foreground: 0 0% 9% !important;
+    --sidebar-border: 0 0% 89.8% !important;
+    --sidebar-ring: 0 0% 3.9% !important;
+
+    /* Light theme chart colors */
+    --chart-1: 12 76% 61% !important;
+    --chart-2: 173 58% 39% !important;
+    --chart-3: 197 37% 24% !important;
+    --chart-4: 43 74% 66% !important;
+    --chart-5: 27 87% 67% !important;
+  }
+
+  /* Override dark mode for customer workspace elements */
+  html.dark .customer-workspace {
+    --background: 0 0% 100% !important;
+    --foreground: 0 0% 3.9% !important;
+    --card: 0 0% 100% !important;
+    --card-foreground: 0 0% 3.9% !important;
+    --popover: 0 0% 100% !important;
+    --popover-foreground: 0 0% 3.9% !important;
+    --border: 0 0% 89.8% !important;
+    --input: 0 0% 89.8% !important;
+    --sidebar-background: 0 0% 100% !important;
+    --sidebar-foreground: 0 0% 9% !important;
+    --sidebar-border: 0 0% 89.8% !important;
+  }
+
   /* ===== BASE ELEMENT STYLES ===== */
   * {
     border-color: hsl(var(--border));
@@ -212,6 +284,64 @@ html.dark.professional-workspace {
 }
 
 @layer components {
+  /* ===== CUSTOMER WORKSPACE COMPONENTS ===== */
+  
+  .customer-card {
+    @apply bg-card border border-border rounded-lg shadow-sm;
+    @apply text-card-foreground p-6;
+  }
+
+  .customer-button-primary {
+    @apply bg-primary text-primary-foreground;
+    @apply rounded-md px-4 py-2 font-medium;
+    @apply hover:bg-primary/90;
+    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2;
+    @apply transition-colors duration-200;
+  }
+
+  .customer-button-secondary {
+    @apply bg-secondary text-secondary-foreground border border-border;
+    @apply rounded-md px-4 py-2 font-medium;
+    @apply hover:bg-secondary/80;
+    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2;
+    @apply transition-colors duration-200;
+  }
+
+  .customer-input {
+    @apply bg-background border border-border text-foreground;
+    @apply rounded-md px-3 py-2;
+    @apply focus:outline-none focus:border-ring focus:ring-2 focus:ring-ring/20;
+    @apply transition-all duration-200;
+    @apply placeholder:text-muted-foreground;
+  }
+
+  .customer-textarea {
+    @apply bg-background border border-border text-foreground;
+    @apply rounded-md px-3 py-2 min-h-[80px] resize-y;
+    @apply focus:outline-none focus:border-ring focus:ring-2 focus:ring-ring/20;
+    @apply transition-all duration-200;
+    @apply placeholder:text-muted-foreground;
+  }
+
+  .customer-select {
+    @apply bg-background border border-border text-foreground;
+    @apply rounded-md px-3 py-2;
+    @apply focus:outline-none focus:border-ring focus:ring-2 focus:ring-ring/20;
+    @apply transition-all duration-200;
+  }
+
+  .customer-sidebar {
+    @apply bg-sidebar border-r border-sidebar-border text-sidebar-foreground;
+    @apply transition-all duration-200 ease-in-out;
+  }
+
+  .customer-sidebar-button {
+    @apply bg-transparent text-sidebar-foreground rounded-md;
+    @apply px-3 py-2 my-0.5 font-medium transition-all duration-200;
+    @apply hover:bg-sidebar-accent hover:text-sidebar-accent-foreground;
+    @apply data-[active=true]:bg-sidebar-primary data-[active=true]:text-sidebar-primary-foreground data-[active=true]:font-semibold;
+  }
+
   /* ===== PROFESSIONAL WORKSPACE COMPONENTS ===== */
   
   .professional-sidebar {
@@ -268,21 +398,6 @@ html.dark.professional-workspace {
     @apply rounded-md px-3 py-2;
     @apply focus:outline-none focus:border-ring focus:ring-2 focus:ring-ring/20;
     @apply transition-all duration-200;
-  }
-
-  /* ===== CUSTOMER WORKSPACE COMPONENTS ===== */
-  
-  .customer-card {
-    @apply bg-card border border-border rounded-lg shadow-sm;
-    @apply text-card-foreground p-6;
-  }
-
-  .customer-button-primary {
-    @apply bg-primary text-primary-foreground;
-    @apply rounded-md px-4 py-2 font-medium;
-    @apply hover:bg-primary/90;
-    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2;
-    @apply transition-colors duration-200;
   }
 
   /* ===== SHARED UTILITY COMPONENTS ===== */
@@ -589,6 +704,30 @@ html.dark.professional-workspace {
 }
 
 @layer utilities {
+  /* ===== CUSTOMER WORKSPACE UTILITIES ===== */
+  
+  .customer-workspace .scrollbar-thin {
+    scrollbar-width: thin;
+    scrollbar-color: hsl(var(--muted-foreground)) hsl(var(--muted));
+  }
+
+  .customer-workspace .scrollbar-thin::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  .customer-workspace .scrollbar-thin::-webkit-scrollbar-track {
+    background: hsl(var(--muted));
+  }
+
+  .customer-workspace .scrollbar-thin::-webkit-scrollbar-thumb {
+    background: hsl(var(--muted-foreground));
+    border-radius: 4px;
+  }
+
+  .customer-workspace .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--foreground));
+  }
+
   /* ===== PROFESSIONAL WORKSPACE UTILITIES ===== */
   
   .professional-workspace .scrollbar-thin {
@@ -717,6 +856,36 @@ html.dark.professional-workspace {
   .animate-fade-in-mobile {
     animation: fade-in-mobile 0.2s ease-out;
   }
+
+  /* ===== CUSTOMER WORKSPACE FORCE WHITE UTILITIES ===== */
+  
+  .customer-workspace .bg-background {
+    background-color: hsl(0 0% 100%) !important;
+  }
+
+  .customer-workspace .bg-card {
+    background-color: hsl(0 0% 100%) !important;
+  }
+
+  .customer-workspace .bg-popover {
+    background-color: hsl(0 0% 100%) !important;
+  }
+
+  .customer-workspace .border-border {
+    border-color: hsl(0 0% 89.8%) !important;
+  }
+
+  .customer-workspace .text-foreground {
+    color: hsl(0 0% 3.9%) !important;
+  }
+
+  .customer-workspace .text-card-foreground {
+    color: hsl(0 0% 3.9%) !important;
+  }
+
+  .customer-workspace .text-muted-foreground {
+    color: hsl(0 0% 45.1%) !important;
+  }
 }
 
 /* ===== KEYFRAME ANIMATIONS ===== */
@@ -820,6 +989,16 @@ html.dark.professional-workspace {
   @apply px-2 py-1 text-xs rounded-md shadow-sm z-50;
 }
 
+/* ===== CUSTOMER WORKSPACE PORTAL OVERRIDES ===== */
+
+.customer-workspace [data-radix-dropdown-menu-content],
+.customer-workspace [data-radix-dialog-content],
+.customer-workspace [data-radix-tooltip-content] {
+  background-color: hsl(0 0% 100%) !important;
+  color: hsl(0 0% 3.9%) !important;
+  border-color: hsl(0 0% 89.8%) !important;
+}
+
 /* ===== ACCESSIBILITY IMPROVEMENTS ===== */
 
 @media (prefers-reduced-motion: reduce) {
@@ -838,6 +1017,10 @@ html.dark.professional-workspace {
   @apply outline-none ring-2 ring-ring ring-offset-2 ring-offset-background;
 }
 
+.customer-workspace *:focus-visible {
+  @apply outline-none ring-2 ring-ring ring-offset-2 ring-offset-background;
+}
+
 /* High contrast mode support */
 @media (prefers-contrast: high) {
   :root {
@@ -849,6 +1032,11 @@ html.dark.professional-workspace {
     --border: 0 0% 100%;
     --input: 0 0% 100%;
   }
+
+  .customer-workspace {
+    --border: 0 0% 0% !important;
+    --input: 0 0% 0% !important;
+  }
 }
 
 /* ===== MOBILE DEVICE OPTIMIZATIONS ===== */
@@ -856,11 +1044,17 @@ html.dark.professional-workspace {
 /* iOS Safari specific fixes */
 @supports (-webkit-touch-callout: none) {
   .mobile-input,
-  .mobile-textarea {
+  .mobile-textarea,
+  .customer-input,
+  .professional-input {
     font-size: 16px; /* Prevents zoom on iOS */
   }
   
-  .mobile-button {
+  .mobile-button,
+  .customer-button-primary,
+  .customer-button-secondary,
+  .professional-button-primary,
+  .professional-button-secondary {
     -webkit-appearance: none;
     border-radius: 0;
     @apply rounded-lg; /* Re-apply our border radius */
@@ -870,14 +1064,20 @@ html.dark.professional-workspace {
 /* Android Chrome specific fixes */
 @media screen and (-webkit-min-device-pixel-ratio: 0) {
   .mobile-input,
-  .mobile-textarea {
+  .mobile-textarea,
+  .customer-input,
+  .customer-textarea,
+  .professional-input,
+  .professional-textarea {
     @apply touch-manipulation;
   }
 }
 
 /* High DPI displays optimization */
 @media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
-  .mobile-card {
+  .mobile-card,
+  .customer-card,
+  .professional-card {
     @apply shadow-sm;
   }
 }
@@ -919,7 +1119,9 @@ html.dark.professional-workspace {
   .mobile-header,
   .mobile-bottom-nav,
   .sidebar-mobile,
-  .sidebar-desktop {
+  .sidebar-desktop,
+  .customer-sidebar,
+  .professional-sidebar {
     @apply hidden;
   }
   
@@ -939,18 +1141,30 @@ html.dark.professional-workspace {
 
 /* ===== THEME TRANSITION ENHANCEMENTS ===== */
 
-/* Smooth theme transitions for non-professional workspace */
-:root:not(.professional-workspace) {
+/* Smooth theme transitions for non-workspace areas */
+:root:not(.professional-workspace):not(.customer-workspace) {
   transition: background-color 0.2s ease, color 0.2s ease;
 }
 
-:root:not(.professional-workspace) *:not(.no-transition) {
+:root:not(.professional-workspace):not(.customer-workspace) *:not(.no-transition) {
   transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
 }
 
 /* Disable transitions during initial load */
 .no-transition,
 .no-transition * {
+  transition: none !important;
+}
+
+/* Customer workspace should never transition themes */
+.customer-workspace,
+.customer-workspace * {
+  transition: none !important;
+}
+
+/* Professional workspace should never transition themes */
+.professional-workspace,
+.professional-workspace * {
   transition: none !important;
 }
 
@@ -981,6 +1195,23 @@ html.dark.professional-workspace {
   scrollbar-color: hsl(var(--muted-foreground) / 0.5) hsl(var(--muted));
 }
 
+/* Customer workspace scrollbars (always light) */
+.customer-workspace ::-webkit-scrollbar-track {
+  background: hsl(0 0% 96.1%);
+}
+
+.customer-workspace ::-webkit-scrollbar-thumb {
+  background: hsl(0 0% 45.1% / 0.5);
+}
+
+.customer-workspace ::-webkit-scrollbar-thumb:hover {
+  background: hsl(0 0% 45.1% / 0.7);
+}
+
+.customer-workspace * {
+  scrollbar-color: hsl(0 0% 45.1% / 0.5) hsl(0 0% 96.1%);
+}
+
 /* ===== SELECTION STYLES ===== */
 
 ::selection {
@@ -991,6 +1222,17 @@ html.dark.professional-workspace {
 ::-moz-selection {
   background-color: hsl(var(--primary) / 0.2);
   color: hsl(var(--primary-foreground));
+}
+
+/* Customer workspace selection */
+.customer-workspace ::selection {
+  background-color: hsl(0 0% 9% / 0.2);
+  color: hsl(0 0% 3.9%);
+}
+
+.customer-workspace ::-moz-selection {
+  background-color: hsl(0 0% 9% / 0.2);
+  color: hsl(0 0% 3.9%);
 }
 
 /* ===== CUSTOM UTILITIES FOR DEVELOPMENT ===== */

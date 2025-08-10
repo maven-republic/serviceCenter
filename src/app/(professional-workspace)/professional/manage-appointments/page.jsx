@@ -8,7 +8,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Badge } from "@/components/ui/badge"
 import AppointmentInformationTable from '@/components/professional-workspace/table/AppointmentInformationTable'
 import AppointmentInformationView from '@/components/sheet/AppointmentInformationView'
-import AppointmentStatistics from '@/components/professional-workspace/appointments/AppointmentStatistics'
 import AppointmentSearch from '@/components/professional-workspace/appointments/AppointmentSearch'
 import AppointmentEmptyState from '@/components/professional-workspace/appointments/AppointmentEmptyState'
 import AppointmentLoadingState from '@/components/professional-workspace/appointments/AppointmentLoadingState'
@@ -16,12 +15,14 @@ import AppointmentPagination from '@/components/professional-workspace/appointme
 import AppointmentErrorState from '@/components/professional-workspace/appointments/AppointmentErrorState'
 import AppointmentProfileIncomplete from '@/components/professional-workspace/appointments/AppointmentProfileIncomplete'
 import AppointmentAttachmentViewer from '@/components/professional-workspace/appointments/AppointmentAttachmentViewer'
+import { useTableData } from '@/components/professional-workspace/table/primitives/useTableData'
+import { useTableSelection } from '@/components/professional-workspace/table/primitives/useTableSelection'
 
 export default function ManageAppointments() {
   const { user } = useUserStore()
   const [appointments, setAppointments] = useState([])
   const [interests, setInterests] = useState([])
-  const [professional, setProfessional] = useState(null) // ✅ NEW: Professional state
+  const [professional, setProfessional] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [selectedAppointment, setSelectedAppointment] = useState(null)
@@ -32,10 +33,7 @@ export default function ManageAppointments() {
   const [selectedAppointmentForFiles, setSelectedAppointmentForFiles] = useState(null)
   const [attachmentViewerOpen, setAttachmentViewerOpen] = useState(false)
   
-  const [filters, setFilters] = useState({
-    status: 'all',
-    search: ''
-  })
+  // Basic pagination for API calls
   const [pagination, setPagination] = useState({
     page: 1,
     limit: 10,
@@ -51,7 +49,38 @@ export default function ManageAppointments() {
     assigned: 0
   })
 
-  // ✅ NEW: Fetch professional data
+  // ✅ NEW: Use table hooks for enhanced functionality
+  const currentData = activeTab === 'interests' ? interests : appointments
+  
+  const {
+    processedData,
+    searchQuery,
+    paginationInfo,
+    dataStats,
+    handleSearch,
+    clearAllFilters,
+    goToPage,
+    setPageSize
+  } = useTableData({
+    data: currentData,
+    mode: activeTab,
+    pageSize: pagination.limit
+  })
+
+  const {
+    selection,
+    selectedItems,
+    selectionState,
+    toggleSelection,
+    toggleSelectAll,
+    clearSelection,
+    bulkOperations
+  } = useTableSelection({
+    data: processedData,
+    mode: activeTab
+  })
+
+  // ✅ Fetch professional data
   const fetchProfessionalData = useCallback(async () => {
     if (!user?.profile?.professional_id) return
 
@@ -62,7 +91,6 @@ export default function ManageAppointments() {
       
       if (!response.ok) {
         console.warn('⚠️ Professional API failed, using fallback data')
-        // Create fallback professional object
         setProfessional({
           id: user.profile.professional_id,
           professional_id: user.profile.professional_id,
@@ -80,14 +108,12 @@ export default function ManageAppointments() {
       
       setProfessional({
         ...data.professional,
-        // Ensure both ID formats exist
         id: data.professional?.id || data.professional?.professional_id || user.profile.professional_id,
         professional_id: data.professional?.professional_id || data.professional?.id || user.profile.professional_id
       })
 
     } catch (error) {
       console.error('❌ Error fetching professional data:', error)
-      // Create fallback professional object
       setProfessional({
         id: user.profile.professional_id,
         professional_id: user.profile.professional_id,
@@ -100,15 +126,16 @@ export default function ManageAppointments() {
     }
   }, [user?.profile?.professional_id, user?.email, user?.profile])
 
-  // ✅ NEW: Comprehensive refresh handler
+  // ✅ Comprehensive refresh handler
   const handleRefresh = useCallback(() => {
     console.log('🔄 Refreshing all data...')
     fetchData(pagination.page)
     fetchTabCounts()
     fetchProfessionalData()
-  }, [pagination.page])
+    clearSelection() // Clear any selections on refresh
+  }, [pagination.page, clearSelection])
 
-  // ✅ ENHANCED: Fetch available appointments with invitation detection
+  // ✅ Fetch available appointments with invitation detection
   const fetchAvailableAppointments = useCallback(async (page = 1) => {
     if (!user?.profile?.professional_id) return
 
@@ -123,10 +150,6 @@ export default function ManageAppointments() {
         limit: pagination.limit.toString(),
         offset: ((page - 1) * pagination.limit).toString()
       })
-
-      if (filters.status !== 'all') {
-        params.append('status', filters.status)
-      }
 
       console.log('🔍 Fetching available appointments with invitations:', params.toString())
 
@@ -169,7 +192,7 @@ export default function ManageAppointments() {
     } finally {
       setLoading(false)
     }
-  }, [user?.profile?.professional_id, filters.status, pagination.limit])
+  }, [user?.profile?.professional_id, pagination.limit])
 
   // Fetch professional's interests
   const fetchProfessionalInterests = useCallback(async (page = 1) => {
@@ -184,10 +207,6 @@ export default function ManageAppointments() {
         limit: pagination.limit.toString(),
         offset: ((page - 1) * pagination.limit).toString()
       })
-
-      if (filters.status !== 'all') {
-        params.append('status', filters.status)
-      }
 
       console.log('🎯 Fetching professional interests:', params.toString())
 
@@ -226,9 +245,9 @@ export default function ManageAppointments() {
     } finally {
       setLoading(false)
     }
-  }, [user?.profile?.professional_id, filters.status, pagination.limit])
+  }, [user?.profile?.professional_id, pagination.limit])
 
-  // Fetch assigned appointments (existing logic)
+  // Fetch assigned appointments
   const fetchAssignedAppointments = useCallback(async (page = 1) => {
     if (!user?.profile?.professional_id) return
 
@@ -242,10 +261,6 @@ export default function ManageAppointments() {
         limit: pagination.limit.toString(),
         offset: ((page - 1) * pagination.limit).toString()
       })
-
-      if (filters.status !== 'all') {
-        params.append('status', filters.status)
-      }
 
       console.log('🔍 Fetching assigned appointments:', params.toString())
 
@@ -284,9 +299,9 @@ export default function ManageAppointments() {
     } finally {
       setLoading(false)
     }
-  }, [user?.profile?.professional_id, filters.status, pagination.limit])
+  }, [user?.profile?.professional_id, pagination.limit])
 
-  // ✅ ENHANCED: Fetch tab counts with invitation breakdown
+  // ✅ Fetch tab counts with invitation breakdown
   const fetchTabCounts = useCallback(async () => {
     if (!user?.profile?.professional_id) return
 
@@ -298,14 +313,12 @@ export default function ManageAppointments() {
       let interestsCount = 0  
       let assignedCount = 0
 
-      // 1. Available appointments count WITH invitation detection
+      // Available appointments count WITH invitation detection
       try {
         const availableRes = await fetch(`/api/appointments?professional_filter=available&professional_id=${user.profile.professional_id}&status=pending&limit=50`)
-        console.log('📊 Available response status:', availableRes.status)
         
         if (availableRes.ok) {
           const availableText = await availableRes.text()
-          console.log('📊 Available response text:', availableText.substring(0, 200))
           
           if (availableText.trim()) {
             const availableData = JSON.parse(availableText)
@@ -313,55 +326,39 @@ export default function ManageAppointments() {
             
             availableCount = availableData.total || 0
             invitationCount = appointments.filter(apt => apt.is_invited)?.length || 0
-            
-            console.log('🎯 Available breakdown:', { 
-              total: availableCount, 
-              invitations: invitationCount, 
-              open: availableCount - invitationCount 
-            })
           }
-        } else {
-          console.warn('⚠️ Available appointments API failed:', availableRes.status)
         }
       } catch (error) {
         console.error('❌ Error fetching available count:', error)
       }
 
-      // 2. Professional interests count
+      // Professional interests count
       try {
         const interestsRes = await fetch(`/api/interests?professional_id=${user.profile.professional_id}&limit=1`)
-        console.log('📊 Interests response status:', interestsRes.status)
         
         if (interestsRes.ok) {
           const interestsText = await interestsRes.text()
-          console.log('📊 Interests response text:', interestsText.substring(0, 200))
           
           if (interestsText.trim()) {
             const interestsData = JSON.parse(interestsText)
             interestsCount = interestsData.total || 0
           }
-        } else {
-          console.warn('⚠️ Interests API failed:', interestsRes.status)
         }
       } catch (error) {
         console.error('❌ Error fetching interests count:', error)
       }
 
-      // 3. Assigned appointments count
+      // Assigned appointments count
       try {
         const assignedRes = await fetch(`/api/appointments?professional_id=${user.profile.professional_id}&professional_filter=assigned&limit=1`)
-        console.log('📊 Assigned response status:', assignedRes.status)
         
         if (assignedRes.ok) {
           const assignedText = await assignedRes.text()
-          console.log('📊 Assigned response text:', assignedText.substring(0, 200))
           
           if (assignedText.trim()) {
             const assignedData = JSON.parse(assignedText)
             assignedCount = assignedData.total || 0
           }
-        } else {
-          console.warn('⚠️ Assigned appointments API failed:', assignedRes.status)
         }
       } catch (error) {
         console.error('❌ Error fetching assigned count:', error)
@@ -408,10 +405,10 @@ export default function ManageAppointments() {
   useEffect(() => {
     fetchData(1)
     fetchTabCounts()
-    fetchProfessionalData() // ✅ NEW: Fetch professional data
+    fetchProfessionalData()
   }, [activeTab, fetchData, fetchTabCounts, fetchProfessionalData])
 
-  // ✅ ENHANCED: Express interest with invitation awareness
+  // ✅ Express interest with invitation awareness
   const handleExpressInterest = useCallback(async (appointmentId, interestData) => {
     if (!appointmentId) return
 
@@ -420,8 +417,6 @@ export default function ManageAppointments() {
 
     console.log('🎯 Expressing interest in appointment:', appointmentId)
     console.log('🎯 Is invitation response:', isInvitation)
-    console.log('🔍 Interest data being sent:', interestData)
-    console.log('🔍 Professional ID:', user?.profile?.professional_id)
 
     try {
       const requestBody = {
@@ -431,8 +426,6 @@ export default function ManageAppointments() {
         invitation_response: isInvitation,
         intent: isInvitation ? 'high' : (interestData.intent || 'standard')
       }
-      
-      console.log('🔍 Full request body:', JSON.stringify(requestBody, null, 2))
 
       const response = await fetch('/api/interests', {
         method: 'POST',
@@ -442,38 +435,27 @@ export default function ManageAppointments() {
         body: JSON.stringify(requestBody)
       })
 
-      console.log('🔍 Response status:', response.status)
-      console.log('🔍 Response ok:', response.ok)
-
       const responseText = await response.text()
-      console.log('🔍 Raw response:', responseText)
-
       let data
       try {
         data = JSON.parse(responseText)
       } catch (parseError) {
-        console.error('❌ Failed to parse response as JSON:', parseError)
-        console.error('❌ Raw response was:', responseText)
-        throw new Error(`Server returned invalid JSON. Status: ${response.status}. Raw response: ${responseText.substring(0, 200)}`)
+        throw new Error(`Server returned invalid JSON. Status: ${response.status}`)
       }
 
       if (!response.ok) {
-        console.error('❌ API Error Response:', data)
-        
         const errorMessage = data.error || data.message || `HTTP ${response.status}: ${response.statusText}`
-        const errorDetails = data.details ? ` Details: ${JSON.stringify(data.details)}` : ''
-        
-        throw new Error(`${errorMessage}${errorDetails}`)
+        throw new Error(errorMessage)
       }
 
       console.log('✅ Interest expressed successfully:', data)
 
       const successMessage = isInvitation 
-        ? 'Response to invitation sent successfully! The customer will review your proposal.'
-        : 'Interest expressed successfully! You\'ll be notified if the customer selects you.'
+        ? 'Response to invitation sent successfully!'
+        : 'Interest expressed successfully!'
 
-      // ✅ Use comprehensive refresh
       handleRefresh()
+      clearSelection()
 
       if (showSheet) {
         setShowSheet(false)
@@ -483,13 +465,11 @@ export default function ManageAppointments() {
       alert(successMessage)
 
     } catch (err) {
-      console.error('❌ Complete error details:', err)
-      console.error('❌ Error stack:', err.stack)
-      
+      console.error('❌ Error expressing interest:', err)
       setError(`Failed to express interest: ${err.message}`)
       alert(`Error expressing interest: ${err.message}`)
     }
-  }, [user?.profile?.professional_id, showSheet, appointments, handleRefresh])
+  }, [user?.profile?.professional_id, showSheet, appointments, handleRefresh, clearSelection])
 
   // Update existing interest
   const handleUpdateInterest = useCallback(async (interestId, updateData) => {
@@ -514,8 +494,8 @@ export default function ManageAppointments() {
 
       console.log('✅ Interest updated successfully')
 
-      // ✅ Use comprehensive refresh
       handleRefresh()
+      clearSelection()
 
       if (showSheet) {
         setShowSheet(false)
@@ -526,7 +506,7 @@ export default function ManageAppointments() {
       console.error('❌ Error updating interest:', err)
       setError(err.message)
     }
-  }, [showSheet, handleRefresh])
+  }, [showSheet, handleRefresh, clearSelection])
 
   // Handle appointment action (accept/decline) - for assigned appointments
   const handleAppointmentAction = useCallback(async (appointmentId, action, additionalData = {}) => {
@@ -578,7 +558,6 @@ export default function ManageAppointments() {
   // Handle view appointment details
   const handleViewAppointment = useCallback(async (appointmentId) => {
     console.log('👁️ Viewing appointment:', appointmentId)
-    console.log('🔍 Current activeTab:', activeTab)
 
     try {
       const response = await fetch(`/api/appointments/${appointmentId}`)
@@ -587,8 +566,6 @@ export default function ManageAppointments() {
       if (!response.ok) {
         throw new Error(data.error || 'Failed to fetch appointment details')
       }
-
-      console.log('📋 Setting appointment with mode:', activeTab)
 
       setSelectedAppointment({
         ...data.appointment,
@@ -608,81 +585,78 @@ export default function ManageAppointments() {
     setAttachmentViewerOpen(true)
   }, [])
 
-  // Filter data locally by search
-  const getFilteredData = () => {
-    const dataSource = activeTab === 'interests' ? interests : appointments
-    
-    if (!filters.search) return dataSource
-    
-    const searchLower = filters.search.toLowerCase()
-    
-    return dataSource.filter(item => {
-      const appointment = activeTab === 'interests' ? item.appointment : item
+  // ✅ Handle bulk actions
+  const handleBulkAction = useCallback(async (action, selectedIds) => {
+    console.log(`🔄 Performing bulk ${action} on:`, selectedIds)
+
+    try {
+      switch (action) {
+        case 'express_interest':
+          // Bulk express interest for available appointments
+          for (const id of selectedIds) {
+            await handleExpressInterest(id, { intent: 'standard' })
+          }
+          break
+        case 'export':
+          // Export selected data
+          const selectedData = selectedItems
+          const dataStr = JSON.stringify(selectedData, null, 2)
+          const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr)
+          
+          const exportFileDefaultName = `${activeTab}_appointments_${new Date().toISOString().split('T')[0]}.json`
+          
+          const linkElement = document.createElement('a')
+          linkElement.setAttribute('href', dataUri)
+          linkElement.setAttribute('download', exportFileDefaultName)
+          linkElement.click()
+          break
+        default:
+          console.warn('Unknown bulk action:', action)
+      }
+
+      clearSelection()
       
-      const customerName = `${appointment.customer?.account?.first_name || ''} ${appointment.customer?.account?.last_name || ''}`.toLowerCase()
-      const serviceName = appointment.service?.name?.toLowerCase() || ''
-      const description = appointment.description?.toLowerCase() || ''
-      
-      return customerName.includes(searchLower) || 
-             serviceName.includes(searchLower) || 
-             description.includes(searchLower)
-    })
-  }
-
-  // Handle status filter change
-  const handleStatusFilter = useCallback((status) => {
-    setFilters(prev => ({ ...prev, status }))
-    setPagination(prev => ({ ...prev, page: 1 }))
-  }, [])
-
-  // Handle search
-  const handleSearch = useCallback((searchTerm) => {
-    setFilters(prev => ({ ...prev, search: searchTerm }))
-  }, [])
-
-  // Handle pagination
-  const handlePageChange = useCallback((newPage) => {
-    if (newPage >= 1 && newPage <= pagination.totalPages) {
-      fetchData(newPage)
+    } catch (err) {
+      console.error(`❌ Error performing bulk ${action}:`, err)
+      setError(`Failed to perform bulk ${action}: ${err.message}`)
     }
-  }, [fetchData, pagination.totalPages])
-
-  // Handle clear filters
-  const handleClearAllFilters = useCallback(() => {
-    handleStatusFilter('all')
-    handleSearch('')
-  }, [handleStatusFilter, handleSearch])
+  }, [selectedItems, activeTab, handleExpressInterest, clearSelection])
 
   // Handle retry
   const handleRetry = useCallback(() => {
     fetchData(pagination.page)
   }, [fetchData, pagination.page])
 
+  // ✅ Handle page size change
+  const handlePageSizeChange = useCallback((newPageSize) => {
+    setPageSize(newPageSize)
+    setPagination(prev => ({ ...prev, limit: newPageSize, page: 1 }))
+    fetchData(1)
+  }, [setPageSize, fetchData])
+
+  // ✅ Handle pagination from the new hook or external pagination
+  const handlePageChange = useCallback((newPage) => {
+    if (newPage >= 1 && newPage <= pagination.totalPages) {
+      fetchData(newPage)
+    }
+  }, [fetchData, pagination.totalPages])
+
   // Early return for incomplete profile
   if (!user?.profile?.professional_id) {
     return <AppointmentProfileIncomplete />
   }
 
-  const filteredData = getFilteredData()
-
   return (
     <div className="space-y-3 p-6 bg-background min-h-screen">
       {/* Professional Header */}
-      <div className="space-y-2">
+      {/* <div className="space-y-2">
         <h1 className="text-3xl font-bold tracking-tight text-foreground">
           Manage Appointments
         </h1>
         <p className="text-muted-foreground leading-relaxed">
           Discover new opportunities, manage your interests, and track your assigned appointments.
         </p>
-      </div>
-
-      {/* Statistics Overview */}
-      <AppointmentStatistics 
-        appointments={appointments} 
-        interests={interests}
-        activeTab={activeTab}
-      />
+      </div> */}
 
       {/* Error State */}
       {error && (
@@ -731,16 +705,16 @@ export default function ManageAppointments() {
           </TabsTrigger>
         </TabsList>
 
-        {/* Search and Filters */}
+        {/* ✅ Updated Search with Full Hook Integration */}
         <AppointmentSearch
-          filters={filters}
-          appointments={filteredData}
-          onStatusFilter={handleStatusFilter}
+          searchQuery={searchQuery}
+          appointments={currentData}
           onSearch={handleSearch}
           mode={activeTab}
+          dataStats={dataStats}
         />
 
-        {/* Tab Content with Comprehensive Professional Support */}
+        {/* Tab Content */}
         <TabsContent value="available" className="space-y-4">
           {tabCounts.invitations > 0 && (
             <Card className="border-blue-200 bg-blue-50">
@@ -767,35 +741,49 @@ export default function ManageAppointments() {
           <div className="space-y-1">
             {loading ? (
               <AppointmentLoadingState />
-            ) : filteredData.length === 0 ? (
+            ) : processedData.length === 0 ? (
               <AppointmentEmptyState
-                filters={filters}
-                onClearFilters={handleClearAllFilters}
+                
+                
                 mode={activeTab}
                 emptyMessage="No available appointments in your area"
                 emptyDescription="Check back later for new appointment opportunities and invitations"
               />
             ) : (
-              <AppointmentInformationTable
-                appointments={filteredData}
-                professionalId={user?.profile?.professional_id}
-                professional={professional} // ✅ NEW: Pass professional object
-                onView={handleViewAppointment}
-                onExpressInterest={handleExpressInterest}
-                onViewAttachments={handleViewAttachments}
-                onRefresh={handleRefresh} // ✅ NEW: Pass refresh handler
-                loading={loading}
-                pagination={pagination}
-                onPageChange={handlePageChange}
-                mode="available"
-              />
-            )}
+              <>
+                <AppointmentInformationTable
+                  appointments={processedData}
+                  professionalId={user?.profile?.professional_id}
+                  professional={professional}
+                  onView={handleViewAppointment}
+                  onExpressInterest={handleExpressInterest}
+                  onViewAttachments={handleViewAttachments}
+                  onRefresh={handleRefresh}
+                  loading={loading}
+                  // ✅ Use internal pagination from useTableData
+                  pagination={paginationInfo}
+                  onPageChange={goToPage}
+                  mode="available"
+                  // ✅ Pass selection state
+                  selectionState={selectionState}
+                  onSelectionChange={toggleSelection}
+                  onSelectAll={toggleSelectAll}
+                />
 
-            {!loading && filteredData.length > 0 && (
-              <AppointmentPagination
-                pagination={pagination}
-                onPageChange={handlePageChange}
-              />
+                <AppointmentPagination
+                  pagination={paginationInfo}
+                  onPageChange={goToPage}
+                  onPageSizeChange={handlePageSizeChange}
+                  selectionState={selectionState}
+                  dataStats={dataStats}
+                  mode={activeTab}
+                  onBulkAction={handleBulkAction}
+                  showPageSizeSelector={true}
+                  showQuickJump={true}
+                  showDataStats={true}
+                  showBulkActions={true}
+                />
+              </>
             )}
           </div>
         </TabsContent>
@@ -804,34 +792,44 @@ export default function ManageAppointments() {
           <div className="space-y-1">
             {loading ? (
               <AppointmentLoadingState />
-            ) : filteredData.length === 0 ? (
+            ) : processedData.length === 0 ? (
               <AppointmentEmptyState
-                filters={filters}
-                onClearFilters={handleClearAllFilters}
                 emptyMessage="No interests expressed yet"
                 emptyDescription="Browse available appointments and invitations to express interest"
               />
             ) : (
-              <AppointmentInformationTable
-                appointments={filteredData}
-                professionalId={user?.profile?.professional_id}
-                professional={professional} // ✅ NEW: Pass professional object
-                onView={handleViewAppointment}
-                onUpdateInterest={handleUpdateInterest}
-                onViewAttachments={handleViewAttachments}
-                onRefresh={handleRefresh} // ✅ NEW: Pass refresh handler
-                loading={loading}
-                pagination={pagination}
-                onPageChange={handlePageChange}
-                mode="interests"
-              />
-            )}
+              <>
+                <AppointmentInformationTable
+                  appointments={processedData}
+                  professionalId={user?.profile?.professional_id}
+                  professional={professional}
+                  onView={handleViewAppointment}
+                  onUpdateInterest={handleUpdateInterest}
+                  onViewAttachments={handleViewAttachments}
+                  onRefresh={handleRefresh}
+                  loading={loading}
+                  pagination={paginationInfo}
+                  onPageChange={goToPage}
+                  mode="interests"
+                  selectionState={selectionState}
+                  onSelectionChange={toggleSelection}
+                  onSelectAll={toggleSelectAll}
+                />
 
-            {!loading && filteredData.length > 0 && (
-              <AppointmentPagination
-                pagination={pagination}
-                onPageChange={handlePageChange}
-              />
+                <AppointmentPagination
+                  pagination={paginationInfo}
+                  onPageChange={goToPage}
+                  onPageSizeChange={handlePageSizeChange}
+                  selectionState={selectionState}
+                  dataStats={dataStats}
+                  mode={activeTab}
+                  onBulkAction={handleBulkAction}
+                  showPageSizeSelector={true}
+                  showQuickJump={true}
+                  showDataStats={true}
+                  showBulkActions={true}
+                />
+              </>
             )}
           </div>
         </TabsContent>
@@ -840,43 +838,51 @@ export default function ManageAppointments() {
           <div className="space-y-1">
             {loading ? (
               <AppointmentLoadingState />
-            ) : filteredData.length === 0 ? (
+            ) : processedData.length === 0 ? (
               <AppointmentEmptyState
-                filters={filters}
-                onClearFilters={handleClearAllFilters}
                 emptyMessage="No assigned appointments"
                 emptyDescription="Express interest in available appointments and respond to invitations to get selected"
               />
             ) : (
-              <AppointmentInformationTable
-                appointments={filteredData}
-                professionalId={user?.profile?.professional_id}
-                professional={professional} // ✅ NEW: Pass professional object
-                onView={handleViewAppointment}
-                onAccept={(id) => handleAppointmentAction(id, 'accept')}
-                onDecline={(id) => handleAppointmentAction(id, 'decline')}
-                onViewAttachments={handleViewAttachments}
-                onRefresh={handleRefresh} // ✅ NEW: Pass refresh handler
-                loading={loading}
-                pagination={pagination}
-                onPageChange={handlePageChange}
-                mode="assigned"
-              />
-            )}
+              <>
+                <AppointmentInformationTable
+                  appointments={processedData}
+                  professionalId={user?.profile?.professional_id}
+                  professional={professional}
+                  onView={handleViewAppointment}
+                  onAccept={(id) => handleAppointmentAction(id, 'accept')}
+                  onDecline={(id) => handleAppointmentAction(id, 'decline')}
+                  onViewAttachments={handleViewAttachments}
+                  onRefresh={handleRefresh}
+                  loading={loading}
+                  pagination={paginationInfo}
+                  onPageChange={goToPage}
+                  mode="assigned"
+                  selectionState={selectionState}
+                  onSelectionChange={toggleSelection}
+                  onSelectAll={toggleSelectAll}
+                />
 
-            {!loading && filteredData.length > 0 && (
-              <AppointmentPagination
-                pagination={pagination}
-                onPageChange={handlePageChange}
-              />
+                <AppointmentPagination
+                  pagination={paginationInfo}
+                  onPageChange={goToPage}
+                  onPageSizeChange={handlePageSizeChange}
+                  selectionState={selectionState}
+                  dataStats={dataStats}
+                  mode={activeTab}
+                  onBulkAction={handleBulkAction}
+                  showPageSizeSelector={true}
+                  showQuickJump={true}
+                  showDataStats={true}
+                  showBulkActions={true}
+                />
+              </>
             )}
           </div>
         </TabsContent>
       </Tabs>
 
-      {showSheet && console.log('🔧 Passing mode to AppointmentInformationView:', activeTab)}
-
-      {/* ✅ ENHANCED: Appointment Detail Sheet with Professional ID */}
+      {/* ✅ Appointment Detail Sheet */}
       <AppointmentInformationView
         open={showSheet}
         onOpenChange={(open) => {
@@ -887,12 +893,12 @@ export default function ManageAppointments() {
         }}
         appointment={selectedAppointment}
         professionalId={user?.profile?.professional_id}
-        professional={professional} // ✅ NEW: Pass professional object
+        professional={professional}
         onAccept={() => handleAppointmentAction(selectedAppointment?.appointment_id, 'accept')}
         onDecline={() => handleAppointmentAction(selectedAppointment?.appointment_id, 'decline')}
         onExpressInterest={handleExpressInterest}
         onUpdateInterest={handleUpdateInterest}
-        onRefresh={handleRefresh} // ✅ NEW: Pass refresh handler
+        onRefresh={handleRefresh}
       />
 
       {/* ✅ Attachment Viewer Modal */}

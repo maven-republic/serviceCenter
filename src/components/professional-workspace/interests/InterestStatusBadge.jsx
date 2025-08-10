@@ -14,7 +14,9 @@ import {
   Eye,
   UserCheck,
   Shield,
-  Hourglass
+  Hourglass,
+  Edit,
+  RefreshCw
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
@@ -26,9 +28,26 @@ export default function InterestStatusBadge({
   className
 }) {
   
+  // ✅ DEBUG: Log the status being processed
+  console.log('🎯 InterestStatusBadge rendering:', { 
+    status, 
+    type: typeof status,
+    size,
+    showIcon,
+    showDot 
+  });
+
   // Status configurations
   const getStatusConfig = (status) => {
-    switch (status) {
+    const statusString = String(status).toLowerCase().trim();
+    
+    console.log('🔍 Processing status:', { 
+      originalStatus: status,
+      processedStatus: statusString,
+      type: typeof statusString 
+    });
+
+    switch (statusString) {
       case 'pending':
         return {
           label: 'Pending Review',
@@ -82,7 +101,7 @@ export default function InterestStatusBadge({
           isUrgent: true
         }
       
-      // Professional confirmed status
+      // ✅ CONFIRMED: Professional confirmed status - this should handle your DB values
       case 'confirmed':
         return {
           label: 'Confirmed',
@@ -93,18 +112,21 @@ export default function InterestStatusBadge({
           description: 'You confirmed availability and are ready to proceed',
           isSuccess: true
         }
-      
-      // Professional declined selection - NEW
-      case 'declined_by_professional':
+
+      // ✅ UPDATED: Quote updated status - this should handle your DB values
+      case 'updated':
         return {
-          label: 'Declined',
-          icon: X,
-          variant: 'secondary',
-          className: 'bg-red-50 text-red-600 border-red-200 hover:bg-red-100',
-          dotColor: 'bg-red-400',
-          description: 'You declined this selection'
+          label: ' Updated',
+          icon: Edit,
+          variant: 'default',
+          className: 'bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100',
+          dotColor: 'bg-amber-500',
+          description: 'You updated your quote - waiting for customer approval',
+          isUrgent: true
         }
       
+      // Professional declined selection
+      case 'declined_by_professional':
       case 'declined':
         return {
           label: 'Declined',
@@ -188,15 +210,38 @@ export default function InterestStatusBadge({
           dotColor: 'bg-indigo-500',
           description: 'Customer has viewed your interest'
         }
+
+      // ✅ REVIEWING: Handle reviewing status (appointment-level, when customer needs to approve quote updates)
+      case 'reviewing':
+        return {
+          label: 'Under Review',
+          icon: RefreshCw,
+          variant: 'default',
+          className: 'bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100',
+          dotColor: 'bg-blue-500',
+          description: 'Customer is reviewing your updated quote'
+        }
       
       default:
+        // ✅ IMPROVED: Better fallback with actual status shown + DEBUG logging
+        console.warn('❌ Unknown status in InterestStatusBadge:', { 
+          status, 
+          processedStatus: statusString,
+          availableStatuses: [
+            'pending', 'invited', 'interested', 'quoted', 'selected', 
+            'confirmed', 'updated', 'declined', 'rejected', 'withdrawn', 
+            'accepted', 'expired', 'response_needed', 'assessment_scheduled', 
+            'viewed', 'reviewing'
+          ]
+        });
+
         return {
-          label: status || 'Unknown',
+          label: statusString ? `${statusString.charAt(0).toUpperCase()}${statusString.slice(1)}` : 'Unknown',
           icon: AlertTriangle,
           variant: 'secondary',
           className: 'bg-gray-50 text-gray-600 border-gray-200',
           dotColor: 'bg-gray-400',
-          description: 'Unknown status'
+          description: `Unrecognized status: ${statusString || 'Unknown'}`
         }
     }
   }
@@ -204,12 +249,19 @@ export default function InterestStatusBadge({
   const config = getStatusConfig(status)
   const IconComponent = config.icon
 
+  // ✅ DEBUG: Log the final config
+  console.log('✅ Final status config:', { 
+    status, 
+    label: config.label, 
+    className: config.className 
+  });
+
   // Size configurations
   const sizeClasses = {
     sm: {
-      badge: 'text-xs px-2 py-1 h-5',
-      icon: 'h-3 w-3',
-      dot: 'w-1.5 h-1.5'
+      badge: 'text-[10px] px-1.5 py-0.5 h-4',
+      icon: 'h-2.5 w-2.5',
+      dot: 'w-1 h-1'
     },
     default: {
       badge: 'text-sm px-2.5 py-1 h-6',
@@ -264,26 +316,28 @@ export const getStatusPriority = (status) => {
   const priorities = {
     'selected': 1,                    // Highest priority - needs immediate action
     'response_needed': 2,             // Urgent response required
-    'confirmed': 3,                   // Success state
-    'assessment_scheduled': 4,        // Active project
-    'quoted': 5,                      // Waiting for customer
-    'interested': 6,                  // Standard interest
-    'invited': 7,                     // Invitation received
-    'pending': 8,                     // Under review
-    'viewed': 9,                      // Customer activity
-    'accepted': 10,                   // Completed action
-    'rejected': 11,                   // Customer decision
-    'declined': 12,                   // Professional decision
-    'declined_by_professional': 12,   // Professional decision - NEW
-    'withdrawn': 13,                  // Professional action
-    'expired': 14                     // Lowest priority
+    'updated': 3,                     // Quote updated - awaiting approval
+    'confirmed': 4,                   // Success state
+    'assessment_scheduled': 5,        // Active project
+    'quoted': 6,                      // Waiting for customer
+    'interested': 7,                  // Standard interest
+    'invited': 8,                     // Invitation received
+    'pending': 9,                     // Under review
+    'reviewing': 10,                  // Customer reviewing updates
+    'viewed': 11,                     // Customer activity
+    'accepted': 12,                   // Completed action
+    'rejected': 13,                   // Customer decision
+    'declined': 14,                   // Professional decision
+    'declined_by_professional': 14,   // Professional decision
+    'withdrawn': 15,                  // Professional action
+    'expired': 16                     // Lowest priority
   }
   return priorities[status] || 99
 }
 
 // Helper function to check if status needs action
 export const statusNeedsAction = (status) => {
-  return ['selected', 'response_needed', 'invited'].includes(status)
+  return ['selected', 'response_needed', 'invited', 'updated'].includes(status)
 }
 
 // Helper function to check if status is positive outcome

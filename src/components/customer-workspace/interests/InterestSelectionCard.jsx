@@ -1,4 +1,4 @@
-// Enhanced InterestSelectionCard.jsx - Now supports price ranges and quote updates
+// Enhanced InterestSelectionCard.jsx - Now supports quote update approval flow
 "use client";
 
 import { useState } from 'react';
@@ -25,7 +25,11 @@ import {
   Eye,
   Phone,
   AlertTriangle,
-  CheckCircle
+  CheckCircle,
+  RefreshCw,
+  History,
+  Zap,
+  FileText
 } from 'lucide-react';
 
 const InterestSelectionCard = ({ 
@@ -33,6 +37,7 @@ const InterestSelectionCard = ({
   onSelect, 
   onReject, 
   onMessage, 
+  onViewQuoteComparison, // NEW: Function to show quote comparison
   isLoading = false,
   showActions = true,
   className = ""
@@ -86,36 +91,70 @@ const InterestSelectionCard = ({
   // ✅ ENHANCED: Updated status badge with new quote update statuses
   const getStatusBadge = (status) => {
     const statusConfig = {
-      interested: { variant: 'secondary', label: 'Interested' },
-      quoted: { variant: 'default', label: 'Quoted' },
-      selected: { variant: 'default', label: '✅ Selected', className: 'bg-green-100 text-green-800' },
-      updated_quote: { 
+      interested: { 
+        variant: 'secondary', 
+        label: 'Interested',
+        className: 'bg-blue-100 text-blue-800 border-blue-300'
+      },
+      quoted: { 
+        variant: 'default', 
+        label: 'Quoted',
+        className: 'bg-purple-100 text-purple-800 border-purple-300'
+      },
+      selected: { 
+        variant: 'default', 
+        label: '✅ Selected', 
+        className: 'bg-green-100 text-green-800 border-green-300'
+      },
+      // 🔥 NEW: Updated status for quote changes
+      updated: { 
         variant: 'destructive', 
         label: '⚠️ Quote Updated', 
-        className: 'bg-orange-100 text-orange-800 border-orange-300 animate-pulse' 
+        className: 'bg-orange-100 text-orange-800 border-orange-300 animate-pulse',
+        icon: RefreshCw
       },
       confirmed: { 
         variant: 'default', 
-        label: '✅ Confirmed', 
-        className: 'bg-green-100 text-green-800' 
+        label: '🎉 Confirmed', 
+        className: 'bg-green-100 text-green-800 border-green-300'
       },
-      rejected: { variant: 'destructive', label: 'Rejected' },
-      withdrawn: { variant: 'outline', label: 'Withdrawn' },
-      declined_by_professional: { variant: 'outline', label: 'Declined' }
+      rejected: { 
+        variant: 'destructive', 
+        label: 'Not Selected',
+        className: 'bg-red-100 text-red-800 border-red-300'
+      },
+      withdrawn: { 
+        variant: 'outline', 
+        label: 'Withdrawn',
+        className: 'bg-gray-100 text-gray-600 border-gray-300'
+      },
+      declined_by_professional: { 
+        variant: 'outline', 
+        label: 'Declined',
+        className: 'bg-gray-100 text-gray-600 border-gray-300'
+      }
     };
 
-    const config = statusConfig[status] || { variant: 'secondary', label: status };
+    const config = statusConfig[status] || { 
+      variant: 'secondary', 
+      label: status,
+      className: 'bg-gray-100 text-gray-800 border-gray-300'
+    };
+    
+    const StatusIcon = config.icon;
     
     return (
       <Badge 
         variant={config.variant} 
-        className={config.className}
+        className={`${config.className} flex items-center space-x-1`}
       >
-        {config.label}
+        {StatusIcon && <StatusIcon className="h-3 w-3" />}
+        <span>{config.label}</span>
       </Badge>
     );
   };
 
+  // 🔥 ENHANCED: Pricing section with quote update handling
   const getPricingSection = () => {
     // Helper function to determine if assessment is needed
     const hasAssessment = interest.assessment === true || 
@@ -125,42 +164,93 @@ const InterestSelectionCard = ({
                          interest.price_range_min || 
                          interest.price_range_max;
 
-    // ✅ NEW: Handle quote update status
-    if (interest.status === 'updated_quote') {
-      return (
-        <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
-          <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center space-x-2">
-              <AlertTriangle className="h-5 w-5 text-orange-600" />
-              <div>
-                <h4 className="font-semibold text-orange-800">Quote Updated - Approval Required</h4>
-                <p className="text-sm text-orange-700">Professional has updated their quote and needs your approval</p>
-              </div>
-            </div>
-            <div className="text-right">
-              <div className="text-xl font-bold text-orange-700">
-                {formatCurrency(interest.amount)}
-              </div>
-              <Badge className="bg-orange-100 text-orange-800 border-orange-300">
-                Updated Quote
-              </Badge>
-            </div>
-          </div>
-          
-          {interest.estimated_duration_hours && (
-            <div className="text-sm text-orange-600 mb-2">
-              <Clock className="h-4 w-4 inline mr-1" />
-              Estimated Duration: {interest.estimated_duration_hours} hours
-            </div>
-          )}
+    // 🔥 NEW: Handle updated quote status - HIGHEST PRIORITY
+    if (interest.status === 'updated') {
+      const originalAmount = interest.original_amount || 0;
+      const newAmount = interest.amount || 0;
+      const changeAmount = newAmount - originalAmount;
+      const changePercent = originalAmount > 0 ? ((changeAmount / originalAmount) * 100) : 0;
 
-          <Alert className="bg-orange-100 border-orange-300">
-            <Info className="h-4 w-4 text-orange-600" />
-            <AlertDescription className="text-orange-800 text-sm">
-              <strong>Action Required:</strong> This quote has been updated and requires your approval before proceeding.
-              Please review the changes in the detailed comparison view.
-            </AlertDescription>
-          </Alert>
+      return (
+        <div className="bg-orange-50 border-2 border-orange-200 rounded-lg p-4 relative overflow-hidden">
+          {/* Animated background effect */}
+          <div className="absolute inset-0 bg-gradient-to-r from-orange-100/50 to-orange-50/50 animate-pulse"></div>
+          
+          <div className="relative z-10">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center space-x-2">
+                <div className="p-1 bg-orange-200 rounded-full">
+                  <AlertTriangle className="h-4 w-4 text-orange-700" />
+                </div>
+                <div>
+                  <h4 className="font-semibold text-orange-800 flex items-center space-x-2">
+                    <RefreshCw className="h-4 w-4" />
+                    <span>Quote Updated - Your Approval Required</span>
+                  </h4>
+                  <p className="text-sm text-orange-700">Professional has updated their quote and needs your approval</p>
+                </div>
+              </div>
+              <div className="text-right">
+                <div className="text-xl font-bold text-orange-700">
+                  {formatCurrency(newAmount)}
+                </div>
+                <Badge className="bg-orange-200 text-orange-800 border-orange-300 mt-1">
+                  <Zap className="h-3 w-3 mr-1" />
+                  Needs Review
+                </Badge>
+              </div>
+            </div>
+            
+            {/* Change indicator */}
+            {originalAmount > 0 && changeAmount !== 0 && (
+              <div className="bg-white/80 border border-orange-200 rounded p-3 mb-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-medium text-orange-700">Price Change:</span>
+                  <div className={`flex items-center space-x-1 font-semibold ${
+                    changeAmount > 0 ? 'text-red-700' : 'text-green-700'
+                  }`}>
+                    {changeAmount > 0 ? (
+                      <TrendingUp className="h-4 w-4" />
+                    ) : (
+                      <TrendingDown className="h-4 w-4" />
+                    )}
+                    <span>
+                      {changeAmount > 0 ? '+' : ''}{formatCurrency(changeAmount)} 
+                      ({Math.abs(changePercent).toFixed(1)}%)
+                    </span>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Duration info */}
+            {interest.estimated_duration_hours && (
+              <div className="text-sm text-orange-600 mb-3 flex items-center space-x-1">
+                <Clock className="h-4 w-4" />
+                <span>Duration: {interest.estimated_duration_hours} hours</span>
+              </div>
+            )}
+
+            {/* Update reason */}
+            {interest.update_justification && (
+              <div className="bg-white/80 border border-orange-200 rounded p-3 mb-3">
+                <h5 className="font-medium text-orange-700 mb-1 flex items-center space-x-1">
+                  <FileText className="h-4 w-4" />
+                  <span>Reason for Update:</span>
+                </h5>
+                <p className="text-sm text-orange-600">{interest.update_justification}</p>
+              </div>
+            )}
+
+            {/* Action prompt */}
+            <Alert className="bg-orange-100 border-orange-300">
+              <Info className="h-4 w-4 text-orange-600" />
+              <AlertDescription className="text-orange-800 text-sm">
+                <strong>Action Required:</strong> Please review the updated quote details. 
+                Click "View Quote Comparison" below to see the full comparison and approve/decline the changes.
+              </AlertDescription>
+            </Alert>
+          </div>
         </div>
       );
     }
@@ -341,16 +431,27 @@ const InterestSelectionCard = ({
     );
   };
 
-  // ✅ NEW: Determine if actions should be disabled for quote updates
-  const isQuoteUpdatePending = interest.status === 'updated_quote';
+  // ✅ NEW: Determine card styling and interaction states
+  const isQuoteUpdatePending = interest.status === 'updated';
   const isConfirmedOrCompleted = ['confirmed', 'completed'].includes(interest.status);
+  const isInactive = ['rejected', 'withdrawn', 'declined_by_professional'].includes(interest.status);
+
+  // 🔥 NEW: Get card border and background styling
+  const getCardStyling = () => {
+    if (isQuoteUpdatePending) {
+      return 'ring-2 ring-orange-300 bg-orange-50/30 border-orange-200';
+    }
+    if (interest.selected_by_customer && !isQuoteUpdatePending) {
+      return 'ring-2 ring-green-300 bg-green-50/30 border-green-200';
+    }
+    if (isInactive) {
+      return 'opacity-60 bg-gray-50 border-gray-200';
+    }
+    return 'hover:shadow-md border-gray-200';
+  };
 
   return (
-    <Card className={`transition-all hover:shadow-md ${
-      interest.selected_by_customer ? 'ring-2 ring-green-300' : ''
-    } ${
-      isQuoteUpdatePending ? 'ring-2 ring-orange-300 bg-orange-50/30' : ''
-    } ${className}`}>
+    <Card className={`transition-all ${getCardStyling()} ${className}`}>
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between">
           <div className="flex items-center space-x-3">
@@ -365,6 +466,13 @@ const InterestSelectionCard = ({
               {professional.verification_status === 'verified' && (
                 <div className="absolute -bottom-1 -right-1 bg-green-500 rounded-full p-1">
                   <Shield className="h-3 w-3 text-white" />
+                </div>
+              )}
+
+              {/* 🔥 NEW: Quote update indicator */}
+              {isQuoteUpdatePending && (
+                <div className="absolute -top-1 -right-1 bg-orange-500 rounded-full p-1 animate-pulse">
+                  <RefreshCw className="h-3 w-3 text-white" />
                 </div>
               )}
             </div>
@@ -416,13 +524,13 @@ const InterestSelectionCard = ({
       </CardHeader>
 
       <CardContent className="space-y-4">
-        {/* ✅ NEW: Quote update alert */}
+        {/* 🔥 NEW: Quote update priority alert */}
         {isQuoteUpdatePending && (
-          <Alert className="bg-orange-100 border-orange-300">
+          <Alert className="bg-orange-100 border-orange-300 animate-pulse">
             <AlertTriangle className="h-4 w-4 text-orange-600" />
             <AlertDescription className="text-orange-800">
-              <strong>Quote Update Pending:</strong> This professional has updated their quote. 
-              Please review the changes in the detailed comparison view above before making a decision.
+              <strong>Urgent:</strong> This professional has updated their quote and needs your immediate approval. 
+              Assessment scheduling is blocked until you review the changes.
             </AlertDescription>
           </Alert>
         )}
@@ -435,6 +543,26 @@ const InterestSelectionCard = ({
           <div className="bg-blue-50 border-l-4 border-blue-200 p-3">
             <h4 className="font-medium text-blue-800 mb-1">Professional's Message:</h4>
             <p className="text-sm text-blue-700">{interest.message}</p>
+          </div>
+        )}
+
+        {/* 🔥 NEW: Quote update history indicator */}
+        {interest.original_amount && interest.amount !== interest.original_amount && (
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+            <div className="flex items-center space-x-2 mb-2">
+              <History className="h-4 w-4 text-blue-600" />
+              <h4 className="font-medium text-blue-800">Quote History</h4>
+            </div>
+            <div className="text-sm space-y-1">
+              <div className="flex justify-between">
+                <span className="text-blue-700">Original quote:</span>
+                <span className="font-medium">{formatCurrency(interest.original_amount)}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-blue-700">Updated quote:</span>
+                <span className="font-medium">{formatCurrency(interest.amount)}</span>
+              </div>
+            </div>
           </div>
         )}
 
@@ -481,7 +609,7 @@ const InterestSelectionCard = ({
         <Separator />
 
         {/* Action Buttons */}
-        {showActions && !interest.selected_by_customer && !isConfirmedOrCompleted && (
+        {showActions && !isInactive && (
           <div className="flex items-center justify-between pt-2">
             <div className="flex items-center space-x-2">
               <Button
@@ -506,8 +634,20 @@ const InterestSelectionCard = ({
               </Button>
             </div>
             
-            {/* ✅ NEW: Conditional action buttons based on status */}
-            {!isQuoteUpdatePending ? (
+            {/* 🔥 NEW: Conditional action buttons based on status */}
+            {isQuoteUpdatePending ? (
+              // Quote update pending - show review button
+              <div className="flex items-center space-x-2">
+                <Button
+                  onClick={() => onViewQuoteComparison?.(interest)}
+                  className="bg-orange-600 hover:bg-orange-700 flex items-center space-x-2"
+                >
+                  <Eye className="h-4 w-4" />
+                  <span>Review Quote Changes</span>
+                </Button>
+              </div>
+            ) : !interest.selected_by_customer && !isConfirmedOrCompleted ? (
+              // Normal selection buttons
               <div className="flex items-center space-x-2">
                 {!showConfirmReject ? (
                   <Button
@@ -569,19 +709,12 @@ const InterestSelectionCard = ({
                   </div>
                 )}
               </div>
-            ) : (
-              <Alert className="bg-orange-100 border-orange-300 flex-1 max-w-md">
-                <AlertTriangle className="h-4 w-4 text-orange-600" />
-                <AlertDescription className="text-orange-800 text-sm">
-                  Please review the updated quote above before taking action.
-                </AlertDescription>
-              </Alert>
-            )}
+            ) : null}
           </div>
         )}
 
         {/* Selected Professional Message */}
-        {interest.selected_by_customer && !isQuoteUpdatePending && (
+        {interest.selected_by_customer && !isQuoteUpdatePending && !isConfirmedOrCompleted && (
           <Alert className="bg-green-50 border-green-200">
             <Check className="h-4 w-4 text-green-600" />
             <AlertDescription className="text-green-800">
@@ -597,6 +730,19 @@ const InterestSelectionCard = ({
             <CheckCircle className="h-4 w-4 text-green-600" />
             <AlertDescription className="text-green-800">
               <strong>🎉 Project Confirmed!</strong> Your quote has been approved and the professional is ready to begin work.
+            </AlertDescription>
+          </Alert>
+        )}
+
+        {/* ✅ NEW: Inactive status message */}
+        {isInactive && (
+          <Alert className="bg-gray-50 border-gray-200">
+            <AlertCircle className="h-4 w-4 text-gray-600" />
+            <AlertDescription className="text-gray-800">
+              This interest is no longer active. 
+              {interest.status === 'rejected' && 'You selected a different professional for this project.'}
+              {interest.status === 'withdrawn' && 'The professional has withdrawn their interest.'}
+              {interest.status === 'declined_by_professional' && 'The professional declined to work on this project.'}
             </AlertDescription>
           </Alert>
         )}

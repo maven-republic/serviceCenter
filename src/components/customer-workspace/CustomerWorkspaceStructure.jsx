@@ -1,3 +1,4 @@
+// src/components/customer-workspace/CustomerWorkspaceStructure.jsx
 "use client";
 
 import toggleStore from "@/store/toggleStore";
@@ -28,20 +29,20 @@ export default function CustomerWorkspaceStructure({ children }) {
   }, [user, fetchUser]);
 
   return (
-    // FIXED: Removed h-screen and overflow constraints to allow sticky positioning
-    <div className="min-h-screen bg-background">
+    // 🎨 CUSTOMER WORKSPACE - Always white background
+    <div className="min-h-screen bg-background customer-workspace-container">
       <div className="flex">
-        {/* Sidebar Container - FIXED: Removed h-full that was causing issues */}
-       <div className={cn(
-  "transition-all duration-300 ease-in-out flex-shrink-0",
-  isActive ? "w-0 overflow-hidden" : "w-28"  // ✅ Updated to match sidebar
-)}>
-  <CustomerWorkspaceNavigation />
-</div>
         
-        {/* Main Content Area - FIXED: Removed overflow-hidden and flex constraints */}
-        <div className="flex-1 min-h-screen">
-          {/* Main Content */}
+        {/* Sidebar Container */}
+        <div className={cn(
+          "transition-all duration-300 ease-in-out flex-shrink-0 border-r border-border",
+          isActive ? "w-0 overflow-hidden" : "w-28"
+        )}>
+          <CustomerWorkspaceNavigation />
+        </div>
+        
+        {/* Main Content Area */}
+        <div className="flex-1 min-h-screen bg-background">
           <main className="p-6">
             <div className="max-w-7xl mx-auto">
               {children}

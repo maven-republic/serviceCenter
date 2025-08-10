@@ -12,8 +12,8 @@ export async function POST(request, { params }) {
   
   try {
     const resolvedParams = await params
-    const { id: appointmentId, interest_id: interestId } = resolvedParams
-    
+const appointmentId = resolvedParams['appointment-id']
+const interestId = resolvedParams['interest-id']    
     console.log('📝 Processing quote approval:', { appointmentId, interestId })
     
     if (!appointmentId || !interestId) {

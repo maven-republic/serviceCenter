@@ -382,13 +382,17 @@ C:\Users\adrom\Downloads\serviceCenter\src\app\api\appointments\debug-interests
 C:\Users\adrom\Downloads\serviceCenter\src\app\api\appointments\experiment
 C:\Users\adrom\Downloads\serviceCenter\src\app\api\appointments\route.js
 C:\Users\adrom\Downloads\serviceCenter\src\app\api\appointments\schema-check
-C:\Users\adrom\Downloads\serviceCenter\src\app\api\appointments\[id]
+C:\Users\adrom\Downloads\serviceCenter\src\app\api\appointments\[appointment-id]
 C:\Users\adrom\Downloads\serviceCenter\src\app\api\appointments\debug-interests\route.js
 C:\Users\adrom\Downloads\serviceCenter\src\app\api\appointments\experiment\route.js
 C:\Users\adrom\Downloads\serviceCenter\src\app\api\appointments\schema-check\route.js
-C:\Users\adrom\Downloads\serviceCenter\src\app\api\appointments\[id]\interests
-C:\Users\adrom\Downloads\serviceCenter\src\app\api\appointments\[id]\route.js
-C:\Users\adrom\Downloads\serviceCenter\src\app\api\appointments\[id]\interests\route.js
+C:\Users\adrom\Downloads\serviceCenter\src\app\api\appointments\[appointment-id]\interests
+C:\Users\adrom\Downloads\serviceCenter\src\app\api\appointments\[appointment-id]\route.js
+C:\Users\adrom\Downloads\serviceCenter\src\app\api\appointments\[appointment-id]\interests\route.js
+C:\Users\adrom\Downloads\serviceCenter\src\app\api\appointments\[appointment-id]\interests\[interest-id]
+C:\Users\adrom\Downloads\serviceCenter\src\app\api\appointments\[appointment-id]\interests\[interest-id]\quote-approval
+C:\Users\adrom\Downloads\serviceCenter\src\app\api\appointments\[appointment-id]\interests\[interest-id]\route.js
+C:\Users\adrom\Downloads\serviceCenter\src\app\api\appointments\[appointment-id]\interests\[interest-id]\quote-approval\route.js
 C:\Users\adrom\Downloads\serviceCenter\src\app\api\assets\upload
 C:\Users\adrom\Downloads\serviceCenter\src\app\api\assets\upload\route.js
 C:\Users\adrom\Downloads\serviceCenter\src\app\api\categories\route.js
@@ -585,6 +589,10 @@ C:\Users\adrom\Downloads\serviceCenter\src\components\customer-workspace\custome
 C:\Users\adrom\Downloads\serviceCenter\src\components\customer-workspace\customer\appointments\AppointmentsHeader.jsx
 C:\Users\adrom\Downloads\serviceCenter\src\components\customer-workspace\customer\appointments\AppointmentsList.jsx
 C:\Users\adrom\Downloads\serviceCenter\src\components\customer-workspace\customer\appointments\AppointmentsTable.jsx
+C:\Users\adrom\Downloads\serviceCenter\src\components\customer-workspace\customer\appointments\AppointmentsTableSkeleton.jsx
+C:\Users\adrom\Downloads\serviceCenter\src\components\customer-workspace\customer\appointments\columns.jsx
+C:\Users\adrom\Downloads\serviceCenter\src\components\customer-workspace\customer\appointments\data-table.jsx
+C:\Users\adrom\Downloads\serviceCenter\src\components\customer-workspace\customer\appointments\LiveUpdates.jsx
 C:\Users\adrom\Downloads\serviceCenter\src\components\customer-workspace\customer\auth\Authentication.jsx
 C:\Users\adrom\Downloads\serviceCenter\src\components\customer-workspace\customer\auth\AuthenticationSentinel.jsx
 C:\Users\adrom\Downloads\serviceCenter\src\components\customer-workspace\customer\auth\Session.jsx
@@ -612,6 +620,7 @@ C:\Users\adrom\Downloads\serviceCenter\src\components\customer-workspace\header\
 C:\Users\adrom\Downloads\serviceCenter\src\components\customer-workspace\interests\AppointmentInterestStatus.jsx
 C:\Users\adrom\Downloads\serviceCenter\src\components\customer-workspace\interests\AssessmentScheduler.jsx
 C:\Users\adrom\Downloads\serviceCenter\src\components\customer-workspace\interests\CustomerAppointmentDashboard.jsx
+C:\Users\adrom\Downloads\serviceCenter\src\components\customer-workspace\interests\CustomerQuoteComparison.jsx
 C:\Users\adrom\Downloads\serviceCenter\src\components\customer-workspace\interests\InterestComparisonView.jsx
 C:\Users\adrom\Downloads\serviceCenter\src\components\customer-workspace\interests\InterestSelectionCard.jsx
 C:\Users\adrom\Downloads\serviceCenter\src\components\customer-workspace\navigation\CustomerHeader.jsx
@@ -624,6 +633,14 @@ C:\Users\adrom\Downloads\serviceCenter\src\components\customer-workspace\section
 C:\Users\adrom\Downloads\serviceCenter\src\components\customer-workspace\section\SessionVerification.jsx
 C:\Users\adrom\Downloads\serviceCenter\src\components\customer-workspace\section\SkeletonTemplate.jsx
 C:\Users\adrom\Downloads\serviceCenter\src\components\customer-workspace\sidebar\CustomerWorkspaceNavigation .jsx
+C:\Users\adrom\Downloads\serviceCenter\src\components\customer-workspace\sidebar\navigation
+C:\Users\adrom\Downloads\serviceCenter\src\components\customer-workspace\sidebar\navigation\IconButton.jsx
+C:\Users\adrom\Downloads\serviceCenter\src\components\customer-workspace\sidebar\navigation\iconMapper.js
+C:\Users\adrom\Downloads\serviceCenter\src\components\customer-workspace\sidebar\navigation\index.js
+C:\Users\adrom\Downloads\serviceCenter\src\components\customer-workspace\sidebar\navigation\LogoutButton.jsx
+C:\Users\adrom\Downloads\serviceCenter\src\components\customer-workspace\sidebar\navigation\NavigationItem.jsx
+C:\Users\adrom\Downloads\serviceCenter\src\components\customer-workspace\sidebar\navigation\NavigationSection.jsx
+C:\Users\adrom\Downloads\serviceCenter\src\components\customer-workspace\sidebar\navigation\SidebarLogo.jsx
 C:\Users\adrom\Downloads\serviceCenter\src\components\debug\AuthDebug.jsx
 C:\Users\adrom\Downloads\serviceCenter\src\components\debug\CSSHealthChecker.jsx
 C:\Users\adrom\Downloads\serviceCenter\src\components\discoveries\context
@@ -1000,6 +1017,11 @@ C:\Users\adrom\Downloads\serviceCenter\src\components\professional-workspace\sec
 C:\Users\adrom\Downloads\serviceCenter\src\components\professional-workspace\section\professional-computation\misc\ServiceQuantificationGrid.jsx
 C:\Users\adrom\Downloads\serviceCenter\src\components\professional-workspace\sidebar\DashboardSidebar.jsx
 C:\Users\adrom\Downloads\serviceCenter\src\components\professional-workspace\table\AppointmentInformationTable.jsx
+C:\Users\adrom\Downloads\serviceCenter\src\components\professional-workspace\table\columns.js
+C:\Users\adrom\Downloads\serviceCenter\src\components\professional-workspace\table\primitives
+C:\Users\adrom\Downloads\serviceCenter\src\components\professional-workspace\table\primitives\useTableData.js
+C:\Users\adrom\Downloads\serviceCenter\src\components\professional-workspace\table\primitives\useTableSelection.js
+C:\Users\adrom\Downloads\serviceCenter\src\components\professional-workspace\table\primitives\useTableSorting.js
 C:\Users\adrom\Downloads\serviceCenter\src\components\quantification\manifold
 C:\Users\adrom\Downloads\serviceCenter\src\components\quantification\manifold\AttributeQuantifier.jsx
 C:\Users\adrom\Downloads\serviceCenter\src\components\quantification\manifold\ModelSelector.jsx
@@ -1212,6 +1234,7 @@ C:\Users\adrom\Downloads\serviceCenter\src\components\ui\dropdown-menu.jsx
 C:\Users\adrom\Downloads\serviceCenter\src\components\ui\input.jsx
 C:\Users\adrom\Downloads\serviceCenter\src\components\ui\label.jsx
 C:\Users\adrom\Downloads\serviceCenter\src\components\ui\optimized-image.jsx
+C:\Users\adrom\Downloads\serviceCenter\src\components\ui\popover.jsx
 C:\Users\adrom\Downloads\serviceCenter\src\components\ui\progress.jsx
 C:\Users\adrom\Downloads\serviceCenter\src\components\ui\scroll-area.jsx
 C:\Users\adrom\Downloads\serviceCenter\src\components\ui\select.jsx
@@ -1284,6 +1307,7 @@ C:\Users\adrom\Downloads\serviceCenter\src\primitives\customer\useAccountType.js
 C:\Users\adrom\Downloads\serviceCenter\src\primitives\customer\useAppointments.js
 C:\Users\adrom\Downloads\serviceCenter\src\primitives\customer\useCollectionData.js
 C:\Users\adrom\Downloads\serviceCenter\src\primitives\customer\useCustomerAuth.js
+C:\Users\adrom\Downloads\serviceCenter\src\primitives\customer\useQuoteApproval.js
 C:\Users\adrom\Downloads\serviceCenter\src\primitives\customer\useSearchSuggestions.js
 C:\Users\adrom\Downloads\serviceCenter\src\primitives\professional\index.js
 C:\Users\adrom\Downloads\serviceCenter\src\primitives\professional\useProfessionalResponseHandlers.js
