@@ -126,7 +126,13 @@
 
 .auth-workspace .form-label {
   @apply text-sm font-medium leading-none;
-  @apply peer-disabled:cursor-not-allowed peer-disabled:opacity-70;
+  @apply cursor-pointer;
+}
+
+/* Disabled label styling */
+.auth-workspace .form-checkbox:disabled + .form-label,
+.auth-workspace .form-radio:disabled + .form-label {
+  @apply cursor-not-allowed opacity-70;
 }
 
 .auth-workspace .form-description {
@@ -148,11 +154,22 @@
 
 /* ===== CHECKBOX STYLES ===== */
 .auth-workspace .form-checkbox {
-  @apply peer h-4 w-4 shrink-0 rounded-sm border border-primary;
+  @apply h-4 w-4 shrink-0 rounded-sm border border-primary;
   @apply ring-offset-background focus-visible:outline-none focus-visible:ring-2;
   @apply focus-visible:ring-ring focus-visible:ring-offset-2;
   @apply disabled:cursor-not-allowed disabled:opacity-50;
   @apply data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground;
+}
+
+/* Add peer class separately */
+.auth-workspace .form-checkbox {
+  /* This creates the peer relationship for form validation */
+  position: relative;
+}
+
+.auth-workspace .form-checkbox:checked + .form-checkbox-label,
+.auth-workspace .form-checkbox:focus + .form-checkbox-label {
+  @apply text-primary;
 }
 
 /* ===== RADIO STYLES ===== */
@@ -161,6 +178,10 @@
   @apply text-primary ring-offset-background;
   @apply focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2;
   @apply disabled:cursor-not-allowed disabled:opacity-50;
+}
+
+.auth-workspace .form-radio:checked + .form-radio-label {
+  @apply text-primary;
 }
 
 /* ===== ALERT STYLES ===== */
