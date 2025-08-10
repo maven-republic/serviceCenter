@@ -54,14 +54,10 @@ export default function AppointmentPagination({
   className,
   ...props 
 }) {
-  // ===== SAFETY CHECKS =====
-  if (!pagination || !pagination.totalPages || pagination.totalPages <= 1) {
-    // Still show info if we have selection or data stats
-    const hasInfo = (selectionState?.hasSelection) || (dataStats?.hasActiveFilters) || showDataStats
-    if (!hasInfo) return null
-  }
-
-  // ===== COMPUTED VALUES =====
+  // ===== ALL HOOKS MUST BE AT THE TOP LEVEL =====
+  // ===== NO CONDITIONS OR EARLY RETURNS BEFORE HOOKS =====
+  
+  // Extract pagination values with defaults
   const { 
     currentPage = 1, 
     pageSize = 10, 
@@ -73,17 +69,17 @@ export default function AppointmentPagination({
     hasPreviousPage = false
   } = pagination || {}
 
-  // Page size options
-  const pageSizeOptions = [
+  // Page size options (memoized)
+  const pageSizeOptions = useMemo(() => [
     { value: 5, label: '5 per page' },
     { value: 10, label: '10 per page' },
     { value: 25, label: '25 per page' },
     { value: 50, label: '50 per page' },
     { value: 100, label: '100 per page' }
-  ]
+  ], [])
 
   // Generate page numbers for display with smart ellipsis
-  const getPageNumbers = useCallback(() => {
+  const pageNumbers = useMemo(() => {
     if (totalPages <= 7) {
       // Show all pages if total is small
       return Array.from({ length: totalPages }, (_, i) => i + 1)
@@ -105,42 +101,7 @@ export default function AppointmentPagination({
     return pages
   }, [currentPage, totalPages])
 
-  const pageNumbers = getPageNumbers()
-
-  // ===== HANDLERS =====
-  const handlePageChange = useCallback((page) => {
-    if (page >= 1 && page <= totalPages && page !== currentPage) {
-      onPageChange?.(page)
-    }
-  }, [currentPage, totalPages, onPageChange])
-
-  const handlePageSizeChange = useCallback((newPageSize) => {
-    const newSize = parseInt(newPageSize)
-    if (newSize !== pageSize) {
-      onPageSizeChange?.(newSize)
-      // Reset to first page when changing page size
-      onPageChange?.(1)
-    }
-  }, [pageSize, onPageSizeChange, onPageChange])
-
-  const handleQuickJump = useCallback((direction) => {
-    switch (direction) {
-      case 'first':
-        handlePageChange(1)
-        break
-      case 'last':
-        handlePageChange(totalPages)
-        break
-      case 'prev-block':
-        handlePageChange(Math.max(1, currentPage - 5))
-        break
-      case 'next-block':
-        handlePageChange(Math.min(totalPages, currentPage + 5))
-        break
-    }
-  }, [currentPage, totalPages, handlePageChange])
-
-  // ===== BULK ACTIONS =====
+  // Bulk actions configuration
   const bulkActions = useMemo(() => {
     const actions = []
     
@@ -168,8 +129,53 @@ export default function AppointmentPagination({
     return actions
   }, [mode])
 
-  // ===== RENDER COMPONENTS =====
-  const renderPageSizeSelector = () => (
+  // Page change handler
+  const handlePageChange = useCallback((page) => {
+    if (page >= 1 && page <= totalPages && page !== currentPage && onPageChange) {
+      onPageChange(page)
+    }
+  }, [currentPage, totalPages, onPageChange])
+
+  // Page size change handler
+  const handlePageSizeChange = useCallback((newPageSize) => {
+    const newSize = parseInt(newPageSize)
+    if (newSize !== pageSize && onPageSizeChange && onPageChange) {
+      onPageSizeChange(newSize)
+      // Reset to first page when changing page size
+      onPageChange(1)
+    }
+  }, [pageSize, onPageSizeChange, onPageChange])
+
+  // Quick jump handler
+  const handleQuickJump = useCallback((direction) => {
+    switch (direction) {
+      case 'first':
+        handlePageChange(1)
+        break
+      case 'last':
+        handlePageChange(totalPages)
+        break
+      case 'prev-block':
+        handlePageChange(Math.max(1, currentPage - 5))
+        break
+      case 'next-block':
+        handlePageChange(Math.min(totalPages, currentPage + 5))
+        break
+    }
+  }, [currentPage, totalPages, handlePageChange])
+
+  // Check if we should show the component
+  const shouldShowPagination = useMemo(() => {
+    return totalPages > 1
+  }, [totalPages])
+
+  const shouldShowInfo = useMemo(() => {
+    return (selectionState?.hasSelection) || (dataStats?.hasActiveFilters) || showDataStats
+  }, [selectionState?.hasSelection, dataStats?.hasActiveFilters, showDataStats])
+
+  // ===== RENDER HELPER FUNCTIONS =====
+  
+  const renderPageSizeSelector = useCallback(() => (
     <div className="flex items-center space-x-2">
       <span className="text-sm text-muted-foreground whitespace-nowrap">Show:</span>
       <Select value={pageSize.toString()} onValueChange={handlePageSizeChange}>
@@ -185,9 +191,9 @@ export default function AppointmentPagination({
         </SelectContent>
       </Select>
     </div>
-  )
+  ), [pageSize, handlePageSizeChange, pageSizeOptions])
 
-  const renderQuickJump = () => (
+  const renderQuickJump = useCallback(() => (
     <div className="flex items-center space-x-1">
       <Tooltip>
         <TooltipTrigger asChild>
@@ -225,9 +231,9 @@ export default function AppointmentPagination({
         <TooltipContent>Last page</TooltipContent>
       </Tooltip>
     </div>
-  )
+  ), [currentPage, totalPages, handleQuickJump])
 
-  const renderPageNumbers = () => (
+  const renderPageNumbers = useCallback(() => (
     <div className="flex items-center space-x-1">
       {pageNumbers.map((pageNum, index) => (
         <div key={index}>
@@ -253,9 +259,9 @@ export default function AppointmentPagination({
         </div>
       ))}
     </div>
-  )
+  ), [pageNumbers, currentPage, handlePageChange])
 
-  const renderBulkActions = () => {
+  const renderBulkActions = useCallback(() => {
     if (!selectionState?.hasSelection || !showBulkActions) return null
 
     return (
@@ -288,9 +294,9 @@ export default function AppointmentPagination({
         </DropdownMenu>
       </div>
     )
-  }
+  }, [selectionState?.hasSelection, selectionState?.selectedCount, showBulkActions, bulkActions, onBulkAction])
 
-  const renderDataStats = () => {
+  const renderDataStats = useCallback(() => {
     if (!showDataStats) return null
 
     const stats = []
@@ -332,6 +338,11 @@ export default function AppointmentPagination({
         )}
       </div>
     )
+  }, [showDataStats, totalItems, startIndex, endIndex, dataStats, selectionState])
+
+  // ===== EARLY RETURN CHECK (AFTER ALL HOOKS) =====
+  if (!shouldShowPagination && !shouldShowInfo) {
+    return null
   }
 
   // ===== MAIN RENDER =====
@@ -344,11 +355,11 @@ export default function AppointmentPagination({
             {/* Left Side - Data Stats and Page Size */}
             <div className="flex items-center space-x-6">
               {renderDataStats()}
-              {showPageSizeSelector && totalPages > 1 && renderPageSizeSelector()}
+              {showPageSizeSelector && shouldShowPagination && renderPageSizeSelector()}
             </div>
             
             {/* Center - Pagination Controls */}
-            {totalPages > 1 && (
+            {shouldShowPagination && (
               <div className="flex items-center space-x-2">
                 {showQuickJump && renderQuickJump()}
                 
@@ -419,7 +430,7 @@ export default function AppointmentPagination({
             </div>
             
             {/* Middle Row - Pagination */}
-            {totalPages > 1 && (
+            {shouldShowPagination && (
               <div className="flex items-center justify-center space-x-2">
                 <Button
                   variant="outline"
@@ -505,7 +516,7 @@ export default function AppointmentPagination({
             )}
             
             {/* Bottom Row - Page Size */}
-            {showPageSizeSelector && totalPages > 1 && (
+            {showPageSizeSelector && shouldShowPagination && (
               <div className="flex justify-center">
                 {renderPageSizeSelector()}
               </div>
@@ -515,9 +526,16 @@ export default function AppointmentPagination({
           {/* Additional Mobile Info */}
           <div className="sm:hidden mt-3 pt-3 border-t border-border text-center">
             <div className="text-xs text-muted-foreground">
-              Page {currentPage} of {totalPages}
-              {selectionState?.hasSelection && (
-                <span className="ml-2 text-primary">• {selectionState.selectedCount} selected</span>
+              {shouldShowPagination && (
+                <>
+                  Page {currentPage} of {totalPages}
+                  {selectionState?.hasSelection && (
+                    <span className="ml-2 text-primary">• {selectionState.selectedCount} selected</span>
+                  )}
+                </>
+              )}
+              {!shouldShowPagination && selectionState?.hasSelection && (
+                <span className="text-primary">{selectionState.selectedCount} selected</span>
               )}
             </div>
           </div>

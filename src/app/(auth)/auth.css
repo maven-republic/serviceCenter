@@ -1,75 +1,312 @@
-@import "/css/bootstrap.min.css";
-@import "/css/animate.css";
-@import "/css/ace-responsive-menu.css";
-@import "/css/menu.css";
-@import "/css/fontawesome.css";
-@import "/css/flaticon.css";
-@import "/css/bootstrap-select.min.css";
-@import "/css/slider.css";
-@import "/css/style.css";
-@import "/css/ud-custom-spacing.css";
-@import "/css/dashbord_navitaion.css";
-@import "/css/responsive.css";
-
+/* ===== AUTH WORKSPACE STYLES - TAILWIND + SHADCN/UI ===== */
+/* Modern authentication interface using semantic design tokens */
 
 .auth-workspace {
-a {
-    cursor: pointer;
-  }
+  /* Ensure proper theme application */
+  @apply bg-background text-foreground min-h-screen;
+}
 
-  .next-btn,
-  .prev-btn {
-    background-color: #ffffff;
-    box-shadow: 0px 10px 35px rgba(5, 16, 54, 0.1);
-    border: none;
-    border-radius: 50%;
-    color: #051036;
-    display: inline-block;
-    height: 60px;
-    line-height: 60px;
-    margin: 0;
-    padding: 0;
-    position: absolute;
-    top: 38%;
-    width: 60px;
-    transition: all 0.3s ease;
-    z-index: 1;
-  }
-
-  .next-btn {
-    right: -30px;
-  }
-
-  .prev-btn {
-    left: -30px;
-  }
-
-  .prev-btn:hover,
-  .next-btn:hover {
-    background-color: var(--primary-color);
-    color: #ffffff;
-  }
-
-  /* Add any other auth-specific styles you need */
+/* ===== NAVIGATION BUTTONS ===== */
+.auth-workspace .next-btn,
+.auth-workspace .prev-btn {
+  @apply bg-background border border-border rounded-full;
+  @apply text-foreground inline-flex items-center justify-center;
+  @apply h-15 w-15 p-0 absolute top-1/3 z-10;
+  @apply shadow-lg hover:shadow-xl transition-all duration-300;
+  @apply hover:bg-primary hover:text-primary-foreground hover:border-primary;
+  @apply focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2;
+  @apply disabled:opacity-50 disabled:cursor-not-allowed;
   
-  .our-register {
-    position: relative;
-  }
+  /* Custom height/width since h-15 doesn't exist */
+  height: 60px;
+  width: 60px;
+  top: 38%;
+}
 
-  input.form-control:hover {
-    border-width: 0.5px !important;
-    outline: none;
-  }
+.auth-workspace .next-btn {
+  @apply -right-7;
+}
 
-  input.form-control:focus {
-    box-shadow: none !important;
-    border-color: #5bbb7b;
-    outline: none;
-  }
+.auth-workspace .prev-btn {
+  @apply -left-7;
+}
 
-  .no-shadow-modal {
-    box-shadow: none !important;
-    border: 1px solid #dee2e6;
+/* ===== FORM STYLES ===== */
+.auth-workspace .our-register {
+  @apply relative;
+}
+
+/* Enhanced form controls using shadcn/ui patterns */
+.auth-workspace input.form-control {
+  @apply w-full px-3 py-2 text-sm rounded-md border border-input;
+  @apply bg-background text-foreground placeholder:text-muted-foreground;
+  @apply transition-colors duration-200;
+  @apply focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2;
+  @apply focus:border-transparent;
+  @apply disabled:cursor-not-allowed disabled:opacity-50;
+}
+
+.auth-workspace input.form-control:hover {
+  @apply border-border/80;
+}
+
+.auth-workspace input.form-control:focus {
+  @apply border-ring;
+}
+
+/* ===== MODAL OVERRIDES ===== */
+.auth-workspace .no-shadow-modal {
+  @apply shadow-none border border-border;
+  @apply bg-card text-card-foreground;
+}
+
+/* ===== AUTH-SPECIFIC CARD STYLES ===== */
+.auth-workspace .auth-card {
+  @apply bg-card border border-border rounded-lg shadow-sm;
+  @apply text-card-foreground;
+}
+
+.auth-workspace .auth-card-header {
+  @apply flex flex-col space-y-1.5 p-6 pb-4;
+}
+
+.auth-workspace .auth-card-content {
+  @apply p-6 pt-0;
+}
+
+.auth-workspace .auth-card-footer {
+  @apply flex items-center p-6 pt-0;
+}
+
+/* ===== BUTTON STYLES ===== */
+.auth-workspace .auth-button-primary {
+  @apply bg-primary text-primary-foreground;
+  @apply rounded-md px-4 py-2 font-medium;
+  @apply hover:bg-primary/90 transition-colors duration-200;
+  @apply focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2;
+  @apply disabled:opacity-50 disabled:cursor-not-allowed;
+}
+
+.auth-workspace .auth-button-secondary {
+  @apply bg-secondary text-secondary-foreground border border-border;
+  @apply rounded-md px-4 py-2 font-medium;
+  @apply hover:bg-secondary/80 transition-colors duration-200;
+  @apply focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2;
+  @apply disabled:opacity-50 disabled:cursor-not-allowed;
+}
+
+.auth-workspace .auth-button-outline {
+  @apply border border-input bg-background;
+  @apply rounded-md px-4 py-2 font-medium;
+  @apply hover:bg-accent hover:text-accent-foreground;
+  @apply focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2;
+  @apply transition-colors duration-200;
+  @apply disabled:opacity-50 disabled:cursor-not-allowed;
+}
+
+.auth-workspace .auth-button-ghost {
+  @apply hover:bg-accent hover:text-accent-foreground;
+  @apply rounded-md px-4 py-2 font-medium;
+  @apply focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2;
+  @apply transition-colors duration-200;
+  @apply disabled:opacity-50 disabled:cursor-not-allowed;
+}
+
+/* ===== LINK STYLES ===== */
+.auth-workspace a {
+  @apply cursor-pointer text-primary hover:text-primary/80;
+  @apply transition-colors duration-200;
+  @apply focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:rounded-sm;
+}
+
+/* ===== FORM GROUP STYLES ===== */
+.auth-workspace .form-group {
+  @apply space-y-2;
+}
+
+.auth-workspace .form-label {
+  @apply text-sm font-medium leading-none;
+  @apply peer-disabled:cursor-not-allowed peer-disabled:opacity-70;
+}
+
+.auth-workspace .form-description {
+  @apply text-sm text-muted-foreground;
+}
+
+.auth-workspace .form-error {
+  @apply text-sm font-medium text-destructive;
+}
+
+/* ===== SELECT STYLES ===== */
+.auth-workspace .form-select {
+  @apply flex h-10 w-full items-center justify-between rounded-md border border-input;
+  @apply bg-background px-3 py-2 text-sm;
+  @apply ring-offset-background placeholder:text-muted-foreground;
+  @apply focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2;
+  @apply disabled:cursor-not-allowed disabled:opacity-50;
+}
+
+/* ===== CHECKBOX STYLES ===== */
+.auth-workspace .form-checkbox {
+  @apply peer h-4 w-4 shrink-0 rounded-sm border border-primary;
+  @apply ring-offset-background focus-visible:outline-none focus-visible:ring-2;
+  @apply focus-visible:ring-ring focus-visible:ring-offset-2;
+  @apply disabled:cursor-not-allowed disabled:opacity-50;
+  @apply data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground;
+}
+
+/* ===== RADIO STYLES ===== */
+.auth-workspace .form-radio {
+  @apply aspect-square h-4 w-4 rounded-full border border-primary;
+  @apply text-primary ring-offset-background;
+  @apply focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2;
+  @apply disabled:cursor-not-allowed disabled:opacity-50;
+}
+
+/* ===== ALERT STYLES ===== */
+.auth-workspace .alert {
+  @apply relative w-full rounded-lg border p-4;
+}
+
+.auth-workspace .alert-destructive {
+  @apply border-destructive/50 text-destructive;
+  @apply bg-destructive/5;
+}
+
+.auth-workspace .alert-warning {
+  @apply border-yellow-500/50 text-yellow-700;
+  @apply bg-yellow-50 dark:bg-yellow-950 dark:text-yellow-300;
+}
+
+.auth-workspace .alert-success {
+  @apply border-green-500/50 text-green-700;
+  @apply bg-green-50 dark:bg-green-950 dark:text-green-300;
+}
+
+.auth-workspace .alert-info {
+  @apply border-blue-500/50 text-blue-700;
+  @apply bg-blue-50 dark:bg-blue-950 dark:text-blue-300;
+}
+
+/* ===== PROGRESS STYLES ===== */
+.auth-workspace .progress {
+  @apply relative h-4 w-full overflow-hidden rounded-full bg-secondary;
+}
+
+.auth-workspace .progress-indicator {
+  @apply h-full w-full flex-1 bg-primary transition-all duration-300;
+}
+
+/* ===== SEPARATOR STYLES ===== */
+.auth-workspace .separator {
+  @apply shrink-0 bg-border;
+}
+
+.auth-workspace .separator-horizontal {
+  @apply h-px w-full;
+}
+
+.auth-workspace .separator-vertical {
+  @apply h-full w-px;
+}
+
+/* ===== BADGE STYLES ===== */
+.auth-workspace .badge {
+  @apply inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold;
+  @apply transition-colors duration-200;
+  @apply focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2;
+}
+
+.auth-workspace .badge-default {
+  @apply bg-primary text-primary-foreground hover:bg-primary/80;
+}
+
+.auth-workspace .badge-secondary {
+  @apply bg-secondary text-secondary-foreground hover:bg-secondary/80;
+}
+
+.auth-workspace .badge-destructive {
+  @apply bg-destructive text-destructive-foreground hover:bg-destructive/80;
+}
+
+.auth-workspace .badge-outline {
+  @apply border border-input bg-background hover:bg-accent hover:text-accent-foreground;
+}
+
+/* ===== LOADING SPINNER ===== */
+.auth-workspace .spinner {
+  @apply h-4 w-4 animate-spin rounded-full border-2 border-muted-foreground;
+  @apply border-t-transparent;
+}
+
+.auth-workspace .spinner-lg {
+  @apply h-6 w-6;
+}
+
+.auth-workspace .spinner-xl {
+  @apply h-8 w-8;
+}
+
+/* ===== AVATAR STYLES ===== */
+.auth-workspace .avatar {
+  @apply relative flex h-10 w-10 shrink-0 overflow-hidden rounded-full;
+}
+
+.auth-workspace .avatar-image {
+  @apply aspect-square h-full w-full object-cover;
+}
+
+.auth-workspace .avatar-fallback {
+  @apply flex h-full w-full items-center justify-center rounded-full bg-muted;
+  @apply text-sm font-medium text-muted-foreground;
+}
+
+/* ===== RESPONSIVE LAYOUT ===== */
+.auth-workspace .container {
+  @apply w-full mx-auto px-4 sm:px-6 lg:px-8;
+}
+
+.auth-workspace .grid-cols-auth {
+  @apply grid grid-cols-1 lg:grid-cols-2 gap-6;
+}
+
+/* ===== FOCUS MANAGEMENT ===== */
+.auth-workspace *:focus-visible {
+  @apply outline-none ring-2 ring-ring ring-offset-2 ring-offset-background;
+}
+
+/* ===== REDUCED MOTION ===== */
+@media (prefers-reduced-motion: reduce) {
+  .auth-workspace * {
+    @apply transition-none;
+  }
+  
+  .auth-workspace .spinner {
+    @apply animate-none;
   }
 }
 
+/* ===== HIGH CONTRAST MODE ===== */
+@media (prefers-contrast: high) {
+  .auth-workspace .form-control {
+    @apply border-2;
+  }
+  
+  .auth-workspace .auth-button-primary,
+  .auth-workspace .auth-button-secondary,
+  .auth-workspace .auth-button-outline {
+    @apply border-2;
+  }
+}
+
+/* ===== PRINT STYLES ===== */
+@media print {
+  .auth-workspace .next-btn,
+  .auth-workspace .prev-btn {
+    @apply hidden;
+  }
+  
+  .auth-workspace {
+    @apply bg-white text-black;
+  }
+}
