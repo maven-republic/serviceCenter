@@ -13,36 +13,38 @@ import {
 import { cn } from "@/lib/utils"
 
 export function ThemeToggle({ variant = "dropdown", className, ...props }) {
-  const { theme, setTheme, actualTheme, isProfessionalWorkspace } = useTheme()
+  const { theme, setTheme, actualTheme, isProfessionalWorkspace, isCustomerWorkspace } = useTheme()
 
-  // 🔒 Simple toggle version (for professional workspace)
-  if (variant === "simple" || isProfessionalWorkspace) {
+  // 🔒 Simple toggle version (disabled only for customer workspace)
+  if (variant === "simple") {
     return (
       <Button
         variant="outline"
         size="icon"
         className={cn(
           "relative",
-          isProfessionalWorkspace && "cursor-not-allowed opacity-50",
+          isCustomerWorkspace && "cursor-not-allowed opacity-50",
           className
         )}
         onClick={() => {
-          if (!isProfessionalWorkspace) {
+          if (!isCustomerWorkspace) {
             setTheme(actualTheme === "light" ? "dark" : "light")
           }
         }}
-        disabled={isProfessionalWorkspace}
+        disabled={isCustomerWorkspace}
         title={
-          isProfessionalWorkspace 
-            ? "Theme switching disabled in professional workspace" 
+          isCustomerWorkspace 
+            ? "Theme switching disabled in customer workspace" 
+            : isProfessionalWorkspace
+            ? "Professional workspace theme toggle"
             : "Toggle theme"
         }
         {...props}
       >
-        {isProfessionalWorkspace ? (
+        {isCustomerWorkspace ? (
           <>
             <Lock className="h-[1.2rem] w-[1.2rem]" />
-            <Moon className="absolute h-[1.2rem] w-[1.2rem] opacity-30" />
+            <Sun className="absolute h-[1.2rem] w-[1.2rem] opacity-30" />
           </>
         ) : (
           <>
@@ -51,13 +53,30 @@ export function ThemeToggle({ variant = "dropdown", className, ...props }) {
           </>
         )}
         <span className="sr-only">
-          {isProfessionalWorkspace ? "Theme locked to dark" : "Toggle theme"}
+          {isCustomerWorkspace ? "Theme locked to light" : "Toggle theme"}
         </span>
       </Button>
     )
   }
 
-  // 🎨 Advanced dropdown version (for customer workspace and other areas)
+  // 🎨 Advanced dropdown version (disabled only for customer workspace)
+  if (isCustomerWorkspace) {
+    return (
+      <Button
+        variant="outline"
+        size="icon"
+        className={cn("relative cursor-not-allowed opacity-50", className)}
+        disabled={true}
+        title="Theme switching disabled in customer workspace"
+        {...props}
+      >
+        <Lock className="h-[1.2rem] w-[1.2rem]" />
+        <Sun className="absolute h-[1.2rem] w-[1.2rem] opacity-30" />
+        <span className="sr-only">Theme locked to light</span>
+      </Button>
+    )
+  }
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -119,12 +138,19 @@ export function ThemeToggle({ variant = "dropdown", className, ...props }) {
             Currently: {actualTheme}
           </div>
         )}
+        
+        {/* Show workspace context */}
+        {isProfessionalWorkspace && (
+          <div className="px-2 py-1.5 text-xs text-muted-foreground border-t">
+            Professional workspace
+          </div>
+        )}
       </DropdownMenuContent>
     </DropdownMenu>
   )
 }
 
-// 🎯 Professional Workspace Theme Status Component
+// 🎯 Professional Workspace Theme Status Component (Updated)
 export function ProfessionalThemeStatus({ className, ...props }) {
   const { isProfessionalWorkspace, actualTheme } = useTheme()
 
@@ -140,22 +166,23 @@ export function ProfessionalThemeStatus({ className, ...props }) {
       )}
       {...props}
     >
-      <Lock className="h-3 w-3" />
-      <span>Professional workspace (Dark theme)</span>
+      <Monitor className="h-3 w-3" />
+      <span>Professional workspace ({actualTheme} theme)</span>
     </div>
   )
 }
 
 // 🔄 Theme Sync Hook for components that need theme awareness
 export function useThemeSync() {
-  const { theme, actualTheme, isProfessionalWorkspace } = useTheme()
+  const { theme, actualTheme, isProfessionalWorkspace, isCustomerWorkspace } = useTheme()
   
   return {
     theme,
     actualTheme,
     isProfessionalWorkspace,
+    isCustomerWorkspace,
     isDark: actualTheme === "dark",
     isLight: actualTheme === "light",
-    canChangeTheme: !isProfessionalWorkspace,
+    canChangeTheme: !isCustomerWorkspace, // Only customer workspace is locked
   }
 }

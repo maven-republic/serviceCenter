@@ -24,6 +24,7 @@ export function ThemeProvider({
   children,
   defaultTheme = "system",
   storageKey = "ui-theme",
+  professionalStorageKey = "professional-ui-theme", // Separate storage for professional workspace
   ...props
 }) {
   const [theme, setTheme] = useState(defaultTheme)
@@ -50,10 +51,21 @@ export function ThemeProvider({
       setIsProfessionalWorkspace(isProfessional)
       setIsCustomerWorkspace(isCustomer)
       
+      // Load workspace-specific theme when entering professional workspace
+      if (isProfessional) {
+        const professionalTheme = localStorage.getItem(professionalStorageKey) || "dark" // Default to dark for professional
+        setTheme(professionalTheme)
+      } else if (!isCustomer) {
+        // Restore general theme when leaving professional workspace (but not entering customer)
+        const generalTheme = localStorage.getItem(storageKey) || defaultTheme
+        setTheme(generalTheme)
+      }
+      
       console.log('🏢 Workspace Detection:', { 
         pathname, 
         isProfessional, 
-        isCustomer 
+        isCustomer,
+        currentTheme: isProfessional ? localStorage.getItem(professionalStorageKey) : localStorage.getItem(storageKey)
       })
       
       return { isProfessional, isCustomer }
@@ -83,7 +95,7 @@ export function ThemeProvider({
       window.removeEventListener('popstate', handleRouteChange)
       observer.disconnect()
     }
-  }, [])
+  }, [professionalStorageKey, storageKey, defaultTheme])
 
   // ENHANCED THEME APPLICATION LOGIC
   useEffect(() => {
@@ -97,10 +109,19 @@ export function ThemeProvider({
     let appliedTheme
 
     if (isProfessionalWorkspace) {
-      // 🔒 FORCE DARK THEME for professional workspace
-      appliedTheme = "dark"
-      root.classList.add("dark", "professional-workspace")
-      console.log('🏢 Applied professional workspace theme (dark)')
+      // 🎨 ALLOW THEME SWITCHING for professional workspace (but add workspace class)
+      if (theme === "system") {
+        const systemTheme = window.matchMedia("(prefers-color-scheme: dark)").matches
+          ? "dark"
+          : "light"
+        appliedTheme = systemTheme
+        root.classList.add(systemTheme, "professional-workspace")
+        console.log('🏢 Applied professional workspace system theme:', systemTheme)
+      } else {
+        appliedTheme = theme
+        root.classList.add(theme, "professional-workspace")
+        console.log('🏢 Applied professional workspace theme:', theme)
+      }
       
     } else if (isCustomerWorkspace) {
       // 🔒 FORCE LIGHT THEME (WHITE BACKGROUND) for customer workspace
@@ -127,9 +148,9 @@ export function ThemeProvider({
     setActualTheme(appliedTheme)
   }, [theme, isProfessionalWorkspace, isCustomerWorkspace, isInitialized])
 
-  // System theme change listener (only for non-workspace areas)
+  // System theme change listener
   useEffect(() => {
-    if (theme !== "system" || isProfessionalWorkspace || isCustomerWorkspace) return
+    if (theme !== "system" || isCustomerWorkspace) return // Customer workspace is always light
 
     const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)")
     
@@ -140,6 +161,11 @@ export function ThemeProvider({
       const root = window.document.documentElement
       root.classList.remove("light", "dark")
       root.classList.add(newSystemTheme)
+      
+      // Maintain workspace classes
+      if (isProfessionalWorkspace) {
+        root.classList.add("professional-workspace")
+      }
     }
 
     mediaQuery.addEventListener("change", handleSystemThemeChange)
@@ -152,18 +178,21 @@ export function ThemeProvider({
   const value = {
     theme,
     setTheme: (newTheme) => {
-      // 🚫 Prevent theme change in workspaces
-      if (isProfessionalWorkspace) {
-        console.warn("Theme switching is disabled in professional workspace (always dark)")
-        return
-      }
-      
+      // 🚫 Prevent theme change ONLY in customer workspace
       if (isCustomerWorkspace) {
         console.warn("Theme switching is disabled in customer workspace (always white)")
         return
       }
       
-      localStorage.setItem(storageKey, newTheme)
+      // Save theme to appropriate storage
+      if (isProfessionalWorkspace) {
+        localStorage.setItem(professionalStorageKey, newTheme)
+        console.log('💾 Saved professional workspace theme:', newTheme)
+      } else {
+        localStorage.setItem(storageKey, newTheme)
+        console.log('💾 Saved general theme:', newTheme)
+      }
+      
       setTheme(newTheme)
     },
     actualTheme,

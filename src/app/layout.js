@@ -26,43 +26,18 @@ export default async function InterfaceFoundation({ children }) {
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
+        {/* Minimal script - only prevent flash, let ThemeProvider handle themes */}
         <script
           dangerouslySetInnerHTML={{
             __html: `
               (function() {
                 try {
-                  const pathname = window.location.pathname;
-                  
-                  // Remove any existing theme classes
-                  document.documentElement.classList.remove('light', 'dark', 'professional-workspace', 'customer-workspace');
-                  
-                  if (pathname.includes('/professional')) {
-                    // 🔒 PROFESSIONAL WORKSPACE - Force dark theme
-                    document.documentElement.classList.add('dark', 'professional-workspace');
-                    console.log('🏢 Applied professional workspace theme (dark)');
-                    
-                  } else if (pathname.includes('/customer')) {
-                    // 🔒 CUSTOMER WORKSPACE - Force light theme (white background)
-                    document.documentElement.classList.add('light', 'customer-workspace');
-                    console.log('👤 Applied customer workspace theme (white)');
-                    
-                  } else {
-                    // 🌍 PUBLIC AREAS - Use saved theme or default to light
-                    const savedTheme = localStorage.getItem('ui-theme') || 'light';
-                    
-                    if (savedTheme === 'system') {
-                      const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-                      document.documentElement.classList.add(systemTheme);
-                      console.log('🌓 Applied system theme:', systemTheme);
-                    } else {
-                      document.documentElement.classList.add(savedTheme);
-                      console.log('🎨 Applied saved theme:', savedTheme);
-                    }
-                  }
+                  // Only set a basic light theme to prevent flash
+                  // ThemeProvider will handle the real theme logic
+                  document.documentElement.classList.add('light');
+                  console.log('🌟 Basic theme set, ThemeProvider will take over');
                 } catch (e) {
                   console.warn('Theme initialization error:', e);
-                  // Fallback to light theme
-                  document.documentElement.classList.add('light');
                 }
               })();
             `,

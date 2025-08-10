@@ -1,7 +1,7 @@
 // src/app/(professional-workspace)/professional/layout.jsx
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
 import { useUserStore } from '@/store/userStore'
 import { useTheme } from '@/components/theme-provider'
 import { cn } from '@/lib/utils'
@@ -9,33 +9,25 @@ import ProfessionalWorkspace from "@/components/professional-workspace/Professio
 
 export default function ProfessionalWorkspaceLayout({ children }) {
   const { user } = useUserStore()
-  const { setTheme } = useTheme()
-  const [isThemeForced, setIsThemeForced] = useState(false)
+  const { isProfessionalWorkspace } = useTheme()
 
-  // 🎯 Theme forcing with modern approach
+  // 🎯 Only add workspace classes, let ThemeProvider handle themes
   useEffect(() => {
-    if (!isThemeForced) {
-      setTheme('dark')
-      setIsThemeForced(true)
-    }
-    
-    // Ensure DOM classes are applied
-    const root = document.documentElement
-    root.classList.add('dark')
-    root.classList.remove('light')
-    
-    // Add professional workspace class to body
+    // Add professional workspace class to body for any component styling
     document.body.classList.add('professional-workspace')
+    
+    console.log('🏢 Professional workspace layout mounted')
     
     return () => {
       document.body.classList.remove('professional-workspace')
+      console.log('🏢 Professional workspace layout unmounted')
     }
-  }, [setTheme, isThemeForced])
+  }, [])
 
   return (
     <div className={cn(
       "min-h-screen transition-none",
-      "professional-workspace dark"
+      "professional-workspace" // This class is for component styling, not theme forcing
     )}>
       {/* Use the modernized ProfessionalWorkspace component */}
       <ProfessionalWorkspace>

@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
 import { Badge } from "@/components/ui/badge"
 import { ScrollArea } from "@/components/ui/scroll-area"
+import { ThemeToggle } from "@/components/theme-toggle"
 import { cn } from "@/lib/utils"
 import { 
   LogOut,
@@ -121,14 +122,19 @@ export default function DashboardSidebar() {
     <div className="flex flex-col h-full bg-card border-r border-border">
       {/* Header */}
       <div className="p-6 border-b border-border">
-        <div className="flex items-center space-x-3">
-          <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center shadow-lg">
-            <Briefcase className="h-5 w-5 text-primary-foreground" />
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-3">
+            <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center shadow-lg">
+              <Briefcase className="h-5 w-5 text-primary-foreground" />
+            </div>
+            <div className="space-y-0.5">
+              <h2 className="text-lg font-semibold text-foreground">Workspace</h2>
+              <p className="text-xs text-muted-foreground">Professional Dashboard</p>
+            </div>
           </div>
-          <div className="space-y-0.5">
-            <h2 className="text-lg font-semibold text-foreground">Workspace</h2>
-            <p className="text-xs text-muted-foreground">Professional Dashboard</p>
-          </div>
+          
+          {/* Theme Toggle in Header */}
+          <ThemeToggle variant="simple" className="h-9 w-9" />
         </div>
       </div>
 
@@ -145,8 +151,16 @@ export default function DashboardSidebar() {
         </div>
       </ScrollArea>
 
-      {/* Footer */}
-      <div className="p-4 border-t border-border">
+      {/* Footer with Theme Info */}
+      <div className="p-4 border-t border-border space-y-3">
+        {/* Theme Toggle Dropdown - Alternative placement */}
+        <div className="flex items-center justify-between">
+          <span className="text-xs text-muted-foreground font-medium">Theme</span>
+          <ThemeToggle variant="dropdown" className="h-8 w-8" />
+        </div>
+        
+        <Separator />
+        
         <div className="flex items-center space-x-2 px-3 py-2 rounded-lg bg-muted/50">
           <div className="h-2 w-2 rounded-full bg-green-500 animate-pulse" />
           <span className="text-xs text-muted-foreground font-medium">
