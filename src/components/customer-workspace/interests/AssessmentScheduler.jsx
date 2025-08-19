@@ -1,15 +1,10 @@
-// src/components/customer-workspace/interests/AssessmentScheduler.jsx
-"use client";
-
-import { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Calendar } from '@/components/ui/calendar';
 import { Textarea } from '@/components/ui/textarea';
-import { Separator } from '@/components/ui/separator';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { 
   Calendar as CalendarIcon, 
@@ -41,7 +36,6 @@ const AssessmentScheduler = ({
   const professional = interest?.professional;
   const account = professional?.account;
 
-  // Generate available time slots for selected date
   useEffect(() => {
     if (selectedDate) {
       generateTimeSlots(selectedDate);
@@ -50,8 +44,8 @@ const AssessmentScheduler = ({
 
   const generateTimeSlots = (date) => {
     const slots = [];
-    const startHour = 8; // 8 AM
-    const endHour = 18; // 6 PM
+    const startHour = 8;
+    const endHour = 18;
     
     for (let hour = startHour; hour < endHour; hour++) {
       slots.push(`${hour.toString().padStart(2, '0')}:00`);
@@ -103,21 +97,20 @@ const AssessmentScheduler = ({
 
   const getAssessmentStatusBadge = (status) => {
     const statusConfig = {
-      'proposed': { variant: 'secondary', label: 'Proposed' },
-      'accepted': { variant: 'default', label: 'Accepted' },
-      'scheduled': { variant: 'default', label: 'Scheduled' },
-      'confirmed': { variant: 'default', label: 'Confirmed' },
-      'in_progress': { variant: 'default', label: 'In Progress' },
-      'completed': { variant: 'default', label: 'Completed' },
-      'cancelled': { variant: 'destructive', label: 'Cancelled' },
-      'no_show': { variant: 'destructive', label: 'No Show' }
+      'proposed': { className: 'bg-blue-100 text-blue-800', label: 'Proposed' },
+      'accepted': { className: 'bg-green-100 text-green-800', label: 'Accepted' },
+      'scheduled': { className: 'bg-green-100 text-green-800', label: 'Scheduled' },
+      'confirmed': { className: 'bg-green-100 text-green-800', label: 'Confirmed' },
+      'in_progress': { className: 'bg-blue-100 text-blue-800', label: 'In Progress' },
+      'completed': { className: 'bg-green-100 text-green-800', label: 'Completed' },
+      'cancelled': { className: 'bg-red-100 text-red-800', label: 'Cancelled' },
+      'no_show': { className: 'bg-red-100 text-red-800', label: 'No Show' }
     };
     
-    const config = statusConfig[status] || { variant: 'outline', label: status };
-    return <Badge variant={config.variant}>{config.label}</Badge>;
+    const config = statusConfig[status] || { className: 'bg-gray-100 text-gray-700', label: status };
+    return <Badge className={config.className}>{config.label}</Badge>;
   };
 
-  // If no assessment is required, don't show the scheduler
   if (!interest?.assessment) {
     return null;
   }
@@ -125,124 +118,119 @@ const AssessmentScheduler = ({
   return (
     <div className="space-y-6">
       {/* Professional Info Header */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center space-x-4">
-            <Avatar className="h-16 w-16">
-              <AvatarImage src={account?.profile_picture_url} />
-              <AvatarFallback className="text-lg">
-                {account?.first_name?.[0]}{account?.last_name?.[0]}
-              </AvatarFallback>
-            </Avatar>
-            
-            <div className="flex-1">
-              <div className="flex items-center space-x-2">
-                <h2 className="text-xl font-bold">
-                  {account?.first_name} {account?.last_name}
-                </h2>
-                {professional?.verification_status === 'verified' && (
-                  <Shield className="h-5 w-5 text-green-600" />
-                )}
-              </div>
-              
-              {professional?.business_name && (
-                <p className="text-muted-foreground">{professional.business_name}</p>
+      <div className="bg-white rounded-xl p-6">
+        <div className="flex items-center space-x-4">
+          <Avatar className="h-16 w-16">
+            <AvatarImage src={account?.profile_picture_url} />
+            <AvatarFallback className="text-lg">
+              {account?.first_name?.[0]}{account?.last_name?.[0]}
+            </AvatarFallback>
+          </Avatar>
+          
+          <div className="flex-1">
+            <div className="flex items-center space-x-2">
+              <h2 className="text-xl font-bold text-gray-900">
+                {account?.first_name} {account?.last_name}
+              </h2>
+              {professional?.verification_status === 'verified' && (
+                <Shield className="h-5 w-5 text-green-600" />
               )}
-              
-              <div className="flex items-center space-x-4 mt-2">
-                <div className="flex items-center space-x-1">
-                  <Mail className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-sm">{account?.email}</span>
-                </div>
+            </div>
+            
+            {professional?.business_name && (
+              <p className="text-gray-600">{professional.business_name}</p>
+            )}
+            
+            <div className="flex items-center space-x-4 mt-2">
+              <div className="flex items-center space-x-1">
+                <Mail className="h-4 w-4 text-gray-500" />
+                <span className="text-sm text-gray-600">{account?.email}</span>
               </div>
             </div>
           </div>
-        </CardHeader>
-      </Card>
+        </div>
+      </div>
 
       {/* Assessment Details */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center space-x-2">
-            <CalendarIcon className="h-5 w-5" />
-            <span>Site Assessment Details</span>
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="space-y-2">
-              <h4 className="font-medium text-muted-foreground">Assessment Type</h4>
-              <Badge variant="outline" className="capitalize">
-                {interest.modality} Assessment
-              </Badge>
+      <div className="bg-white rounded-xl p-6">
+        <div className="flex items-center space-x-2 mb-4">
+          <CalendarIcon className="h-5 w-5 text-gray-700" />
+          <h3 className="text-lg font-semibold text-gray-900">Site Assessment Details</h3>
+        </div>
+        
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+          <div className="space-y-2">
+            <h4 className="font-medium text-gray-600">Assessment Type</h4>
+            <Badge className="bg-blue-100 text-blue-800 capitalize">
+              {interest.modality} Assessment
+            </Badge>
+          </div>
+          
+          <div className="space-y-2">
+            <h4 className="font-medium text-gray-600">Duration</h4>
+            <div className="flex items-center space-x-1">
+              <Clock className="h-4 w-4" />
+              <span>{interest.duration || 60} minutes</span>
             </div>
-            
-            <div className="space-y-2">
-              <h4 className="font-medium text-muted-foreground">Duration</h4>
-              <div className="flex items-center space-x-1">
-                <Clock className="h-4 w-4" />
-                <span>{interest.duration || 60} minutes</span>
-              </div>
+          </div>
+          
+          <div className="space-y-2">
+            <h4 className="font-medium text-gray-600">Assessment Fee</h4>
+            <div className="flex items-center space-x-1">
+              <DollarSign className="h-4 w-4" />
+              <span className="font-semibold">
+                {interest.fee > 0 ? formatCurrency(interest.fee) : 'Free'}
+              </span>
             </div>
-            
-            <div className="space-y-2">
-              <h4 className="font-medium text-muted-foreground">Assessment Fee</h4>
-              <div className="flex items-center space-x-1">
-                <DollarSign className="h-4 w-4" />
-                <span className="font-semibold">
-                  {interest.fee > 0 ? formatCurrency(interest.fee) : 'Free'}
-                </span>
+          </div>
+        </div>
+
+        {interest.fee > 0 && (
+          <div className="bg-blue-50 rounded-xl p-3">
+            <div className="flex items-start space-x-2">
+              <AlertCircle className="h-4 w-4 text-blue-600 mt-0.5" />
+              <div className="text-blue-800 text-sm">
+                The assessment fee will be applied to your final project cost if you proceed with this professional.
               </div>
             </div>
           </div>
+        )}
 
-          {interest.fee > 0 && (
-            <Alert className="bg-blue-50 border-blue-200">
-              <AlertCircle className="h-4 w-4 text-blue-600" />
-              <AlertDescription className="text-blue-800">
-                The assessment fee will be applied to your final project cost if you proceed with this professional.
-              </AlertDescription>
-            </Alert>
-          )}
-
-          {/* Professional's Message */}
-          {interest.message && (
-            <div className="p-4 bg-muted rounded-lg">
-              <h4 className="font-medium mb-2">Professional's Message:</h4>
-              <p className="text-sm">{interest.message}</p>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+        {interest.message && (
+          <div className="p-4 bg-gray-50 rounded-xl mt-4">
+            <h4 className="font-medium mb-2">Professional's Message:</h4>
+            <p className="text-sm text-gray-700">{interest.message}</p>
+          </div>
+        )}
+      </div>
 
       {/* Current Assessment Status */}
       {assessment && (
-        <Card>
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <CardTitle>Assessment Status</CardTitle>
-              {getAssessmentStatusBadge(assessment.status)}
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-4">
+        <div className="bg-white rounded-xl p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-semibold text-gray-900">Assessment Status</h3>
+            {getAssessmentStatusBadge(assessment.status)}
+          </div>
+          
+          <div className="space-y-4">
             {assessment.proposed_date && (
               <div className="space-y-2">
-                <h4 className="font-medium text-muted-foreground">Scheduled Time</h4>
-                <p className="font-medium">{formatDateTime(assessment.proposed_date)}</p>
+                <h4 className="font-medium text-gray-600">Scheduled Time</h4>
+                <p className="font-medium text-gray-900">{formatDateTime(assessment.proposed_date)}</p>
               </div>
             )}
 
             {assessment.proposal_message && (
               <div className="space-y-2">
-                <h4 className="font-medium text-muted-foreground">Professional's Proposal</h4>
-                <p className="text-sm">{assessment.proposal_message}</p>
+                <h4 className="font-medium text-gray-600">Professional's Proposal</h4>
+                <p className="text-sm text-gray-700">{assessment.proposal_message}</p>
               </div>
             )}
 
             {assessment.customer_special_instructions && (
               <div className="space-y-2">
-                <h4 className="font-medium text-muted-foreground">Your Instructions</h4>
-                <p className="text-sm">{assessment.customer_special_instructions}</p>
+                <h4 className="font-medium text-gray-600">Your Instructions</h4>
+                <p className="text-sm text-gray-700">{assessment.customer_special_instructions}</p>
               </div>
             )}
 
@@ -268,144 +256,140 @@ const AssessmentScheduler = ({
               )}
 
               {assessment.status === 'scheduled' && (
-                <Alert className="bg-green-50 border-green-200">
-                  <CheckCircle className="h-4 w-4 text-green-600" />
-                  <AlertDescription className="text-green-800">
-                    <strong>Assessment Confirmed!</strong> The professional will contact you before the scheduled time.
-                  </AlertDescription>
-                </Alert>
+                <div className="bg-green-50 rounded-xl p-3 w-full">
+                  <div className="flex items-start space-x-2">
+                    <CheckCircle className="h-4 w-4 text-green-600 mt-0.5" />
+                    <div className="text-green-800 text-sm">
+                      <strong>Assessment Confirmed!</strong> The professional will contact you before the scheduled time.
+                    </div>
+                  </div>
+                </div>
               )}
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       )}
 
       {/* Schedule New Assessment */}
       {(!assessment || assessment.status === 'cancelled') && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Schedule Assessment</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {/* Calendar */}
-              <div className="space-y-4">
-                <h4 className="font-medium">Select Date</h4>
-                <Calendar
-                  mode="single"
-                  selected={selectedDate}
-                  onSelect={setSelectedDate}
-                  disabled={(date) => date < new Date() || date.getDay() === 0} // Disable past dates and Sundays
-                  className="rounded-md border"
-                />
-              </div>
+        <div className="bg-white rounded-xl p-6">
+          <h3 className="text-lg font-semibold text-gray-900 mb-6">Schedule Assessment</h3>
+          
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+            {/* Calendar */}
+            <div className="space-y-4">
+              <h4 className="font-medium text-gray-700">Select Date</h4>
+              <Calendar
+                mode="single"
+                selected={selectedDate}
+                onSelect={setSelectedDate}
+                disabled={(date) => date < new Date() || date.getDay() === 0}
+                className="rounded-xl border border-gray-200 p-3"
+              />
+            </div>
 
-              {/* Time Slots */}
-              <div className="space-y-4">
-                <h4 className="font-medium">Select Time</h4>
-                {selectedDate ? (
-                  <div className="grid grid-cols-3 gap-2 max-h-64 overflow-y-auto">
-                   {availableTimeSlots.map((slot) => (
-                     <Button
-                       key={slot}
-                       variant={selectedTimeSlot === slot ? "default" : "outline"}
-                       size="sm"
-                       onClick={() => setSelectedTimeSlot(slot)}
-                       className="text-xs"
-                     >
-                       {slot}
-                     </Button>
-                   ))}
-                 </div>
-               ) : (
-                 <p className="text-muted-foreground text-sm">
-                   Please select a date first
-                 </p>
-               )}
-             </div>
+            {/* Time Slots */}
+            <div className="space-y-4">
+              <h4 className="font-medium text-gray-700">Select Time</h4>
+              {selectedDate ? (
+                <div className="grid grid-cols-3 gap-2 max-h-64 overflow-y-auto">
+                 {availableTimeSlots.map((slot) => (
+                   <Button
+                     key={slot}
+                     variant={selectedTimeSlot === slot ? "default" : "outline"}
+                     size="sm"
+                     onClick={() => setSelectedTimeSlot(slot)}
+                     className="text-xs"
+                   >
+                     {slot}
+                   </Button>
+                 ))}
+               </div>
+             ) : (
+               <p className="text-gray-500 text-sm">
+                 Please select a date first
+               </p>
+             )}
            </div>
+         </div>
 
-           {/* Special Instructions */}
-           <div className="space-y-2">
-             <h4 className="font-medium">Special Instructions (Optional)</h4>
-             <Textarea
-               placeholder="e.g., Use side entrance, dogs on property, parking instructions..."
-               value={specialInstructions}
-               onChange={(e) => setSpecialInstructions(e.target.value)}
-               className="min-h-[80px]"
-             />
-           </div>
+         {/* Special Instructions */}
+         <div className="space-y-2 mb-6">
+           <h4 className="font-medium text-gray-700">Special Instructions (Optional)</h4>
+           <Textarea
+             placeholder="e.g., Use side entrance, dogs on property, parking instructions..."
+             value={specialInstructions}
+             onChange={(e) => setSpecialInstructions(e.target.value)}
+             className="min-h-[80px]"
+           />
+         </div>
 
-           {/* Schedule Button */}
-           <Button
-             onClick={() => setShowConfirmDialog(true)}
-             disabled={!selectedDate || !selectedTimeSlot || isLoading}
-             className="w-full"
-           >
-             <CalendarIcon className="h-4 w-4 mr-2" />
-             Schedule Assessment
-           </Button>
-         </CardContent>
-       </Card>
+         {/* Schedule Button */}
+         <Button
+           onClick={() => setShowConfirmDialog(true)}
+           disabled={!selectedDate || !selectedTimeSlot || isLoading}
+           className="w-full"
+         >
+           <CalendarIcon className="h-4 w-4 mr-2" />
+           Schedule Assessment
+         </Button>
+       </div>
      )}
 
      {/* Assessment Information */}
-     <Card>
-       <CardHeader>
-         <CardTitle>What to Expect</CardTitle>
-       </CardHeader>
-       <CardContent className="space-y-4">
-         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-           <div className="space-y-3">
-             <h4 className="font-medium">During the Assessment:</h4>
-             <ul className="space-y-2 text-sm text-muted-foreground">
-               <li className="flex items-start space-x-2">
-                 <span className="flex-shrink-0 w-1.5 h-1.5 bg-blue-600 rounded-full mt-2"></span>
-                 <span>Professional will examine the work area</span>
-               </li>
-               <li className="flex items-start space-x-2">
-                 <span className="flex-shrink-0 w-1.5 h-1.5 bg-blue-600 rounded-full mt-2"></span>
-                 <span>Take measurements and photos</span>
-               </li>
-               <li className="flex items-start space-x-2">
-                 <span className="flex-shrink-0 w-1.5 h-1.5 bg-blue-600 rounded-full mt-2"></span>
-                 <span>Discuss your requirements and preferences</span>
-               </li>
-               <li className="flex items-start space-x-2">
-                 <span className="flex-shrink-0 w-1.5 h-1.5 bg-blue-600 rounded-full mt-2"></span>
-                 <span>Identify any potential challenges</span>
-               </li>
-             </ul>
-           </div>
-
-           <div className="space-y-3">
-             <h4 className="font-medium">After the Assessment:</h4>
-             <ul className="space-y-2 text-sm text-muted-foreground">
-               <li className="flex items-start space-x-2">
-                 <span className="flex-shrink-0 w-1.5 h-1.5 bg-green-600 rounded-full mt-2"></span>
-                 <span>Receive detailed, accurate quote</span>
-               </li>
-               <li className="flex items-start space-x-2">
-                 <span className="flex-shrink-0 w-1.5 h-1.5 bg-green-600 rounded-full mt-2"></span>
-                 <span>Timeline and materials breakdown</span>
-               </li>
-               <li className="flex items-start space-x-2">
-                 <span className="flex-shrink-0 w-1.5 h-1.5 bg-green-600 rounded-full mt-2"></span>
-                 <span>Clear scope of work document</span>
-               </li>
-               <li className="flex items-start space-x-2">
-                 <span className="flex-shrink-0 w-1.5 h-1.5 bg-green-600 rounded-full mt-2"></span>
-                 <span>Option to proceed with the project</span>
-               </li>
-             </ul>
-           </div>
+     <div className="bg-white rounded-xl p-6">
+       <h3 className="text-lg font-semibold text-gray-900 mb-4">What to Expect</h3>
+       
+       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+         <div className="space-y-3">
+           <h4 className="font-medium text-gray-700">During the Assessment:</h4>
+           <ul className="space-y-2 text-sm text-gray-600">
+             <li className="flex items-start space-x-2">
+               <span className="flex-shrink-0 w-1.5 h-1.5 bg-blue-600 rounded-full mt-2"></span>
+               <span>Professional will examine the work area</span>
+             </li>
+             <li className="flex items-start space-x-2">
+               <span className="flex-shrink-0 w-1.5 h-1.5 bg-blue-600 rounded-full mt-2"></span>
+               <span>Take measurements and photos</span>
+             </li>
+             <li className="flex items-start space-x-2">
+               <span className="flex-shrink-0 w-1.5 h-1.5 bg-blue-600 rounded-full mt-2"></span>
+               <span>Discuss your requirements and preferences</span>
+             </li>
+             <li className="flex items-start space-x-2">
+               <span className="flex-shrink-0 w-1.5 h-1.5 bg-blue-600 rounded-full mt-2"></span>
+               <span>Identify any potential challenges</span>
+             </li>
+           </ul>
          </div>
-       </CardContent>
-     </Card>
+
+         <div className="space-y-3">
+           <h4 className="font-medium text-gray-700">After the Assessment:</h4>
+           <ul className="space-y-2 text-sm text-gray-600">
+             <li className="flex items-start space-x-2">
+               <span className="flex-shrink-0 w-1.5 h-1.5 bg-green-600 rounded-full mt-2"></span>
+               <span>Receive detailed, accurate quote</span>
+             </li>
+             <li className="flex items-start space-x-2">
+               <span className="flex-shrink-0 w-1.5 h-1.5 bg-green-600 rounded-full mt-2"></span>
+               <span>Timeline and materials breakdown</span>
+             </li>
+             <li className="flex items-start space-x-2">
+               <span className="flex-shrink-0 w-1.5 h-1.5 bg-green-600 rounded-full mt-2"></span>
+               <span>Clear scope of work document</span>
+             </li>
+             <li className="flex items-start space-x-2">
+               <span className="flex-shrink-0 w-1.5 h-1.5 bg-green-600 rounded-full mt-2"></span>
+               <span>Option to proceed with the project</span>
+             </li>
+           </ul>
+         </div>
+       </div>
+     </div>
 
      {/* Confirmation Dialog */}
      <Dialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
-       <DialogContent>
+       <DialogContent className="max-w-md">
          <DialogHeader>
            <DialogTitle>Confirm Assessment Schedule</DialogTitle>
            <DialogDescription>
@@ -416,11 +400,11 @@ const AssessmentScheduler = ({
          <div className="space-y-4">
            <div className="grid grid-cols-2 gap-4 text-sm">
              <div>
-               <span className="font-medium text-muted-foreground">Professional:</span>
+               <span className="font-medium text-gray-600">Professional:</span>
                <p>{account?.first_name} {account?.last_name}</p>
              </div>
              <div>
-               <span className="font-medium text-muted-foreground">Date & Time:</span>
+               <span className="font-medium text-gray-600">Date & Time:</span>
                <p>
                  {selectedDate?.toLocaleDateString('en-US', {
                    weekday: 'long',
@@ -430,29 +414,31 @@ const AssessmentScheduler = ({
                </p>
              </div>
              <div>
-               <span className="font-medium text-muted-foreground">Duration:</span>
+               <span className="font-medium text-gray-600">Duration:</span>
                <p>{interest.duration || 60} minutes</p>
              </div>
              <div>
-               <span className="font-medium text-muted-foreground">Fee:</span>
+               <span className="font-medium text-gray-600">Fee:</span>
                <p>{interest.fee > 0 ? formatCurrency(interest.fee) : 'Free'}</p>
              </div>
            </div>
 
            {specialInstructions && (
              <div>
-               <span className="font-medium text-muted-foreground text-sm">Special Instructions:</span>
-               <p className="text-sm mt-1 p-2 bg-muted rounded">{specialInstructions}</p>
+               <span className="font-medium text-gray-600 text-sm">Special Instructions:</span>
+               <p className="text-sm mt-1 p-2 bg-gray-50 rounded">{specialInstructions}</p>
              </div>
            )}
 
            {interest.fee > 0 && (
-             <Alert className="bg-blue-50 border-blue-200">
-               <AlertCircle className="h-4 w-4 text-blue-600" />
-               <AlertDescription className="text-blue-800 text-sm">
-                 The assessment fee of {formatCurrency(interest.fee)} will be charged and applied to your final project cost if you proceed.
-               </AlertDescription>
-             </Alert>
+             <div className="bg-blue-50 rounded-xl p-3">
+               <div className="flex items-start space-x-2">
+                 <AlertCircle className="h-4 w-4 text-blue-600 mt-0.5" />
+                 <div className="text-blue-800 text-sm">
+                   The assessment fee of {formatCurrency(interest.fee)} will be charged and applied to your final project cost if you proceed.
+                 </div>
+               </div>
+             </div>
            )}
          </div>
 

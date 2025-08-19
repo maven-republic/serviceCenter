@@ -1,4 +1,4 @@
-// src/components/professional-workspace/interests/InterestStatusBadge.jsx
+// src/components/professional-workspace/interests/InterestStatusBadge.jsx - Fixed Status Alignment
 'use client'
 
 import { Badge } from "@/components/ui/badge"
@@ -28,7 +28,7 @@ export default function InterestStatusBadge({
   className
 }) {
   
-  // ✅ DEBUG: Log the status being processed
+  // 🔍 DEBUG: Log the status being processed
   console.log('🎯 InterestStatusBadge rendering:', { 
     status, 
     type: typeof status,
@@ -37,7 +37,7 @@ export default function InterestStatusBadge({
     showDot 
   });
 
-  // Status configurations
+  // Status configurations - ✅ FIXED: Aligned with database schema
   const getStatusConfig = (status) => {
     const statusString = String(status).toLowerCase().trim();
     
@@ -58,6 +58,7 @@ export default function InterestStatusBadge({
           description: 'Waiting for customer to review your interest'
         }
       
+      // ✅ ADDED: 'invited' status exists in DB interest enum
       case 'invited':
         return {
           label: 'Invited',
@@ -101,22 +102,22 @@ export default function InterestStatusBadge({
           isUrgent: true
         }
       
-      // ✅ CONFIRMED: Professional confirmed status - this should handle your DB values
-      case 'confirmed':
+      // ✅ FIXED: Changed from 'confirmed' to 'approved' to match DB schema
+      case 'approved':
         return {
-          label: 'Confirmed',
+          label: 'Approved',
           icon: CheckCircle,
           variant: 'default',
           className: 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100',
           dotColor: 'bg-emerald-500',
-          description: 'You confirmed availability and are ready to proceed',
+          description: 'Project approved and ready to proceed',
           isSuccess: true
         }
 
-      // ✅ UPDATED: Quote updated status - this should handle your DB values
+      // ✅ UPDATED: Quote updated status - matches DB enum
       case 'updated':
         return {
-          label: ' Updated',
+          label: 'Quote Updated',
           icon: Edit,
           variant: 'default',
           className: 'bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100',
@@ -125,18 +126,7 @@ export default function InterestStatusBadge({
           isUrgent: true
         }
       
-      // Professional declined selection
-      case 'declined_by_professional':
-      case 'declined':
-        return {
-          label: 'Declined',
-          icon: X,
-          variant: 'secondary',
-          className: 'bg-red-50 text-red-600 border-red-200 hover:bg-red-100',
-          dotColor: 'bg-red-400',
-          description: 'You declined this selection'
-        }
-      
+      // ✅ FIXED: Only using statuses that exist in DB
       case 'rejected':
         return {
           label: 'Not Selected',
@@ -157,61 +147,7 @@ export default function InterestStatusBadge({
           description: 'You withdrew your interest'
         }
       
-      case 'accepted':
-        return {
-          label: 'Accepted',
-          icon: CheckCircle,
-          variant: 'default',
-          className: 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100',
-          dotColor: 'bg-emerald-500',
-          description: 'You accepted the project assignment',
-          isSuccess: true
-        }
-      
-      case 'expired':
-        return {
-          label: 'Expired',
-          icon: AlertTriangle,
-          variant: 'secondary',
-          className: 'bg-yellow-50 text-yellow-700 border-yellow-200 hover:bg-yellow-100',
-          dotColor: 'bg-yellow-500',
-          description: 'Interest expired due to timeout'
-        }
-      
-      // Response deadline approaching
-      case 'response_needed':
-        return {
-          label: 'Response Needed',
-          icon: Hourglass,
-          variant: 'default',
-          className: 'bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100 animate-pulse duration-1500',
-          dotColor: 'bg-amber-500',
-          description: 'Customer is waiting for your response',
-          isUrgent: true
-        }
-      
-      // Assessment phase
-      case 'assessment_scheduled':
-        return {
-          label: 'Assessment Scheduled',
-          icon: Shield,
-          variant: 'default',
-          className: 'bg-indigo-50 text-indigo-700 border-indigo-200 hover:bg-indigo-100',
-          dotColor: 'bg-indigo-500',
-          description: 'Assessment appointment is scheduled'
-        }
-      
-      case 'viewed':
-        return {
-          label: 'Viewed',
-          icon: Eye,
-          variant: 'outline',
-          className: 'bg-indigo-50 text-indigo-700 border-indigo-200 hover:bg-indigo-100',
-          dotColor: 'bg-indigo-500',
-          description: 'Customer has viewed your interest'
-        }
-
-      // ✅ REVIEWING: Handle reviewing status (appointment-level, when customer needs to approve quote updates)
+      // ✅ REVIEWING: Handle reviewing status (appointment-level)
       case 'reviewing':
         return {
           label: 'Under Review',
@@ -221,6 +157,169 @@ export default function InterestStatusBadge({
           dotColor: 'bg-blue-500',
           description: 'Customer is reviewing your updated quote'
         }
+
+      // ✅ APPOINTMENT-LEVEL STATUSES: For appointment status display
+      case 'evaluating':
+        return {
+          label: 'Evaluating',
+          icon: Eye,
+          variant: 'outline',
+          className: 'bg-indigo-50 text-indigo-700 border-indigo-200 hover:bg-indigo-100',
+          dotColor: 'bg-indigo-500',
+          description: 'Customer is evaluating proposals'
+        }
+
+      case 'competing':
+        return {
+          label: 'Competing',
+          icon: Users,
+          variant: 'outline',
+          className: 'bg-orange-50 text-orange-700 border-orange-200 hover:bg-orange-100',
+          dotColor: 'bg-orange-500',
+          description: 'Multiple professionals are competing for this project'
+        }
+
+      case 'proposed':
+        return {
+          label: 'Proposed',
+          icon: Shield,
+          variant: 'outline',
+          className: 'bg-purple-50 text-purple-700 border-purple-200 hover:bg-purple-100',
+          dotColor: 'bg-purple-500',
+          description: 'Assessment proposal submitted'
+        }
+
+      case 'scheduled':
+        return {
+          label: 'Scheduled',
+          icon: Clock,
+          variant: 'default',
+          className: 'bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100',
+          dotColor: 'bg-blue-500',
+          description: 'Appointment or assessment is scheduled'
+        }
+
+      case 'assessing':
+        return {
+          label: 'Assessing',
+          icon: Shield,
+          variant: 'default',
+          className: 'bg-indigo-50 text-indigo-700 border-indigo-200 hover:bg-indigo-100',
+          dotColor: 'bg-indigo-500',
+          description: 'Assessment is in progress'
+        }
+
+      case 'assessed':
+        return {
+          label: 'Assessed',
+          icon: CheckCircle,
+          variant: 'default',
+          className: 'bg-green-50 text-green-700 border-green-200 hover:bg-green-100',
+          dotColor: 'bg-green-500',
+          description: 'Assessment completed'
+        }
+
+      case 'comparing':
+        return {
+          label: 'Comparing',
+          icon: BarChart3,
+          variant: 'outline',
+          className: 'bg-yellow-50 text-yellow-700 border-yellow-200 hover:bg-yellow-100',
+          dotColor: 'bg-yellow-500',
+          description: 'Customer is comparing options'
+        }
+
+      case 'negotiating':
+        return {
+          label: 'Negotiating',
+          icon: RefreshCw,
+          variant: 'default',
+          className: 'bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100',
+          dotColor: 'bg-blue-500',
+          description: 'Negotiation in progress'
+        }
+
+      case 'revised':
+        return {
+          label: 'Revised',
+          icon: Edit,
+          variant: 'outline',
+          className: 'bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100',
+          dotColor: 'bg-amber-500',
+          description: 'Quote has been revised'
+        }
+
+      case 'converting':
+        return {
+          label: 'Converting',
+          icon: RefreshCw,
+          variant: 'default',
+          className: 'bg-green-50 text-green-700 border-green-200 hover:bg-green-100',
+          dotColor: 'bg-green-500',
+          description: 'Converting to booking',
+          isSuccess: true
+        }
+
+      case 'converted':
+        return {
+          label: 'Converted',
+          icon: CheckCircle,
+          variant: 'default',
+          className: 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100',
+          dotColor: 'bg-emerald-500',
+          description: 'Successfully converted to booking',
+          isSuccess: true
+        }
+
+      case 'declined':
+        return {
+          label: 'Declined',
+          icon: X,
+          variant: 'secondary',
+          className: 'bg-red-50 text-red-600 border-red-200 hover:bg-red-100',
+          dotColor: 'bg-red-400',
+          description: 'Professional declined or customer declined'
+        }
+
+      case 'cancelled':
+        return {
+          label: 'Cancelled',
+          icon: X,
+          variant: 'secondary',
+          className: 'bg-gray-50 text-gray-600 border-gray-200 hover:bg-gray-100',
+          dotColor: 'bg-gray-400',
+          description: 'Appointment was cancelled'
+        }
+
+      case 'abandoned':
+        return {
+          label: 'Abandoned',
+          icon: AlertTriangle,
+          variant: 'secondary',
+          className: 'bg-gray-50 text-gray-600 border-gray-200 hover:bg-gray-100',
+          dotColor: 'bg-gray-400',
+          description: 'Customer abandoned the request'
+        }
+
+      case 'expired':
+        return {
+          label: 'Expired',
+          icon: AlertTriangle,
+          variant: 'secondary',
+          className: 'bg-yellow-50 text-yellow-700 border-yellow-200 hover:bg-yellow-100',
+          dotColor: 'bg-yellow-500',
+          description: 'Request expired due to timeout'
+        }
+
+      case 'superseded':
+        return {
+          label: 'Superseded',
+          icon: RefreshCw,
+          variant: 'secondary',
+          className: 'bg-gray-50 text-gray-600 border-gray-200 hover:bg-gray-100',
+          dotColor: 'bg-gray-400',
+          description: 'Replaced by newer version'
+        }
       
       default:
         // ✅ IMPROVED: Better fallback with actual status shown + DEBUG logging
@@ -228,10 +327,14 @@ export default function InterestStatusBadge({
           status, 
           processedStatus: statusString,
           availableStatuses: [
+            // Interest-level statuses
             'pending', 'invited', 'interested', 'quoted', 'selected', 
-            'confirmed', 'updated', 'declined', 'rejected', 'withdrawn', 
-            'accepted', 'expired', 'response_needed', 'assessment_scheduled', 
-            'viewed', 'reviewing'
+            'approved', 'updated', 'rejected', 'withdrawn',
+            // Appointment-level statuses  
+            'evaluating', 'competing', 'proposed', 'scheduled', 
+            'assessing', 'assessed', 'comparing', 'negotiating', 
+            'revised', 'reviewing', 'converting', 'converted', 
+            'declined', 'cancelled', 'abandoned', 'expired', 'superseded'
           ]
         });
 
@@ -311,38 +414,56 @@ export default function InterestStatusBadge({
   )
 }
 
-// Helper function to get status priority for sorting
+// ✅ FIXED: Helper function with updated status priorities matching DB schema
 export const getStatusPriority = (status) => {
   const priorities = {
-    'selected': 1,                    // Highest priority - needs immediate action
-    'response_needed': 2,             // Urgent response required
-    'updated': 3,                     // Quote updated - awaiting approval
-    'confirmed': 4,                   // Success state
-    'assessment_scheduled': 5,        // Active project
-    'quoted': 6,                      // Waiting for customer
-    'interested': 7,                  // Standard interest
-    'invited': 8,                     // Invitation received
-    'pending': 9,                     // Under review
-    'reviewing': 10,                  // Customer reviewing updates
-    'viewed': 11,                     // Customer activity
-    'accepted': 12,                   // Completed action
-    'rejected': 13,                   // Customer decision
-    'declined': 14,                   // Professional decision
-    'declined_by_professional': 14,   // Professional decision
-    'withdrawn': 15,                  // Professional action
-    'expired': 16                     // Lowest priority
+    // High priority - needs immediate action
+    'selected': 1,                    // Customer selected you
+    'updated': 2,                     // Quote updated - awaiting approval
+    'invited': 3,                     // Customer invitation
+    
+    // Active project statuses
+    'approved': 4,                    // Project approved (was 'confirmed')
+    'converting': 5,                  // Converting to booking
+    'converted': 6,                   // Successfully converted
+    'assessing': 7,                   // Assessment in progress
+    'scheduled': 8,                   // Scheduled appointment
+    'negotiating': 9,                 // In negotiation
+    
+    // Standard workflow statuses
+    'quoted': 10,                     // Quote sent, waiting for customer
+    'interested': 11,                 // Interest expressed
+    'proposed': 12,                   // Assessment proposed
+    'assessed': 13,                   // Assessment completed
+    'revised': 14,                    // Quote revised
+    'pending': 15,                    // Under review
+    'reviewing': 16,                  // Customer reviewing updates
+    
+    // Customer evaluation statuses
+    'evaluating': 17,                 // Customer evaluating
+    'competing': 18,                  // Multiple professionals competing
+    'comparing': 19,                  // Customer comparing options
+    
+    // Final decision statuses
+    'rejected': 20,                   // Customer decision - not selected
+    'declined': 21,                   // Professional or customer declined
+    'withdrawn': 22,                  // Professional withdrew
+    'cancelled': 23,                  // Appointment cancelled
+    'superseded': 24,                 // Replaced by newer version
+    'abandoned': 25,                  // Customer abandoned
+    'expired': 26                     // Expired due to timeout
   }
   return priorities[status] || 99
 }
 
-// Helper function to check if status needs action
+// ✅ FIXED: Helper function with updated valid statuses
 export const statusNeedsAction = (status) => {
-  return ['selected', 'response_needed', 'invited', 'updated'].includes(status)
+  return ['selected', 'invited', 'updated', 'scheduled', 'assessing'].includes(status)
 }
 
-// Helper function to check if status is positive outcome
+// ✅ FIXED: Helper function with updated positive outcomes
 export const statusIsPositive = (status) => {
-  return ['selected', 'confirmed', 'accepted', 'assessment_scheduled'].includes(status)
+  return ['selected', 'approved', 'converted', 'assessed', 'scheduled', 'converting'].includes(status)
 }
 
 // Export named variations for convenience
@@ -378,7 +499,7 @@ export const ResponseStatusBadge = ({ status, deadline, className }) => {
     
     if (status === 'selected') {
       if (hoursRemaining <= 6) {
-        return 'response_needed' // Very urgent
+        return 'urgent_response' // Very urgent - custom status for UI
       }
       return 'selected' // Normal urgent
     }

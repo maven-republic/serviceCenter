@@ -110,191 +110,191 @@ const getAppointmentTime = (appointment, mode) => {
   }
 }
 
-// Status configuration for different contexts
+// FLAT Status configuration - removed gradients and complex styling
 const getStatusConfig = (status, mode = 'appointment') => {
   const configs = {
-    // Appointment statuses from your DB schema
+    // Appointment statuses - FLAT DESIGN
     pending: { 
-      variant: 'secondary',
-      className: 'bg-muted text-muted-foreground border-border',
+      variant: 'outline',
+      className: 'bg-white text-gray-600 border-gray-300',
       icon: Clock,
       label: 'Pending',
-      dotColor: 'bg-muted-foreground'
+      dotColor: 'bg-gray-400'
     },
     interested: { 
       variant: 'outline',
-      className: 'bg-blue-100 text-blue-800 border-blue-200',
+      className: 'bg-blue-50 text-blue-700 border-blue-200',
       icon: Heart,
       label: 'Interested',
-      dotColor: 'bg-blue-600'
+      dotColor: 'bg-blue-500'
     },
     competing: { 
       variant: 'outline',
-      className: 'bg-amber-100 text-amber-800 border-amber-200',
+      className: 'bg-orange-50 text-orange-700 border-orange-200',
       icon: Flame,
       label: 'Competing',
-      dotColor: 'bg-amber-600'
+      dotColor: 'bg-orange-500'
     },
     evaluating: { 
       variant: 'outline',
-      className: 'bg-purple-100 text-purple-800 border-purple-200',
+      className: 'bg-purple-50 text-purple-700 border-purple-200',
       icon: Clock,
       label: 'Evaluating',
-      dotColor: 'bg-purple-600'
+      dotColor: 'bg-purple-500'
     },
     proposed: { 
       variant: 'outline',
-      className: 'bg-indigo-100 text-indigo-800 border-indigo-200',
+      className: 'bg-indigo-50 text-indigo-700 border-indigo-200',
       icon: Edit,
       label: 'Proposed',
-      dotColor: 'bg-indigo-600'
+      dotColor: 'bg-indigo-500'
     },
     scheduled: { 
       variant: 'outline',
-      className: 'bg-teal-100 text-teal-800 border-teal-200',
+      className: 'bg-teal-50 text-teal-700 border-teal-200',
       icon: Calendar,
       label: 'Scheduled',
-      dotColor: 'bg-teal-600'
+      dotColor: 'bg-teal-500'
     },
     assessing: { 
       variant: 'outline',
-      className: 'bg-orange-100 text-orange-800 border-orange-200',
+      className: 'bg-orange-50 text-orange-700 border-orange-200',
       icon: Clock,
       label: 'Assessing',
-      dotColor: 'bg-orange-600'
+      dotColor: 'bg-orange-500'
     },
     assessed: { 
       variant: 'outline',
-      className: 'bg-emerald-100 text-emerald-800 border-emerald-200',
+      className: 'bg-emerald-50 text-emerald-700 border-emerald-200',
       icon: CheckCircle,
       label: 'Assessed',
-      dotColor: 'bg-emerald-600'
+      dotColor: 'bg-emerald-500'
     },
     quoted: { 
       variant: 'outline',
-      className: 'bg-background text-foreground border-border hover:bg-muted/50',
+      className: 'bg-white text-gray-700 border-gray-300',
       icon: DollarSign,
       label: 'Quoted',
-      dotColor: 'bg-primary'
+      dotColor: 'bg-gray-500'
     },
     comparing: { 
       variant: 'outline',
-      className: 'bg-violet-100 text-violet-800 border-violet-200',
+      className: 'bg-violet-50 text-violet-700 border-violet-200',
       icon: Clock,
       label: 'Comparing',
-      dotColor: 'bg-violet-600'
+      dotColor: 'bg-violet-500'
     },
     negotiating: { 
       variant: 'outline',
-      className: 'bg-yellow-100 text-yellow-800 border-yellow-200',
+      className: 'bg-yellow-50 text-yellow-700 border-yellow-200',
       icon: Edit,
       label: 'Negotiating',
-      dotColor: 'bg-yellow-600'
+      dotColor: 'bg-yellow-500'
     },
     reviewing: { 
       variant: 'outline',
-      className: 'bg-cyan-100 text-cyan-800 border-cyan-200',
+      className: 'bg-cyan-50 text-cyan-700 border-cyan-200',
       icon: Clock,
       label: 'Reviewing',
-      dotColor: 'bg-cyan-600'
+      dotColor: 'bg-cyan-500'
     },
     approved: { 
       variant: 'default',
-      className: 'bg-green-600 text-white hover:bg-green-700',
+      className: 'bg-green-600 text-white border-green-600',
       icon: Check,
       label: 'Approved',
       dotColor: 'bg-white'
     },
     converting: { 
       variant: 'default',
-      className: 'bg-primary text-primary-foreground hover:bg-primary/90',
+      className: 'bg-blue-600 text-white border-blue-600',
       icon: Clock,
       label: 'Converting',
-      dotColor: 'bg-primary-foreground'
+      dotColor: 'bg-white'
     },
     converted: { 
       variant: 'default',
-      className: 'bg-primary text-primary-foreground hover:bg-primary/90',
+      className: 'bg-blue-600 text-white border-blue-600',
       icon: Check,
       label: 'Converted',
-      dotColor: 'bg-primary-foreground'
+      dotColor: 'bg-white'
     },
     declined: { 
-      variant: 'secondary',
-      className: 'bg-red-100 text-red-800 border-red-200',
+      variant: 'outline',
+      className: 'bg-red-50 text-red-700 border-red-200',
       icon: X,
       label: 'Declined',
-      dotColor: 'bg-red-600'
+      dotColor: 'bg-red-500'
     },
     withdrawn: { 
-      variant: 'secondary',
-      className: 'bg-gray-100 text-gray-800 border-gray-200',
+      variant: 'outline',
+      className: 'bg-gray-50 text-gray-600 border-gray-200',
       icon: X,
       label: 'Withdrawn',
-      dotColor: 'bg-gray-600'
+      dotColor: 'bg-gray-400'
     },
     cancelled: { 
-      variant: 'secondary',
-      className: 'bg-red-100 text-red-800 border-red-200',
+      variant: 'outline',
+      className: 'bg-red-50 text-red-700 border-red-200',
       icon: X,
       label: 'Cancelled',
-      dotColor: 'bg-red-600'
+      dotColor: 'bg-red-500'
     },
     
-    // Interest statuses (for interests mode)
+    // Interest statuses (for interests mode) - FLAT DESIGN
     selected: {
       variant: 'default',
-      className: 'bg-green-600 text-white hover:bg-green-700',
+      className: 'bg-green-600 text-white border-green-600',
       icon: UserCheck,
       label: 'Selected',
       dotColor: 'bg-white'
     },
     confirmed: {
-      variant: 'default',
-      className: 'bg-emerald-100 text-emerald-800 border-emerald-200',
+      variant: 'outline',
+      className: 'bg-emerald-50 text-emerald-700 border-emerald-200',
       icon: CheckCircle,
       label: 'Confirmed',
-      dotColor: 'bg-emerald-600'
+      dotColor: 'bg-emerald-500'
     },
     updated: {
-      variant: 'default',
-      className: 'bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100',
+      variant: 'outline',
+      className: 'bg-amber-50 text-amber-700 border-amber-200',
       icon: Edit,
       label: 'Updated',
       dotColor: 'bg-amber-500'
     },
     rejected: {
-      variant: 'secondary',
-      className: 'bg-red-100 text-red-800 border-red-200',
+      variant: 'outline',
+      className: 'bg-red-50 text-red-700 border-red-200',
       icon: X,
       label: 'Rejected',
-      dotColor: 'bg-red-600'
+      dotColor: 'bg-red-500'
     }
   }
   return configs[status] || configs.pending
 }
 
-// ===== CELL COMPONENTS =====
+// ===== FLAT CELL COMPONENTS =====
 
-// Selection checkbox cell
+// Selection checkbox cell - FLAT DESIGN
 const SelectionCell = ({ item, isSelected, onToggle }) => (
   <Checkbox
     checked={isSelected}
     onCheckedChange={onToggle}
     aria-label={`Select appointment for ${item.customer?.first_name || 'customer'}`}
-    className="border-border data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground h-3 w-3"
+    className="border-gray-300 data-[state=checked]:bg-blue-600 data-[state=checked]:text-white h-4 w-4"
   />
 )
 
-// Type indicator cell (for available mode)
+// Type indicator cell - FLAT DESIGN
 const TypeCell = ({ item }) => {
   const isInvitation = item.is_invited || (item.recipients && item.recipients.length > 0)
   
   return isInvitation ? (
     <Tooltip>
       <TooltipTrigger>
-        <Badge className="bg-blue-600 text-white text-[10px] px-1 py-0 h-4">
-          <Crown className="h-2 w-2 mr-0.5" />
+        <Badge className="bg-blue-600 text-white text-xs px-2 py-1 h-5 border-0">
+          <Crown className="h-3 w-3 mr-1" />
           Invited
         </Badge>
       </TooltipTrigger>
@@ -303,13 +303,13 @@ const TypeCell = ({ item }) => {
       </TooltipContent>
     </Tooltip>
   ) : (
-    <Badge variant="outline" className="text-[10px] px-1 py-0 h-4">
+    <Badge variant="outline" className="text-xs px-2 py-1 h-5 bg-white text-gray-600 border-gray-300">
       Open
     </Badge>
   )
 }
 
-// Customer information cell - FIXED FOR BOTH FLATTENED AND NESTED DATA
+// Customer information cell - FLAT DESIGN
 const CustomerCell = ({ item, mode }) => {
   let firstName, lastName, email, profilePicture
   
@@ -328,28 +328,28 @@ const CustomerCell = ({ item, mode }) => {
   }
   
   if (!firstName && !lastName && !email) {
-    return <span className="text-muted-foreground">Unknown Customer</span>
+    return <span className="text-gray-500">Unknown Customer</span>
   }
   
   return (
     <div className="flex items-center space-x-2">
-      <Avatar className="h-6 w-6 border border-border flex-shrink-0">
+      <Avatar className="h-7 w-7 border border-gray-200 flex-shrink-0">
         <AvatarImage 
           src={profilePicture} 
           alt={`${firstName} ${lastName}`}
         />
-        <AvatarFallback className="text-[10px] font-medium bg-muted text-muted-foreground">
+        <AvatarFallback className="text-xs font-medium bg-gray-100 text-gray-600">
           {firstName?.[0] || '?'}
           {lastName?.[0] || ''}
         </AvatarFallback>
       </Avatar>
       <div className="min-w-0 flex-1">
-        <div className="font-medium text-xs truncate text-foreground">
+        <div className="font-medium text-sm text-gray-900 truncate">
           {firstName} {lastName} {(!firstName && !lastName) && 'Unknown Customer'}
         </div>
         {email && (
-          <div className="hidden sm:flex items-center space-x-1 text-[10px] text-muted-foreground">
-            <Mail className="h-2 w-2" />
+          <div className="hidden sm:flex items-center space-x-1 text-xs text-gray-500">
+            <Mail className="h-3 w-3" />
             <span className="truncate max-w-[120px]">
               {email}
             </span>
@@ -360,45 +360,45 @@ const CustomerCell = ({ item, mode }) => {
   )
 }
 
-// Service information cell - FIXED FOR BOTH FLATTENED AND NESTED DATA
+// Service information cell - FLAT DESIGN
 const ServiceCell = ({ item, mode }) => {
   let serviceName, description
   
   if (mode === 'interests') {
     // Interests mode has nested structure
-    serviceName = item.appointment?.service?.name ||        // From nested service object
-                 item.service?.name ||                     // Fallback to direct service
-                 item.appointment?.title ||                // Fallback to appointment title
+    serviceName = item.appointment?.service?.name ||        
+                 item.service?.name ||                     
+                 item.appointment?.title ||                
                  'Untitled Service'
     
-    description = item.appointment?.service?.description || // From nested service object
-                 item.service?.description ||              // Fallback to direct service
-                 item.appointment?.description ||          // Fallback to appointment description
+    description = item.appointment?.service?.description || 
+                 item.service?.description ||              
+                 item.appointment?.description ||          
                  item.appointment?.customer_message
   } else {
     // Available/assigned modes have flattened structure
-    serviceName = item.service_name ||    // From your flattened API response
-                 item.title ||           // Fallback to appointment title
+    serviceName = item.service_name ||    
+                 item.title ||           
                  'Untitled Service'
     
-    description = item.service_description || // From your flattened API response
+    description = item.service_description || 
                  item.description || 
                  item.customer_message
   }
   
   return (
     <div className="min-w-0">
-      <div className="font-medium text-xs truncate text-foreground">
+      <div className="font-medium text-sm text-gray-900 truncate">
         {serviceName}
       </div>
       {description && (
         <Tooltip>
           <TooltipTrigger asChild>
-            <div className="text-[10px] text-muted-foreground truncate max-w-[150px] cursor-help">
+            <div className="text-xs text-gray-500 truncate max-w-[150px] cursor-help">
               {description}
             </div>
           </TooltipTrigger>
-          <TooltipContent className="max-w-xs bg-popover text-popover-foreground border-border">
+          <TooltipContent className="max-w-xs bg-white border border-gray-200">
             <p>{description}</p>
           </TooltipContent>
         </Tooltip>
@@ -407,7 +407,7 @@ const ServiceCell = ({ item, mode }) => {
   )
 }
 
-// Time cell with smart formatting - FIXED FOR BOTH DATA STRUCTURES
+// Time cell with smart formatting - FLAT DESIGN
 const TimeCell = ({ item, mode }) => {
   let appointment, appointmentTime
   
@@ -423,12 +423,12 @@ const TimeCell = ({ item, mode }) => {
   
   return (
     <div>
-      <div className="font-medium text-xs text-foreground">
+      <div className="font-medium text-sm text-gray-900">
         {formatAppointmentTime(appointmentTime)}
       </div>
       {appointment.deadline && (
-        <div className="text-[10px] text-muted-foreground flex items-center space-x-1">
-          <AlertTriangle className="h-2 w-2" />
+        <div className="text-xs text-gray-500 flex items-center space-x-1">
+          <AlertTriangle className="h-3 w-3" />
           <span>Due: {formatAppointmentTime(appointment.deadline)}</span>
         </div>
       )}
@@ -436,52 +436,63 @@ const TimeCell = ({ item, mode }) => {
   )
 }
 
-// Status badge cell - FIXED FOR BOTH DATA STRUCTURES
+// Status badge cell - FIXED DESIGN
 const StatusCell = ({ item, mode = 'available' }) => {
-  // Based on your schema, get the correct status field
-  const status = mode === 'interests' ? item.status : (item.appointment?.status || item.status)
-  const statusConfig = getStatusConfig(status, mode)
+  let status, statusType, tooltipText
+  
+  if (mode === 'interests') {
+    // Show interest-level status
+    status = item.status
+    statusType = 'interest'
+    tooltipText = `Interest status: ${status}`
+  } else {
+    // Show appointment-level status for available/assigned modes
+    status = item.status  // This is appointment status in these modes
+    statusType = 'appointment'
+    tooltipText = `Appointment status: ${status}`
+  }
+  
+  const statusConfig = getStatusConfig(status, statusType)
   
   return (
     <Tooltip>
       <TooltipTrigger asChild>
         <div className="w-fit">
-          <div className="flex items-center gap-1 cursor-help w-fit">
-            <div className={cn("w-1.5 h-1.5 rounded-full", statusConfig.dotColor)} />
-            <Badge className={cn(statusConfig.className, "text-[10px] px-1 py-0 h-4")}>
-              <statusConfig.icon className="h-2 w-2 mr-0.5" />
+          <div className="flex items-center gap-2 cursor-help w-fit">
+            <div className={cn("w-2 h-2 rounded-full", statusConfig.dotColor)} />
+            <Badge className={cn(statusConfig.className, "text-xs px-2 py-1 h-5 font-medium")}>
+              <statusConfig.icon className="h-3 w-3 mr-1" />
               {statusConfig.label}
             </Badge>
           </div>
         </div>
       </TooltipTrigger>
-      <TooltipContent className="bg-popover text-popover-foreground border-border">
-        <p>{mode === 'interests' ? 'Interest' : 'Appointment'} status: {status}</p>
+      <TooltipContent className="bg-white border border-gray-200">
+        <p>{tooltipText}</p>
       </TooltipContent>
     </Tooltip>
   )
 }
 
-// Attachments indicator cell - FIXED FOR BOTH DATA STRUCTURES
+// Attachments indicator cell - FLAT DESIGN
 const AttachmentsCell = ({ item, mode }) => {
   const appointment = mode === 'interests' ? item.appointment : item
   
   // Based on your schema, attachments are in the attachment table
-  // This would need to be joined in your query, or passed as part of the data
   const attachments = appointment?.attachments || appointment?.attachment || []
   
   if (attachments.length === 0) {
-    return <span className="text-[10px] text-muted-foreground">-</span>
+    return <span className="text-xs text-gray-400">-</span>
   }
   
   return (
-    <div className="flex items-center space-x-1">
+    <div className="flex items-center space-x-2">
       <Tooltip>
         <TooltipTrigger asChild>
           <Button
             variant="ghost"
             size="sm"
-            className="h-5 w-5 p-0 text-muted-foreground hover:text-foreground"
+            className="h-6 w-6 p-0 text-gray-500 hover:text-gray-700 hover:bg-gray-100"
           >
             <Paperclip className="h-3 w-3" />
           </Button>
@@ -491,49 +502,51 @@ const AttachmentsCell = ({ item, mode }) => {
         </TooltipContent>
       </Tooltip>
       
-      {attachments.some(att => att.type?.startsWith('image/')) && (
-        <Tooltip>
-          <TooltipTrigger>
-            <div className="flex items-center text-[10px] text-muted-foreground">
-              <Image className="h-2 w-2 mr-0.5" />
-              <span>{attachments.filter(att => att.type?.startsWith('image/')).length}</span>
-            </div>
-          </TooltipTrigger>
-          <TooltipContent>
-            <p>Images attached</p>
-          </TooltipContent>
-        </Tooltip>
-      )}
-      
-      {attachments.some(att => !att.type?.startsWith('image/')) && (
-        <Tooltip>
-          <TooltipTrigger>
-            <div className="flex items-center text-[10px] text-muted-foreground">
-              <FileText className="h-2 w-2 mr-0.5" />
-              <span>{attachments.filter(att => !att.type?.startsWith('image/')).length}</span>
-            </div>
-          </TooltipTrigger>
-          <TooltipContent>
-            <p>Documents attached</p>
-          </TooltipContent>
-        </Tooltip>
-      )}
+      <div className="flex gap-1">
+        {attachments.some(att => att.type?.startsWith('image/')) && (
+          <Tooltip>
+            <TooltipTrigger>
+              <div className="flex items-center text-xs text-gray-500">
+                <Image className="h-3 w-3 mr-1" />
+                <span>{attachments.filter(att => att.type?.startsWith('image/')).length}</span>
+              </div>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Images attached</p>
+            </TooltipContent>
+          </Tooltip>
+        )}
+        
+        {attachments.some(att => !att.type?.startsWith('image/')) && (
+          <Tooltip>
+            <TooltipTrigger>
+              <div className="flex items-center text-xs text-gray-500">
+                <FileText className="h-3 w-3 mr-1" />
+                <span>{attachments.filter(att => !att.type?.startsWith('image/')).length}</span>
+              </div>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Documents attached</p>
+            </TooltipContent>
+          </Tooltip>
+        )}
+      </div>
     </div>
   )
 }
 
-// Date cell - FIXED FOR BOTH DATA STRUCTURES
+// Date cell - FLAT DESIGN
 const DateCell = ({ item, mode = 'available' }) => {
   const date = mode === 'interests' ? item.created_at : (item.appointment?.created_at || item.created_at)
   
   return (
-    <div className="text-xs text-muted-foreground">
+    <div className="text-sm text-gray-500">
       {formatAppointmentTime(date)}
     </div>
   )
 }
 
-// Actions dropdown cell
+// Actions dropdown cell - FLAT DESIGN
 const ActionsCell = ({ item, mode = 'available', onAction }) => {
   const appointment = mode === 'interests' ? item.appointment : item
   const itemId = appointment?.appointment_id || item.appointment_id
@@ -543,16 +556,16 @@ const ActionsCell = ({ item, mode = 'available', onAction }) => {
       <DropdownMenuTrigger asChild>
         <Button 
           variant="ghost" 
-          className="h-6 w-6 p-0 hover:bg-muted text-muted-foreground hover:text-foreground"
+          className="h-7 w-7 p-0 hover:bg-gray-100 text-gray-500 hover:text-gray-700"
         >
-          <MoreHorizontal className="h-3 w-3" />
+          <MoreHorizontal className="h-4 w-4" />
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-48 bg-popover border-border">
+      <DropdownMenuContent align="end" className="w-48 bg-white border border-gray-200">
         {/* Available mode actions */}
         {mode === 'available' && (
           <DropdownMenuItem 
-            className="flex items-center text-foreground hover:bg-muted"
+            className="flex items-center text-gray-700 hover:bg-gray-50"
             onClick={() => onAction?.('express_interest', item)}
           >
             <Heart className="h-4 w-4 mr-2" />
@@ -573,7 +586,7 @@ const ActionsCell = ({ item, mode = 'available', onAction }) => {
 
         {mode === 'interests' && ['interested', 'quoted', 'confirmed'].includes(item.status) && (
           <DropdownMenuItem 
-            className="flex items-center text-foreground hover:bg-muted"
+            className="flex items-center text-gray-700 hover:bg-gray-50"
             onClick={() => onAction?.('update_interest', item)}
           >
             <Edit className="h-4 w-4 mr-2" />
@@ -612,9 +625,9 @@ const ActionsCell = ({ item, mode = 'available', onAction }) => {
         )}
 
         {/* Common actions */}
-        <DropdownMenuSeparator className="bg-border" />
+        <DropdownMenuSeparator className="bg-gray-200" />
         <DropdownMenuItem 
-          className="flex items-center text-foreground hover:bg-muted"
+          className="flex items-center text-gray-700 hover:bg-gray-50"
           onClick={() => onAction?.('share', item)}
         >
           <Send className="h-4 w-4 mr-2" />
@@ -625,7 +638,7 @@ const ActionsCell = ({ item, mode = 'available', onAction }) => {
   )
 }
 
-// ===== COLUMN DEFINITIONS - FIXED FOR BOTH DATA STRUCTURES =====
+// ===== COLUMN DEFINITIONS - FLAT DESIGN =====
 
 // Base columns used across all modes
 const baseColumns = [
@@ -635,7 +648,7 @@ const baseColumns = [
     width: 'w-8',
     sortable: false,
     cell: SelectionCell,
-    // FIXED: Use a function instead of component to avoid DOM prop passing
+    // FLAT: Use a function instead of component to avoid DOM prop passing
     headerCell: ({ selectedCount, totalCount, onSelectAll }) => {
       // Handle indeterminate properly
       const isIndeterminate = selectedCount > 0 && selectedCount < totalCount
@@ -644,11 +657,10 @@ const baseColumns = [
       return (
         <Checkbox
           checked={isChecked}
-          // FIXED: Pass undefined instead of false for indeterminate
           indeterminate={isIndeterminate ? true : undefined}
           onCheckedChange={onSelectAll}
           aria-label="Select all appointments"
-          className="border-border data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground h-3 w-3"
+          className="border-gray-300 data-[state=checked]:bg-blue-600 data-[state=checked]:text-white h-4 w-4"
         />
       )
     }

@@ -154,14 +154,14 @@ export default function ProfessionalServices() {
 
   return (
     <>
-      <Card className="mb-6">
+      <Card className="mb-6 border-border">
         <CardHeader>
           <div className="flex justify-between items-center">
             <CardTitle className="text-xl font-semibold">Professional Services</CardTitle>
             <Button
               size="icon"
               variant="outline"
-              className="h-9 w-9 rounded-full"
+              className="h-9 w-9 rounded-full border-border"
               onClick={() => setShowModal(true)}
               aria-label="Add or Manage Services"
             >
@@ -196,7 +196,7 @@ export default function ProfessionalServices() {
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
               {services.map((service, i) => (
-                <Card key={service.service_id} className="h-full hover:shadow-md transition-shadow duration-200">
+                <Card key={service.service_id} className="h-full border-border hover:border-primary/30 transition-colors duration-200">
                   <CardContent className="p-4 flex flex-col h-full">
                     
                     {/* 🎯 PRIMARY: Service Name (Most Important) */}
@@ -206,7 +206,7 @@ export default function ProfessionalServices() {
                     
                     {/* 🎯 SECONDARY: Vertical (Business Context) */}
                     <div className="mb-3">
-                      <Badge variant="default" className="gap-1 text-xs">
+                      <Badge variant="default" className="gap-1 text-xs border-border">
                         <Layers className="h-3 w-3" />
                         {service.vertical}
                       </Badge>
@@ -247,7 +247,7 @@ export default function ProfessionalServices() {
       {/* Service modal using ServiceInformation */}
       {showModal && (
         <div className="fixed inset-0 z-50 bg-black/40 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0">
-          <div className="fixed left-[50%] top-[50%] z-50 w-full max-w-6xl translate-x-[-50%] translate-y-[-50%] bg-background p-6 shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%] rounded-lg border max-h-[90vh] overflow-y-auto">
+          <div className="fixed left-[50%] top-[50%] z-50 w-full max-w-6xl translate-x-[-50%] translate-y-[-50%] bg-background p-6 duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%] rounded-lg border border-border max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-lg font-semibold">Manage Services</h2>
               <Button

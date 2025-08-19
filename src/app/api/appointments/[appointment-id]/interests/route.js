@@ -1,4 +1,4 @@
-// src/app/api/appointments/[appointment-id]/interests/route.js
+// src/app/api/appointments/[appointment-id]/interests/route.js - FIXED VERSION
 
 import { createClient } from '@/utils/supabase/server'
 import { NextResponse } from 'next/server'
@@ -13,7 +13,7 @@ export async function POST(request, { params }) {
     const resolvedParams = await params
     const appointmentId = resolvedParams['appointment-id']
     
-    console.log('📝 Appointment ID:', appointmentId)
+    console.log('🔍 Appointment ID:', appointmentId)
     
     if (!appointmentId) {
       console.error('❌ Missing appointment ID')
@@ -27,7 +27,7 @@ export async function POST(request, { params }) {
     let body
     try {
       body = await request.json()
-      console.log('📝 Request body:', {
+      console.log('🔍 Request body:', {
         action: body.action,
         interest_ids: body.interest_ids,
         hasCustomerNotes: !!body.data?.customer_notes
@@ -64,6 +64,21 @@ export async function POST(request, { params }) {
     if (action === 'select_professional') {
       console.log('🎯 Selecting professional(s):', interest_ids)
 
+      // First, get the current appointment to understand the context
+      const { data: appointment, error: appointmentFetchError } = await supabase
+        .from('appointment')
+        .select('interest_count, status')
+        .eq('appointment_id', appointmentId)
+        .single()
+
+      if (appointmentFetchError) {
+        console.error('❌ Failed to fetch appointment:', appointmentFetchError)
+        return NextResponse.json(
+          { success: false, error: 'Failed to fetch appointment details' },
+          { status: 500 }
+        )
+      }
+
       // Update the selected interest(s)
       const { data: updatedInterests, error: updateError } = await supabase
         .from('interest')
@@ -88,24 +103,39 @@ export async function POST(request, { params }) {
 
       console.log('✅ Professional(s) selected successfully:', updatedInterests?.length || 0)
 
-      // Update appointment status if needed
+      // 🛠️ FIXED: Better appointment status progression logic
+      const appointmentUpdateData = {
+        professional_id: interest_ids[0], // Set the selected professional
+        updated_at: new Date().toISOString()
+      }
+
+      // Determine next appointment status based on current state
+      if (appointment.status === 'pending') {
+        appointmentUpdateData.status = 'evaluating'  // Customer is now evaluating their selection
+      } else if (['interested', 'competing'].includes(appointment.status)) {
+        appointmentUpdateData.status = 'evaluating'  // Customer moved from competition to evaluation
+      } else {
+        // Keep current status if already in advanced state
+        console.log('📋 Appointment already in advanced state:', appointment.status)
+      }
+
       const { error: appointmentError } = await supabase
         .from('appointment')
-        .update({
-          status: 'quoted',
-          updated_at: new Date().toISOString()
-        })
+        .update(appointmentUpdateData)
         .eq('appointment_id', appointmentId)
 
       if (appointmentError) {
         console.warn('⚠️ Failed to update appointment status:', appointmentError)
         // Don't fail the request for this
+      } else {
+        console.log('✅ Appointment status updated to:', appointmentUpdateData.status || 'unchanged')
       }
 
       return NextResponse.json({
         success: true,
         message: 'Professional selected successfully',
         selected_interests: updatedInterests,
+        appointment_status: appointmentUpdateData.status || appointment.status,
         action: 'select_professional'
       })
     }
@@ -134,6 +164,18 @@ export async function POST(request, { params }) {
       }
 
       console.log('✅ Interests rejected successfully:', rejectedInterests?.length || 0)
+
+      // Update appointment timestamp but don't change status for rejections
+      const { error: appointmentError } = await supabase
+        .from('appointment')
+        .update({
+          updated_at: new Date().toISOString()
+        })
+        .eq('appointment_id', appointmentId)
+
+      if (appointmentError) {
+        console.warn('⚠️ Failed to update appointment timestamp:', appointmentError)
+      }
 
       return NextResponse.json({
         success: true,
@@ -171,7 +213,7 @@ export async function PUT(request, { params }) {
     const resolvedParams = await params
     const appointmentId = resolvedParams['appointment-id']
     
-    console.log('📝 Resolved appointment ID:', appointmentId)
+    console.log('🔍 Resolved appointment ID:', appointmentId)
     
     if (!appointmentId) {
       console.error('❌ Missing appointment ID')
@@ -185,7 +227,7 @@ export async function PUT(request, { params }) {
     let body
     try {
       body = await request.json()
-      console.log('📝 Request body parsed:', {
+      console.log('🔍 Request body parsed:', {
         action: body.action,
         professional_id: body.professional_id,
         decline_reason: body.decline_reason,
@@ -419,7 +461,7 @@ async function handleDeclineSelection(supabase, interest, body) {
     referral_suggestions = [] 
   } = body
 
-  console.log('📝 Processing decline selection:', {
+  console.log('🔍 Processing decline selection:', {
     interestId: interest.interest_id,
     reason: decline_reason,
     messageLength: decline_message?.length || 0,
@@ -427,10 +469,10 @@ async function handleDeclineSelection(supabase, interest, body) {
   })
 
   try {
-    // ✅ SINGLE-WORD STATUS: Use 'withdrawn' for professional decline
+    // Update interest to withdrawn status
     const updateData = {
-      status: 'withdrawn',                          // ✅ Single-word: professional withdraws interest
-      response: 'declined',                         // ✅ Single-word: response status
+      status: 'withdrawn',                          // Professional withdraws interest
+      response: 'declined',                         // Response status
       rejection_reason: decline_reason,             // Decline reason
       updated_at: new Date().toISOString()         // Updated timestamp
     }
@@ -451,7 +493,7 @@ async function handleDeclineSelection(supabase, interest, body) {
       updateData.customer_notes = JSON.stringify(referralData)
     }
 
-    console.log('📝 Update data prepared:', updateData)
+    console.log('🔍 Update data prepared:', updateData)
 
     // Update the interest record with decline information
     const { data: updatedInterest, error: updateError } = await supabase
@@ -475,17 +517,36 @@ async function handleDeclineSelection(supabase, interest, body) {
 
     console.log('✅ Interest updated successfully')
 
-    // Update appointment status if needed
+    // 🛠️ FIXED: Update appointment status back to competing/interested
+    const { data: otherInterests } = await supabase
+      .from('interest')
+      .select('interest_id')
+      .eq('appointment_id', interest.appointment_id)
+      .not('status', 'in', '(withdrawn,rejected)')
+
+    const remainingInterestsCount = otherInterests?.length || 0
+    
+    let newAppointmentStatus = 'pending'
+    if (remainingInterestsCount > 1) {
+      newAppointmentStatus = 'competing'
+    } else if (remainingInterestsCount === 1) {
+      newAppointmentStatus = 'interested'
+    }
+
     const { error: appointmentError } = await supabase
       .from('appointment')
       .update({
+        status: newAppointmentStatus,  // Revert to appropriate status
+        professional_id: null,        // Clear selected professional
         updated_at: new Date().toISOString()
       })
       .eq('appointment_id', interest.appointment_id)
 
     if (appointmentError) {
-      console.warn('⚠️ Failed to update appointment timestamp:', appointmentError)
+      console.warn('⚠️ Failed to update appointment status:', appointmentError)
       // Don't fail the request for this
+    } else {
+      console.log('✅ Appointment status reverted to:', newAppointmentStatus)
     }
 
     console.log('✅ Professional decline processed successfully')
@@ -494,6 +555,7 @@ async function handleDeclineSelection(supabase, interest, body) {
       success: true,
       message: 'Selection declined successfully',
       interest: updatedInterest,
+      appointment_status: newAppointmentStatus,
       action: 'decline_selection'
     })
 
@@ -511,7 +573,7 @@ async function handleDeclineSelection(supabase, interest, body) {
   }
 }
 
-// ✅ UPDATED handleAcceptSelection - Replace in your route.js
+// 🛠️ FIXED: Updated handleAcceptSelection with proper status transitions
 async function handleAcceptSelection(supabase, interest, body) {
   const { 
     response_message,
@@ -579,8 +641,8 @@ async function handleAcceptSelection(supabase, interest, body) {
       }
     }
 
-    // ✅ Status determination
-    const interestStatus = hasQuoteChanges ? 'updated' : 'confirmed'
+    // 🛠️ FIXED: Status determination using database enum values
+    const interestStatus = hasQuoteChanges ? 'updated' : 'approved'  // Use 'approved' instead of 'confirmed'
     
     console.log('📋 Status determination:', {
       hasQuoteChanges,
@@ -588,7 +650,7 @@ async function handleAcceptSelection(supabase, interest, body) {
       requiresCustomerApproval: hasQuoteChanges
     })
 
-    // ✅ SINGLE-WORD FIELDS: Prepare update data
+    // Prepare update data using single-word fields
     const updateData = {
       response: 'confirmed',
       status: interestStatus,
@@ -600,7 +662,7 @@ async function handleAcceptSelection(supabase, interest, body) {
       updateData.message = response_message
     }
 
-    // ✅ Store original values using single-word fields when quote changes
+    // Store original values using single-word fields when quote changes
     if (hasQuoteChanges) {
       updateData.base = interest.amount                        // original amount
       updateData.hours = interest.estimated_duration_hours     // original duration
@@ -649,7 +711,7 @@ async function handleAcceptSelection(supabase, interest, body) {
       )
     }
 
-    // ✅ Create quote history record using single-word fields
+    // Create quote history record if quote changed
     if (hasQuoteChanges) {
       const { error: historyError } = await supabase
         .from('quote_update_history')
@@ -680,17 +742,18 @@ async function handleAcceptSelection(supabase, interest, body) {
       }
     }
 
-    // Update appointment
+    // 🛠️ FIXED: Update appointment with proper status progression
     const appointmentUpdateData = {
       updated_at: new Date().toISOString()
     }
 
     if (!hasQuoteChanges) {
-      appointmentUpdateData.professional_id = interest.professional_id
-      appointmentUpdateData.status = 'approved'
+      // No quote changes - direct approval
+      appointmentUpdateData.status = 'approved'  // Final approved status
       console.log('✅ Immediate confirmation - no quote changes')
     } else {
-      appointmentUpdateData.status = 'reviewing'
+      // Quote changes - customer needs to review
+      appointmentUpdateData.status = 'reviewing'  // Customer reviewing changes
       console.log('⏳ Pending customer approval - quote changes detected')
     }
 
@@ -745,6 +808,7 @@ async function handleAcceptSelection(supabase, interest, body) {
         ? 'Quote updated successfully. Customer approval required.'
         : 'Selection accepted successfully',
       interest: updatedInterest,
+      appointment_status: appointmentUpdateData.status,
       action: 'accept_selection',
       
       quote_changes: hasQuoteChanges ? {

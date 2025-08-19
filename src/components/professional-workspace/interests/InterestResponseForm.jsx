@@ -1,5 +1,5 @@
 // src/components/professional-workspace/interests/InterestResponseForm.jsx
-// UPDATED with price range support
+// ✅ FIXED: Removed duplicate celebration UI - ProfessionalResponseHandler handles 'selected' status
 
 'use client'
 
@@ -30,7 +30,10 @@ import {
   Trash2,
   CheckCircle,
   Users,
-  Info
+  Info,
+  X,
+  Crown,
+  Heart
 } from "lucide-react"
 
 export default function InterestResponseForm({
@@ -48,7 +51,6 @@ export default function InterestResponseForm({
     modality: interest?.modality || 'none',
     fee: interest?.fee || 0.00,
     amount: interest?.amount || null,
-    // NEW: Price range fields
     price_range_min: interest?.price_range_min || '',
     price_range_max: interest?.price_range_max || '',
     assessment_justification: interest?.assessment_justification || '',
@@ -60,6 +62,50 @@ export default function InterestResponseForm({
 
   const [errors, setErrors] = useState({})
 
+  // ✅ FIXED: Clear component responsibility check
+  console.log('📝 InterestResponseForm Component Scope:', {
+    componentName: 'InterestResponseForm',
+    handlesStatuses: ['interested', 'quoted', 'updated'],
+    doesNotHandle: ['selected'], // ProfessionalResponseHandler handles this
+    currentStatus: interest?.status,
+    shouldRender: ['interested', 'quoted', 'updated'].includes(interest?.status)
+  })
+
+  // ✅ FIXED: Early return for selected status with clear message
+  if (interest?.status === 'selected') {
+    return (
+      <div className="space-y-4">
+        <Alert className="border-blue-200 bg-blue-50">
+          <Crown className="h-4 w-4 text-blue-600" />
+          <AlertDescription>
+            <div className="space-y-2">
+              <div className="font-semibold text-blue-800">🎉 You've Been Selected!</div>
+              <p className="text-blue-700 text-sm">
+                This interest requires a response to the customer's selection. 
+                The system should be using the Professional Response Handler for this status.
+              </p>
+              <div className="text-xs text-blue-600 font-mono mt-2">
+                Component: InterestResponseForm → Should be: ProfessionalResponseHandler
+              </div>
+            </div>
+          </AlertDescription>
+        </Alert>
+        
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={onCancel} className="flex-1">
+            Back to Details
+          </Button>
+          <Button 
+            onClick={() => window.location.reload()} 
+            className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
+          >
+            Refresh to Load Correct Component
+          </Button>
+        </div>
+      </div>
+    )
+  }
+
   // Update form when interest changes
   useEffect(() => {
     if (interest) {
@@ -70,7 +116,6 @@ export default function InterestResponseForm({
         modality: interest.modality || 'none',
         fee: interest.fee || 0.00,
         amount: interest.amount || null,
-        // NEW: Price range fields
         price_range_min: interest.price_range_min || '',
         price_range_max: interest.price_range_max || '',
         assessment_justification: interest.assessment_justification || '',
@@ -95,7 +140,7 @@ export default function InterestResponseForm({
     }
   }, [errors])
 
-  // NEW: Get pricing strategy
+  // Get pricing strategy
   const getPricingStrategy = () => {
     if (!formData.assessment && formData.amount) return 'immediate'
     if (formData.assessment && formData.amount) return 'preliminary'
@@ -104,7 +149,7 @@ export default function InterestResponseForm({
     return 'none'
   }
 
-  // UPDATED: Enhanced validation with price range
+  // Enhanced validation with price range
   const validateForm = useCallback(() => {
     const newErrors = {}
     
@@ -120,7 +165,7 @@ export default function InterestResponseForm({
       newErrors.fee = 'Assessment fee cannot be negative'
     }
 
-    // NEW: Price range validation for assessment-only
+    // Price range validation for assessment-only
     if (formData.assessment && !formData.amount) {
       if (!formData.price_range_min && !formData.price_range_max) {
         newErrors.pricing = 'Please provide either a quote or price range when assessment is required'
@@ -151,7 +196,7 @@ export default function InterestResponseForm({
     return Object.keys(newErrors).length === 0
   }, [formData])
 
-  // UPDATED: Handle form submission with price range
+  // Handle form submission with price range
   const handleSubmit = useCallback(async (e) => {
     e.preventDefault()
     
@@ -161,7 +206,6 @@ export default function InterestResponseForm({
       ...formData,
       amount: formData.amount || null,
       fee: formData.assessment && formData.modality === 'local' ? formData.fee : 0,
-      // NEW: Include price range fields
       price_range_min: formData.price_range_min ? parseFloat(formData.price_range_min) : null,
       price_range_max: formData.price_range_max ? parseFloat(formData.price_range_max) : null,
       assessment_justification: formData.assessment_justification || null,
@@ -183,7 +227,7 @@ export default function InterestResponseForm({
   const minDateTime = new Date().toISOString().slice(0, 16)
   const strategy = getPricingStrategy()
 
-  // Get status configuration
+  // ✅ FIXED: Get status configuration - only for editable statuses
   const getStatusConfig = (status) => {
     switch (status) {
       case 'interested':
@@ -192,29 +236,29 @@ export default function InterestResponseForm({
           variant: 'default',
           description: 'Your interest has been submitted and is waiting for customer review'
         }
-      case 'invited':
-        return { 
-          label: 'Invited to Quote', 
-          variant: 'default',
-          description: 'Customer specifically invited you to provide a quote'
-        }
       case 'quoted':
         return { 
           label: 'Quote Provided', 
           variant: 'default',
           description: 'You have provided a quote to the customer'
         }
-      case 'selected':
+      case 'updated':
         return { 
-          label: 'Selected!', 
+          label: 'Quote Updated', 
           variant: 'default',
-          description: 'Customer has selected you for this project'
+          description: 'You have updated your quote - awaiting customer review'
         }
       case 'rejected':
         return { 
           label: 'Not Selected', 
           variant: 'secondary',
           description: 'Customer selected another professional'
+        }
+      case 'confirmed':
+        return { 
+          label: 'Confirmed', 
+          variant: 'default',
+          description: 'You have confirmed the project'
         }
       case 'withdrawn':
         return { 
@@ -232,7 +276,7 @@ export default function InterestResponseForm({
   }
 
   const statusConfig = getStatusConfig(interest?.status)
-  const canEdit = ['interested', 'invited', 'quoted'].includes(interest?.status)
+  const canEdit = ['interested', 'quoted', 'updated'].includes(interest?.status)
 
   return (
     <div className="space-y-6">
@@ -242,7 +286,7 @@ export default function InterestResponseForm({
           <CardTitle className="text-base flex items-center gap-2">
             <Target className="h-4 w-4" />
             Interest Status
-            {/* NEW: Show pricing strategy badge */}
+            {/* Show pricing strategy badge */}
             <Badge variant="outline" className="ml-2">
               {strategy === 'immediate' && 'Immediate Quote'}
               {strategy === 'preliminary' && 'Preliminary + Assessment'}
@@ -280,25 +324,29 @@ export default function InterestResponseForm({
         </CardContent>
       </Card>
 
+      {/* ✅ REMOVED: All celebration UI for selected status - ProfessionalResponseHandler handles this */}
+
       {/* Cannot Edit Warning */}
-      {!canEdit && (
+      {!canEdit && !['selected'].includes(interest?.status) && (
         <Alert>
           <AlertTriangle className="h-4 w-4" />
           <AlertDescription>
-            {interest?.status === 'selected' ? 
-              'Congratulations! You have been selected. The customer may contact you soon.' :
+            {interest?.status === 'confirmed' ? 
+              'You have confirmed this project. The customer may contact you soon.' :
               interest?.status === 'withdrawn' ?
               'You have withdrawn your interest in this project.' :
+              interest?.status === 'rejected' ?
+              'The customer selected another professional for this project.' :
               'This interest can no longer be edited due to its current status.'
             }
           </AlertDescription>
         </Alert>
       )}
 
-      {/* Update Form */}
+      {/* Update Form - Only show for editable statuses */}
       {canEdit && (
         <form onSubmit={handleSubmit} className="space-y-6">
-          {/* UPDATED: Pricing Strategy with price range */}
+          {/* Pricing Strategy */}
           <Card>
             <CardHeader className="pb-3">
               <CardTitle className="text-base flex items-center gap-2">
@@ -342,7 +390,7 @@ export default function InterestResponseForm({
                 )}
               </div>
 
-              {/* NEW: Price Range (when assessment but no quote) */}
+              {/* Price Range (when assessment but no quote) */}
               {formData.assessment && !formData.amount && (
                 <div className="space-y-4 p-4 border border-amber-200 bg-amber-50 rounded-md">
                   <div className="flex items-center gap-2">
@@ -379,7 +427,6 @@ export default function InterestResponseForm({
                   {errors.price_range_max && (
                     <p className="text-sm text-destructive">{errors.price_range_max}</p>
                   )}
-                  {/* Show current range if exists */}
                   {(interest?.price_range_min || interest?.price_range_max) && (
                     <p className="text-xs text-muted-foreground">
                       Current range: JMD ${interest.price_range_min || '?'} - ${interest.price_range_max || '?'}
@@ -475,7 +522,6 @@ export default function InterestResponseForm({
                     </div>
                   )}
 
-                  {/* NEW: Assessment justification for assessment-only */}
                   {!formData.amount && (
                     <div className="space-y-2">
                       <Label htmlFor="assessment_justification">
@@ -626,8 +672,8 @@ export default function InterestResponseForm({
         </form>
       )}
 
-      {/* Read-only view for non-editable statuses */}
-      {!canEdit && (
+      {/* Read-only view for non-editable statuses (except selected which should use ProfessionalResponseHandler) */}
+      {!canEdit && interest?.status !== 'selected' && (
         <div className="space-y-6">
           {/* Current Details */}
           <Card>
@@ -643,7 +689,7 @@ export default function InterestResponseForm({
                 </div>
               )}
 
-              {/* NEW: Price Range Display */}
+              {/* Price Range Display */}
               {!interest?.amount && (interest?.price_range_min || interest?.price_range_max) && (
                 <div className="flex justify-between items-center py-2 border-b">
                   <span className="font-medium text-muted-foreground">Price Range</span>
@@ -675,7 +721,7 @@ export default function InterestResponseForm({
                 </div>
               )}
 
-              {/* NEW: Assessment Justification Display */}
+              {/* Assessment Justification Display */}
               {interest?.assessment_justification && (
                 <div className="space-y-2">
                   <span className="font-medium text-muted-foreground">Assessment Justification</span>
@@ -715,63 +761,62 @@ export default function InterestResponseForm({
             </CardContent>
           </Card>
 
-          {/* Actions for selected interests */}
-          {interest?.status === 'selected' && (
+          {/* Actions for rejected interests */}
+          {interest?.status === 'rejected' && (
             <Card>
               <CardHeader className="pb-3">
                 <CardTitle className="text-base flex items-center gap-2">
-                  <CheckCircle className="h-4 w-4 text-green-600" />
-                  Congratulations - You've Been Selected!
+                  <X className="h-4 w-4 text-red-600" />
+                  Not Selected This Time
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <Alert>
                   <Users className="h-4 w-4" />
                   <AlertDescription>
-                    The customer has selected you for this project! You should receive further 
-                    communication about next steps. If you need to reach out, you can contact 
-                    the customer directly or wait for them to initiate the booking process.
+                    The customer selected another professional for this project. Don't be discouraged - 
+                    this is part of the competitive process. Keep improving your proposals!
                   </AlertDescription>
                 </Alert>
                 
                 <div className="flex gap-2">
-                  <Button variant="default" className="gap-2">
-                    <Edit className="h-4 w-4" />
-                    Contact Customer
+                  <Button variant="outline" className="gap-2">
+                    <Heart className="h-4 w-4" />
+                    View Similar Projects
                   </Button>
                   <Button variant="outline">
-                    View Project Details
+                    Improve Profile
                   </Button>
                 </div>
               </CardContent>
             </Card>
           )}
 
-          {/* Actions for invited interests */}
-          {interest?.status === 'invited' && (
+          {/* Actions for confirmed interests */}
+          {interest?.status === 'confirmed' && (
             <Card>
               <CardHeader className="pb-3">
                 <CardTitle className="text-base flex items-center gap-2">
-                  <Users className="h-4 w-4 text-blue-600" />
-                  You've Been Invited to Quote
+                  <CheckCircle className="h-4 w-4 text-green-600" />
+                  Project Confirmed
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <Alert>
-                  <Users className="h-4 w-4" />
-                  <AlertDescription>
-                    The customer has specifically invited you to provide a quote for this project. 
-                    This is a great opportunity to showcase your expertise!
+                <Alert className="border-green-200 bg-green-50">
+                  <CheckCircle className="h-4 w-4 text-green-600" />
+                  <AlertDescription className="text-green-700">
+                    <strong>Project Confirmed:</strong> You have confirmed this project. 
+                    The customer has been notified and may contact you soon to coordinate next steps.
                   </AlertDescription>
                 </Alert>
                 
                 <div className="flex gap-2">
-                  <Button variant="default" className="gap-2">
-                    <Edit className="h-4 w-4" />
-                    Update Quote
+                  <Button variant="outline" className="gap-2">
+                    <Users className="h-4 w-4" />
+                    Contact Customer
                   </Button>
                   <Button variant="outline">
-                    Contact Customer
+                    View Project Details
                   </Button>
                 </div>
               </CardContent>

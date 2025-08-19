@@ -4,6 +4,9 @@
 import { useState, useEffect } from 'react'
 import { useSupabaseClient } from '@supabase/auth-helpers-react'
 import { useUserStore } from '@/store/userStore'
+import { Button } from '@/components/ui/button'
+import { Alert, AlertDescription } from '@/components/ui/alert'
+import { AlertCircle, Loader2, Clock, User } from 'lucide-react'
 import AvailabilityManager from '@/components/professional-workspace/availability/AvailabilityManager'
 
 export default function AvailabilityPage() {
@@ -88,69 +91,156 @@ export default function AvailabilityPage() {
     }
   }, [professionalId, supabase, user?.profile])
 
-  // Show loading while user data is being fetched
+  // Mobile Loading State
   if (isLoading || !user) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-foreground mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Loading your workspace...</p>
+      <div className="min-h-screen bg-background">
+        <div className="flex flex-col items-center justify-center min-h-[60vh] p-4">
+          <div className="text-center space-y-4">
+            <div className="flex items-center justify-center w-16 h-16 rounded-full bg-muted">
+              <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+            </div>
+            <div>
+              <h2 className="text-lg font-semibold text-foreground mb-2">Loading Workspace</h2>
+              <p className="text-sm text-muted-foreground">Setting up your availability management...</p>
+            </div>
+          </div>
         </div>
       </div>
     )
   }
 
-  // Check if user has professional profile
+  // Mobile Professional Profile Required State
   if (!professionalId) {
     return (
-      <div className="container py-8">
-        <div className="text-center max-w-md mx-auto">
-          <h2 className="text-xl font-semibold text-foreground mb-4">Professional Profile Required</h2>
-          <p className="text-muted-foreground mb-6">
-            No professional profile found. Please complete your registration to manage availability.
-          </p>
-          <button 
+      <div className="min-h-screen bg-background">
+        <div className="p-4">
+          {/* Mobile Header */}
+          <div className="text-center py-8">
+            <div className="flex items-center justify-center w-16 h-16 rounded-full bg-amber-100 mx-auto mb-4">
+              <User className="h-8 w-8 text-amber-600" />
+            </div>
+            <h1 className="text-xl font-bold text-foreground mb-2">Professional Profile Required</h1>
+            <p className="text-muted-foreground text-sm mb-6">
+              Complete your professional registration to manage your availability and start booking appointments.
+            </p>
+          </div>
+
+          {/* Mobile Alert */}
+          <Alert className="mb-6">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription className="text-sm">
+              No professional profile found. You need to complete your registration to access availability management.
+            </AlertDescription>
+          </Alert>
+
+          {/* Mobile Action Button */}
+          <Button 
             onClick={() => window.location.href = '/professional/account-information'}
-            className="bg-primary text-primary-foreground px-4 py-2 rounded-md hover:bg-primary/90 transition-colors"
+            className="w-full h-12 text-base"
+            size="lg"
           >
-            Complete Profile
-          </button>
+            Complete Profile Setup
+          </Button>
+
+          {/* Mobile Help Section */}
+          <div className="mt-8 p-4 bg-muted/50 rounded-lg">
+            <h3 className="font-semibold text-foreground mb-2">Why do I need this?</h3>
+            <ul className="text-sm text-muted-foreground space-y-1">
+              <li>• Set your working hours and availability</li>
+              <li>• Allow customers to book appointments</li>
+              <li>• Manage your professional schedule</li>
+              <li>• Control booking preferences and rules</li>
+            </ul>
+          </div>
         </div>
       </div>
     )
   }
 
-  // Show loading while availability data loads
+  // Mobile Data Loading State
   if (availabilityData.loading) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-foreground mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Loading availability settings...</p>
+      <div className="min-h-screen bg-background">
+        <div className="flex flex-col items-center justify-center min-h-[60vh] p-4">
+          <div className="text-center space-y-4">
+            <div className="flex items-center justify-center w-16 h-16 rounded-full bg-muted">
+              <Clock className="h-8 w-8 text-muted-foreground" />
+            </div>
+            <div>
+              <h2 className="text-lg font-semibold text-foreground mb-2">Loading Availability</h2>
+              <p className="text-sm text-muted-foreground">Fetching your schedule settings...</p>
+            </div>
+            <div className="w-48 h-2 bg-muted rounded-full overflow-hidden">
+              <div className="h-full bg-primary rounded-full animate-pulse" style={{ width: '60%' }}></div>
+            </div>
+          </div>
         </div>
       </div>
     )
   }
 
-  // Show error if data loading failed
+  // Mobile Error State
   if (availabilityData.error) {
     return (
-      <div className="container py-8">
-        <div className="text-center max-w-md mx-auto">
-          <h2 className="text-xl font-semibold text-foreground mb-4">Error Loading Availability</h2>
-          <p className="text-muted-foreground mb-6">{availabilityData.error}</p>
-          <button 
-            onClick={() => window.location.reload()}
-            className="bg-primary text-primary-foreground px-4 py-2 rounded-md hover:bg-primary/90 transition-colors"
-          >
-            Try Again
-          </button>
+      <div className="min-h-screen bg-background">
+        <div className="p-4">
+          {/* Mobile Error Header */}
+          <div className="text-center py-8">
+            <div className="flex items-center justify-center w-16 h-16 rounded-full bg-red-100 mx-auto mb-4">
+              <AlertCircle className="h-8 w-8 text-red-600" />
+            </div>
+            <h1 className="text-xl font-bold text-foreground mb-2">Error Loading Availability</h1>
+            <p className="text-muted-foreground text-sm mb-6">
+              We encountered an issue while loading your availability settings.
+            </p>
+          </div>
+
+          {/* Mobile Error Alert */}
+          <Alert variant="destructive" className="mb-6">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription className="text-sm">
+              {availabilityData.error}
+            </AlertDescription>
+          </Alert>
+
+          {/* Mobile Action Buttons */}
+          <div className="space-y-3">
+            <Button 
+              onClick={() => window.location.reload()}
+              className="w-full h-12 text-base"
+              size="lg"
+            >
+              <Loader2 className="h-4 w-4 mr-2" />
+              Try Again
+            </Button>
+            
+            <Button 
+              variant="outline"
+              onClick={() => window.location.href = '/professional/workspace'}
+              className="w-full h-12 text-base"
+              size="lg"
+            >
+              Back to Workspace
+            </Button>
+          </div>
+
+          {/* Mobile Troubleshooting */}
+          <div className="mt-8 p-4 bg-muted/50 rounded-lg">
+            <h3 className="font-semibold text-foreground mb-2">Troubleshooting</h3>
+            <ul className="text-sm text-muted-foreground space-y-1">
+              <li>• Check your internet connection</li>
+              <li>• Refresh the page</li>
+              <li>• Try again in a few moments</li>
+              <li>• Contact support if the issue persists</li>
+            </ul>
+          </div>
         </div>
       </div>
     )
   }
 
-  // Render the availability manager
+  // Render the mobile-optimized availability manager
   return (
     <AvailabilityManager
       initialAvailability={availabilityData.availability}

@@ -1,4 +1,5 @@
-// app/(auth)/register/customer/CustomerAccountCreationForm.jsx
+// ===== BEST PRACTICE CustomerAccountCreationForm.jsx =====
+// Production-ready, accessible, mobile-first responsive design
 'use client'
 
 import { useState, useEffect } from 'react'
@@ -16,7 +17,152 @@ import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
 
+// Separate Features Component for better organization
+function TrustFeatures() {
+  const features = [
+    {
+      icon: Shield,
+      title: 'Honest work',
+      desc: 'Every professional is thoroughly vetted for quality and reliability.'
+    },
+    {
+      icon: CreditCard,
+      title: 'Safe payment',
+      desc: 'Book services within minutes, not days.'
+    },
+    {
+      icon: Check,
+      title: 'Clarity',
+      desc: 'No sudden fees - clear pricing.'
+    },
+    {
+      icon: Star,
+      title: 'Selection',
+      desc: 'Select from the 1% of professionals.'
+    }
+  ]
+
+  return (
+    <section className="space-y-6 lg:space-y-8" aria-labelledby="trust-features-heading">
+      <header>
+        <h2 id="trust-features-heading" className="text-2xl sm:text-3xl lg:text-4xl font-bold text-foreground">
+          Workers you can trust
+        </h2>
+      </header>
+      
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 lg:gap-6">
+        {features.map((feature, index) => {
+          const IconComponent = feature.icon
+          return (
+            <article key={index} className="space-y-3">
+              <div className="w-12 h-12 lg:w-14 lg:h-14 bg-primary/10 rounded-xl flex items-center justify-center">
+                <IconComponent className="w-6 h-6 lg:w-7 lg:h-7 text-primary" aria-hidden="true" />
+              </div>
+              <h3 className="font-semibold text-base lg:text-lg text-foreground">{feature.title}</h3>
+              <p className="text-muted-foreground text-sm lg:text-base leading-relaxed">{feature.desc}</p>
+            </article>
+          )
+        })}
+      </div>
+    </section>
+  )
+}
+
+// Progress Steps Component
+function ProgressSteps({ currentStep, steps }) {
+  return (
+    <div className="space-y-4" role="progressbar" aria-valuenow={currentStep} aria-valuemin={1} aria-valuemax={4}>
+      <Progress value={((currentStep - 1) / 3) * 100} className="h-2" aria-label={`Step ${currentStep} of 4`} />
+      <nav aria-label="Registration steps">
+        <ol className="flex justify-between">
+          {steps.map((step) => (
+            <li key={step.number} className="flex flex-col items-center space-y-2">
+              <div 
+                className={`w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center text-sm font-medium transition-colors duration-200 ${
+                  currentStep >= step.number 
+                    ? 'bg-primary text-primary-foreground' 
+                    : 'bg-muted text-muted-foreground'
+                }`}
+                aria-current={currentStep === step.number ? "step" : undefined}
+              >
+                {step.number}
+              </div>
+              <span className="text-xs sm:text-sm text-muted-foreground font-medium">{step.label}</span>
+            </li>
+          ))}
+        </ol>
+      </nav>
+    </div>
+  )
+}
+
+// Password Strength Indicator Component
+function PasswordStrengthIndicator({ password, strength }) {
+  const getPasswordStrengthInfo = () => {
+    if (password.length === 0) return { color: 'bg-muted', text: '', width: 0 }
+    
+    switch (strength) {
+      case 1: return { color: 'bg-red-500', text: 'Very Weak', width: 16 }
+      case 2: return { color: 'bg-red-400', text: 'Weak', width: 33 }
+      case 3: return { color: 'bg-yellow-500', text: 'Fair', width: 50 }
+      case 4: return { color: 'bg-yellow-400', text: 'Good', width: 66 }
+      case 5: return { color: 'bg-green-400', text: 'Strong', width: 83 }
+      case 6: return { color: 'bg-green-500', text: 'Very Strong', width: 100 }
+      default: return { color: 'bg-muted', text: '', width: 0 }
+    }
+  }
+  
+  const strengthInfo = getPasswordStrengthInfo()
+
+  if (!password) return null
+
+  return (
+    <div className="space-y-2" role="meter" aria-valuenow={strength} aria-valuemin={0} aria-valuemax={6}>
+      <div className="flex items-center space-x-3">
+        <div className="flex-1 bg-muted rounded-full h-2">
+          <div 
+            className={`h-2 rounded-full transition-all duration-300 ${strengthInfo.color}`}
+            style={{ width: `${strengthInfo.width}%` }}
+          />
+        </div>
+        {strengthInfo.text && (
+          <Badge variant="outline" className="text-xs">
+            {strengthInfo.text}
+          </Badge>
+        )}
+      </div>
+      <p className="text-xs text-muted-foreground">
+        Password must be at least 8 characters with uppercase, lowercase, number, and special character.
+      </p>
+    </div>
+  )
+}
+
+// Form Field Component
+function FormField({ label, error, touched, children, required = false, description }) {
+  const hasError = error && touched
+  
+  return (
+    <div className="space-y-2">
+      <Label className="text-sm font-medium text-foreground">
+        {label}
+        {required && <span className="text-destructive ml-1" aria-label="required">*</span>}
+      </Label>
+      {children}
+      {hasError && (
+        <p className="text-sm text-destructive" role="alert" aria-live="polite">
+          {error}
+        </p>
+      )}
+      {description && !hasError && (
+        <p className="text-xs text-muted-foreground">{description}</p>
+      )}
+    </div>
+  )
+}
+
 export default function CustomerAccountCreationForm({ errorMessage }) {
+  // State management
   const [currentStep, setCurrentStep] = useState(1)
   const [formData, setFormData] = useState({
     firstName: '',
@@ -37,16 +183,7 @@ export default function CustomerAccountCreationForm({ errorMessage }) {
     rawGoogleData: null
   })
   
-  const [errors, setErrors] = useState({
-    firstName: '',
-    lastName: '',
-    email: '',
-    phone: '',
-    gender: '',
-    password: '',
-    confirmPassword: ''
-  })
-  
+  const [errors, setErrors] = useState({})
   const [passwordStrength, setPasswordStrength] = useState(0)
   const [touchedFields, setTouchedFields] = useState({})
   const [isAnimating, setIsAnimating] = useState(false)
@@ -54,24 +191,29 @@ export default function CustomerAccountCreationForm({ errorMessage }) {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [isChecking, setIsChecking] = useState(false)
 
-  // Update form data
+  const steps = [
+    { number: 1, label: 'Account' },
+    { number: 2, label: 'Identity' },
+    { number: 3, label: 'Contact' },
+    { number: 4, label: 'Address' }
+  ]
+
+  // Form utilities
   const updateFormData = (field, value) => {
     setFormData(prev => ({ ...prev, [field]: value }))
     setTouchedFields(prev => ({ ...prev, [field]: true }))
     
-    // Clear error when user is typing if the input now passes validation
     const error = validateField(field, value)
     if (!error) {
       setErrors(prev => ({ ...prev, [field]: '' }))
     }
   }
 
-  // Handle input change for text inputs
   const handleInputChange = (e) => {
     updateFormData(e.target.name, e.target.value)
   }
 
-  // Validate a specific field
+  // Validation logic
   const validateField = (name, value) => {
     let error = ''
     
@@ -139,7 +281,7 @@ export default function CustomerAccountCreationForm({ errorMessage }) {
     return error
   }
 
-  // Calculate password strength on password change
+  // Password strength calculation
   useEffect(() => {
     const password = formData.password
     let strength = 0
@@ -153,7 +295,6 @@ export default function CustomerAccountCreationForm({ errorMessage }) {
     
     setPasswordStrength(strength)
     
-    // Also validate confirm password field if it has a value
     if (formData.confirmPassword) {
       setErrors(prev => ({
         ...prev,
@@ -162,6 +303,7 @@ export default function CustomerAccountCreationForm({ errorMessage }) {
     }
   }, [formData.password, formData.confirmPassword])
 
+  // Email checking
   const checkEmail = async (email) => {
     const data = new FormData()
     data.append('email', email)
@@ -179,7 +321,7 @@ export default function CustomerAccountCreationForm({ errorMessage }) {
     return ''
   }
 
-  // Validate fields before moving to next step
+  // Step validation
   const validateStep = async (step) => {
     let isValid = true
     let newErrors = { ...errors }
@@ -228,10 +370,10 @@ export default function CustomerAccountCreationForm({ errorMessage }) {
     return isValid
   }
 
+  // Navigation
   const nextStep = async () => {
     setIsChecking(true)
     
-    // Mark fields as touched
     if (currentStep === 1) {
       setTouchedFields(prev => ({
         ...prev,
@@ -273,6 +415,7 @@ export default function CustomerAccountCreationForm({ errorMessage }) {
     }, 300)
   }
 
+  // Form submission
   const handleSubmit = async (e) => {
     e.preventDefault()
     
@@ -300,426 +443,363 @@ export default function CustomerAccountCreationForm({ errorMessage }) {
     await signupCustomer(submitData)
   }
 
-  // Get strength color and text
-  const getPasswordStrengthInfo = () => {
-    if (formData.password.length === 0) return { color: 'bg-muted', text: '', width: 0 }
-    
-    switch (passwordStrength) {
-      case 1:
-        return { color: 'bg-red-500', text: 'Very Weak', width: 16 }
-      case 2:
-        return { color: 'bg-red-400', text: 'Weak', width: 33 }
-      case 3:
-        return { color: 'bg-yellow-500', text: 'Fair', width: 50 }
-      case 4:
-        return { color: 'bg-yellow-400', text: 'Good', width: 66 }
-      case 5:
-        return { color: 'bg-green-400', text: 'Strong', width: 83 }
-      case 6:
-        return { color: 'bg-green-500', text: 'Very Strong', width: 100 }
-      default:
-        return { color: 'bg-muted', text: '', width: 0 }
-    }
-  }
-  
-  const strengthInfo = getPasswordStrengthInfo()
-
-  // Features data
-  const features = [
-    {
-      icon: Shield,
-      title: 'Honest work',
-      desc: 'Every professional is thoroughly vetted for quality and reliability.'
-    },
-    {
-      icon: CreditCard,
-      title: 'Safe payment',
-      desc: 'Book services within minutes, not days.'
-    },
-    {
-      icon: Check,
-      title: 'Clarity',
-      desc: 'No sudden fees - clear pricing.'
-    },
-    {
-      icon: Star,
-      title: 'Selection',
-      desc: 'Select from the 1% of professionals.'
-    }
-  ]
-
-  const steps = [
-    { number: 1, label: 'Account' },
-    { number: 2, label: 'Identity' },
-    { number: 3, label: 'Contact' },
-    { number: 4, label: 'Address' }
-  ]
-
   return (
-    <div className="min-h-screen bg-background py-8 px-4">
-      <div className="container mx-auto max-w-6xl">
-        <div className="grid lg:grid-cols-2 gap-12 items-center">
-          {/* Left Column - Features */}
-          <div className="space-y-8">
-            <div>
-              <h2 className="text-3xl font-bold mb-4">Workers you can trust</h2>
+    <div className="bg-background">
+      {/* Mobile-first responsive container */}
+      <div className="min-h-screen px-4 py-6 sm:py-8 lg:py-12">
+        <div className="mx-auto max-w-7xl">
+          
+          {/* Main content grid - mobile-first approach */}
+          <div className="space-y-8 lg:space-y-0 lg:grid lg:grid-cols-12 lg:gap-12 lg:items-start">
+            
+            {/* Features section - hidden on mobile, shown on lg+ */}
+            <div className="hidden lg:block lg:col-span-5 lg:sticky lg:top-8">
+              <TrustFeatures />
             </div>
             
-            <div className="grid md:grid-cols-2 gap-6">
-              {features.map((feature, index) => {
-                const IconComponent = feature.icon
-                return (
-                  <div key={index} className="space-y-3">
-                    <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
-                      <IconComponent className="w-6 h-6 text-primary" />
+            {/* Form section - full width on mobile, constrained on desktop */}
+            <div className="lg:col-span-7">
+              <div className="mx-auto max-w-2xl">
+                <Card className="shadow-lg border-0 sm:border sm:shadow-sm">
+                  <CardHeader className="text-center space-y-2 p-6 sm:p-8">
+                    <CardTitle className="text-2xl sm:text-3xl font-bold">Create an Account</CardTitle>
+                    <CardDescription className="text-base text-muted-foreground">
+                      Join our platform to find trusted professionals
+                    </CardDescription>
+                  </CardHeader>
+                  
+                  <CardContent className="p-6 sm:p-8 pt-0">
+                    <div className="space-y-8">
+                      
+                      {/* Progress indicator */}
+                      <ProgressSteps currentStep={currentStep} steps={steps} />
+
+                      {/* Form content with smooth transitions */}
+                      <form onSubmit={currentStep === 4 ? handleSubmit : e => e.preventDefault()}>
+                        <div className={`space-y-6 transition-opacity duration-300 ${isAnimating ? 'opacity-0' : 'opacity-100'}`}>
+                          
+                          {/* Step 1: Account Creation */}
+                          {currentStep === 1 && (
+                            <div className="space-y-6" role="tabpanel" aria-labelledby="step-1">
+                              <header className="space-y-2 text-center">
+                                <h3 id="step-1" className="text-xl font-semibold">Create your customer account</h3>
+                                <p className="text-sm text-muted-foreground">
+                                  Already have an account?{" "}
+                                  <Link href="/login" className="text-primary hover:text-primary/80 font-medium transition-colors">
+                                    Log In!
+                                  </Link>
+                                </p>
+                              </header>
+                              
+                              <FormField
+                                label="Email"
+                                error={errors.email}
+                                touched={touchedFields.email}
+                                required
+                                description="We'll never share your email with anyone else."
+                              >
+                                <Input
+                                  id="email"
+                                  name="email"
+                                  type="email"
+                                  value={formData.email}
+                                  onChange={handleInputChange}
+                                  className={`h-12 ${errors.email && touchedFields.email ? 'border-destructive focus:border-destructive' : ''}`}
+                                  placeholder="your@email.com"
+                                  autoComplete="email"
+                                  aria-describedby="email-description"
+                                />
+                              </FormField>
+                              
+                              <FormField
+                                label="Password"
+                                error={errors.password}
+                                touched={touchedFields.password}
+                                required
+                              >
+                                <div className="space-y-3">
+                                  <div className="relative">
+                                    <Input
+                                      id="password"
+                                      name="password"
+                                      type={showPassword ? "text" : "password"}
+                                      value={formData.password}
+                                      onChange={handleInputChange}
+                                      className={`h-12 pr-12 ${errors.password && touchedFields.password ? 'border-destructive focus:border-destructive' : ''}`}
+                                      placeholder="Enter your password"
+                                      autoComplete="new-password"
+                                    />
+                                    <Button
+                                      type="button"
+                                      variant="ghost"
+                                      size="sm"
+                                      className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
+                                      onClick={() => setShowPassword(!showPassword)}
+                                      aria-label={showPassword ? "Hide password" : "Show password"}
+                                    >
+                                      {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                                    </Button>
+                                  </div>
+                                  <PasswordStrengthIndicator password={formData.password} strength={passwordStrength} />
+                                </div>
+                              </FormField>
+                              
+                              <FormField
+                                label="Confirm Password"
+                                error={errors.confirmPassword}
+                                touched={touchedFields.confirmPassword}
+                                required
+                              >
+                                <div className="relative">
+                                  <Input
+                                    id="confirmPassword"
+                                    name="confirmPassword"
+                                    type={showConfirmPassword ? "text" : "password"}
+                                    value={formData.confirmPassword}
+                                    onChange={handleInputChange}
+                                    className={`h-12 pr-12 ${errors.confirmPassword && touchedFields.confirmPassword ? 'border-destructive focus:border-destructive' : ''}`}
+                                    placeholder="Confirm your password"
+                                    autoComplete="new-password"
+                                  />
+                                  <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="sm"
+                                    className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
+                                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                                    aria-label={showConfirmPassword ? "Hide password confirmation" : "Show password confirmation"}
+                                  >
+                                    {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                                  </Button>
+                                </div>
+                              </FormField>
+                              
+                              <Button
+                                type="button"
+                                onClick={nextStep}
+                                disabled={isChecking || isAnimating}
+                                className="w-full h-12 text-base"
+                              >
+                                {isChecking ? (
+                                  <>
+                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                    Checking...
+                                  </>
+                                ) : (
+                                  <>
+                                    Continue
+                                    <ArrowRight className="ml-2 h-4 w-4" />
+                                  </>
+                                )}
+                              </Button>
+                            </div>
+                          )}
+                          
+                          {/* Step 2: Profile Information */}
+                          {currentStep === 2 && (
+                            <div className="space-y-6" role="tabpanel" aria-labelledby="step-2">
+                              <header className="text-center">
+                                <h3 id="step-2" className="text-xl font-semibold">Your Profile</h3>
+                              </header>
+                              
+                              <FormField
+                                label="First Name"
+                                error={errors.firstName}
+                                touched={touchedFields.firstName}
+                                required
+                              >
+                                <Input
+                                  id="firstName"
+                                  name="firstName"
+                                  value={formData.firstName}
+                                  onChange={handleInputChange}
+                                  className={`h-12 ${errors.firstName && touchedFields.firstName ? 'border-destructive focus:border-destructive' : ''}`}
+                                  placeholder="Enter your first name"
+                                  autoComplete="given-name"
+                                />
+                              </FormField>
+                              
+                              <FormField
+                                label="Last Name"
+                                error={errors.lastName}
+                                touched={touchedFields.lastName}
+                                required
+                              >
+                                <Input
+                                  id="lastName"
+                                  name="lastName"
+                                  value={formData.lastName}
+                                  onChange={handleInputChange}
+                                  className={`h-12 ${errors.lastName && touchedFields.lastName ? 'border-destructive focus:border-destructive' : ''}`}
+                                  placeholder="Enter your last name"
+                                  autoComplete="family-name"
+                                />
+                              </FormField>
+                              
+                              <FormField
+                                label="Gender"
+                                error={errors.gender}
+                                touched={touchedFields.gender}
+                                required
+                              >
+                                <Select
+                                  value={formData.gender}
+                                  onValueChange={(value) => updateFormData('gender', value)}
+                                >
+                                  <SelectTrigger className={`h-12 ${errors.gender && touchedFields.gender ? 'border-destructive focus:border-destructive' : ''}`}>
+                                    <SelectValue placeholder="Select gender" />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="male">Male</SelectItem>
+                                    <SelectItem value="female">Female</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              </FormField>
+                              
+                              <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
+                                <Button
+                                  type="button"
+                                  variant="outline"
+                                  onClick={prevStep}
+                                  disabled={isAnimating}
+                                  className="h-12 text-base order-2 sm:order-1 sm:w-auto"
+                                >
+                                  <ArrowLeft className="mr-2 h-4 w-4" />
+                                  Back
+                                </Button>
+                                <Button
+                                  type="button"
+                                  onClick={nextStep}
+                                  disabled={isAnimating}
+                                  className="h-12 text-base flex-1 order-1 sm:order-2"
+                                >
+                                  Continue
+                                  <ArrowRight className="ml-2 h-4 w-4" />
+                                </Button>
+                              </div>
+                            </div>
+                          )}
+                          
+                          {/* Step 3: Contact Information */}
+                          {currentStep === 3 && (
+                            <div className="space-y-6" role="tabpanel" aria-labelledby="step-3">
+                              <header className="text-center">
+                                <h3 id="step-3" className="text-xl font-semibold">Contact Information</h3>
+                              </header>
+                              
+                              <FormField
+                                label="Phone Number"
+                                error={errors.phone}
+                                touched={touchedFields.phone}
+                                required
+                                description="Format: 123-456-7890 or (123) 456-7890"
+                              >
+                                <Input
+                                  id="phone"
+                                  name="phone"
+                                  type="tel"
+                                  value={formData.phone}
+                                  onChange={handleInputChange}
+                                  className={`h-12 ${errors.phone && touchedFields.phone ? 'border-destructive focus:border-destructive' : ''}`}
+                                  placeholder="123-456-7890"
+                                  autoComplete="tel"
+                                />
+                              </FormField>
+                              
+                              <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
+                                <Button
+                                  type="button"
+                                  variant="outline"
+                                  onClick={prevStep}
+                                  disabled={isAnimating}
+                                  className="h-12 text-base order-2 sm:order-1 sm:w-auto"
+                                >
+                                  <ArrowLeft className="mr-2 h-4 w-4" />
+                                  Back
+                                </Button>
+                                <Button
+                                  type="button"
+                                  onClick={nextStep}
+                                  disabled={isAnimating}
+                                  className="h-12 text-base flex-1 order-1 sm:order-2"
+                                >
+                                  Continue
+                                  <ArrowRight className="ml-2 h-4 w-4" />
+                                </Button>
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Step 4: Address Information */}
+                          {currentStep === 4 && (
+                            <div className="space-y-6" role="tabpanel" aria-labelledby="step-4">
+                              <header className="text-center">
+                                <h3 id="step-4" className="text-xl font-semibold">Address Information</h3>
+                              </header>
+
+                              <Address onSelect={(place) => {
+                                const getComponent = (type) =>
+                                  place.address_components?.find(c => c.types.includes(type))?.long_name || ''
+
+                                const location = place.geometry.location
+
+                                const updatedAddress = {
+                                  formattedAddress: place.formatted_address,
+                                  placeId: place.place_id,
+                                  latitude: location.lat(),
+                                  longitude: location.lng(),
+                                  street: getComponent('route'),
+                                  city: getComponent('locality') || getComponent('sublocality'),
+                                  parish: getComponent('administrative_area_level_1'),
+                                  country: getComponent('country'),
+                                  rawGoogleData: place
+                                }
+
+                                setFormData(prev => ({ ...prev, ...updatedAddress }))
+                              }} />
+
+                              <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
+                                <Button
+                                  type="button"
+                                  variant="outline"
+                                  onClick={prevStep}
+                                  disabled={isAnimating}
+                                  className="h-12 text-base order-2 sm:order-1 sm:w-auto"
+                                >
+                                  <ArrowLeft className="mr-2 h-4 w-4" />
+                                  Back
+                                </Button>
+                                <Button
+                                  type="submit"
+                                  disabled={isAnimating}
+                                  className="h-12 text-base flex-1 order-1 sm:order-2"
+                                >
+                                  Create Account
+                                  <ArrowRight className="ml-2 h-4 w-4" />
+                                </Button>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </form>
+                      
+                      {/* Global error message */}
+                      {errorMessage && (
+                        <Alert variant="destructive" role="alert">
+                          <AlertDescription>{errorMessage}</AlertDescription>
+                        </Alert>
+                      )}
                     </div>
-                    <h5 className="font-semibold">{feature.title}</h5>
-                    <p className="text-muted-foreground text-sm">{feature.desc}</p>
-                  </div>
-                )
-              })}
+                  </CardContent>
+                </Card>
+              </div>
+            </div>
+            
+            {/* Mobile features section - shown at bottom on mobile */}
+            <div className="lg:hidden">
+              <TrustFeatures />
             </div>
           </div>
-
-          {/* Right Column - Form */}
-          <Card className="w-full">
-            <CardHeader className="text-center">
-              <CardTitle className="text-2xl">Create an Account</CardTitle>
-              <CardDescription>Join our platform to find trusted professionals</CardDescription>
-            </CardHeader>
-            
-            <CardContent className="space-y-6">
-              {/* Progress indicator */}
-              <div className="space-y-4">
-                <Progress value={((currentStep - 1) / 3) * 100} className="h-2" />
-                <div className="flex justify-between">
-                  {steps.map((step) => (
-                    <div key={step.number} className="flex flex-col items-center space-y-2">
-                      <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
-                        currentStep >= step.number 
-                          ? 'bg-primary text-primary-foreground' 
-                          : 'bg-muted text-muted-foreground'
-                      }`}>
-                        {step.number}
-                      </div>
-                      <span className="text-xs text-muted-foreground">{step.label}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              <form onSubmit={currentStep === 4 ? handleSubmit : e => e.preventDefault()}>
-                <div className={`space-y-6 transition-opacity duration-300 ${isAnimating ? 'opacity-0' : 'opacity-100'}`}>
-                  
-                  {currentStep === 1 && (
-                    <>
-                      <div className="space-y-2 text-center">
-                        <h4 className="text-lg font-semibold">Create your customer account</h4>
-                        <p className="text-sm text-muted-foreground">
-                          Already have an account?{" "}
-                          <Link href="/login" className="text-primary hover:underline">
-                            Log In!
-                          </Link>
-                        </p>
-                      </div>
-                      
-                      <div className="space-y-2">
-                        <Label htmlFor="email">Email</Label>
-                        <Input
-                          id="email"
-                          name="email"
-                          type="email"
-                          value={formData.email}
-                          onChange={handleInputChange}
-                          className={errors.email && touchedFields.email ? 'border-destructive' : ''}
-                          placeholder="your@email.com"
-                        />
-                        {errors.email && touchedFields.email && (
-                          <p className="text-sm text-destructive">{errors.email}</p>
-                        )}
-                        <p className="text-xs text-muted-foreground">We'll never share your email with anyone else.</p>
-                      </div>
-                      
-                      <div className="space-y-2">
-                        <Label htmlFor="password">Password</Label>
-                        <div className="relative">
-                          <Input
-                            id="password"
-                            name="password"
-                            type={showPassword ? "text" : "password"}
-                            value={formData.password}
-                            onChange={handleInputChange}
-                            className={errors.password && touchedFields.password ? 'border-destructive pr-10' : 'pr-10'}
-                            placeholder="Enter your password"
-                          />
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
-                            onClick={() => setShowPassword(!showPassword)}
-                          >
-                            {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                          </Button>
-                        </div>
-                        {errors.password && touchedFields.password && (
-                          <p className="text-sm text-destructive">{errors.password}</p>
-                        )}
-                        
-                        {formData.password && (
-                          <div className="space-y-2">
-                            <div className="flex items-center space-x-2">
-                              <div className="flex-1 bg-muted rounded-full h-2">
-                                <div 
-                                  className={`h-2 rounded-full transition-all duration-300 ${strengthInfo.color}`}
-                                  style={{ width: `${strengthInfo.width}%` }}
-                                />
-                              </div>
-                              {strengthInfo.text && (
-                                <Badge variant="outline" className="text-xs">
-                                  {strengthInfo.text}
-                                </Badge>
-                              )}
-                            </div>
-                            <p className="text-xs text-muted-foreground">
-                              Password must be at least 8 characters with uppercase, lowercase, number, and special character.
-                            </p>
-                          </div>
-                        )}
-                      </div>
-                      
-                      <div className="space-y-2">
-                        <Label htmlFor="confirmPassword">Confirm Password</Label>
-                        <div className="relative">
-                          <Input
-                            id="confirmPassword"
-                            name="confirmPassword"
-                            type={showConfirmPassword ? "text" : "password"}
-                            value={formData.confirmPassword}
-                            onChange={handleInputChange}
-                            className={errors.confirmPassword && touchedFields.confirmPassword ? 'border-destructive pr-10' : 'pr-10'}
-                            placeholder="Confirm your password"
-                          />
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
-                            onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                          >
-                            {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                          </Button>
-                        </div>
-                        {errors.confirmPassword && touchedFields.confirmPassword && (
-                          <p className="text-sm text-destructive">{errors.confirmPassword}</p>
-                        )}
-                      </div>
-                      
-                      <Button
-                        type="button"
-                        onClick={nextStep}
-                        disabled={isChecking || isAnimating}
-                        className="w-full"
-                      >
-                        {isChecking ? (
-                          <>
-                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                            Checking...
-                          </>
-                        ) : (
-                          <>
-                            Continue
-                            <ArrowRight className="ml-2 h-4 w-4" />
-                          </>
-                        )}
-                      </Button>
-                    </>
-                  )}
-                  
-                  {currentStep === 2 && (
-                    <>
-                      <div className="text-center">
-                        <h4 className="text-lg font-semibold">Your Profile</h4>
-                      </div>
-                      
-                      <div className="space-y-2">
-                        <Label htmlFor="firstName">First Name</Label>
-                        <Input
-                          id="firstName"
-                          name="firstName"
-                          value={formData.firstName}
-                          onChange={handleInputChange}
-                          className={errors.firstName && touchedFields.firstName ? 'border-destructive' : ''}
-                          placeholder="Enter your first name"
-                        />
-                        {errors.firstName && touchedFields.firstName && (
-                          <p className="text-sm text-destructive">{errors.firstName}</p>
-                        )}
-                      </div>
-                      
-                      <div className="space-y-2">
-                        <Label htmlFor="lastName">Last Name</Label>
-                        <Input
-                          id="lastName"
-                          name="lastName"
-                          value={formData.lastName}
-                          onChange={handleInputChange}
-                          className={errors.lastName && touchedFields.lastName ? 'border-destructive' : ''}
-                          placeholder="Enter your last name"
-                        />
-                        {errors.lastName && touchedFields.lastName && (
-                          <p className="text-sm text-destructive">{errors.lastName}</p>
-                        )}
-                      </div>
-                      
-                      <div className="space-y-2">
-                        <Label htmlFor="gender">Gender</Label>
-                        <Select
-                          value={formData.gender}
-                          onValueChange={(value) => updateFormData('gender', value)}
-                        >
-                          <SelectTrigger className={errors.gender && touchedFields.gender ? 'border-destructive' : ''}>
-                            <SelectValue placeholder="Select gender" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="male">Male</SelectItem>
-                            <SelectItem value="female">Female</SelectItem>
-                          </SelectContent>
-                        </Select>
-                        {errors.gender && touchedFields.gender && (
-                          <p className="text-sm text-destructive">{errors.gender}</p>
-                        )}
-                      </div>
-                      
-                      <div className="flex justify-between gap-4">
-                        <Button
-                          type="button"
-                          variant="outline"
-                          onClick={prevStep}
-                          disabled={isAnimating}
-                        >
-                          <ArrowLeft className="mr-2 h-4 w-4" />
-                          Back
-                        </Button>
-                        <Button
-                          type="button"
-                          onClick={nextStep}
-                          disabled={isAnimating}
-                          className="flex-1"
-                        >
-                          Continue
-                          <ArrowRight className="ml-2 h-4 w-4" />
-                        </Button>
-                      </div>
-                    </>
-                  )}
-                  
-                  {currentStep === 3 && (
-                    <>
-                      <div className="text-center">
-                        <h4 className="text-lg font-semibold">Contact Information</h4>
-                      </div>
-                      
-                      <div className="space-y-2">
-                        <Label htmlFor="phone">Phone Number</Label>
-                        <Input
-                          id="phone"
-                          name="phone"
-                          type="tel"
-                          value={formData.phone}
-                          onChange={handleInputChange}
-                          className={errors.phone && touchedFields.phone ? 'border-destructive' : ''}
-                          placeholder="123-456-7890"
-                        />
-                        {errors.phone && touchedFields.phone && (
-                          <p className="text-sm text-destructive">{errors.phone}</p>
-                        )}
-                        <p className="text-xs text-muted-foreground">
-                          Format: 123-456-7890 or (123) 456-7890
-                        </p>
-                      </div>
-                      
-                      <div className="flex justify-between gap-4">
-                        <Button
-                          type="button"
-                          variant="outline"
-                          onClick={prevStep}
-                          disabled={isAnimating}
-                        >
-                          <ArrowLeft className="mr-2 h-4 w-4" />
-                          Back
-                        </Button>
-                        <Button
-                          type="button"
-                          onClick={nextStep}
-                          disabled={isAnimating}
-                          className="flex-1"
-                        >
-                          Continue
-                          <ArrowRight className="ml-2 h-4 w-4" />
-                        </Button>
-                      </div>
-                    </>
-                  )}
-
-                  {currentStep === 4 && (
-                    <>
-                      <div className="text-center">
-                        <h4 className="text-lg font-semibold">Address Information</h4>
-                      </div>
-
-                      <Address onSelect={(place) => {
-                        const getComponent = (type) =>
-                          place.address_components?.find(c => c.types.includes(type))?.long_name || ''
-
-                        const location = place.geometry.location
-
-                        const updatedAddress = {
-                          formattedAddress: place.formatted_address,
-                          placeId: place.place_id,
-                          latitude: location.lat(),
-                          longitude: location.lng(),
-                          street: getComponent('route'),
-                          city: getComponent('locality') || getComponent('sublocality'),
-                          parish: getComponent('administrative_area_level_1'),
-                          country: getComponent('country'),
-                          rawGoogleData: place
-                        }
-
-                        setFormData(prev => ({ ...prev, ...updatedAddress }))
-                      }} />
-
-                      <div className="flex justify-between gap-4">
-                        <Button
-                          type="button"
-                          variant="outline"
-                          onClick={prevStep}
-                          disabled={isAnimating}
-                        >
-                          <ArrowLeft className="mr-2 h-4 w-4" />
-                          Back
-                        </Button>
-                        <Button
-                          type="submit"
-                          disabled={isAnimating}
-                          className="flex-1"
-                        >
-                          Create Account
-                          <ArrowRight className="ml-2 h-4 w-4" />
-                        </Button>
-                      </div>
-                    </>
-                  )}
-                </div>
-              </form>
-              
-              {errorMessage && (
-                <Alert variant="destructive">
-                  <AlertDescription>{errorMessage}</AlertDescription>
-                </Alert>
-              )}
-            </CardContent>
-          </Card>
         </div>
       </div>
     </div>

@@ -1,3 +1,5 @@
+// ===== MOBILE RESPONSIVE AccountOverview.jsx =====
+
 'use client'
 
 import React, { useState, useEffect } from 'react'
@@ -32,10 +34,8 @@ export default function AccountOverview() {
   const [phoneNumber, setPhoneNumber] = useState('')
   const [phoneLoading, setPhoneLoading] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
-  const [saveStatus, setSaveStatus] = useState(null) // 'success', 'error', null
+  const [saveStatus, setSaveStatus] = useState(null)
   const [hasChanges, setHasChanges] = useState(false)
-
-  // Track initial values to detect changes
   const [initialValues, setInitialValues] = useState({})
 
   useEffect(() => {
@@ -53,7 +53,6 @@ export default function AccountOverview() {
     }
   }, [user])
 
-  // Check for changes
   useEffect(() => {
     const currentValues = { firstName, lastName, email, phoneNumber }
     const changed = Object.keys(initialValues).some(key => 
@@ -107,7 +106,6 @@ export default function AccountOverview() {
 
       if (accountError) throw accountError
 
-      // Update phone if it exists
       if (phoneNumber) {
         const { error: phoneError } = await supabase
           .from('phone')
@@ -121,8 +119,6 @@ export default function AccountOverview() {
       await fetchUser(user, supabase)
       setSaveStatus('success')
       setHasChanges(false)
-      
-      // Update initial values
       setInitialValues({ firstName, lastName, email, phoneNumber })
       
     } catch (error) {
@@ -143,54 +139,53 @@ export default function AccountOverview() {
 
   if (!user) {
     return (
-      <div className="flex items-center justify-center p-8">
+      <div className="flex items-center justify-center p-6 sm:p-8">
         <div className="text-center space-y-3">
           <Loader2 className="h-6 w-6 animate-spin text-primary mx-auto" />
-          <p className="text-muted-foreground">Loading your profile...</p>
+          <p className="text-sm sm:text-base text-muted-foreground">Loading your profile...</p>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="space-y-6">
-      {/* Profile Image Section */}
-      <div className="flex items-center space-x-6 p-4 rounded-lg border-2 border-dashed border-border hover:border-primary/50 transition-colors">
-        <div className="relative group">
-          <Avatar className="h-20 w-20">
+    <div className="space-y-4 sm:space-y-6">
+      {/* Profile Image Section - Mobile Responsive */}
+      <div className="flex flex-col sm:flex-row items-center sm:items-start space-y-4 sm:space-y-0 sm:space-x-4 lg:space-x-6 p-4 sm:p-6 rounded-lg border-2 border-dashed border-border hover:border-primary/50 transition-colors">
+        <div className="relative group flex-shrink-0">
+          <Avatar className="h-16 w-16 sm:h-20 sm:w-20">
             <AvatarImage 
               src="/images/team/fl-1.png" 
               alt="Profile picture"
               className="object-cover"
             />
-            <AvatarFallback className="bg-primary/10 text-primary text-lg font-semibold">
+            <AvatarFallback className="bg-primary/10 text-primary text-base sm:text-lg font-semibold">
               {firstName?.[0]}{lastName?.[0]}
             </AvatarFallback>
           </Avatar>
           
-          {/* Upload overlay */}
           <div className="absolute inset-0 bg-black/50 rounded-full opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center cursor-pointer">
-            <Camera className="h-6 w-6 text-white" />
+            <Camera className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
           </div>
         </div>
         
-        <div className="flex-1 space-y-2">
-          <h3 className="font-semibold text-foreground">Profile Picture</h3>
+        <div className="flex-1 space-y-2 sm:space-y-3 text-center sm:text-left">
+          <h3 className="font-semibold text-foreground text-base sm:text-lg">Profile Picture</h3>
           <p className="text-sm text-muted-foreground">
             Upload a professional photo to build trust with clients
           </p>
-          <Button variant="outline" size="sm" className="gap-2">
+          <Button variant="outline" size="sm" className="gap-2 w-full sm:w-auto">
             <Upload className="h-4 w-4" />
             Upload New Photo
           </Button>
         </div>
       </div>
 
-      {/* Save Status Messages */}
+      {/* Save Status Messages - Mobile Responsive */}
       {saveStatus === 'success' && (
         <Alert className="border-green-200 bg-green-50 text-green-800 dark:border-green-800 dark:bg-green-950 dark:text-green-200">
           <CheckCircle className="h-4 w-4" />
-          <AlertDescription>
+          <AlertDescription className="text-sm">
             Your account information has been updated successfully!
           </AlertDescription>
         </Alert>
@@ -199,14 +194,14 @@ export default function AccountOverview() {
       {saveStatus === 'error' && (
         <Alert variant="destructive">
           <AlertCircle className="h-4 w-4" />
-          <AlertDescription>
+          <AlertDescription className="text-sm">
             There was an error updating your information. Please try again.
           </AlertDescription>
         </Alert>
       )}
 
-      {/* Form Fields */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      {/* Form Fields - Mobile Responsive Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
         <div className="space-y-2">
           <Label htmlFor="firstName" className="text-sm font-medium">
             First Name *
@@ -220,7 +215,7 @@ export default function AccountOverview() {
               onFocus={(e) => e.target.select()}
               onKeyDown={handleKeyDown}
               className={cn(
-                "transition-all duration-200",
+                "h-11 transition-all duration-200",
                 firstName ? "border-green-200 bg-green-50/50 dark:border-green-800 dark:bg-green-950/50" : ""
               )}
               placeholder="Enter your first name"
@@ -245,7 +240,7 @@ export default function AccountOverview() {
               onFocus={(e) => e.target.select()}
               onKeyDown={handleKeyDown}
               className={cn(
-                "transition-all duration-200",
+                "h-11 transition-all duration-200",
                 lastName ? "border-green-200 bg-green-50/50 dark:border-green-800 dark:bg-green-950/50" : ""
               )}
               placeholder="Enter your last name"
@@ -270,7 +265,7 @@ export default function AccountOverview() {
               onFocus={(e) => e.target.select()}
               onKeyDown={handleKeyDown}
               className={cn(
-                "transition-all duration-200",
+                "h-11 transition-all duration-200",
                 email ? "border-green-200 bg-green-50/50 dark:border-green-800 dark:bg-green-950/50" : ""
               )}
               placeholder="Enter your email address"
@@ -297,7 +292,7 @@ export default function AccountOverview() {
               onKeyDown={handleKeyDown}
               disabled={phoneLoading}
               className={cn(
-                "transition-all duration-200",
+                "h-11 transition-all duration-200",
                 phoneNumber ? "border-green-200 bg-green-50/50 dark:border-green-800 dark:bg-green-950/50" : ""
               )}
               placeholder={phoneLoading ? "Loading..." : "Enter your phone number"}
@@ -311,9 +306,9 @@ export default function AccountOverview() {
         </div>
       </div>
 
-      {/* Save Button */}
-      <div className="flex items-center justify-between pt-6 border-t">
-        <div className="text-sm text-muted-foreground">
+      {/* Save Button - Mobile Responsive */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pt-4 sm:pt-6 border-t">
+        <div className="text-sm text-muted-foreground text-center sm:text-left">
           {hasChanges ? (
             <span className="text-orange-600 dark:text-orange-400">You have unsaved changes</span>
           ) : (
@@ -325,7 +320,7 @@ export default function AccountOverview() {
           onClick={handleSave}
           disabled={isSaving || !hasChanges}
           className={cn(
-            "min-w-[140px] transition-all duration-200",
+            "w-full sm:w-auto min-w-[140px] transition-all duration-200 h-11",
             hasChanges && "ring-2 ring-primary/20 ring-offset-2"
           )}
         >

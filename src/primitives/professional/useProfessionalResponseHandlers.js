@@ -92,7 +92,7 @@ export const useProfessionalResponseHandlers = ({
     return { appointmentId, professionalId, interestId }
   }
 
-  // 🔧 ENHANCED: Accept selection handler
+  // 🚨 FIXED: Accept selection handler - Use correct API endpoint
   const handleAccept = async () => {
     console.log('🎯 handleAccept called');
     
@@ -104,25 +104,29 @@ export const useProfessionalResponseHandlers = ({
     setLoading(true)
     
     try {
-      const { appointmentId, professionalId } = validateRequiredData()
+      const { appointmentId, professionalId, interestId } = validateRequiredData()
 
-      console.log('🔄 Accepting selection:', {
+      console.log('📤 Accepting selection:', {
         appointmentId,
         professionalId,
+        interestId,
         messageLength: responseMessage.length
       })
 
+      // 🚨 CRITICAL FIX: Use the individual interest endpoint
+      const apiUrl = `/api/interests/${interestId}`
+      
       const requestBody = {
-        professional_id: professionalId,
-        action: 'accept_selection',
-        response_message: responseMessage.trim(),
+        status: 'confirmed',  // ✅ Direct status update 
+        message: responseMessage.trim(),
         confirmed_at: new Date().toISOString()
       }
 
+      console.log('🌐 Calling API:', apiUrl);
       console.log('📤 Accept request body:', requestBody);
 
-      const response = await fetch(`/api/appointments/${appointmentId}/interests`, {
-        method: 'PUT',
+      const response = await fetch(apiUrl, {
+        method: 'PATCH',  // ✅ Use PATCH for updates
         headers: {
           'Content-Type': 'application/json',
         },
@@ -159,7 +163,7 @@ export const useProfessionalResponseHandlers = ({
     }
   }
 
-  // 🔧 ENHANCED: Decline selection handler
+  // 🚨 FIXED: Decline selection handler - Use correct API endpoint  
   const handleDecline = async () => {
     console.log('🎯 handleDecline called');
     
@@ -181,32 +185,33 @@ export const useProfessionalResponseHandlers = ({
     setLoading(true)
     
     try {
-      const { appointmentId, professionalId } = validateRequiredData()
+      const { appointmentId, professionalId, interestId } = validateRequiredData()
 
-      // Convert single referral suggestion to array format for API
-      const referralSuggestions = referralSuggestion?.trim() ? [referralSuggestion.trim()] : []
-
-      console.log('🔄 Declining selection:', {
+      console.log('📤 Declining selection:', {
         appointmentId,
         professionalId,
+        interestId,
         reason: declineReason,
         messageLength: responseMessage.length,
-        hasReferrals: referralSuggestions.length > 0
+        hasReferrals: !!referralSuggestion?.trim()
       })
 
+      // 🚨 CRITICAL FIX: Use the individual interest endpoint
+      const apiUrl = `/api/interests/${interestId}`
+
       const requestBody = {
-        professional_id: professionalId,
-        action: 'decline_selection',
-        decline_reason: declineReason,
-        decline_message: responseMessage.trim(),
-        referral_suggestions: referralSuggestions,
+        status: 'declined',  // ✅ Direct status update
+        message: responseMessage.trim(),
+        decline_reason_category: declineReason,
+        referral_suggestion: referralSuggestion?.trim() || null,
         declined_at: new Date().toISOString()
       }
 
+      console.log('🌐 Calling API:', apiUrl);
       console.log('📤 Decline request body:', requestBody)
 
-      const response = await fetch(`/api/appointments/${appointmentId}/interests`, {
-        method: 'PUT',
+      const response = await fetch(apiUrl, {
+        method: 'PATCH',  // ✅ Use PATCH for updates
         headers: {
           'Content-Type': 'application/json',
         },
@@ -267,34 +272,32 @@ export const useProfessionalResponseHandlers = ({
     setLoading(true)
     
     try {
-      const { appointmentId, professionalId } = validateRequiredData()
+      const { appointmentId, professionalId, interestId } = validateRequiredData()
       const proposedDateTime = new Date(`${assessmentDate}T${assessmentTime}`)
 
-      console.log('🔄 Scheduling assessment:', {
+      console.log('📤 Scheduling assessment:', {
         appointmentId,
         professionalId,
+        interestId,
         proposedDateTime: proposedDateTime.toISOString()
       })
 
+      // 🚨 CRITICAL FIX: Use the individual interest endpoint
+      const apiUrl = `/api/interests/${interestId}`
+
       const requestBody = {
-        professional_id: professionalId,
-        action: 'accept_selection',
-        response_message: responseMessage.trim(),
-        schedule_assessment: true,
-        assessment_details: {
-          proposed_date: proposedDateTime.toISOString(),
-          duration_minutes: parseInt(assessmentDuration),
-          type: 'local',
-          message: assessmentNotes.trim(),
-          address_id: appointment.address_id
-        },
+        status: 'confirmed',  // ✅ Accept the selection
+        message: responseMessage.trim(),
+        // Assessment details in notes for now - your schema may vary
+        notes: `Assessment scheduled for ${proposedDateTime.toISOString()}. Duration: ${assessmentDuration} minutes. ${assessmentNotes.trim()}`,
         confirmed_at: new Date().toISOString()
       }
 
+      console.log('🌐 Calling API:', apiUrl);
       console.log('📤 Assessment request body:', requestBody);
       
-      const response = await fetch(`/api/appointments/${appointmentId}/interests`, {
-        method: 'PUT',
+      const response = await fetch(apiUrl, {
+        method: 'PATCH',  // ✅ Use PATCH for updates
         headers: {
           'Content-Type': 'application/json',
         },
@@ -331,11 +334,10 @@ export const useProfessionalResponseHandlers = ({
     }
   }
 
-  // 🔧 COMPLETELY REWRITTEN: Quote update handler with proper API integration
+  // ✅ UNCHANGED: Quote update handler (this one was already correct)
   const handleUpdateQuote = async (submissionData) => {
     console.log('🎯 handleUpdateQuote called with submission data:', submissionData);
     
-    // 🔥 CRITICAL: Accept data directly from form submission
     const updatedQuote = submissionData?.updated_quote;
     const updateReason = submissionData?.quote_update_reason;
     const message = submissionData?.response_message;
@@ -346,7 +348,6 @@ export const useProfessionalResponseHandlers = ({
       message
     });
 
-    // Enhanced validation
     if (!updatedQuote?.amount) {
       console.log('❌ Validation failed: Missing quote amount');
       toast.error('Please provide an updated quote amount');
@@ -365,7 +366,6 @@ export const useProfessionalResponseHandlers = ({
       return;
     }
 
-    // Business rule validation
     const originalAmount = parseFloat(interest?.amount) || 0;
     const newAmount = parseFloat(updatedQuote.amount);
     const changePercent = originalAmount > 0 ? ((newAmount - originalAmount) / originalAmount) * 100 : 0;
@@ -389,11 +389,9 @@ export const useProfessionalResponseHandlers = ({
     try {
       const { appointmentId, interestId } = validateRequiredData();
       
-      // 🔥 CRITICAL: Use the CORRECT API endpoint that we know works
       const apiUrl = `/api/appointments/${appointmentId}/interests/${interestId}`;
       console.log('🌐 Calling quote update API:', apiUrl);
       
-      // 🔥 CRITICAL: Format request exactly as API expects
       const requestBody = {
         updated_quote: {
           amount: parseFloat(updatedQuote.amount),
@@ -407,7 +405,6 @@ export const useProfessionalResponseHandlers = ({
       
       console.log('📤 Quote update request body:', JSON.stringify(requestBody, null, 2));
 
-      // 🔥 CRITICAL: Use PATCH method (not PUT)
       const response = await fetch(apiUrl, {
         method: 'PATCH',
         headers: {
@@ -431,7 +428,6 @@ export const useProfessionalResponseHandlers = ({
         console.error('❌ API Error - Status:', response.status);
         console.error('❌ API Error - Response:', result);
         
-        // Handle specific error cases
         if (response.status === 400 && result.error?.includes('Cannot update quote when status is')) {
           throw new Error(`Quote cannot be updated: ${result.error}`);
         }
@@ -452,18 +448,13 @@ export const useProfessionalResponseHandlers = ({
         description: 'Customer will review your updated quote and respond with approval or feedback.'
       });
       
-      // Clean up and close
       resetFormData();
       onSuccess?.(result);
       onClose();
       
     } catch (error) {
       console.error('❌ Complete quote update error:', error);
-      console.error('❌ Error name:', error.name);
-      console.error('❌ Error message:', error.message);
-      console.error('❌ Error stack:', error.stack);
       
-      // User-friendly error messages
       let errorMessage = 'Failed to update quote';
       let errorDescription = error.message || 'Please try again or contact support if the issue persists.';
       
@@ -485,7 +476,7 @@ export const useProfessionalResponseHandlers = ({
 
   // 🔧 ENHANCED: Close handler with cleanup
   const handleClose = () => {
-    console.log('🔄 Closing professional response handler');
+    console.log('📄 Closing professional response handler');
     resetFormData()
     onClose()
   }

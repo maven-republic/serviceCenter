@@ -295,6 +295,149 @@ html.dark.customer-workspace {
 }
 
 @layer components {
+  /* ===== ENHANCED BUTTON STYLES ===== */
+  .btn-enhanced {
+    @apply shadow-sm hover:shadow-md transition-all duration-200;
+    @apply focus:ring-2 focus:ring-primary/20 focus:ring-offset-2;
+    @apply active:scale-[0.98] transform;
+  }
+
+  .btn-brand {
+    @apply bg-gradient-to-r from-primary to-primary/90;
+    @apply text-white border-0 shadow-lg;
+    @apply hover:from-primary/90 hover:to-primary/80;
+    @apply hover:shadow-xl hover:-translate-y-0.5;
+    @apply transition-all duration-300 ease-out;
+  }
+
+  .btn-brand:hover {
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+  }
+
+  /* Gradient Brand Utilities */
+  .gradient-brand {
+    @apply bg-gradient-to-r from-primary via-primary to-primary/90;
+    @apply shadow-lg border-0;
+  }
+
+  .gradient-brand:hover {
+    @apply from-primary/90 via-primary/90 to-primary/80;
+  }
+
+  /* Text Display Classes */
+  .text-display {
+    @apply font-semibold tracking-tight;
+    font-feature-settings: "kern" 1, "liga" 1, "calt" 1;
+  }
+
+  .text-body {
+    @apply leading-relaxed;
+    font-feature-settings: "kern" 1, "liga" 1;
+  }
+
+  /* Enhanced Button Variants for Different Sizes */
+  .btn-mobile {
+    @apply h-12 px-6 text-base;
+    @apply sm:h-10 sm:px-4 sm:text-sm;
+  }
+
+  .btn-desktop {
+    @apply h-9 px-4 text-sm;
+    @apply lg:h-10 lg:px-6 lg:text-base;
+  }
+
+  /* Loading Button States */
+  .btn-loading {
+    @apply relative overflow-hidden;
+  }
+
+  .btn-loading::after {
+    content: '';
+    @apply absolute inset-0 bg-white/20;
+    @apply animate-pulse;
+  }
+
+  /* Enhanced Card Styles for Better Button Integration */
+  .card-enhanced {
+    @apply bg-card border border-border rounded-xl shadow-sm;
+    @apply hover:shadow-md transition-shadow duration-200;
+    @apply dark:shadow-none dark:hover:shadow-none;
+  }
+
+  .card-gradient {
+    @apply bg-gradient-to-br from-card to-card/95;
+    @apply border border-border/50 rounded-xl;
+    @apply shadow-sm hover:shadow-md transition-all duration-200;
+  }
+
+  /* Badge Enhancements */
+  .badge-enhanced {
+    @apply inline-flex items-center gap-1.5 px-3 py-1;
+    @apply text-xs font-medium rounded-full;
+    @apply transition-colors duration-200;
+  }
+
+  .badge-gradient {
+    @apply bg-gradient-to-r from-primary/10 to-primary/5;
+    @apply text-primary border border-primary/20;
+    @apply hover:from-primary/20 hover:to-primary/10;
+  }
+
+  /* Alert Enhancements */
+  .alert-enhanced {
+    @apply border-l-4 bg-gradient-to-r;
+    @apply shadow-sm hover:shadow-md transition-shadow duration-200;
+  }
+
+  /* Focus States for Better Accessibility */
+  .focus-enhanced:focus-visible {
+    @apply outline-none ring-2 ring-primary/50 ring-offset-2;
+    @apply ring-offset-background transition-all duration-200;
+  }
+
+  /* Professional Workspace Button Overrides */
+  .professional-workspace .btn-enhanced {
+    @apply shadow-md hover:shadow-lg;
+  }
+
+  .professional-workspace .btn-brand {
+    @apply shadow-lg hover:shadow-xl;
+  }
+
+  /* Customer Workspace Button Overrides (always light) */
+  .customer-workspace .btn-enhanced {
+    @apply bg-white text-gray-900 border border-gray-200;
+    @apply hover:bg-gray-50 hover:border-gray-300;
+    @apply shadow-sm hover:shadow-md;
+  }
+
+  .customer-workspace .btn-brand {
+    @apply bg-gradient-to-r from-blue-600 to-blue-700 text-white;
+    @apply hover:from-blue-700 hover:to-blue-800;
+    @apply shadow-lg hover:shadow-xl;
+  }
+
+  /* Responsive Button Sizes */
+  .btn-responsive {
+    @apply h-12 px-6 text-base; /* Mobile first */
+    @apply sm:h-10 sm:px-4 sm:text-sm; /* Small screens */
+    @apply md:h-9 md:px-4 md:text-sm; /* Medium screens */
+    @apply lg:h-10 lg:px-6 lg:text-base; /* Large screens */
+  }
+
+  .btn-responsive-sm {
+    @apply h-10 px-4 text-sm; /* Mobile first */
+    @apply sm:h-8 sm:px-3 sm:text-xs; /* Small screens */
+    @apply md:h-9 md:px-4 md:text-sm; /* Medium screens */
+  }
+
+  .btn-responsive-lg {
+    @apply h-14 px-8 text-lg; /* Mobile first */
+    @apply sm:h-12 sm:px-6 sm:text-base; /* Small screens */
+    @apply md:h-10 md:px-6 md:text-base; /* Medium screens */
+    @apply lg:h-11 lg:px-8 lg:text-lg; /* Large screens */
+  }
+
   /* ===== CUSTOMER WORKSPACE COMPONENTS ===== */
   
   .customer-card {
@@ -508,20 +651,47 @@ html.dark.customer-workspace {
 }
 
 @layer utilities {
+  /* ===== ENHANCED HOVER EFFECTS ===== */
+  .hover-lift {
+    @apply transition-transform duration-200 ease-out;
+    @apply hover:-translate-y-1 hover:shadow-lg;
+  }
+
+  .hover-scale {
+    @apply transition-transform duration-200 ease-out;
+    @apply hover:scale-105;
+  }
+
+  /* ===== ENHANCED FOCUS STATES ===== */
+  .focus-ring-brand {
+    @apply focus-visible:ring-2 focus-visible:ring-primary/50;
+    @apply focus-visible:ring-offset-2 focus-visible:ring-offset-background;
+  }
+
+  /* ===== TEXT GRADIENT UTILITIES ===== */
+  .text-gradient-brand {
+    @apply bg-gradient-to-r from-primary to-primary/80;
+    @apply bg-clip-text text-transparent;
+  }
+
+  /* ===== ANIMATION UTILITIES ===== */
+  .animate-fade-in-up {
+    animation: fadeInUp 0.3s ease-out;
+  }
+
+  .animate-bounce-in {
+    animation: bounceIn 0.4s ease-out;
+  }
+
+  .animate-fade-in {
+    animation: fade-in 0.2s ease-out;
+  }
+
+  .animate-slide-up {
+    animation: slide-up 0.3s ease-out;
+  }
+
   /* ===== CUSTOMER WORKSPACE UTILITIES (unchanged) ===== */
-  .customer-workspace .scrollbar-thin {
-    scrollbar-width: thin;
-    scrollbar-color: hsl(var(--muted-foreground)) hsl(var(--muted));
-  }
-
-  .customer-workspace .scrollbar-thin::-webkit-scrollbar {
-    width: 8px;
-  }
-
-  .customer-workspace .scrollbar-thin::-webkit-scrollbar-track {
-    background: hsl(var(--muted));
-  }
-
   .customer-workspace .scrollbar-thin::-webkit-scrollbar-thumb {
     background: hsl(var(--muted-foreground));
     border-radius: 4px;
@@ -546,14 +716,6 @@ html.dark.customer-workspace {
     border-radius: 4px;
   }
 
-  .animate-fade-in {
-    animation: fade-in 0.2s ease-out;
-  }
-
-  .animate-slide-up {
-    animation: slide-up 0.3s ease-out;
-  }
-
   /* ===== CUSTOMER WORKSPACE FORCE WHITE UTILITIES (unchanged) ===== */
   .customer-workspace .bg-background {
     background-color: hsl(0 0% 100%) !important;
@@ -575,6 +737,35 @@ html.dark.customer-workspace {
   }
 }
 
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes bounceIn {
+  0% {
+    opacity: 0;
+    transform: scale(0.3);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.05);
+  }
+  70% {
+    transform: scale(0.95);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
 @keyframes fade-in {
   from {
     opacity: 0;
@@ -592,6 +783,30 @@ html.dark.customer-workspace {
   to {
     opacity: 1;
     transform: translateY(0);
+  }
+}
+
+/* ===== DARK MODE OVERRIDES ===== */
+.dark .btn-enhanced {
+  @apply shadow-lg shadow-black/10;
+}
+
+.dark .btn-brand {
+  @apply shadow-xl shadow-black/20;
+}
+
+.dark .card-enhanced {
+  @apply shadow-lg shadow-black/10;
+}
+
+/* ===== RESPONSIVE BUTTON FIXES ===== */
+@media (max-width: 640px) {
+  .btn-enhanced {
+    @apply min-h-[44px]; /* Touch-friendly minimum */
+  }
+  
+  .btn-brand {
+    @apply min-h-[44px] px-6;
   }
 }
 
@@ -726,6 +941,13 @@ html.dark.customer-workspace {
     color: black !important;
     box-shadow: none !important;
   }
+
+  .btn-enhanced,
+  .btn-brand,
+  .gradient-brand {
+    @apply bg-white text-black border border-black;
+    @apply shadow-none;
+  }
 }
 
 /* Hide debug utilities in production */
@@ -735,4 +957,20 @@ html.dark.customer-workspace {
     outline: none !important;
     background-image: none !important;
   }
-}
+}bar-thin {
+    scrollbar-width: thin;
+    scrollbar-color: hsl(var(--muted-foreground)) hsl(var(--muted));
+  }
+
+  .customer-workspace .scrollbar-thin::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  .customer-workspace .scrollbar-thin::-webkit-scrollbar-track {
+    background: hsl(var(--muted));
+  }
+
+  .customer-workspace .scrollbar-thin::-webkit-scrollbar-thumb {
+    background: hsl(var(--muted-foreground));
+    border-radius: 4px;
+  }

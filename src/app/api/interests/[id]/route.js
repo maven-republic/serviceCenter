@@ -112,11 +112,12 @@ export async function PATCH(request, { params }) {
     // Get current interest to validate
     const { data: currentInterest, error: fetchError } = await supabase
       .from('interest')
-      .select('interest_id, professional_id, appointment_id, status, assessment, amount')
+      .select('interest_id, professional_id, appointment_id, status, assessment, amount, selected_by_customer')
       .eq('interest_id', id)
       .single()
 
     if (fetchError || !currentInterest) {
+      console.error('❌ Interest fetch error:', fetchError)
       return NextResponse.json(
         { error: 'Interest not found' },
         { status: 404 }
@@ -126,18 +127,25 @@ export async function PATCH(request, { params }) {
     // Prepare update data
     const updateData = {}
     
-    // Handle status changes
+    // Handle status changes - FIXED: Added 'confirmed' transition
     if (body.status) {
       const validTransitions = {
-        'pending': ['quoted', 'withdrawn'],
         'invited': ['quoted', 'declined'],
-        'quoted': ['selected', 'rejected'],
-        'selected': ['accepted', 'declined'],
-        'accepted': [],
-        'declined': [],
-        'rejected': [],
-        'withdrawn': []
+        'interested': ['quoted', 'withdrawn'], 
+        'quoted': ['selected', 'rejected', 'updated'],
+        'selected': ['confirmed', 'declined'],    // ✅ This allows selected → confirmed
+        'confirmed': [],                          // Final success state
+        'declined': [],                           // Final decline state  
+        'rejected': [],                           // Customer rejected quote
+        'withdrawn': [],
+        'updated': ['quoted']
       }
+
+      console.log('🔍 Status transition check:', {
+        current: currentInterest.status,
+        requested: body.status,
+        allowed: validTransitions[currentInterest.status]
+      })
 
       if (!validTransitions[currentInterest.status]?.includes(body.status)) {
         return NextResponse.json(
@@ -146,10 +154,27 @@ export async function PATCH(request, { params }) {
         )
       }
 
+      // Additional validation for 'confirmed' status
+      if (body.status === 'confirmed') {
+        if (currentInterest.status !== 'selected') {
+          return NextResponse.json(
+            { error: 'Can only confirm selected interests' },
+            { status: 400 }
+          )
+        }
+
+        if (!currentInterest.selected_by_customer) {
+          return NextResponse.json(
+            { error: 'Interest must be selected by customer before confirmation' },
+            { status: 400 }
+          )
+        }
+      }
+
       updateData.status = body.status
     }
 
-    // UPDATED: Handle other field updates including new price range fields
+    // Handle other field updates including new price range fields
     const allowedFields = [
       'message', 
       'amount', 
@@ -163,7 +188,7 @@ export async function PATCH(request, { params }) {
       'estimated_duration_hours',
       'earliest_start',
       'latest_start',
-      // NEW: Price range fields
+      // Price range fields
       'price_range_min',
       'price_range_max',
       'assessment_justification'
@@ -175,7 +200,7 @@ export async function PATCH(request, { params }) {
       }
     })
 
-    // NEW: Enhanced validation for assessment-only with price ranges
+    // Enhanced validation for assessment-only with price ranges
     if (body.assessment !== undefined || body.amount !== undefined || body.price_range_min !== undefined || body.price_range_max !== undefined) {
       const newAssessment = body.assessment !== undefined ? body.assessment : currentInterest.assessment
       const newAmount = body.amount !== undefined ? body.amount : currentInterest.amount
@@ -215,26 +240,12 @@ export async function PATCH(request, { params }) {
 
     console.log('🔥 Updating interest with:', updateData)
 
-    // Update interest
+    // FIXED: Simple update without complex embedding to avoid PostgREST errors
     const { data: updatedInterest, error } = await supabase
       .from('interest')
       .update(updateData)
       .eq('interest_id', id)
-      .select(`
-        *,
-        appointment:appointment_id (
-          appointment_id,
-          title,
-          status,
-          customer:customer_id (
-            customer_id,
-            account:account_id (
-              first_name,
-              last_name
-            )
-          )
-        )
-      `)
+      .select('*')  // Simple select without relationships
       .single()
 
     if (error) {
@@ -245,7 +256,7 @@ export async function PATCH(request, { params }) {
       )
     }
 
-    console.log('✅ Interest updated:', updatedInterest.interest_id)
+    console.log('✅ Interest updated successfully:', updatedInterest.interest_id)
 
     // Handle special status changes
     if (body.status === 'withdrawn') {
@@ -271,6 +282,8 @@ export async function PATCH(request, { params }) {
       console.log('📧 TODO: Send quote notification to customer')
     } else if (body.status === 'withdrawn') {
       console.log('📧 TODO: Send withdrawal notification to customer')
+    } else if (body.status === 'confirmed') {
+      console.log('✅ Professional confirmed interest - appointment status will be updated by DB trigger')
     }
 
     return NextResponse.json({

@@ -1,10 +1,9 @@
-// src/components/customer-workspace/interests/CustomerAppointmentDashboard.jsx (Fixed with Quote Approval)
+// src/components/customer-workspace/interests/CustomerAppointmentDashboard.jsx (Fixed Status Alignment)
 "use client";
 
 import { useState, useEffect, useCallback } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
 import { 
   AlertCircle,
@@ -23,12 +22,12 @@ import AssessmentScheduler from './AssessmentScheduler';
 import CustomerQuoteComparison from './CustomerQuoteComparison';
 import AppointmentInterestStatus from './AppointmentInterestStatus';
 
-// 🔥 NEW: Import the quote approval hook
+// Import the quote approval hook
 import { useQuoteApproval } from '@/primitives/customer/useQuoteApproval';
 
 const CustomerAppointmentDashboard = ({ appointmentId }) => {
   const [appointmentInformation, setAppointmentData] = useState(null);
-  const [interests, setInterests] = useState([]);
+  const [interests, setInterests] = useState([]); // ✅ Initialize as empty array
   const [summary, setSummary] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -37,7 +36,7 @@ const CustomerAppointmentDashboard = ({ appointmentId }) => {
   const [successMessage, setSuccessMessage] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
 
-  // 🔥 NEW: Use the quote approval hook
+  // Use the quote approval hook
   const { 
     handleQuoteApproval, 
     loading: quoteApprovalLoading, 
@@ -52,7 +51,7 @@ const CustomerAppointmentDashboard = ({ appointmentId }) => {
   }, [appointmentId]);
 
   useEffect(() => {
-    if (interests.length > 0) {
+    if (interests && interests.length > 0) {
       console.log('🔍 DEBUG: Interests data structure:', interests[0]);
       console.log('🔍 DEBUG: First interest fields:', Object.keys(interests[0]));
       if (interests[0].professional) {
@@ -61,7 +60,7 @@ const CustomerAppointmentDashboard = ({ appointmentId }) => {
     }
   }, [interests]);
 
-  // 🔥 NEW: Clear success/error messages after delay
+  // Clear success/error messages after delay
   useEffect(() => {
     if (successMessage) {
       const timer = setTimeout(() => setSuccessMessage(''), 5000);
@@ -145,11 +144,11 @@ const CustomerAppointmentDashboard = ({ appointmentId }) => {
         // Create a minimal appointment object if not provided
         const appointmentData = data.appointment || { 
           appointment_id: appointmentId,
-          status: 'pending'  // Default status
+          status: 'pending'
         };
         
         setAppointmentData(appointmentData);
-        setInterests(data.interests || []);
+        setInterests(data.interests || []); // ✅ Ensure array fallback
         setSummary(data.summary);
       } else {
         console.error('❌ API returned error:', data.error);
@@ -268,7 +267,7 @@ const CustomerAppointmentDashboard = ({ appointmentId }) => {
     }
   };
 
-  // 🔥 UPDATED: Quote approval handler using the hook
+  // Quote approval handler using the hook
   const handleQuoteApprovalAction = useCallback(async (interestId, action, notes = '') => {
     clearQuoteError(); // Clear any previous errors
     
@@ -282,7 +281,7 @@ const CustomerAppointmentDashboard = ({ appointmentId }) => {
           // Refresh data and show success message
           await fetchAppointmentInterests();
           if (action === 'approve') {
-            setSuccessMessage('Quote update approved! The professional has been notified and the project is confirmed.');
+            setSuccessMessage('Quote update approved! The professional has been notified and the project is ready to proceed.');
           } else {
             setSuccessMessage('Quote update declined. The professional will need to provide a new response.');
           }
@@ -307,7 +306,7 @@ const CustomerAppointmentDashboard = ({ appointmentId }) => {
       <div className="space-y-6">
         <div className="text-center py-12">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-muted-foreground">Loading professional responses...</p>
+          <p className="mt-4 text-gray-600">Loading professional responses...</p>
         </div>
       </div>
     );
@@ -316,35 +315,39 @@ const CustomerAppointmentDashboard = ({ appointmentId }) => {
   if (error) {
     return (
       <div className="space-y-4">
-        <Alert variant="destructive">
-          <AlertCircle className="h-4 w-4" />
-          <AlertDescription>{error}</AlertDescription>
-        </Alert>
+        <div className="bg-red-50 rounded-xl p-4">
+          <div className="flex items-start space-x-2">
+            <AlertCircle className="h-4 w-4 text-red-600 mt-0.5" />
+            <div className="text-red-800 text-sm">
+              {error}
+            </div>
+          </div>
+        </div>
         
         {debugInfo && (
-          <Alert>
-            <AlertCircle className="h-4 w-4" />
-            <AlertDescription>
-              <details className="mt-2">
+          <div className="bg-blue-50 rounded-xl p-4">
+            <div className="flex items-start space-x-2">
+              <AlertCircle className="h-4 w-4 text-blue-600 mt-0.5" />
+              <details className="text-blue-800 text-sm">
                 <summary className="cursor-pointer font-medium">Debug Information</summary>
-                <pre className="mt-2 text-xs bg-gray-100 p-2 rounded overflow-auto max-h-40">
+                <pre className="mt-2 text-xs bg-white p-2 rounded overflow-auto max-h-40">
                   {JSON.stringify(debugInfo, null, 2)}
                 </pre>
               </details>
-            </AlertDescription>
-          </Alert>
+            </div>
+          </div>
         )}
         
         <div className="flex space-x-2">
           <button 
             onClick={fetchAppointmentInterests}
-            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
           >
             Retry
           </button>
           <button 
             onClick={() => window.open(`/api/appointments/${appointmentId}/interests`, '_blank')}
-            className="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700"
+            className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700"
           >
             Debug API
           </button>
@@ -353,76 +356,78 @@ const CustomerAppointmentDashboard = ({ appointmentId }) => {
     );
   }
 
-  const activeInterests = interests.filter(i => !['withdrawn', 'rejected'].includes(i.status));
-  const selectedInterest = interests.find(i => i.selected_by_customer);
+  // ✅ Safe filtering with null checks
+  const activeInterests = interests ? interests.filter(i => !['withdrawn', 'rejected'].includes(i.status)) : [];
+  const selectedInterest = interests ? interests.find(i => i.selected_by_customer) : null;
   const needsAssessment = selectedInterest?.assessment;
   
-  // 🔥 FIXED: Use 'updated' status instead of 'updated_quote'
-  const quoteUpdatesCount = interests.filter(i => i.status === 'updated').length;
+  // Use 'updated' status instead of 'updated_quote'
+  const quoteUpdatesCount = interests ? interests.filter(i => i.status === 'updated').length : 0;
   const hasQuoteUpdates = quoteUpdatesCount > 0;
 
-  // 🔥 NEW: Determine appointment status for AppointmentInterestStatus
+  // Determine appointment status for AppointmentInterestStatus
   const appointmentStatus = appointmentInformation?.status || (hasQuoteUpdates ? 'reviewing' : 'pending');
 
   return (
     <div className="space-y-6">
-      {/* 🔥 NEW: Success Message */}
+      {/* Success Message */}
       {successMessage && (
-        <Alert className="bg-green-50 border-green-200">
-          <CheckCircle className="h-4 w-4 text-green-600" />
-          <AlertDescription className="text-green-800">
-            {successMessage}
-          </AlertDescription>
-        </Alert>
+        <div className="bg-green-50 rounded-xl p-4">
+          <div className="flex items-start space-x-2">
+            <CheckCircle className="h-4 w-4 text-green-600 mt-0.5" />
+            <div className="text-green-800 text-sm">
+              {successMessage}
+            </div>
+          </div>
+        </div>
       )}
 
-      {/* 🔥 NEW: Error Message */}
+      {/* Error Message */}
       {(errorMessage || quoteApprovalError) && (
-        <Alert variant="destructive">
-          <AlertCircle className="h-4 w-4" />
-          <AlertDescription>
-            {errorMessage || quoteApprovalError}
-          </AlertDescription>
-        </Alert>
+        <div className="bg-red-50 rounded-xl p-4">
+          <div className="flex items-start space-x-2">
+            <AlertCircle className="h-4 w-4 text-red-600 mt-0.5" />
+            <div className="text-red-800 text-sm">
+              {errorMessage || quoteApprovalError}
+            </div>
+          </div>
+        </div>
       )}
 
-      {/* 🔥 NEW: Appointment Status Overview */}
+      {/* Appointment Status Overview */}
       <AppointmentInterestStatus
         status={appointmentStatus}
-        interestCount={interests.length}
+        interestCount={interests ? interests.length : 0}
         selectedInterest={selectedInterest}
         hasQuoteUpdates={hasQuoteUpdates}
       />
 
       {/* Debug Panel */}
       {process.env.NODE_ENV === 'development' && (
-        <Alert>
-          <AlertCircle className="h-4 w-4" />
-          <AlertDescription>
-            <details>
-              <summary className="cursor-pointer font-medium">Debug Info</summary>
-              <div className="mt-2 text-xs">
-                <p>Appointment ID: {appointmentId}</p>
-                <p>Appointment Status: {appointmentStatus}</p>
-                <p>Interests Count: {interests.length}</p>
-                <p>Active Interests: {activeInterests.length}</p>
-                <p>Quote Updates Pending: {quoteUpdatesCount}</p>
-                <p>Selected Interest: {selectedInterest ? 'Yes' : 'No'}</p>
-                <p>Has Appointment Data: {appointmentInformation ? 'Yes' : 'No'}</p>
-                <p>Quote Approval Loading: {quoteApprovalLoading ? 'Yes' : 'No'}</p>
-              </div>
-            </details>
-          </AlertDescription>
-        </Alert>
+        <div className="bg-gray-50 rounded-xl p-4">
+          <details className="text-gray-600 text-sm">
+            <summary className="cursor-pointer font-medium">Debug Info</summary>
+            <div className="mt-2 text-xs">
+              <p>Appointment ID: {appointmentId}</p>
+              <p>Appointment Status: {appointmentStatus}</p>
+              <p>Interests Count: {interests ? interests.length : 0}</p>
+              <p>Active Interests: {activeInterests.length}</p>
+              <p>Quote Updates Pending: {quoteUpdatesCount}</p>
+              <p>Selected Interest: {selectedInterest ? 'Yes' : 'No'}</p>
+              <p>Selected Interest Status: {selectedInterest?.status || 'N/A'}</p>
+              <p>Has Appointment Data: {appointmentInformation ? 'Yes' : 'No'}</p>
+              <p>Quote Approval Loading: {quoteApprovalLoading ? 'Yes' : 'No'}</p>
+            </div>
+          </details>
+        </div>
       )}
 
       {/* Main Content Tabs */}
       <Tabs defaultValue={selectedInterest ? "selected" : "responses"} className="space-y-6">
-        <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="responses" className="flex items-center space-x-2">
+        <TabsList className="grid w-full grid-cols-4 bg-white rounded-xl">
+          <TabsTrigger value="responses" className="flex items-center space-x-2 data-[state=active]:bg-blue-50 data-[state=active]:text-blue-700">
             <Users className="h-4 w-4" />
             <span>Responses ({activeInterests.length})</span>
-            {/* 🔥 UPDATED: Quote update indicator */}
             {hasQuoteUpdates && (
               <Badge className="ml-1 bg-orange-500 text-white animate-pulse">
                 <RefreshCw className="h-3 w-3 mr-1" />
@@ -430,14 +435,14 @@ const CustomerAppointmentDashboard = ({ appointmentId }) => {
               </Badge>
             )}
           </TabsTrigger>
-          <TabsTrigger value="compare" disabled={activeInterests.length < 2}>
+          <TabsTrigger value="compare" disabled={activeInterests.length < 2} className="data-[state=active]:bg-blue-50 data-[state=active]:text-blue-700">
             <BarChart3 className="h-4 w-4 mr-2" />
             Compare
           </TabsTrigger>
           <TabsTrigger 
             value="selected" 
             disabled={!selectedInterest}
-            className="flex items-center space-x-2"
+            className="flex items-center space-x-2 data-[state=active]:bg-blue-50 data-[state=active]:text-blue-700"
           >
             <User className="h-4 w-4" />
             <span>Selected</span>
@@ -445,7 +450,7 @@ const CustomerAppointmentDashboard = ({ appointmentId }) => {
           <TabsTrigger 
             value="assessment" 
             disabled={!needsAssessment || appointmentStatus === 'reviewing'}
-            className="flex items-center space-x-2"
+            className="flex items-center space-x-2 data-[state=active]:bg-blue-50 data-[state=active]:text-blue-700"
           >
             <Clock className="h-4 w-4" />
             <span>Assessment</span>
@@ -457,10 +462,10 @@ const CustomerAppointmentDashboard = ({ appointmentId }) => {
 
         {/* Professional Responses Tab */}
         <TabsContent value="responses" className="space-y-4">
-          {/* 🔥 UPDATED: Quote Updates Section */}
-          {interests.some(i => i.status === 'updated') && (
+          {/* Quote Updates Section */}
+          {interests && interests.some(i => i.status === 'updated') && (
             <div className="space-y-4">
-              <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
+              <div className="bg-orange-50 rounded-xl p-4">
                 <div className="flex items-center space-x-2 mb-3">
                   <div className="p-2 rounded-full bg-orange-100">
                     <AlertTriangle className="h-5 w-5 text-orange-600 animate-pulse" />
@@ -476,12 +481,14 @@ const CustomerAppointmentDashboard = ({ appointmentId }) => {
                   </div>
                 </div>
                 
-                <Alert className="bg-orange-100 border-orange-300">
-                  <AlertTriangle className="h-4 w-4 text-orange-600" />
-                  <AlertDescription className="text-orange-800">
-                    <strong>Important:</strong> Assessment scheduling is blocked until you approve or decline these quote changes.
-                  </AlertDescription>
-                </Alert>
+                <div className="bg-orange-100 rounded-xl p-3">
+                  <div className="flex items-start space-x-2">
+                    <AlertTriangle className="h-4 w-4 text-orange-600 mt-0.5" />
+                    <div className="text-orange-800 text-sm">
+                      <strong>Important:</strong> Assessment scheduling is blocked until you approve or decline these quote changes.
+                    </div>
+                  </div>
+                </div>
               </div>
               
               {interests
@@ -501,18 +508,20 @@ const CustomerAppointmentDashboard = ({ appointmentId }) => {
                 ))
               }
               
-              <Separator className="my-6" />
+              <hr className="border-gray-200 my-6" />
             </div>
           )}
 
           {/* Regular Interests Section */}
           {activeInterests.length === 0 ? (
-            <Alert>
-              <AlertCircle className="h-4 w-4" />
-              <AlertDescription>
-                No professional responses yet. Qualified professionals are being notified about your request.
-              </AlertDescription>
-            </Alert>
+            <div className="bg-blue-50 rounded-xl p-4">
+              <div className="flex items-start space-x-2">
+                <AlertCircle className="h-4 w-4 text-blue-600 mt-0.5" />
+                <div className="text-blue-800 text-sm">
+                  No professional responses yet. Qualified professionals are being notified about your request.
+                </div>
+              </div>
+            </div>
           ) : (
             <div className="space-y-4">
               {activeInterests
@@ -525,7 +534,7 @@ const CustomerAppointmentDashboard = ({ appointmentId }) => {
                     onReject={handleRejectProfessional}
                     onMessage={handleMessageProfessional}
                     isLoading={actionLoading}
-                    // 🔥 NEW: Disable actions during quote review
+                    // Disable actions during quote review
                     showActions={appointmentStatus !== 'reviewing'}
                   />
                 ))
@@ -548,29 +557,35 @@ const CustomerAppointmentDashboard = ({ appointmentId }) => {
         <TabsContent value="selected">
           {selectedInterest ? (
             <div className="space-y-6">
-              {/* 🔥 NEW: Show different alerts based on status */}
+              {/* ✅ FIXED: Show different alerts based on status - now using 'approved' instead of 'confirmed' */}
               {appointmentStatus === 'reviewing' ? (
-                <Alert className="bg-orange-50 border-orange-200">
-                  <AlertTriangle className="h-4 w-4 text-orange-600" />
-                  <AlertDescription className="text-orange-800">
-                    <strong>Quote Update In Review:</strong> Your selected professional has updated their quote. 
-                    Please review the changes in the "Responses" tab before proceeding.
-                  </AlertDescription>
-                </Alert>
-              ) : selectedInterest.status === 'confirmed' ? (
-                <Alert className="bg-green-50 border-green-200">
-                  <CheckCircle className="h-4 w-4 text-green-600" />
-                  <AlertDescription className="text-green-800">
-                    <strong>Project Confirmed!</strong> Your quote has been approved and the professional is ready to begin.
-                  </AlertDescription>
-                </Alert>
+                <div className="bg-orange-50 rounded-xl p-4">
+                  <div className="flex items-start space-x-2">
+                    <AlertTriangle className="h-4 w-4 text-orange-600 mt-0.5" />
+                    <div className="text-orange-800 text-sm">
+                      <strong>Quote Update In Review:</strong> Your selected professional has updated their quote. 
+                      Please review the changes in the "Responses" tab before proceeding.
+                    </div>
+                  </div>
+                </div>
+              ) : selectedInterest.status === 'approved' ? ( // ✅ FIXED: Changed from 'confirmed' to 'approved'
+                <div className="bg-green-50 rounded-xl p-4">
+                  <div className="flex items-start space-x-2">
+                    <CheckCircle className="h-4 w-4 text-green-600 mt-0.5" />
+                    <div className="text-green-800 text-sm">
+                      <strong>Project Approved!</strong> Your quote has been approved and the professional is ready to begin.
+                    </div>
+                  </div>
+                </div>
               ) : (
-                <Alert className="bg-green-50 border-green-200">
-                  <CheckCircle className="h-4 w-4 text-green-600" />
-                  <AlertDescription className="text-green-800">
-                    <strong>Professional Selected!</strong> You've chosen this professional for your project.
-                  </AlertDescription>
-                </Alert>
+                <div className="bg-green-50 rounded-xl p-4">
+                  <div className="flex items-start space-x-2">
+                    <CheckCircle className="h-4 w-4 text-green-600 mt-0.5" />
+                    <div className="text-green-800 text-sm">
+                      <strong>Professional Selected!</strong> You've chosen this professional for your project.
+                    </div>
+                  </div>
+                </div>
               )}
               
               <InterestSelectionCard 
@@ -583,25 +598,29 @@ const CustomerAppointmentDashboard = ({ appointmentId }) => {
               />
             </div>
           ) : (
-            <Alert>
-              <AlertCircle className="h-4 w-4" />
-              <AlertDescription>
-                No professional selected yet. Choose from the available responses.
-              </AlertDescription>
-            </Alert>
+            <div className="bg-blue-50 rounded-xl p-4">
+              <div className="flex items-start space-x-2">
+                <AlertCircle className="h-4 w-4 text-blue-600 mt-0.5" />
+                <div className="text-blue-800 text-sm">
+                  No professional selected yet. Choose from the available responses.
+                </div>
+              </div>
+            </div>
           )}
         </TabsContent>
 
         {/* Assessment Tab */}
         <TabsContent value="assessment">
           {appointmentStatus === 'reviewing' ? (
-            <Alert className="bg-orange-50 border-orange-200">
-              <AlertTriangle className="h-4 w-4 text-orange-600" />
-              <AlertDescription className="text-orange-800">
-                <strong>Assessment Scheduling Blocked:</strong> Please approve or decline the pending quote updates 
-                before scheduling an assessment.
-              </AlertDescription>
-            </Alert>
+            <div className="bg-orange-50 rounded-xl p-4">
+              <div className="flex items-start space-x-2">
+                <AlertTriangle className="h-4 w-4 text-orange-600 mt-0.5" />
+                <div className="text-orange-800 text-sm">
+                  <strong>Assessment Scheduling Blocked:</strong> Please approve or decline the pending quote updates 
+                  before scheduling an assessment.
+                </div>
+              </div>
+            </div>
           ) : needsAssessment && selectedInterest ? (
             <AssessmentScheduler 
               interest={selectedInterest}
@@ -621,12 +640,14 @@ const CustomerAppointmentDashboard = ({ appointmentId }) => {
               isLoading={actionLoading}
             />
           ) : (
-            <Alert>
-              <AlertCircle className="h-4 w-4" />
-              <AlertDescription>
-                No assessment required or no professional selected yet.
-              </AlertDescription>
-            </Alert>
+            <div className="bg-blue-50 rounded-xl p-4">
+              <div className="flex items-start space-x-2">
+                <AlertCircle className="h-4 w-4 text-blue-600 mt-0.5" />
+                <div className="text-blue-800 text-sm">
+                  No assessment required or no professional selected yet.
+                </div>
+              </div>
+            </div>
           )}
         </TabsContent>
       </Tabs>

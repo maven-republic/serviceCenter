@@ -11,27 +11,45 @@ export default function ProfessionalWorkspaceLayout({ children }) {
   const { user } = useUserStore()
   const { isProfessionalWorkspace } = useTheme()
 
-  // 🎯 Only add workspace classes, let ThemeProvider handle themes
+  // Mobile-first workspace setup
   useEffect(() => {
-    // Add professional workspace class to body for any component styling
+    // Add professional workspace class for styling
     document.body.classList.add('professional-workspace')
     
-    console.log('🏢 Professional workspace layout mounted')
+    // Add mobile-specific classes
+    document.body.classList.add('professional-workspace-mobile')
+    
+    // Prevent zoom on iOS double-tap
+    const viewport = document.querySelector('meta[name="viewport"]')
+    if (viewport) {
+      viewport.setAttribute('content', 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no')
+    }
+    
+    // Add touch-friendly classes
+    document.documentElement.style.setProperty('--touch-target-min', '44px')
+    document.documentElement.style.setProperty('--touch-target-comfortable', '48px')
+    
+    console.log('🢠Professional workspace layout mounted (mobile-optimized)')
     
     return () => {
-      document.body.classList.remove('professional-workspace')
-      console.log('🏢 Professional workspace layout unmounted')
+      document.body.classList.remove('professional-workspace', 'professional-workspace-mobile')
+      console.log('🢠Professional workspace layout unmounted')
     }
   }, [])
 
   return (
     <div className={cn(
-      "min-h-screen transition-none",
-      "professional-workspace" // This class is for component styling, not theme forcing
+      "min-h-screen transition-none bg-background",
+      "professional-workspace professional-workspace-mobile",
+      // Mobile-specific styling
+      "touch-manipulation", // Better touch performance
+      "overscroll-behavior-none" // Prevent bounce scrolling
     )}>
-      {/* Use the modernized ProfessionalWorkspace component */}
-      <ProfessionalWorkspace>
-        {children}
+      {/* Mobile-optimized Professional Workspace */}
+      <ProfessionalWorkspace isMobile={true}>
+        <div className="w-full max-w-none">
+          {children}
+        </div>
       </ProfessionalWorkspace>
     </div>
   )

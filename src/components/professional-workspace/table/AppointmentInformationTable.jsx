@@ -30,31 +30,28 @@ import { useTableData } from './primitives/useTableData'
 // Import our column definitions
 import { getColumnsForMode } from './columns'
 
-// Basic Table components (matching your existing table.jsx structure)
+// Ultra-flat Table components with thin borders
 const Table = ({ className, ...props }) => (
   <div className="relative w-full overflow-auto">
     <table
-      className={cn("w-full caption-bottom text-sm", className)}
+      className={cn("w-full caption-bottom text-sm border-collapse border-spacing-0", className)}
       {...props}
     />
   </div>
 )
 
 const TableHeader = ({ className, ...props }) => (
-  <thead className={cn("[&_tr]:border-b", className)} {...props} />
+  <thead className={cn("", className)} {...props} />
 )
 
 const TableBody = ({ className, ...props }) => (
-  <tbody
-    className={cn("[&_tr:last-child]:border-0", className)}
-    {...props}
-  />
+  <tbody className={cn("", className)} {...props} />
 )
 
 const TableRow = ({ className, ...props }) => (
   <tr
     className={cn(
-      "border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted",
+      "border-b border-gray-50 hover:bg-gray-50",
       className
     )}
     {...props}
@@ -64,7 +61,7 @@ const TableRow = ({ className, ...props }) => (
 const TableHead = ({ className, ...props }) => (
   <th
     className={cn(
-      "h-12 px-2 text-left align-middle font-medium text-muted-foreground [&:has([role=checkbox])]:pr-0",
+      "h-11 px-3 text-left align-middle font-medium text-gray-600 bg-gray-50 border-b border-gray-100",
       className
     )}
     {...props}
@@ -74,7 +71,7 @@ const TableHead = ({ className, ...props }) => (
 const TableCell = ({ className, ...props }) => (
   <td
     className={cn(
-      "p-2 align-middle [&:has([role=checkbox])]:pr-0",
+      "p-3 align-middle text-gray-900",
       className
     )}
     {...props}
@@ -215,7 +212,22 @@ export default function AppointmentInformationTable({
 
   const handleRowClick = useCallback((item) => {
     const appointmentId = mode === 'interests' ? item.appointment?.appointment_id : item.appointment_id
-    onView?.(appointmentId)
+    
+    if (mode === 'interests') {
+      console.log('🎯 Interests mode click - passing complete interest data:', {
+        appointmentId,
+        interestStatus: item.status,
+        interestId: item.interest_id
+      });
+      
+      onView?.(appointmentId, {
+        mode: 'interests',
+        interestData: item,
+        appointmentData: item.appointment
+      })
+    } else {
+      onView?.(appointmentId)
+    }
   }, [mode, onView])
 
   const handleBulkMessage = useCallback(() => {
@@ -243,7 +255,7 @@ export default function AppointmentInformationTable({
     const sortIconData = getSortIcon(column.key)
     
     return (
-      <TableHead key={column.key} className={cn("py-2", column.width, column.headerClassName)}>
+      <TableHead key={column.key} className={cn("", column.width, column.headerClassName)}>
         {column.key === 'selection' ? (
           // Special handling for selection header
           column.headerCell?.({
@@ -254,16 +266,16 @@ export default function AppointmentInformationTable({
         ) : (
           <div
             className={cn(
-              "flex items-center gap-1 text-left font-medium text-muted-foreground select-none",
-              isSortable && "hover:text-foreground cursor-pointer transition-colors"
+              "flex items-center gap-1 text-left font-medium text-gray-600 select-none cursor-default",
+              isSortable && "hover:text-gray-900 cursor-pointer"
             )}
             onClick={isSortable ? () => handleSort(column.key) : undefined}
           >
-            <span className="text-lg font-medium">{column.header}</span>
+            <span className="text-sm font-medium">{column.header}</span>
             {isSortable && (
-              sortIconData.icon === 'asc' ? <ArrowUp className="h-4 w-4 text-foreground" /> :
-              sortIconData.icon === 'desc' ? <ArrowDown className="h-4 w-4 text-foreground" /> :
-              <ArrowUpDown className="h-4 w-4 text-muted-foreground" />
+              sortIconData.icon === 'asc' ? <ArrowUp className="h-3 w-3 text-gray-900" /> :
+              sortIconData.icon === 'desc' ? <ArrowDown className="h-3 w-3 text-gray-900" /> :
+              <ArrowUpDown className="h-3 w-3 text-gray-400" />
             )}
           </div>
         )}
@@ -278,7 +290,7 @@ export default function AppointmentInformationTable({
     // Special handling for selection cell
     if (column.key === 'selection') {
       return (
-        <TableCell key={column.key} className={cn("py-1", column.cellClassName)} onClick={(e) => e.stopPropagation()}>
+        <TableCell key={column.key} className={cn("", column.cellClassName)} onClick={(e) => e.stopPropagation()}>
           {column.cell({
             item,
             isSelected: itemIsSelected,
@@ -292,7 +304,7 @@ export default function AppointmentInformationTable({
     const value = column.accessorFn ? column.accessorFn(item, mode) : item[column.accessorKey]
     
     return (
-      <TableCell key={column.key} className={cn("py-1", column.width, column.cellClassName)}>
+      <TableCell key={column.key} className={cn("", column.width, column.cellClassName)}>
         {column.cell({
           item,
           value,
@@ -307,31 +319,31 @@ export default function AppointmentInformationTable({
   // ===== LOADING STATE =====
   if (loading) {
     return (
-      <Card className={cn("w-full bg-card border-border", className)}>
-        <CardHeader className="py-2 px-4 bg-muted/30 border-b border-border">
+      <Card className={cn("w-full border border-gray-200", className)}>
+        <CardHeader className="py-3 px-4 bg-gray-50 border-b border-gray-100">
           <div className="flex items-center justify-between">
-            <Skeleton className="h-6 w-32 bg-muted" />
-            <Skeleton className="h-8 w-24 bg-muted" />
+            <Skeleton className="h-5 w-32 bg-gray-200" />
+            <Skeleton className="h-8 w-24 bg-gray-200" />
           </div>
         </CardHeader>
-        <CardContent className="bg-background p-6">
-          <div className="space-y-4">
+        <CardContent className="p-6">
+          <div className="space-y-3">
             {[...Array(5)].map((_, i) => (
-              <div key={i} className="flex items-center space-x-4 py-4">
-                <Skeleton className="h-4 w-4 bg-muted" />
+              <div key={i} className="flex items-center space-x-4 py-3 border-b border-gray-50 last:border-b-0">
+                <Skeleton className="h-4 w-4 bg-gray-200" />
                 <div className="flex items-center space-x-3">
-                  <Skeleton className="h-10 w-10 rounded-full bg-muted" />
-                  <div className="space-y-2">
-                    <Skeleton className="h-4 w-32 bg-muted" />
-                    <Skeleton className="h-3 w-24 bg-muted" />
+                  <Skeleton className="h-8 w-8 rounded-full bg-gray-200" />
+                  <div className="space-y-1">
+                    <Skeleton className="h-4 w-32 bg-gray-200" />
+                    <Skeleton className="h-3 w-24 bg-gray-200" />
                   </div>
                 </div>
-                <Skeleton className="h-4 w-24 bg-muted" />
-                <Skeleton className="h-4 w-32 bg-muted" />
-                <Skeleton className="h-6 w-16 bg-muted" />
-                <Skeleton className="h-4 w-16 bg-muted" />
-                <Skeleton className="h-4 w-24 bg-muted" />
-                <Skeleton className="h-8 w-8 bg-muted" />
+                <Skeleton className="h-4 w-24 bg-gray-200" />
+                <Skeleton className="h-4 w-32 bg-gray-200" />
+                <Skeleton className="h-5 w-16 bg-gray-200" />
+                <Skeleton className="h-4 w-16 bg-gray-200" />
+                <Skeleton className="h-4 w-24 bg-gray-200" />
+                <Skeleton className="h-6 w-6 bg-gray-200" />
               </div>
             ))}
           </div>
@@ -367,18 +379,18 @@ export default function AppointmentInformationTable({
       : message.description
 
     return (
-      <Card className={cn("bg-card border-border", className)}>
-        <CardContent className="flex flex-col items-center justify-center py-16 bg-background">
-          <Calendar className="h-16 w-16 text-muted-foreground mb-4" />
-          <h3 className="text-lg font-semibold mb-2 text-foreground">{actualTitle}</h3>
-          <p className="text-muted-foreground text-center max-w-md mb-4">
+      <Card className={cn("border border-gray-100 shadow-none", className)}>
+        <CardContent className="flex flex-col items-center justify-center py-12">
+          <Calendar className="h-12 w-12 text-gray-400 mb-4" />
+          <h3 className="text-lg font-medium mb-2 text-gray-900">{actualTitle}</h3>
+          <p className="text-gray-600 text-center max-w-md mb-4">
             {actualDescription}
           </p>
           {isFiltered && (
             <Button 
               variant="outline" 
               onClick={clearAllFilters}
-              className="bg-background hover:bg-muted border-border text-foreground"
+              className="border-gray-300 text-gray-700"
             >
               Clear all filters
             </Button>
@@ -399,23 +411,23 @@ export default function AppointmentInformationTable({
   // ===== MAIN RENDER =====
   return (
     <TooltipProvider>
-      <Card className={cn("w-full bg-card border-border", className)} {...cardProps}>
-        {/* Enhanced Header with Stats */}
-        <CardHeader className="flex-shrink-0 bg-muted/30 border-b border-border">
+      <Card className={cn("w-full border border-gray-100 shadow-none", className)} {...cardProps}>
+        {/* Flat Header */}
+        <CardHeader className="py-3 px-4 bg-gray-50 border-b border-gray-100">
           <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <h3 className="text-lg text-foreground font-semibold">{getTableTitle()}</h3>
+            <div className="flex items-center space-x-3">
+              <h3 className="text-base font-medium text-gray-900">{getTableTitle()}</h3>
               
               {/* Selection Badge */}
               {selectionState.hasSelection && (
-                <Badge variant="outline" className="text-lg bg-primary/10 text-primary border-primary/20">
+                <Badge variant="outline" className="text-xs bg-blue-50 text-blue-700 border-blue-200">
                   {selectionState.selectedCount} of {selectionState.totalCount} selected
                 </Badge>
               )}
               
               {/* Data Stats Badge */}
               {dataStats.hasActiveFilters && (
-                <Badge variant="outline" className="text-xs bg-muted text-muted-foreground border-border">
+                <Badge variant="outline" className="text-xs bg-gray-100 text-gray-600 border-gray-200">
                   {dataStats.filtered} of {dataStats.total} shown
                 </Badge>
               )}
@@ -429,18 +441,18 @@ export default function AppointmentInformationTable({
                     variant="outline" 
                     size="sm" 
                     onClick={handleBulkMessage}
-                    className="bg-background hover:bg-muted border-border text-foreground"
+                    className="border-gray-300 text-gray-700"
                   >
-                    <MessageSquare className="h-4 w-4 mr-2" />
+                    <MessageSquare className="h-4 w-4 mr-1" />
                     Message ({selectionState.selectedCount})
                   </Button>
                   <Button 
                     variant="outline" 
                     size="sm" 
                     onClick={handleBulkArchive}
-                    className="bg-background hover:bg-muted border-border text-muted-foreground hover:text-destructive"
+                    className="border-gray-300 text-gray-600 hover:text-red-600"
                   >
-                    <Trash2 className="h-4 w-4 mr-2" />
+                    <Trash2 className="h-4 w-4 mr-1" />
                     Archive ({selectionState.selectedCount})
                   </Button>
                 </div>
@@ -451,21 +463,21 @@ export default function AppointmentInformationTable({
                 variant="outline" 
                 size="sm" 
                 onClick={handleCustomize}
-                className="bg-background hover:bg-muted border-border text-foreground"
+                className="border-gray-300 text-gray-700"
               >
-                <Settings className="h-4 w-4 mr-2" />
+                <Settings className="h-4 w-4 mr-1" />
                 Customize
               </Button>
             </div>
           </div>
         </CardHeader>
 
-        {/* Table Content */}
-        <CardContent className="p-0 flex-1 bg-background">
-          <div className="border-0 rounded-none max-h-[900px] overflow-y-auto">
+        {/* Flat Table Content */}
+        <CardContent className="p-0">
+          <div className="overflow-x-auto max-h-[600px] overflow-y-auto">
             <Table>
-              <TableHeader className="sticky top-0 bg-background/95 backdrop-blur-sm z-10 border-b border-border">
-                <TableRow className="hover:bg-transparent border-b border-border">
+              <TableHeader className="sticky top-0 bg-gray-50 z-10">
+                <TableRow className="border-b border-gray-100">
                   {columns.map(renderColumnHeader)}
                 </TableRow>
               </TableHeader>
@@ -484,8 +496,8 @@ export default function AppointmentInformationTable({
                     <TableRow 
                       key={appointmentId}
                       className={cn(
-                        "h-14 transition-all duration-200 hover:bg-muted/50 border-b border-border group cursor-pointer",
-                        itemIsSelected && "bg-primary/5 border-l-4 border-l-primary"
+                        "h-12 cursor-pointer border-b border-gray-50",
+                        itemIsSelected && "bg-blue-50 border-l border-l-blue-500"
                       )}
                       onClick={() => handleRowClick(item)}
                     >
@@ -498,24 +510,24 @@ export default function AppointmentInformationTable({
           </div>
         </CardContent>
 
-        {/* Enhanced Pagination */}
+        {/* Flat Pagination */}
         {activePagination && activePagination.totalPages > 1 && (
-          <div className="flex items-center justify-between px-6 py-4 border-t border-border bg-muted/30">
-            <div className="flex items-center space-x-4 text-sm text-muted-foreground">
+          <div className="flex items-center justify-between px-4 py-3 border-t border-gray-100 bg-gray-50">
+            <div className="flex items-center space-x-4 text-sm text-gray-600">
               <span>
                 Showing {activePagination.startIndex} to {activePagination.endIndex} of {activePagination.totalItems} results
               </span>
               
               {/* Selection Summary */}
               {selectionState.hasSelection && (
-                <span className="text-primary font-medium">
+                <span className="text-blue-600 font-medium">
                   {selectionState.selectedCount} selected
                 </span>
               )}
               
               {/* Filter Summary */}
               {dataStats.hasActiveFilters && (
-                <span className="text-amber-600">
+                <span className="text-orange-600">
                   Filtered ({dataStats.filterEfficiency}% match)
                 </span>
               )}
@@ -527,7 +539,7 @@ export default function AppointmentInformationTable({
                 size="sm"
                 onClick={() => activePageChange(activePagination.currentPage - 1)}
                 disabled={!activePagination.hasPreviousPage}
-                className="bg-background hover:bg-muted border-border text-foreground"
+                className="border-gray-300 text-gray-700"
               >
                 <ChevronLeft className="h-4 w-4 mr-1" />
                 Previous
@@ -544,7 +556,7 @@ export default function AppointmentInformationTable({
                   .map((page, index, array) => (
                     <div key={page} className="flex items-center">
                       {index > 0 && array[index - 1] !== page - 1 && (
-                        <span className="px-2 text-muted-foreground">...</span>
+                        <span className="px-2 text-gray-400">...</span>
                       )}
                       <Button
                         variant={page === activePagination.currentPage ? "default" : "outline"}
@@ -553,8 +565,8 @@ export default function AppointmentInformationTable({
                         className={cn(
                           "w-8 h-8 p-0",
                           page === activePagination.currentPage 
-                            ? "bg-primary text-primary-foreground" 
-                            : "bg-background hover:bg-muted border-border text-foreground"
+                            ? "bg-blue-600 text-white border-blue-600" 
+                            : "border-gray-300 text-gray-700"
                         )}
                       >
                         {page}
@@ -568,7 +580,7 @@ export default function AppointmentInformationTable({
                 size="sm"
                 onClick={() => activePageChange(activePagination.currentPage + 1)}
                 disabled={!activePagination.hasNextPage}
-                className="bg-background hover:bg-muted border-border text-foreground"
+                className="border-gray-300 text-gray-700"
               >
                 Next
                 <ChevronRight className="h-4 w-4 ml-1" />

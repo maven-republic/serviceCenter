@@ -1,4 +1,4 @@
-// ===== UPDATED LoginForm.jsx =====
+// ===== MOBILE-OPTIMIZED LoginForm.jsx - DEBUGGING VERSION =====
 'use client'
 
 import { useState } from 'react'
@@ -15,32 +15,32 @@ import Link from 'next/link'
 import { Loader2, Mail, Lock, Eye, EyeOff, AlertCircle } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
-// Loading Skeleton - Pure Tailwind
+// Loading Skeleton - Enhanced for mobile
 function LoginFormSkeleton() {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background px-4 py-12">
-      <div className="w-full max-w-md space-y-6">
-        {/* Header Skeleton */}
-        <div className="text-center space-y-4">
-          <div className="h-16 bg-muted rounded w-80 mx-auto animate-pulse" />
+    <div className="min-h-screen bg-background px-4 pt-8 pb-16 sm:py-12 sm:flex sm:items-center sm:justify-center">
+      <div className="w-full max-w-sm sm:max-w-md mx-auto space-y-4 sm:space-y-8">
+        {/* Header Skeleton - Responsive */}
+        <div className="text-center space-y-4 flex flex-col items-center">
+          <div className="h-8 sm:h-12 lg:h-16 bg-muted rounded w-48 sm:w-64 mx-auto animate-pulse" />
         </div>
 
         {/* Card Skeleton */}
         <Card className="bg-card border-border">
-          <CardHeader className="text-center space-y-2">
-            <div className="h-6 bg-muted rounded w-24 mx-auto animate-pulse" />
+          <CardHeader className="text-center space-y-2 p-4 sm:p-6">
+            <div className="h-5 sm:h-6 bg-muted rounded w-20 sm:w-24 mx-auto animate-pulse" />
             <div className="h-4 bg-muted rounded w-full animate-pulse" />
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-4 p-4 sm:p-6">
             <div className="space-y-2">
               <div className="h-4 bg-muted rounded w-24 animate-pulse" />
-              <div className="h-10 bg-muted rounded w-full animate-pulse" />
+              <div className="h-11 sm:h-12 bg-muted rounded w-full animate-pulse" />
             </div>
             <div className="space-y-2">
               <div className="h-4 bg-muted rounded w-20 animate-pulse" />
-              <div className="h-10 bg-muted rounded w-full animate-pulse" />
+              <div className="h-11 sm:h-12 bg-muted rounded w-full animate-pulse" />
             </div>
-            <div className="h-11 bg-muted rounded w-full animate-pulse" />
+            <div className="h-11 sm:h-12 bg-muted rounded w-full animate-pulse" />
           </CardContent>
         </Card>
       </div>
@@ -94,7 +94,7 @@ export default function LoginForm({ errorMessage, isLoading = false }) {
       return
     }
 
-    console.log('🔐 Attempting login for:', email)
+    console.log('🔍 Attempting login for:', email)
 
     try {
       const supabase = createClient()
@@ -170,37 +170,39 @@ export default function LoginForm({ errorMessage, isLoading = false }) {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background px-4 py-12">
-      <div className="w-full max-w-md space-y-8">
+    <div className="min-h-screen bg-background px-4 pt-8 pb-16 sm:py-12 sm:flex sm:items-center sm:justify-center">
+      <div className="w-full max-w-sm sm:max-w-md mx-auto space-y-4 sm:space-y-8">
         
-        {/* Header with maven republic text */}
-        <div className="text-center space-y-4 flex flex-col items-center">
-          <h1 className="text-7xl font-bold tracking-tight text-muted-foreground whitespace-nowrap">
+        {/* Header with responsive maven republic text - REDUCED SIZE FOR MOBILE */}
+        <div className="text-center space-y-2 flex flex-col items-center">
+          <h1 className="text-3xl sm:text-5xl lg:text-7xl font-bold tracking-tight text-muted-foreground break-words leading-tight">
             maven republic
           </h1>
         </div>
 
-        {/* Login Card - Pure shadcn/ui */}
+        {/* Login Card - Mobile optimized */}
         <Card className="bg-card border-border shadow-sm">
-          <CardHeader className="text-center space-y-1">
-            <CardTitle className="text-xl text-card-foreground">Sign In</CardTitle>
-            <CardDescription className="text-muted-foreground">
+          <CardHeader className="text-center space-y-1 p-4 sm:p-6">
+            <CardTitle className="text-lg sm:text-xl text-card-foreground">Sign In</CardTitle>
+            <CardDescription className="text-sm sm:text-base text-muted-foreground">
               Enter your credentials to continue
             </CardDescription>
           </CardHeader>
           
-          <CardContent className="space-y-6">
+          <CardContent className="space-y-4 sm:space-y-6 p-4 sm:p-6">
             <form onSubmit={handleLogin} className="space-y-4">
               
-              {/* Global Error - shadcn/ui Alert */}
+              {/* Global Error - Mobile optimized */}
               {errorMessage && (
-                <Alert variant="destructive">
+                <Alert variant="destructive" className="text-sm">
                   <AlertCircle className="h-4 w-4" />
-                  <AlertDescription>{errorMessage}</AlertDescription>
+                  <AlertDescription className="text-xs sm:text-sm leading-relaxed">
+                    {errorMessage}
+                  </AlertDescription>
                 </Alert>
               )}
 
-              {/* Email Field - Pure Tailwind + shadcn/ui */}
+              {/* Email Field - Mobile optimized */}
               <div className="space-y-2">
                 <Label 
                   htmlFor="email" 
@@ -214,9 +216,11 @@ export default function LoginForm({ errorMessage, isLoading = false }) {
                     id="email"
                     name="email"
                     type="email"
+                    inputMode="email"
+                    autoComplete="email"
                     placeholder="you@example.com"
                     className={cn(
-                      "pl-10 bg-background border-border text-foreground",
+                      "pl-10 h-11 sm:h-12 text-base sm:text-sm bg-background border-border text-foreground touch-manipulation",
                       "placeholder:text-muted-foreground",
                       "focus:border-ring focus:ring-2 focus:ring-ring/20",
                       formErrors.email && "border-destructive focus:border-destructive"
@@ -226,11 +230,11 @@ export default function LoginForm({ errorMessage, isLoading = false }) {
                   />
                 </div>
                 {formErrors.email && (
-                  <p className="text-xs text-destructive mt-1">{formErrors.email}</p>
+                  <p className="text-xs text-destructive mt-1 leading-relaxed">{formErrors.email}</p>
                 )}
               </div>
 
-              {/* Password Field - Pure Tailwind + shadcn/ui */}
+              {/* Password Field - Mobile optimized */}
               <div className="space-y-2">
                 <Label 
                   htmlFor="password" 
@@ -244,9 +248,10 @@ export default function LoginForm({ errorMessage, isLoading = false }) {
                     id="password"
                     name="password"
                     type={showPassword ? 'text' : 'password'}
+                    autoComplete="current-password"
                     placeholder="Enter your password"
                     className={cn(
-                      "pl-10 pr-10 bg-background border-border text-foreground",
+                      "pl-10 pr-12 h-11 sm:h-12 text-base sm:text-sm bg-background border-border text-foreground touch-manipulation",
                       "placeholder:text-muted-foreground",
                       "focus:border-ring focus:ring-2 focus:ring-ring/20",
                       formErrors.password && "border-destructive focus:border-destructive"
@@ -257,27 +262,28 @@ export default function LoginForm({ errorMessage, isLoading = false }) {
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 rounded-sm"
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 rounded-sm touch-manipulation p-1"
                     disabled={loading}
                     tabIndex={-1}
+                    aria-label={showPassword ? "Hide password" : "Show password"}
                   >
                     {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                   </button>
                 </div>
                 {formErrors.password && (
-                  <p className="text-xs text-destructive mt-1">{formErrors.password}</p>
+                  <p className="text-xs text-destructive mt-1 leading-relaxed">{formErrors.password}</p>
                 )}
               </div>
 
-              {/* Remember Me & Forgot Password - Pure Tailwind */}
-              <div className="flex items-center justify-between">
+              {/* Remember Me & Forgot Password - Mobile optimized */}
+              <div className="flex flex-col space-y-3 sm:flex-row sm:items-center sm:justify-between sm:space-y-0">
                 <div className="flex items-center space-x-2">
                   <Checkbox
                     id="remember"
                     checked={rememberMe}
                     onCheckedChange={setRememberMe}
                     disabled={loading}
-                    className="data-[state=checked]:bg-primary data-[state=checked]:border-primary"
+                    className="data-[state=checked]:bg-primary data-[state=checked]:border-primary touch-manipulation"
                   />
                   <Label 
                     htmlFor="remember" 
@@ -288,16 +294,16 @@ export default function LoginForm({ errorMessage, isLoading = false }) {
                 </div>
                 <Link 
                   href="/forgot-password" 
-                  className="text-sm text-primary hover:text-primary/80 transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 rounded-sm"
+                  className="text-sm text-primary hover:text-primary/80 transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 rounded-sm touch-manipulation p-1 -m-1"
                 >
                   Forgot password?
                 </Link>
               </div>
 
-              {/* Submit Button - Pure shadcn/ui */}
+              {/* Submit Button - Mobile optimized */}
               <Button 
                 type="submit" 
-                className="w-full h-11 bg-primary text-primary-foreground hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+                className="w-full h-12 sm:h-11 text-base sm:text-sm bg-primary text-primary-foreground hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 touch-manipulation"
                 disabled={loading}
               >
                 {loading ? (
@@ -313,36 +319,36 @@ export default function LoginForm({ errorMessage, isLoading = false }) {
           </CardContent>
         </Card>
 
-        {/* Footer Links - Pure Tailwind */}
+        {/* Footer Links - Mobile optimized */}
         <div className="text-center space-y-4">
           <p className="text-sm text-muted-foreground">
             Don't have an account?{' '}
             <Link 
               href="/register" 
-              className="font-medium text-primary hover:text-primary/80 transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 rounded-sm"
+              className="font-medium text-primary hover:text-primary/80 transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 rounded-sm touch-manipulation"
             >
               Create Account
             </Link>
           </p>
           
-          <div className="flex items-center justify-center space-x-4 text-xs text-muted-foreground">
+          <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-xs text-muted-foreground">
             <Link 
               href="/terms" 
-              className="hover:text-foreground transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 rounded-sm"
+              className="hover:text-foreground transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 rounded-sm touch-manipulation px-1 py-0.5"
             >
               Terms
             </Link>
-            <span>•</span>
+            <span className="hidden sm:inline">•</span>
             <Link 
               href="/privacy" 
-              className="hover:text-foreground transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 rounded-sm"
+              className="hover:text-foreground transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 rounded-sm touch-manipulation px-1 py-0.5"
             >
               Privacy
             </Link>
-            <span>•</span>
+            <span className="hidden sm:inline">•</span>
             <Link 
               href="/help" 
-              className="hover:text-foreground transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 rounded-sm"
+              className="hover:text-foreground transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 rounded-sm touch-manipulation px-1 py-0.5"
             >
               Help
             </Link>

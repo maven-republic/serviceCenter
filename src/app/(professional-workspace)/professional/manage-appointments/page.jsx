@@ -6,6 +6,22 @@ import { useUserStore } from '@/store/userStore'
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
+import { 
+  Calendar,
+  Heart,
+  Users,
+  Clock,
+  Search,
+  Filter,
+  AlertCircle,
+  Target,
+  Crown,
+  RefreshCw,
+  ChevronDown,
+  Grid,
+  List
+} from 'lucide-react'
 import AppointmentInformationTable from '@/components/professional-workspace/table/AppointmentInformationTable'
 import AppointmentInformationView from '@/components/sheet/AppointmentInformationView'
 import AppointmentSearch from '@/components/professional-workspace/appointments/AppointmentSearch'
@@ -18,6 +34,302 @@ import AppointmentAttachmentViewer from '@/components/professional-workspace/app
 import { useTableData } from '@/components/professional-workspace/table/primitives/useTableData'
 import { useTableSelection } from '@/components/professional-workspace/table/primitives/useTableSelection'
 
+// Mobile Appointment Card Component
+const MobileAppointmentCard = ({ 
+  appointment, 
+  mode, 
+  professionalId, 
+  onView, 
+  onAction 
+}) => {
+  const isInvited = appointment.is_invited || (appointment.recipients?.includes(professionalId))
+  const isInterestMode = mode === 'interests'
+  
+  // Handle different data structures
+  const displayData = isInterestMode ? {
+    ...appointment,
+    customer: appointment.appointment?.customer || appointment.customer,
+    service: appointment.appointment?.service || appointment.service,
+    appointment_id: appointment.appointment?.appointment_id || appointment.appointment_id
+  } : appointment
+  
+  const customerName = displayData.customer?.account ? 
+    `${displayData.customer.account.first_name || ''} ${displayData.customer.account.last_name || ''}`.trim() :
+    `${displayData.first_name || ''} ${displayData.last_name || ''}`.trim() || 'Unknown Customer'
+  
+  const serviceName = displayData.service?.name || displayData.service_name || displayData.title || 'Untitled Service'
+  
+  const formatTime = (dateString) => {
+    if (!dateString) return 'Not specified'
+    const date = new Date(dateString)
+    const now = new Date()
+    const diffDays = Math.ceil((date - now) / (1000 * 60 * 60 * 24))
+    
+    if (diffDays === 0) return `Today ${date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}`
+    if (diffDays === 1) return `Tomorrow ${date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}`
+    if (diffDays === -1) return `Yesterday`
+    if (Math.abs(diffDays) < 7) return date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+  }
+  
+  const getStatusColor = (status, mode) => {
+    if (mode === 'interests') {
+      const configs = {
+        interested: 'bg-blue-100 text-blue-800',
+        quoted: 'bg-amber-100 text-amber-800',
+        selected: 'bg-green-100 text-green-800',
+        confirmed: 'bg-emerald-100 text-emerald-800',
+        rejected: 'bg-red-100 text-red-800',
+        updated: 'bg-purple-100 text-purple-800'
+      }
+      return configs[status] || 'bg-gray-100 text-gray-800'
+    } else {
+      const configs = {
+        pending: 'bg-gray-100 text-gray-800',
+        interested: 'bg-blue-100 text-blue-800',
+        competing: 'bg-orange-100 text-orange-800',
+        quoted: 'bg-amber-100 text-amber-800',
+        accepted: 'bg-green-100 text-green-800',
+        converted: 'bg-emerald-100 text-emerald-800',
+        declined: 'bg-red-100 text-red-800'
+      }
+      return configs[status] || 'bg-gray-100 text-gray-800'
+    }
+  }
+  
+  const getActionButton = () => {
+    if (mode === 'available') {
+      return (
+        <Button 
+          size="sm" 
+          onClick={(e) => {
+            e.stopPropagation()
+            onAction('express_interest', appointment)
+          }}
+          className={`w-full ${isInvited ? 'bg-blue-600 hover:bg-blue-700' : 'bg-primary hover:bg-primary/90'}`}
+        >
+          {isInvited ? (
+            <>
+              <Crown className="h-4 w-4 mr-2" />
+              Respond to Invitation
+            </>
+          ) : (
+            <>
+              <Heart className="h-4 w-4 mr-2" />
+              Express Interest
+            </>
+          )}
+        </Button>
+      )
+    } else if (mode === 'interests') {
+      if (appointment.status === 'selected') {
+        return (
+          <Button 
+            size="sm" 
+            onClick={(e) => {
+              e.stopPropagation()
+              onAction('respond_to_selection', appointment)
+            }}
+            className="w-full bg-green-600 hover:bg-green-700"
+          >
+            <Crown className="h-4 w-4 mr-2" />
+            Respond to Selection
+          </Button>
+        )
+      } else if (['interested', 'quoted', 'updated'].includes(appointment.status)) {
+        return (
+          <Button 
+            size="sm" 
+            variant="outline"
+            onClick={(e) => {
+              e.stopPropagation()
+              onAction('update_interest', appointment)
+            }}
+            className="w-full"
+          >
+            <Calendar className="h-4 w-4 mr-2" />
+            Update Interest
+          </Button>
+        )
+      }
+    } else if (mode === 'assigned') {
+      return (
+        <div className="flex gap-2">
+          <Button 
+            size="sm" 
+            variant="outline"
+            onClick={(e) => {
+              e.stopPropagation()
+              onAction('decline', appointment)
+            }}
+            className="flex-1 text-red-600 hover:text-red-700"
+          >
+            Decline
+          </Button>
+          <Button 
+            size="sm"
+            onClick={(e) => {
+              e.stopPropagation()
+              onAction('accept', appointment)
+            }}
+            className="flex-1"
+          >
+            Accept
+          </Button>
+        </div>
+      )
+    }
+    return null
+  }
+  
+  const timeValue = isInterestMode ? 
+    (appointment.appointment?.session || appointment.appointment?.created_at) :
+    (appointment.session || appointment.created_at)
+  
+  return (
+    <Card 
+      className="cursor-pointer hover:shadow-md transition-shadow duration-200 border-l-4 border-l-primary/20"
+      onClick={() => onView(displayData.appointment_id || appointment.appointment_id, isInterestMode ? {
+        mode: 'interests',
+        interestData: appointment,
+        appointmentData: appointment.appointment || appointment
+      } : undefined)}
+    >
+      <CardContent className="p-4">
+        <div className="space-y-3">
+          {/* Header */}
+          <div className="flex items-start justify-between">
+            <div className="flex-1 min-w-0">
+              <h3 className="font-semibold text-foreground text-base truncate">
+                {customerName}
+              </h3>
+              <p className="text-sm text-muted-foreground truncate">
+                {serviceName}
+              </p>
+            </div>
+            
+            <div className="flex items-center gap-2 ml-3">
+              {isInvited && (
+                <Badge className="bg-blue-600 text-white text-xs px-2 py-0.5">
+                  <Crown className="h-3 w-3 mr-1" />
+                  Invited
+                </Badge>
+              )}
+              <Badge className={`text-xs px-2 py-0.5 ${getStatusColor(appointment.status, mode)}`}>
+                {appointment.status}
+              </Badge>
+            </div>
+          </div>
+          
+          {/* Time and urgency */}
+          <div className="flex items-center justify-between text-sm">
+            <div className="flex items-center gap-2 text-muted-foreground">
+              <Clock className="h-4 w-4" />
+              <span>{formatTime(timeValue)}</span>
+            </div>
+            
+            {appointment.urgency && appointment.urgency !== 'standard' && (
+              <Badge 
+                variant="outline" 
+                className={`text-xs ${
+                  appointment.urgency === 'urgent' ? 'border-red-300 text-red-700 bg-red-50' :
+                  appointment.urgency === 'high' ? 'border-orange-300 text-orange-700 bg-orange-50' :
+                  'border-gray-300 text-gray-700 bg-gray-50'
+                }`}
+              >
+                {appointment.urgency}
+              </Badge>
+            )}
+          </div>
+          
+          {/* Description preview */}
+          {(displayData.description || displayData.customer_message) && (
+            <p className="text-sm text-muted-foreground line-clamp-2">
+              {displayData.description || displayData.customer_message}
+            </p>
+          )}
+          
+          {/* Interest-specific info */}
+          {isInterestMode && appointment.amount && (
+            <div className="flex items-center justify-between text-sm bg-green-50 p-2 rounded">
+              <span className="text-green-700">My Quote:</span>
+              <span className="font-semibold text-green-800">
+                JMD ${parseFloat(appointment.amount).toLocaleString()}
+              </span>
+            </div>
+          )}
+          
+          {/* Competition indicator */}
+          {mode === 'available' && appointment.interest_summary?.total_count > 0 && (
+            <div className="flex items-center gap-2 text-xs text-orange-700 bg-orange-50 p-2 rounded">
+              <Users className="h-3 w-3" />
+              <span>{appointment.interest_summary.total_count} professionals interested</span>
+            </div>
+          )}
+          
+          {/* Action button */}
+          <div className="pt-2">
+            {getActionButton()}
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  )
+}
+
+// Mobile Quick Stats Component
+const MobileQuickStats = ({ tabCounts, activeTab }) => {
+  const getActiveCount = () => {
+    switch (activeTab) {
+      case 'available': return tabCounts.available
+      case 'interests': return tabCounts.interests
+      case 'assigned': return tabCounts.assigned
+      default: return 0
+    }
+  }
+
+  return (
+    <div className="flex items-center justify-between p-4 bg-primary/5 rounded-lg">
+      <div>
+        <p className="text-sm text-muted-foreground">Total {activeTab}</p>
+        <p className="text-2xl font-bold text-primary">{getActiveCount()}</p>
+      </div>
+      {activeTab === 'available' && tabCounts.invitations > 0 && (
+        <Badge className="bg-blue-600 text-white">
+          <Crown className="h-3 w-3 mr-1" />
+          {tabCounts.invitations} invitations
+        </Badge>
+      )}
+    </div>
+  )
+}
+
+// Mobile View Toggle Component
+const MobileViewToggle = ({ viewMode, onViewModeChange }) => {
+  return (
+    <div className="flex items-center gap-2 p-1 bg-muted rounded-lg">
+      <Button
+        size="sm"
+        variant={viewMode === 'cards' ? 'default' : 'ghost'}
+        onClick={() => onViewModeChange('cards')}
+        className="flex-1"
+      >
+        <Grid className="h-4 w-4 mr-2" />
+        Cards
+      </Button>
+      <Button
+        size="sm"
+        variant={viewMode === 'table' ? 'default' : 'ghost'}
+        onClick={() => onViewModeChange('table')}
+        className="flex-1"
+      >
+        <List className="h-4 w-4 mr-2" />
+        Table
+      </Button>
+    </div>
+  )
+}
+
 export default function ManageAppointments() {
   const { user } = useUserStore()
   const [appointments, setAppointments] = useState([])
@@ -28,6 +340,10 @@ export default function ManageAppointments() {
   const [selectedAppointment, setSelectedAppointment] = useState(null)
   const [showSheet, setShowSheet] = useState(false)
   const [activeTab, setActiveTab] = useState('available')
+  
+  // Mobile-specific state
+  const [viewMode, setViewMode] = useState('cards') // 'cards' or 'table'
+  const [isMobile, setIsMobile] = useState(false)
   
   // File viewer state
   const [selectedAppointmentForFiles, setSelectedAppointmentForFiles] = useState(null)
@@ -48,6 +364,17 @@ export default function ManageAppointments() {
     interests: 0,
     assigned: 0
   })
+
+  // Detect mobile viewport
+  useEffect(() => {
+    const checkIsMobile = () => {
+      setIsMobile(window.innerWidth < 768)
+    }
+    
+    checkIsMobile()
+    window.addEventListener('resize', checkIsMobile)
+    return () => window.removeEventListener('resize', checkIsMobile)
+  }, [])
 
   // ✅ Use table hooks for enhanced functionality
   const currentData = activeTab === 'interests' ? interests : appointments
@@ -132,7 +459,7 @@ export default function ManageAppointments() {
     fetchData(pagination.page)
     fetchTabCounts()
     fetchProfessionalData()
-    clearSelection() // Clear any selections on refresh
+    clearSelection()
   }, [pagination.page, clearSelection])
 
   // ✅ UPDATED: Fetch available appointments with interest data for state detection
@@ -147,7 +474,7 @@ export default function ManageAppointments() {
         professional_filter: 'available',
         professional_id: user.profile.professional_id,
         status: 'pending',
-        include_interests: 'true', // ✅ NEW: Include interest data for response state detection
+        include_interests: 'true',
         limit: pagination.limit.toString(),
         offset: ((page - 1) * pagination.limit).toString()
       })
@@ -161,8 +488,7 @@ export default function ManageAppointments() {
       }
 
       const responseText = await response.text()
-      console.log('📄 Available appointments response:', responseText.substring(0, 200))
-
+      
       if (!responseText.trim()) {
         throw new Error('Empty response from server')
       }
@@ -174,14 +500,6 @@ export default function ManageAppointments() {
       }
 
       console.log('✅ Available appointments fetched:', data.appointments?.length || 0)
-      
-      const invitationCount = data.appointments?.filter(apt => apt.is_invited)?.length || 0
-      const openCount = data.appointments?.filter(apt => !apt.is_invited)?.length || 0
-      const respondedCount = data.appointments?.filter(apt => 
-        apt.interests?.some(i => i.professional_id === user.profile.professional_id)
-      )?.length || 0
-      
-      console.log('🎯 Invitations found:', invitationCount, 'Open marketplace:', openCount, 'Already responded:', respondedCount)
 
       setAppointments(data.appointments || [])
       setPagination(prev => ({
@@ -222,8 +540,7 @@ export default function ManageAppointments() {
       }
 
       const responseText = await response.text()
-      console.log('📄 Interests response:', responseText.substring(0, 200))
-
+      
       if (!responseText.trim()) {
         throw new Error('Empty response from server')
       }
@@ -276,8 +593,7 @@ export default function ManageAppointments() {
       }
 
       const responseText = await response.text()
-      console.log('📄 Assigned appointments response:', responseText.substring(0, 200))
-
+      
       if (!responseText.trim()) {
         throw new Error('Empty response from server')
       }
@@ -311,8 +627,6 @@ export default function ManageAppointments() {
     if (!user?.profile?.professional_id) return
 
     try {
-      console.log('🔢 Fetching tab counts for professional:', user.profile.professional_id)
-
       let availableCount = 0
       let invitationCount = 0
       let interestsCount = 0  
@@ -369,8 +683,6 @@ export default function ManageAppointments() {
         console.error('❌ Error fetching assigned count:', error)
       }
 
-      console.log('📊 Final tab counts:', { availableCount, invitationCount, interestsCount, assignedCount })
-
       setTabCounts({
         available: availableCount,
         invitations: invitationCount,
@@ -420,9 +732,6 @@ export default function ManageAppointments() {
     const appointment = appointments.find(apt => apt.appointment_id === appointmentId)
     const isInvitation = appointment?.is_invited || false
 
-    console.log('🎯 Expressing interest in appointment:', appointmentId)
-    console.log('🎯 Is invitation response:', isInvitation)
-
     try {
       const requestBody = {
         appointment_id: appointmentId,
@@ -455,11 +764,6 @@ export default function ManageAppointments() {
 
       console.log('✅ Interest expressed successfully:', data)
 
-      const successMessage = isInvitation 
-        ? '🎉 Response to invitation sent successfully!'
-        : '✅ Interest expressed successfully!'
-
-      // ✅ UPDATED: Enhanced refresh and user feedback
       handleRefresh()
       clearSelection()
 
@@ -468,10 +772,6 @@ export default function ManageAppointments() {
         setSelectedAppointment(null)
       }
 
-      // ✅ NEW: Show success message with next steps
-      alert(`${successMessage}\n\nYou can track your response in the "My Interests" tab.`)
-
-      // ✅ NEW: Auto-switch to interests tab after successful submission
       setTimeout(() => {
         setActiveTab('interests')
       }, 100)
@@ -479,15 +779,12 @@ export default function ManageAppointments() {
     } catch (err) {
       console.error('❌ Error expressing interest:', err)
       setError(`Failed to express interest: ${err.message}`)
-      alert(`Error expressing interest: ${err.message}`)
     }
   }, [user?.profile?.professional_id, showSheet, appointments, handleRefresh, clearSelection])
 
   // Update existing interest
   const handleUpdateInterest = useCallback(async (interestId, updateData) => {
     if (!interestId) return
-
-    console.log('🔄 Updating interest:', interestId)
 
     try {
       const response = await fetch(`/api/interests/${interestId}`, {
@@ -504,8 +801,6 @@ export default function ManageAppointments() {
         throw new Error(data.error || 'Failed to update interest')
       }
 
-      console.log('✅ Interest updated successfully')
-
       handleRefresh()
       clearSelection()
 
@@ -520,11 +815,9 @@ export default function ManageAppointments() {
     }
   }, [showSheet, handleRefresh, clearSelection])
 
-  // Handle appointment action (accept/decline) - for assigned appointments
+  // Handle appointment action (accept/decline)
   const handleAppointmentAction = useCallback(async (appointmentId, action, additionalData = {}) => {
     if (!appointmentId || !action) return
-
-    console.log(`🔄 ${action}ing appointment:`, appointmentId)
 
     try {
       const updateData = {
@@ -546,8 +839,6 @@ export default function ManageAppointments() {
         throw new Error(data.error || `Failed to ${action} appointment`)
       }
 
-      console.log(`✅ Appointment ${action}ed successfully`)
-
       setAppointments(prev => 
         prev.map(apt => 
           apt.appointment_id === appointmentId 
@@ -567,10 +858,49 @@ export default function ManageAppointments() {
     }
   }, [showSheet])
 
-  // Handle view appointment details
-  const handleViewAppointment = useCallback(async (appointmentId) => {
-    console.log('👁️ Viewing appointment:', appointmentId)
+  // Handle view appointment
+  const handleViewAppointment = useCallback(async (appointmentId, additionalData = null) => {
+    console.log('👁️ Viewing appointment:', appointmentId, { additionalData, currentTab: activeTab })
 
+    // 🔥 CRITICAL FIX: Handle interests mode data directly
+    if (additionalData?.mode === 'interests' && additionalData?.interestData) {
+      const enhancedInterestData = {
+        ...additionalData.interestData,
+        professional_id: additionalData.interestData.professional_id || 
+                        additionalData.interestData.professionalId ||
+                        user?.profile?.professional_id
+      }
+      
+      setSelectedAppointment({
+        ...additionalData.appointmentData,
+        mode: 'interests',
+        interests: [enhancedInterestData],
+        viewMode: activeTab,
+        interest_id: enhancedInterestData.interest_id,
+        status: enhancedInterestData.status,
+        professional_id: enhancedInterestData.professional_id
+      })
+      
+      setShowSheet(true)
+      return
+    }
+
+    // 🔧 NEW: Handle available appointments (including those with existing responses)
+    if (activeTab === 'available') {
+      if (additionalData?.appointmentData) {
+        setSelectedAppointment({
+          ...additionalData.appointmentData,
+          mode: 'available',
+          viewMode: 'available',
+          interests: additionalData.interestData ? [additionalData.interestData] : []
+        })
+        
+        setShowSheet(true)
+        return
+      }
+    }
+
+    // 📄 Original API fetch logic for other cases
     try {
       const response = await fetch(`/api/appointments/${appointmentId}`)
       const data = await response.json()
@@ -581,6 +911,7 @@ export default function ManageAppointments() {
 
       setSelectedAppointment({
         ...data.appointment,
+        mode: activeTab,
         viewMode: activeTab
       })
       setShowSheet(true)
@@ -589,7 +920,7 @@ export default function ManageAppointments() {
       console.error('❌ Error fetching appointment details:', err)
       setError(err.message)
     }
-  }, [activeTab])
+  }, [activeTab, user?.profile?.professional_id])
 
   // Handle view attachments
   const handleViewAttachments = useCallback((appointment) => {
@@ -604,12 +935,10 @@ export default function ManageAppointments() {
       
       switch (actionType) {
         case 'express_interest':
-          // ✅ FIXED: Open detailed form instead of auto-submitting
           console.log('🎯 Opening detailed form for:', item.appointment_id)
           await handleViewAppointment(item.appointment_id)
           break
         case 'respond_to_selection':
-          // Open professional response handler
           handleViewAppointment(item.appointment?.appointment_id)
           break
         case 'update_interest':
@@ -625,14 +954,12 @@ export default function ManageAppointments() {
           await handleAppointmentAction(item.appointment_id, 'decline')
           break
         case 'share':
-          // Handle share functionality
           console.log('Share:', item)
           break
         default:
           console.warn('Unknown action:', actionType)
       }
       
-      // ✅ UPDATED: Only refresh if we actually performed an action (not just opened a form)
       if (!['express_interest', 'respond_to_selection'].includes(actionType)) {
         handleRefresh()
       }
@@ -643,18 +970,16 @@ export default function ManageAppointments() {
 
   // ✅ Handle bulk actions
   const handleBulkAction = useCallback(async (action, selectedIds) => {
-    console.log(`🔄 Performing bulk ${action} on:`, selectedIds)
+    console.log(`📄 Performing bulk ${action} on:`, selectedIds)
 
     try {
       switch (action) {
         case 'express_interest':
-          // Bulk express interest for available appointments
           for (const id of selectedIds) {
             await handleExpressInterest(id, { intent: 'standard' })
           }
           break
         case 'export':
-          // Export selected data
           const selectedData = selectedItems
           const dataStr = JSON.stringify(selectedData, null, 2)
           const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr)
@@ -697,13 +1022,59 @@ export default function ManageAppointments() {
     }
   }, [fetchData, pagination.totalPages])
 
+  // Mobile Cards View Component
+  const MobileCardsView = ({ data }) => {
+    if (loading) {
+      return (
+        <AppointmentLoadingState 
+          mode={activeTab}
+          viewMode="cards"
+          rowCount={5}
+        />
+      )
+    }
+
+    if (data.length === 0) {
+      return (
+        <AppointmentEmptyState
+          mode={activeTab}
+          emptyMessage={
+            activeTab === 'available' ? "No available appointments in your area" :
+            activeTab === 'interests' ? "No interests expressed yet" :
+            "No assigned appointments"
+          }
+          emptyDescription={
+            activeTab === 'available' ? "Check back later for new appointment opportunities and invitations" :
+            activeTab === 'interests' ? "Browse available appointments and invitations to express interest" :
+            "Express interest in available appointments and respond to invitations to get selected"
+          }
+        />
+      )
+    }
+
+    return (
+      <div className="space-y-4">
+        {data.map((appointment) => (
+          <MobileAppointmentCard
+            key={appointment.appointment_id || appointment.interest_id}
+            appointment={appointment}
+            mode={activeTab}
+            professionalId={user?.profile?.professional_id}
+            onView={handleViewAppointment}
+            onAction={handleAction}
+          />
+        ))}
+      </div>
+    )
+  }
+
   // Early return for incomplete profile
   if (!user?.profile?.professional_id) {
     return <AppointmentProfileIncomplete />
   }
 
   return (
-    <div className="space-y-3 p-6 bg-background min-h-screen">
+    <div className={`space-y-3 ${isMobile ? 'p-4' : 'p-6'} bg-background min-h-screen`}>
       {/* Error State */}
       {error && (
         <AppointmentErrorState 
@@ -712,53 +1083,89 @@ export default function ManageAppointments() {
         />
       )}
 
+      {/* Mobile Quick Stats */}
+      {isMobile && (
+        <MobileQuickStats tabCounts={tabCounts} activeTab={activeTab} />
+      )}
+
       {/* Main Content with Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-        {/* Tab Navigation with Invitation Indicators */}
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="available" className="flex items-center gap-2">
+        {/* Tab Navigation with Invitation Indicators - Responsive Layout */}
+        <TabsList className="grid w-full grid-cols-3 gap-1 p-1 h-auto">
+          <TabsTrigger 
+            value="available" 
+            className="flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 py-2 px-2 sm:px-4 min-h-[48px] sm:min-h-[40px] data-[state=active]:bg-background data-[state=active]:text-foreground"
+          >
             <div className="flex items-center gap-2">
-              <span>Available</span>
-              <div className="flex items-center gap-1">
-                {tabCounts.available > 0 && (
-                  <Badge variant="secondary" className="ml-1">
-                    {tabCounts.available}
-                  </Badge>
-                )}
-                {tabCounts.invitations > 0 && (
-                  <Badge className="bg-blue-600 text-white text-xs">
-                    {tabCounts.invitations} invited
-                  </Badge>
-                )}
-              </div>
+              <span className="text-xs sm:text-sm font-medium whitespace-nowrap">Available</span>
+              {tabCounts.available > 0 && (
+                <Badge variant="secondary" className="text-xs h-4 px-1.5 min-w-[20px] flex items-center justify-center">
+                  {tabCounts.available}
+                </Badge>
+              )}
             </div>
+            {tabCounts.invitations > 0 && (
+              <Badge className="bg-blue-600 text-white text-xs h-4 px-2 rounded-full sm:ml-1">
+                <Crown className="h-3 w-3 mr-1 hidden sm:inline" />
+                <span className="sm:hidden">{tabCounts.invitations} invited</span>
+                <span className="hidden sm:inline">{tabCounts.invitations} invited</span>
+              </Badge>
+            )}
           </TabsTrigger>
-          <TabsTrigger value="interests" className="flex items-center gap-2">
-            My Interests
+          
+          <TabsTrigger 
+            value="interests" 
+            className="flex items-center justify-center gap-2 py-2 px-2 sm:px-4 min-h-[48px] sm:min-h-[40px] data-[state=active]:bg-background data-[state=active]:text-foreground"
+          >
+            <span className="text-xs sm:text-sm font-medium whitespace-nowrap">My Interests</span>
             {tabCounts.interests > 0 && (
-              <Badge variant="secondary" className="ml-1">
+              <Badge variant="secondary" className="text-xs h-4 px-1.5 min-w-[20px] flex items-center justify-center">
                 {tabCounts.interests}
               </Badge>
             )}
           </TabsTrigger>
-          <TabsTrigger value="assigned" className="flex items-center gap-2">
-            Assigned
+          
+          <TabsTrigger 
+            value="assigned" 
+            className="flex items-center justify-center gap-2 py-2 px-2 sm:px-4 min-h-[48px] sm:min-h-[40px] data-[state=active]:bg-background data-[state=active]:text-foreground"
+          >
+            <span className="text-xs sm:text-sm font-medium whitespace-nowrap">Assigned</span>
             {tabCounts.assigned > 0 && (
-              <Badge variant="secondary" className="ml-1">
+              <Badge variant="secondary" className="text-xs h-4 px-1.5 min-w-[20px] flex items-center justify-center">
                 {tabCounts.assigned}
               </Badge>
             )}
           </TabsTrigger>
         </TabsList>
 
-        {/* ✅ Search with Full Hook Integration */}
-        <AppointmentSearch
-          searchQuery={searchQuery}
-          appointments={currentData}
-          onSearch={handleSearch}
-          mode={activeTab}
-          dataStats={dataStats}
-        />
+        {/* Search and Controls */}
+        <div className="space-y-3">
+          <AppointmentSearch
+            searchQuery={searchQuery}
+            appointments={currentData}
+            onSearch={handleSearch}
+            mode={activeTab}
+            dataStats={dataStats}
+          />
+
+          {/* Mobile View Toggle */}
+          {isMobile && (
+            <div className="flex items-center justify-between">
+              <MobileViewToggle 
+                viewMode={viewMode} 
+                onViewModeChange={setViewMode} 
+              />
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleRefresh}
+                disabled={loading}
+              >
+                <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+              </Button>
+            </div>
+          )}
+        </div>
 
         {/* Tab Content */}
         <TabsContent value="available" className="space-y-4">
@@ -785,13 +1192,13 @@ export default function ManageAppointments() {
           )}
 
           <div className="space-y-1">
-            {loading ? (
-              <AppointmentLoadingState />
-            ) : processedData.length === 0 ? (
-              <AppointmentEmptyState
+            {isMobile && viewMode === 'cards' ? (
+              <MobileCardsView data={processedData} />
+            ) : loading ? (
+              <AppointmentLoadingState 
                 mode={activeTab}
-                emptyMessage="No available appointments in your area"
-                emptyDescription="Check back later for new appointment opportunities and invitations"
+                viewMode="table"
+                rowCount={8}
               />
             ) : (
               <>
@@ -800,7 +1207,7 @@ export default function ManageAppointments() {
                   professionalId={user?.profile?.professional_id}
                   professional={professional}
                   onView={handleViewAppointment}
-                  onExpressInterest={handleAction} // ✅ FIXED: Use handleAction instead of direct call
+                  onExpressInterest={handleAction}
                   onViewAttachments={handleViewAttachments}
                   onRefresh={handleRefresh}
                   loading={loading}
@@ -820,10 +1227,10 @@ export default function ManageAppointments() {
                   dataStats={dataStats}
                   mode={activeTab}
                   onBulkAction={handleBulkAction}
-                  showPageSizeSelector={true}
-                  showQuickJump={true}
-                  showDataStats={true}
-                  showBulkActions={true}
+                  showPageSizeSelector={!isMobile}
+                  showQuickJump={!isMobile}
+                  showDataStats={!isMobile}
+                  showBulkActions={!isMobile}
                 />
               </>
             )}
@@ -832,12 +1239,13 @@ export default function ManageAppointments() {
 
         <TabsContent value="interests" className="space-y-4">
           <div className="space-y-1">
-            {loading ? (
-              <AppointmentLoadingState />
-            ) : processedData.length === 0 ? (
-              <AppointmentEmptyState
-                emptyMessage="No interests expressed yet"
-                emptyDescription="Browse available appointments and invitations to express interest"
+            {isMobile && viewMode === 'cards' ? (
+              <MobileCardsView data={processedData} />
+            ) : loading ? (
+              <AppointmentLoadingState 
+                mode={activeTab}
+                viewMode="table"
+                rowCount={8}
               />
             ) : (
               <>
@@ -866,10 +1274,10 @@ export default function ManageAppointments() {
                   dataStats={dataStats}
                   mode={activeTab}
                   onBulkAction={handleBulkAction}
-                  showPageSizeSelector={true}
-                  showQuickJump={true}
-                  showDataStats={true}
-                  showBulkActions={true}
+                  showPageSizeSelector={!isMobile}
+                  showQuickJump={!isMobile}
+                  showDataStats={!isMobile}
+                  showBulkActions={!isMobile}
                 />
               </>
             )}
@@ -878,12 +1286,13 @@ export default function ManageAppointments() {
 
         <TabsContent value="assigned" className="space-y-4">
           <div className="space-y-1">
-            {loading ? (
-              <AppointmentLoadingState />
-            ) : processedData.length === 0 ? (
-              <AppointmentEmptyState
-                emptyMessage="No assigned appointments"
-                emptyDescription="Express interest in available appointments and respond to invitations to get selected"
+            {isMobile && viewMode === 'cards' ? (
+              <MobileCardsView data={processedData} />
+            ) : loading ? (
+              <AppointmentLoadingState 
+                mode={activeTab}
+                viewMode="table"
+                rowCount={8}
               />
             ) : (
               <>
@@ -913,10 +1322,10 @@ export default function ManageAppointments() {
                   dataStats={dataStats}
                   mode={activeTab}
                   onBulkAction={handleBulkAction}
-                  showPageSizeSelector={true}
-                  showQuickJump={true}
-                  showDataStats={true}
-                  showBulkActions={true}
+                  showPageSizeSelector={!isMobile}
+                  showQuickJump={!isMobile}
+                  showDataStats={!isMobile}
+                  showBulkActions={!isMobile}
                 />
               </>
             )}
@@ -933,9 +1342,11 @@ export default function ManageAppointments() {
             setSelectedAppointment(null)
           }
         }}
-        appointment={selectedAppointment}
+        appointment={selectedAppointment?.appointment || selectedAppointment}
+        interests={selectedAppointment?.interests || []}
         professionalId={user?.profile?.professional_id}
         professional={professional}
+        mode={selectedAppointment?.mode || activeTab}
         onAccept={() => handleAppointmentAction(selectedAppointment?.appointment_id, 'accept')}
         onDecline={() => handleAppointmentAction(selectedAppointment?.appointment_id, 'decline')}
         onExpressInterest={handleExpressInterest}

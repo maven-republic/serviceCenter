@@ -1,6 +1,7 @@
 // src/components/professional-workspace/interests/ProfessionalResponseHandler.jsx
 'use client'
 
+import { useEffect } from 'react' // ✅ ADDED: Import useEffect
 import { Button } from '@/components/ui/button'
 import {
   Sheet,
@@ -49,11 +50,21 @@ export default function ProfessionalResponseHandler({
   onClose,
   open = true
 }) {
-  console.log('🏢 ProfessionalResponseHandler props:', {
+   // 🔧 ENHANCED DEBUG LOGGING for ProfessionalResponseHandler
+  console.log('🢠 ProfessionalResponseHandler DEBUG:', {
+    componentName: 'ProfessionalResponseHandler',
+    timestamp: new Date().toISOString(),
+    open: open,
     interest: interest ? {
       id: interest.interest_id,
       status: interest.status,
-      amount: interest.amount
+      statusType: typeof interest.status,
+      statusLength: interest.status?.length,
+      statusTrimmed: interest.status?.trim?.(),
+      exactMatch: interest.status === 'selected',
+      trimmedMatch: interest.status?.trim?.() === 'selected',
+      amount: interest.amount,
+      fullRecord: interest
     } : null,
     appointment: appointment ? {
       id: appointment.appointment_id || appointment.id,
@@ -61,9 +72,31 @@ export default function ProfessionalResponseHandler({
     } : null,
     professional: professional ? {
       id: professional.professional_id || professional.id
-    } : null
-  });
+    } : null,
+    hasCallbacks: {
+      onSuccess: typeof onSuccess === 'function',
+      onClose: typeof onClose === 'function'
+    }
+  })
 
+  // 🔍 Database verification for ProfessionalResponseHandler
+  useEffect(() => {
+    if (interest?.interest_id) {
+      console.log('🔍 [ProfessionalResponseHandler] Verifying database status...')
+      fetch(`/api/interests/${interest.interest_id}`)
+        .then(res => res.json())
+        .then(data => {
+          console.log('📊 [ProfessionalResponseHandler] Database vs Props:', {
+            component: 'ProfessionalResponseHandler',
+            databaseStatus: data.interest?.status,
+            propsStatus: interest?.status,
+            statusMatch: data.interest?.status === interest?.status
+          })
+        })
+        .catch(err => console.error('❌ [ProfessionalResponseHandler] Database check failed:', err))
+    }
+  }, [interest?.interest_id])
+  
   // 🔧 FIXED: Proper state management
   const {
     currentView,

@@ -1,5 +1,5 @@
 // src/app/api/appointments/[id]/interests/[interest_id]/quote-approval/route.js
-// NEW API endpoint for customer quote approval/decline
+// FIXED: Updated appointment status from 'confirmed' to 'approved' to match enum
 
 import { createClient } from '@/utils/supabase/server'
 import { NextResponse } from 'next/server'
@@ -12,9 +12,9 @@ export async function POST(request, { params }) {
   
   try {
     const resolvedParams = await params
-const appointmentId = resolvedParams['appointment-id']
-const interestId = resolvedParams['interest-id']    
-    console.log('📝 Processing quote approval:', { appointmentId, interestId })
+    const appointmentId = resolvedParams['appointment-id']
+    const interestId = resolvedParams['interest-id']    
+    console.log('🔍 Processing quote approval:', { appointmentId, interestId })
     
     if (!appointmentId || !interestId) {
       return NextResponse.json(
@@ -27,7 +27,7 @@ const interestId = resolvedParams['interest-id']
     let body
     try {
       body = await request.json()
-      console.log('📝 Request body:', {
+      console.log('🔍 Request body:', {
         action: body.action,
         hasNotes: !!body.customer_notes
       })
@@ -67,12 +67,13 @@ const interestId = resolvedParams['interest-id']
       )
     }
 
-    // Verify interest is in the correct state for approval
-    if (interest.status !== 'updated_quote') {
+    // 🔧 FIXED: Verify interest is in the correct state for approval
+    // Changed from 'updated_quote' to 'updated' to match frontend
+    if (interest.status !== 'updated') {
       return NextResponse.json(
         { 
           success: false, 
-          error: `Interest status is "${interest.status}", expected "updated_quote"` 
+          error: `Interest status is "${interest.status}", expected "updated"` 
         },
         { status: 400 }
       )
@@ -111,7 +112,7 @@ const interestId = resolvedParams['interest-id']
         .from('appointment')
         .update({
           professional_id: interest.professional_id,
-          status: 'confirmed',
+          status: 'approved', // 🔧 FIXED: Changed from 'confirmed' to 'approved'
           updated_at: new Date().toISOString()
         })
         .eq('appointment_id', appointmentId)

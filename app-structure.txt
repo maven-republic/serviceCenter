@@ -856,7 +856,6 @@ C:\Users\adrom\Downloads\serviceCenter\src\components\professional-workspace\app
 C:\Users\adrom\Downloads\serviceCenter\src\components\professional-workspace\appointments\AppointmentProfileIncomplete.jsx
 C:\Users\adrom\Downloads\serviceCenter\src\components\professional-workspace\appointments\AppointmentSearch.jsx
 C:\Users\adrom\Downloads\serviceCenter\src\components\professional-workspace\appointments\AppointmentStatistics.jsx
-C:\Users\adrom\Downloads\serviceCenter\src\components\professional-workspace\appointments\MultiProfessionalView.jsx
 C:\Users\adrom\Downloads\serviceCenter\src\components\professional-workspace\availability\AvailabilityCalendar.jsx
 C:\Users\adrom\Downloads\serviceCenter\src\components\professional-workspace\availability\AvailabilityCalendarView.jsx
 C:\Users\adrom\Downloads\serviceCenter\src\components\professional-workspace\availability\AvailabilityFramework.jsx

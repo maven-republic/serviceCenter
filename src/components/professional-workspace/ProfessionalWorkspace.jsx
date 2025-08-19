@@ -1,15 +1,21 @@
+// ===== ENHANCED ProfessionalWorkspace.jsx =====
+// File: src/components/professional-workspace/ProfessionalWorkspace.jsx
+
 'use client'
 
 import { useEffect, useState, useRef } from 'react'
 import { useSession, useSupabaseClient } from '@supabase/auth-helpers-react'
+import { usePathname } from 'next/navigation'
 import { useUserStore } from '@/store/userStore'
+import { useIsMobile } from '@/primitives/use-mobile'
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { AlertCircle, User, RefreshCw } from 'lucide-react'
+import { AlertCircle, User, RefreshCw, Menu, X } from 'lucide-react'
+import { cn } from '@/lib/utils'
 import DashboardSidebar from './sidebar/DashboardSidebar'
 
-// Simplified loading component
+// Simplified loading component (unchanged)
 const SimpleLoading = ({ message = "Loading..." }) => (
   <div className="min-h-screen bg-background flex items-center justify-center p-6">
     <Card className="w-full max-w-md">
@@ -27,7 +33,7 @@ const SimpleLoading = ({ message = "Loading..." }) => (
   </div>
 )
 
-// Simple error component
+// Simple error component (unchanged)
 const SimpleError = ({ title, description, onRetry }) => (
   <div className="min-h-screen bg-background flex items-center justify-center p-6">
     <Card className="w-full max-w-md">
@@ -61,10 +67,54 @@ const SimpleError = ({ title, description, onRetry }) => (
   </div>
 )
 
+// Mobile Header Component
+const MobileHeader = ({ onToggleSidebar, sidebarOpen }) => (
+  <header className="fixed top-0 left-0 right-0 z-50 h-16 bg-card border-b border-border lg:hidden">
+    <div className="flex items-center justify-between h-full px-4">
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={onToggleSidebar}
+        className="h-10 w-10 p-0"
+        aria-label={sidebarOpen ? "Close menu" : "Open menu"}
+      >
+        {sidebarOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+      </Button>
+      
+      <div className="flex items-center space-x-2">
+        <div className="h-8 w-8 rounded-xl bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center">
+          <span className="text-primary-foreground font-semibold text-sm">W</span>
+        </div>
+        <span className="font-semibold text-foreground">Workspace</span>
+      </div>
+      
+      <div className="w-10" /> {/* Spacer for centering */}
+    </div>
+  </header>
+)
+
+// Sidebar Backdrop Component
+const SidebarBackdrop = ({ isVisible, onClick }) => {
+  if (!isVisible) return null
+  
+  return (
+    <div
+      className="fixed inset-0 z-40 bg-black/50 lg:hidden"
+      onClick={onClick}
+      aria-hidden="true"
+    />
+  )
+}
+
 export default function ProfessionalWorkspace({ children }) {
   const { user, fetchUser, isLoading } = useUserStore()
   const session = useSession()
   const supabase = useSupabaseClient()
+  const pathname = usePathname()
+  const isMobile = useIsMobile()
+  
+  // Mobile sidebar state
+  const [sidebarOpen, setSidebarOpen] = useState(false)
   
   const [authState, setAuthState] = useState({
     isReady: false,
@@ -80,31 +130,50 @@ export default function ProfessionalWorkspace({ children }) {
     hasUser: !!user,
     userAccountId: user?.account?.account_id,
     isLoading,
-    authState
+    authState,
+    isMobile,
+    sidebarOpen
   })
 
-  // ONE-TIME authentication check
+  // Close sidebar on route change (mobile only)
+  useEffect(() => {
+    if (isMobile) {
+      setSidebarOpen(false)
+    }
+  }, [pathname, isMobile])
+
+  // Handle body scroll lock when mobile sidebar is open
+  useEffect(() => {
+    if (isMobile && sidebarOpen) {
+      document.body.style.overflow = 'hidden'
+    } else {
+      document.body.style.overflow = 'unset'
+    }
+
+    return () => {
+      document.body.style.overflow = 'unset'
+    }
+  }, [isMobile, sidebarOpen])
+
+  // ONE-TIME authentication check (unchanged)
   useEffect(() => {
     if (authChecked.current) return
     authChecked.current = true
     
     console.log('🔍 One-time authentication check...')
     
-    // Check if we have everything we need
     if (session?.user && user?.account?.account_id) {
       console.log('✅ Already authenticated and user loaded')
       setAuthState({ isReady: true, error: null })
       return
     }
     
-    // If we have session but no user, that's fine - fetchUser will handle it
     if (session?.user) {
       console.log('✅ Session found, waiting for user data...')
       setAuthState({ isReady: true, error: null })
       return
     }
     
-    // No session at all
     console.log('❌ No session found')
     setAuthState({ 
       isReady: false, 
@@ -112,7 +181,7 @@ export default function ProfessionalWorkspace({ children }) {
     })
   }, [session, user])
 
-  // Fetch user data when we have a session
+  // Fetch user data when we have a session (unchanged)
   useEffect(() => {
     if (!session?.user?.email || user || isLoading || fetchAttempted.current) {
       return
@@ -123,19 +192,23 @@ export default function ProfessionalWorkspace({ children }) {
     fetchUser(session.user, supabase)
   }, [session?.user?.email, user, isLoading, fetchUser, supabase])
 
-  // Reset fetch attempt when user changes
+  // Reset fetch attempt when user changes (unchanged)
   useEffect(() => {
     fetchAttempted.current = false
   }, [session?.user?.email])
 
-  // Retry handler
+  // Retry handler (unchanged)
   const handleRetry = () => {
     authChecked.current = false
     fetchAttempted.current = false
     setAuthState({ isReady: false, error: null })
   }
 
-  // If we have an error, show it
+  // Mobile sidebar handlers
+  const toggleSidebar = () => setSidebarOpen(!sidebarOpen)
+  const closeSidebar = () => setSidebarOpen(false)
+
+  // If we have an error, show it (unchanged)
   if (authState.error) {
     return (
       <SimpleError
@@ -146,27 +219,65 @@ export default function ProfessionalWorkspace({ children }) {
     )
   }
 
-  // If we're not ready and don't have everything, show loading
+  // If we're not ready and don't have everything, show loading (unchanged)
   if (!authState.isReady || !session?.user) {
     return <SimpleLoading message="Checking authentication..." />
   }
 
-  // Show loading while fetching user data
+  // Show loading while fetching user data (unchanged)
   if (isLoading || !user?.account?.account_id) {
     return <SimpleLoading message="Loading your dashboard..." />
   }
 
-  // Success! Render the workspace
+  // Success! Render the responsive workspace
   console.log('🎉 Rendering workspace for:', user.account.email)
 
   return (
     <div className="min-h-screen bg-background text-foreground">
+      {/* Mobile Header */}
+      {isMobile && (
+        <MobileHeader 
+          onToggleSidebar={toggleSidebar}
+          sidebarOpen={sidebarOpen}
+        />
+      )}
+
+      {/* Sidebar Backdrop (Mobile Only) */}
+      <SidebarBackdrop 
+        isVisible={isMobile && sidebarOpen}
+        onClick={closeSidebar}
+      />
+
       <div className="flex h-screen overflow-hidden">
-        <aside className="w-[280px] flex-shrink-0 border-r border-border bg-card">
+        {/* Responsive Sidebar */}
+        <aside
+          className={cn(
+            // Base styles
+            "flex-shrink-0 border-r border-border bg-card",
+            // Desktop styles
+            "lg:w-[280px] lg:relative lg:translate-x-0",
+            // Mobile styles
+            "fixed lg:relative z-50 lg:z-auto",
+            "w-80 h-full transition-transform duration-300 ease-in-out lg:transition-none",
+            // Mobile positioning
+            isMobile 
+              ? sidebarOpen 
+                ? "translate-x-0" 
+                : "-translate-x-full"
+              : "translate-x-0"
+          )}
+        >
           <DashboardSidebar />
         </aside>
         
-        <main className="flex-1 overflow-y-auto">
+        {/* Main Content */}
+        <main 
+          className={cn(
+            "flex-1 overflow-y-auto",
+            // Add top padding on mobile for fixed header
+            isMobile && "pt-16"
+          )}
+        >
           <div className="container mx-auto p-6 space-y-6 max-w-7xl">
             {children}
           </div>

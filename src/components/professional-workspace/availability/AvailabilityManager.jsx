@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { useSupabaseClient } from '@supabase/auth-helpers-react' // Use the provider's client
+import { useSupabaseClient } from '@supabase/auth-helpers-react'
 import {
   Card,
   CardContent,
@@ -32,12 +32,12 @@ export default function AvailabilityManager({
   professionalId,
   profileSettings = {}
 }) {
-  const supabase = useSupabaseClient() // Get client from provider context
+  const supabase = useSupabaseClient()
   const [availability, setAvailability] = useState(initialAvailability)
   const [overrides, setOverrides] = useState(initialOverrides)
   const [protocolRules, setProtocolRules] = useState(profileSettings)
   const [isSaving, setIsSaving] = useState(false)
-  const [saveStatus, setSaveStatus] = useState(null) // 'success', 'error', null
+  const [saveStatus, setSaveStatus] = useState(null)
   const [activeTab, setActiveTab] = useState('schedule')
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false)
 
@@ -101,7 +101,6 @@ export default function AvailabilityManager({
         if (insertOverridesError) throw insertOverridesError
       }
 
-      // Update local state
       setAvailability(newAvailability)
       setOverrides(newOverrides)
       setSaveStatus('success')
@@ -114,8 +113,6 @@ export default function AvailabilityManager({
       setSaveStatus('error')
     } finally {
       setIsSaving(false)
-
-      // Clear status after 3 seconds
       setTimeout(() => setSaveStatus(null), 3000)
     }
   }
@@ -188,68 +185,59 @@ export default function AvailabilityManager({
   const tabCounts = getTabCounts()
 
   return (
-    <div className="professional-workspace max-w-7xl mx-auto p-6 space-y-6">
-      {/* Header */}
-      <div className="space-y-2">
+    <div className="min-h-screen bg-background">
+      {/* Mobile Header */}
+      <div className="sticky top-0 z-40 bg-background/95 backdrop-blur border-b p-4">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Clock className="h-6 w-6 text-muted-foreground" />
-            <h1 className="text-3xl font-bold text-foreground">Availability Management</h1>
+          <div className="flex items-center gap-3">
+            <Clock className="h-6 w-6 text-primary" />
+            <div>
+              <h1 className="text-xl font-bold text-foreground">Availability</h1>
+              <p className="text-xs text-muted-foreground">Manage your schedule</p>
+            </div>
           </div>
           
           {hasUnsavedChanges && (
-            <div className="flex items-center gap-2">
-              <Badge variant="secondary" className="animate-pulse">
-                Unsaved changes
-              </Badge>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleReset}
-                disabled={isSaving}
-              >
-                <RotateCcw className="h-3 w-3 mr-1" />
-                Reset
-              </Button>
-            </div>
+            <Badge variant="secondary" className="animate-pulse px-2 py-1 text-xs">
+              Unsaved
+            </Badge>
           )}
         </div>
-        <p className="text-muted-foreground text-lg">
-          Configure your working hours and booking preferences to optimize your schedule.
-        </p>
       </div>
 
       {/* Status Alerts */}
       {saveStatus && (
-        <Alert variant={saveStatus === 'success' ? 'default' : 'destructive'}>
-          {saveStatus === 'success' ? (
-            <CheckCircle2 className="h-4 w-4" />
-          ) : (
-            <AlertCircle className="h-4 w-4" />
-          )}
-          <AlertDescription className="flex items-center justify-between">
-            <span>
-              {saveStatus === 'success' 
-                ? 'Changes saved successfully!' 
-                : 'Failed to save changes. Please try again.'
-              }
-            </span>
-            <Button 
-              variant="ghost" 
-              size="sm"
-              onClick={() => setSaveStatus(null)}
-              className="h-auto p-1 text-xs"
-            >
-              ✕
-            </Button>
-          </AlertDescription>
-        </Alert>
+        <div className="p-4">
+          <Alert variant={saveStatus === 'success' ? 'default' : 'destructive'}>
+            {saveStatus === 'success' ? (
+              <CheckCircle2 className="h-4 w-4" />
+            ) : (
+              <AlertCircle className="h-4 w-4" />
+            )}
+            <AlertDescription className="flex items-center justify-between">
+              <span className="text-sm">
+                {saveStatus === 'success' 
+                  ? 'Changes saved successfully!' 
+                  : 'Failed to save changes. Please try again.'
+                }
+              </span>
+              <Button 
+                variant="ghost" 
+                size="sm"
+                onClick={() => setSaveStatus(null)}
+                className="h-auto p-1"
+              >
+                ✕
+              </Button>
+            </AlertDescription>
+          </Alert>
+        </div>
       )}
 
       {/* Loading Overlay */}
       {isSaving && (
         <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center">
-          <Card className="p-6">
+          <Card className="p-6 mx-4 w-full max-w-sm">
             <CardContent className="flex items-center gap-4 p-0">
               <Loader2 className="h-8 w-8 animate-spin text-primary" />
               <div>
@@ -261,80 +249,161 @@ export default function AvailabilityManager({
         </div>
       )}
 
-      {/* Summary Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-blue-100 text-primary">
-                <Calendar className="h-4 w-4" />
+      {/* Mobile Stats Cards */}
+      <div className="p-4">
+        <div className="grid grid-cols-2 gap-3">
+          <Card>
+            <CardContent className="p-3">
+              <div className="flex items-center gap-2">
+                <div className="p-1.5 rounded bg-blue-100 text-primary">
+                  <Calendar className="h-4 w-4" />
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">Regular Hours</p>
+                  <p className="text-lg font-bold">{availability.length}</p>
+                </div>
               </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Regular Hours</p>
-                <p className="text-xl font-bold">{availability.length}</p>
-                <p className="text-xs text-muted-foreground">time blocks</p>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardContent className="p-3">
+              <div className="flex items-center gap-2">
+                <div className="p-1.5 rounded bg-amber-100 text-amber-600">
+                  <Clock className="h-4 w-4" />
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">Overrides</p>
+                  <p className="text-lg font-bold">{overrides.length}</p>
+                </div>
               </div>
-            </div>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-amber-100 text-amber-600">
-                <Clock className="h-4 w-4" />
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Date Overrides</p>
-                <p className="text-xl font-bold">{overrides.length}</p>
-                <p className="text-xs text-muted-foreground">special dates</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-green-100 text-primary">
-                <Settings className="h-4 w-4" />
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Protocol Rules</p>
-                <p className="text-xl font-bold">{tabCounts.protocol}/4</p>
-                <p className="text-xs text-muted-foreground">configured</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        </div>
       </div>
 
-      {/* Main Content with Tabs */}
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <div className="flex items-center justify-between">
-          <TabsList className="grid w-fit grid-cols-2">
-            <TabsTrigger value="schedule" className="flex items-center gap-2">
+      {/* Mobile Tabs */}
+      <div className="px-4">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
+          <TabsList className="grid w-full grid-cols-2 h-12">
+            <TabsTrigger value="schedule" className="flex items-center gap-2 text-sm">
               <Calendar className="h-4 w-4" />
               Schedule
               {tabCounts.schedule > 0 && (
-                <Badge variant="secondary" className="ml-1 h-5 min-w-5 text-xs">
+                <Badge variant="secondary" className="ml-1 h-5 min-w-5 text-xs px-1.5">
                   {tabCounts.schedule}
                 </Badge>
               )}
             </TabsTrigger>
-            <TabsTrigger value="protocol" className="flex items-center gap-2">
+            <TabsTrigger value="protocol" className="flex items-center gap-2 text-sm">
               <Settings className="h-4 w-4" />
               Settings
               {tabCounts.protocol > 0 && (
-                <Badge variant="secondary" className="ml-1 h-5 min-w-5 text-xs">
+                <Badge variant="secondary" className="ml-1 h-5 min-w-5 text-xs px-1.5">
                   {tabCounts.protocol}
                 </Badge>
               )}
             </TabsTrigger>
           </TabsList>
 
-          {/* Global Save Button */}
-          {hasUnsavedChanges && (
+          {/* Schedule Tab */}
+          <TabsContent value="schedule" className="space-y-4">
+            <Card>
+              <CardHeader className="pb-4">
+                <CardTitle className="flex items-center gap-2 text-lg">
+                  <Calendar className="h-5 w-5" />
+                  Working Hours
+                </CardTitle>
+                <CardDescription className="text-sm">
+                  Set your regular availability and manage date-specific overrides.
+                  {overrides.length > 0 && (
+                    <span className="block mt-1 text-amber-600 font-medium">
+                      {overrides.length} override{overrides.length !== 1 ? 's' : ''} configured.
+                    </span>
+                  )}
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <AvailabilityInterface
+                  availability={availability}
+                  overrides={overrides}
+                  onUpdateAvailability={(newAvailability) => {
+                    setAvailability(newAvailability)
+                    handleDataChange()
+                  }}
+                  onUpdateOverrides={(newOverrides) => {
+                    setOverrides(newOverrides)
+                    handleDataChange()
+                  }}
+                  onSave={handleSaveAvailability}
+                />
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Protocol Tab */}
+          <TabsContent value="protocol" className="space-y-4">
+            <Card>
+              <CardHeader className="pb-4">
+                <CardTitle className="flex items-center gap-2 text-lg">
+                  <Settings className="h-5 w-5" />
+                  Booking Rules
+                </CardTitle>
+                <CardDescription className="text-sm">
+                  Configure advance notice requirements, buffer times, and booking limits.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <AvailabilityProtocol
+                  rules={protocolRules}
+                  setRules={(newRules) => {
+                    setProtocolRules(newRules)
+                    handleDataChange()
+                  }}
+                  onSave={handleSaveProtocol}
+                  isSaving={isSaving}
+                />
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
+      </div>
+
+      {/* Mobile Help Card */}
+      <div className="p-4 pb-20">
+        <Card className="border-blue-200 bg-blue-50/50">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base flex items-center gap-2 text-blue-700">
+              <AlertCircle className="h-4 w-4" />
+              Quick Tips
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="text-sm text-blue-700 space-y-3">
+            <div>
+              <h4 className="font-medium mb-1">📅 Schedule</h4>
+              <p className="text-xs">Set regular weekly hours and add date-specific changes</p>
+            </div>
+            <div>
+              <h4 className="font-medium mb-1">⚙️ Settings</h4>
+              <p className="text-xs">Configure minimum notice time and buffer between appointments</p>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Mobile Save Bar - Fixed Bottom */}
+      {hasUnsavedChanges && (
+        <div className="fixed bottom-0 left-0 right-0 z-40 p-4 bg-background border-t">
+          <div className="flex gap-3">
+            <Button
+              variant="outline"
+              onClick={handleReset}
+              disabled={isSaving}
+              className="flex-1"
+            >
+              <RotateCcw className="h-4 w-4 mr-2" />
+              Reset
+            </Button>
             <Button
               onClick={() => {
                 if (activeTab === 'schedule') {
@@ -344,114 +413,23 @@ export default function AvailabilityManager({
                 }
               }}
               disabled={isSaving}
-              className="flex items-center gap-2"
+              className="flex-1"
             >
               {isSaving ? (
                 <>
-                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
                   Saving...
                 </>
               ) : (
                 <>
-                  <Save className="h-4 w-4" />
+                  <Save className="h-4 w-4 mr-2" />
                   Save Changes
                 </>
               )}
             </Button>
-          )}
-        </div>
-
-        {/* Schedule Tab */}
-        <TabsContent value="schedule" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Calendar className="h-5 w-5" />
-                Working Hours & Schedule
-              </CardTitle>
-              <CardDescription>
-                Set your regular availability and manage date-specific overrides.
-                {overrides.length > 0 && (
-                  <span className="block mt-1 text-amber-600 font-medium">
-                    You have {overrides.length} date override{overrides.length !== 1 ? 's' : ''} configured.
-                  </span>
-                )}
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <AvailabilityInterface
-                availability={availability}
-                overrides={overrides}
-                onUpdateAvailability={(newAvailability) => {
-                  setAvailability(newAvailability)
-                  handleDataChange()
-                }}
-                onUpdateOverrides={(newOverrides) => {
-                  setOverrides(newOverrides)
-                  handleDataChange()
-                }}
-                onSave={handleSaveAvailability}
-              />
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        {/* Protocol Tab */}
-        <TabsContent value="protocol" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Settings className="h-5 w-5" />
-                Booking Protocol & Rules
-              </CardTitle>
-              <CardDescription>
-                Configure advance notice requirements, buffer times, and booking limits.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <AvailabilityProtocol
-                rules={protocolRules}
-                setRules={(newRules) => {
-                  setProtocolRules(newRules)
-                  handleDataChange()
-                }}
-                onSave={handleSaveProtocol}
-                isSaving={isSaving}
-              />
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
-
-      {/* Help Section */}
-      <Card className="border-blue-200 bg-blue-50/50">
-        <CardHeader>
-          <CardTitle className="text-base flex items-center gap-2 text-blue-700">
-            <AlertCircle className="h-4 w-4" />
-            Getting Started
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="text-sm space-y-2 text-blue-700">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <h4 className="font-medium mb-2">📅 Schedule Setup</h4>
-              <ul className="space-y-1 text-xs">
-                <li>• Set your regular weekly hours</li>
-                <li>• Use calendar view for date-specific changes</li>
-                <li>• Override specific dates when needed</li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="font-medium mb-2">⚙️ Protocol Settings</h4>
-              <ul className="space-y-1 text-xs">
-                <li>• Set minimum booking notice time</li>
-                <li>• Add buffer time between appointments</li>
-                <li>• Limit daily bookings to prevent overload</li>
-              </ul>
-            </div>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      )}
     </div>
   )
 }

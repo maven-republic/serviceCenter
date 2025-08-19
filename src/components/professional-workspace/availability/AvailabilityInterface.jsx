@@ -29,7 +29,8 @@ import {
   RotateCcw,
   CheckCircle2,
   Eye,
-  Edit3
+  Edit3,
+  TrendingUp
 } from 'lucide-react'
 import AvailabilityFramework from './AvailabilityFramework'
 import AvailabilityCalendarView from './AvailabilityCalendarView'
@@ -127,166 +128,108 @@ export default function AvailabilityInterface({
   const stats = getStats()
 
   return (
-<div className="professional-workspace max-w-6xl mx-auto space-y-6">
-      {/* Header with View Toggle */}
-      <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
-        <div className="space-y-2">
+    <div className="space-y-4">
+      {/* Mobile Header with View Toggle */}
+      <div className="space-y-3">
+        <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Clock className="h-5 w-5 text-muted-foreground" />
-            <h2 className="text-2xl font-bold text-foreground">Working Hours</h2>
-            {hasChanges && (
-              <Badge variant="secondary" className="animate-pulse">
-                Unsaved changes
-              </Badge>
-            )}
+            <div>
+              <h2 className="text-lg font-semibold text-foreground">Working Hours</h2>
+              {hasChanges && (
+                <Badge variant="secondary" className="animate-pulse text-xs px-2 py-0.5">
+                  Unsaved
+                </Badge>
+              )}
+            </div>
           </div>
-          <p className="text-muted-foreground">
-            Set when you're typically available for meetings and appointments
-          </p>
         </div>
 
-        <div className="flex items-center gap-3">
-          {/* View Mode Toggle - Desktop */}
-          <div className="hidden md:flex border rounded-lg p-1 bg-muted/50">
-            {[
-              { key: 'List', label: 'List View', icon: List },
-              { key: 'Calendar', label: 'Calendar View', icon: Calendar }
-            ].map(({ key, label, icon: Icon }) => (
-              <Button
-                key={key}
-                variant={key === viewMode ? "default" : "ghost"}
-                size="sm"
-                onClick={() => setViewMode(key)}
-                className="h-8 px-4 text-sm flex items-center gap-2"
-              >
-                <Icon className="h-4 w-4" />
-                {label}
-              </Button>
-            ))}
-          </div>
-
-          {/* View Mode Toggle - Mobile */}
-          <div className="md:hidden">
-            <Select value={viewMode} onValueChange={setViewMode}>
-              <SelectTrigger className="w-40">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="List">
-                  <div className="flex items-center gap-2">
-                    <List className="h-4 w-4" />
-                    List View
+        {/* Mobile View Toggle */}
+        <div className="w-full">
+          <Select value={viewMode} onValueChange={setViewMode}>
+            <SelectTrigger className="w-full h-12">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="List">
+                <div className="flex items-center gap-2">
+                  <List className="h-4 w-4" />
+                  <div>
+                    <p className="font-medium">List View</p>
+                    <p className="text-xs text-muted-foreground">Set weekly patterns</p>
                   </div>
-                </SelectItem>
-                <SelectItem value="Calendar">
-                  <div className="flex items-center gap-2">
-                    <Calendar className="h-4 w-4" />
-                    Calendar View
+                </div>
+              </SelectItem>
+              <SelectItem value="Calendar">
+                <div className="flex items-center gap-2">
+                  <Calendar className="h-4 w-4" />
+                  <div>
+                    <p className="font-medium">Calendar View</p>
+                    <p className="text-xs text-muted-foreground">Date-specific changes</p>
                   </div>
-                </SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* Action Buttons */}
-          {hasChanges && (
-            <div className="flex items-center gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleReset}
-                disabled={isSaving}
-              >
-                <RotateCcw className="h-3 w-3 mr-1" />
-                Reset
-              </Button>
-              <Button
-                onClick={handleSave}
-                disabled={isSaving}
-                size="sm"
-              >
-                {isSaving ? (
-                  <>
-                    <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-white mr-2" />
-                    Saving...
-                  </>
-                ) : (
-                  <>
-                    <Save className="h-3 w-3 mr-1" />
-                    Save Changes
-                  </>
-                )}
-              </Button>
-            </div>
-          )}
+                </div>
+              </SelectItem>
+            </SelectContent>
+          </Select>
         </div>
       </div>
 
-      {/* Stats Overview */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      {/* Mobile Stats Grid */}
+      <div className="grid grid-cols-2 gap-3">
         <Card>
-          <CardContent className="p-4">
+          <CardContent className="p-3">
             <div className="text-center">
-              <div className="text-2xl font-bold text-foreground">{stats.totalHours}h</div>
-              <div className="text-sm text-muted-foreground">Weekly Hours</div>
+              <div className="flex items-center justify-center gap-1 mb-1">
+                <TrendingUp className="h-4 w-4 text-primary" />
+                <div className="text-xl font-bold text-foreground">{stats.totalHours}h</div>
+              </div>
+              <div className="text-xs text-muted-foreground">Weekly Hours</div>
             </div>
           </CardContent>
         </Card>
         
         <Card>
-          <CardContent className="p-4">
+          <CardContent className="p-3">
             <div className="text-center">
-              <div className="text-2xl font-bold text-foreground">{stats.activeDays}/7</div>
-              <div className="text-sm text-muted-foreground">Active Days</div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-4">
-            <div className="text-center">
-              <div className="text-2xl font-bold text-foreground">{stats.totalBlocks}</div>
-              <div className="text-sm text-muted-foreground">Time Blocks</div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-4">
-            <div className="text-center">
-              <div className="text-2xl font-bold text-foreground">{stats.totalOverrides}</div>
-              <div className="text-sm text-muted-foreground">Date Overrides</div>
+              <div className="flex items-center justify-center gap-1 mb-1">
+                <Calendar className="h-4 w-4 text-primary" />
+                <div className="text-xl font-bold text-foreground">{stats.activeDays}/7</div>
+              </div>
+              <div className="text-xs text-muted-foreground">Active Days</div>
             </div>
           </CardContent>
         </Card>
       </div>
 
-      {/* Override Alert */}
+      {/* Override Alert - Mobile Optimized */}
       {localOverrides.length > 0 && (
-        <Alert>
-          <AlertCircle className="h-4 w-4" />
-          <AlertDescription className="flex items-center justify-between">
-            <span>
-              You have <strong>{localOverrides.length}</strong> date-specific override{localOverrides.length !== 1 ? 's' : ''} configured.
-              {viewMode === 'List' && ' Switch to Calendar view to manage them.'}
-            </span>
-            {viewMode === 'List' && (
-              <Button 
-                variant="outline" 
-                size="sm"
-                onClick={() => setViewMode('Calendar')}
-              >
-                <Calendar className="h-3 w-3 mr-1" />
-                View Calendar
-              </Button>
-            )}
+        <Alert className="bg-amber-50 border-amber-200">
+          <AlertCircle className="h-4 w-4 text-amber-600" />
+          <AlertDescription>
+            <div className="flex flex-col gap-2">
+              <span className="text-sm text-amber-700">
+                <strong>{localOverrides.length}</strong> date override{localOverrides.length !== 1 ? 's' : ''} configured.
+              </span>
+              {viewMode === 'List' && (
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => setViewMode('Calendar')}
+                  className="w-fit self-start h-8"
+                >
+                  <Calendar className="h-3 w-3 mr-1" />
+                  View Calendar
+                </Button>
+              )}
+            </div>
           </AlertDescription>
         </Alert>
       )}
 
-      {/* Main Content */}
+      {/* Main Content Card */}
       <Card>
-        <CardHeader>
+        <CardHeader className="pb-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               {viewMode === 'List' ? (
@@ -294,37 +237,36 @@ export default function AvailabilityInterface({
               ) : (
                 <Calendar className="h-5 w-5" />
               )}
-              <CardTitle>
+              <CardTitle className="text-lg">
                 {viewMode === 'List' ? 'Weekly Schedule' : 'Calendar View'}
               </CardTitle>
             </div>
             
-            <div className="flex items-center gap-2">
-              {viewMode === 'List' && (
-                <Badge variant="outline" className="flex items-center gap-1">
+            <Badge variant="outline" className="flex items-center gap-1 text-xs">
+              {viewMode === 'List' ? (
+                <>
                   <Edit3 className="h-3 w-3" />
-                  Edit Mode
-                </Badge>
-              )}
-              {viewMode === 'Calendar' && (
-                <Badge variant="outline" className="flex items-center gap-1">
+                  Edit
+                </>
+              ) : (
+                <>
                   <Eye className="h-3 w-3" />
                   Interactive
-                </Badge>
+                </>
               )}
-            </div>
+            </Badge>
           </div>
           
-          <CardDescription>
+          <CardDescription className="text-sm">
             {viewMode === 'List' 
-              ? 'Set your regular weekly availability for each day of the week'
-              : 'View your schedule in calendar format and create date-specific overrides'
+              ? 'Set your regular weekly availability for each day'
+              : 'View schedule in calendar format and create date overrides'
             }
           </CardDescription>
         </CardHeader>
         
         <CardContent className="p-0">
-          <div className="p-6">
+          <div className="p-4">
             {viewMode === 'List' ? (
               <AvailabilityFramework
                 availability={localAvailability}
@@ -343,37 +285,51 @@ export default function AvailabilityInterface({
         </CardContent>
       </Card>
 
-      {/* Summary Section */}
+      {/* Mobile Summary Card */}
       <Card className="border-muted bg-muted/20">
-        <CardHeader>
+        <CardHeader className="pb-3">
           <CardTitle className="text-base flex items-center gap-2 text-foreground">
             <Info className="h-4 w-4" />
             Schedule Summary
           </CardTitle>
         </CardHeader>
-        <CardContent className="text-sm text-muted-foreground">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <h4 className="font-medium mb-2 text-foreground">📊 Current Setup</h4>
-              <ul className="space-y-1 text-xs">
-                <li>• <strong className="text-foreground">{stats.totalBlocks}</strong> time blocks across <strong className="text-foreground">{stats.activeDays}</strong> days</li>
-                <li>• <strong className="text-foreground">{stats.totalHours}</strong> hours per week</li>
-                <li>• <strong className="text-foreground">{stats.totalOverrides}</strong> date-specific override{stats.totalOverrides !== 1 ? 's' : ''}</li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="font-medium mb-2 text-foreground">💡 Tips</h4>
-              <ul className="space-y-1 text-xs">
-                <li>• Use List view for setting weekly patterns</li>
-                <li>• Use Calendar view for specific date changes</li>
-                <li>• Date overrides take precedence over weekly hours</li>
-              </ul>
+        <CardContent className="text-sm text-muted-foreground space-y-3">
+          <div>
+            <h4 className="font-medium mb-2 text-foreground">📊 Current Setup</h4>
+            <div className="space-y-1 text-xs">
+              <div className="flex justify-between">
+                <span>Time blocks:</span>
+                <span className="font-medium text-foreground">{stats.totalBlocks}</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Active days:</span>
+                <span className="font-medium text-foreground">{stats.activeDays} of 7</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Weekly hours:</span>
+                <span className="font-medium text-foreground">{stats.totalHours}h</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Date overrides:</span>
+                <span className="font-medium text-foreground">{stats.totalOverrides}</span>
+              </div>
             </div>
           </div>
           
-          <Separator className="my-4 bg-border" />
+          <Separator className="bg-border" />
           
-          <div className="text-xs text-muted-foreground">
+          <div>
+            <h4 className="font-medium mb-2 text-foreground">💡 Quick Tips</h4>
+            <div className="space-y-1 text-xs">
+              <p>• Use List view for weekly patterns</p>
+              <p>• Use Calendar view for specific dates</p>
+              <p>• Date overrides take precedence</p>
+            </div>
+          </div>
+          
+          <Separator className="bg-border" />
+          
+          <div className="text-xs">
             <strong className="text-foreground">Next steps:</strong> 
             {stats.totalBlocks === 0 ? (
               " Start by setting your regular weekly hours in List view."
@@ -387,48 +343,35 @@ export default function AvailabilityInterface({
         </CardContent>
       </Card>
 
-      {/* Mobile Action Bar */}
+      {/* Mobile Action Buttons - Only show if there are changes and we're not in a parent save context */}
       {hasChanges && (
-        <div className="md:hidden fixed bottom-4 left-4 right-4 z-50">
-          <Card className="border-amber-200 bg-amber-50 shadow-lg">
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <AlertCircle className="h-4 w-4 text-amber-600" />
-                  <span className="text-sm font-medium text-amber-700">
-                    Unsaved changes
-                  </span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={handleReset}
-                    disabled={isSaving}
-                  >
-                    Reset
-                  </Button>
-                  <Button
-                    onClick={handleSave}
-                    disabled={isSaving}
-                    size="sm"
-                  >
-                    {isSaving ? (
-                      <>
-                        <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-white mr-2" />
-                        Saving...
-                      </>
-                    ) : (
-                      <>
-                        <CheckCircle2 className="h-3 w-3 mr-1" />
-                        Save
-                      </>
-                    )}
-                  </Button>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+        <div className="flex gap-3 pt-2">
+          <Button
+            variant="outline"
+            onClick={handleReset}
+            disabled={isSaving}
+            className="flex-1"
+          >
+            <RotateCcw className="h-4 w-4 mr-2" />
+            Reset
+          </Button>
+          <Button
+            onClick={handleSave}
+            disabled={isSaving}
+            className="flex-1"
+          >
+            {isSaving ? (
+              <>
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
+                Saving...
+              </>
+            ) : (
+              <>
+                <CheckCircle2 className="h-4 w-4 mr-2" />
+                Save
+              </>
+            )}
+          </Button>
         </div>
       )}
     </div>
