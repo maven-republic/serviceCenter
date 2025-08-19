@@ -28,7 +28,9 @@ import {
   CheckCircle2,
   Loader2,
   Settings,
-  Info
+  Info,
+  Eye,
+  EyeOff 
 } from 'lucide-react'
 
 export default function AvailabilityProtocol({ rules, setRules, onSave, isSaving }) {

@@ -2,103 +2,68 @@ import * as React from "react"
 import { Slot } from "@radix-ui/react-slot"
 import { cn } from "@/lib/utils"
 
-// Enhanced variant implementation with responsive support
-const getButtonClasses = ({ 
-  variant = "default", 
-  size = "default", 
-  responsive = false,
-  enhanced = false,
-  gradient = false 
-}) => {
-  const baseClasses = "inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50"
+// Manual variant implementation (no cva dependency)
+const getButtonClasses = ({ variant = "default", size = "default" }) => {
+  const baseClasses = "inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50"
   
   const variants = {
-    default: "bg-primary text-primary-foreground hover:bg-primary/90",
-    destructive: "bg-destructive text-destructive-foreground hover:bg-destructive/90",
-    outline: "border border-input bg-background hover:bg-accent hover:text-accent-foreground",
-    secondary: "bg-secondary text-secondary-foreground hover:bg-secondary/80",
+    default: "bg-primary text-primary-foreground shadow hover:bg-primary/90",
+    destructive: "bg-destructive text-destructive-foreground shadow-sm hover:bg-destructive/90",
+    outline: "border border-input bg-background shadow-sm hover:bg-accent hover:text-accent-foreground",
+    secondary: "bg-secondary text-secondary-foreground shadow-sm hover:bg-secondary/80",
     ghost: "hover:bg-accent hover:text-accent-foreground",
     link: "text-primary underline-offset-4 hover:underline",
   }
   
   const sizes = {
-    default: responsive ? "h-12 px-6 text-base sm:h-9 sm:px-4 sm:text-sm" : "h-9 px-4 py-2",
-    sm: responsive ? "h-10 px-4 text-sm sm:h-8 sm:px-3 sm:text-xs" : "h-8 rounded-md px-3 text-xs",
-    lg: responsive ? "h-14 px-8 text-lg sm:h-11 sm:px-6 sm:text-base" : "h-10 rounded-md px-8",
-    icon: responsive ? "h-12 w-12 sm:h-9 sm:w-9" : "h-9 w-9",
+    default: "h-9 px-4 py-2",
+    sm: "h-8 rounded-md px-3 text-xs",
+    lg: "h-10 rounded-md px-8",
+    icon: "h-9 w-9",
   }
-
-  // Enhanced modifiers
-  const enhancements = enhanced ? "btn-enhanced" : ""
-  const gradientClass = gradient ? "btn-brand" : ""
   
-  return cn(
-    baseClasses, 
-    variants[variant] || variants.default, 
-    sizes[size] || sizes.default,
-    enhancements,
-    gradientClass
-  )
+  return cn(baseClasses, variants[variant] || variants.default, sizes[size] || sizes.default)
 }
 
-const Button = React.forwardRef(({ 
-  className, 
-  variant = "default",
-  size = "default", 
-  responsive = false,
-  enhanced = false,
-  gradient = false,
-  asChild = false, 
-  children,
-  ...props 
-}, ref) => {
+const Button = React.forwardRef(({ className, variant, size, asChild = false, ...props }, ref) => {
   const Comp = asChild ? Slot : "button"
-  
   return (
     <Comp
-      className={cn(
-        getButtonClasses({ variant, size, responsive, enhanced, gradient }), 
-        className
-      )}
+      className={cn(getButtonClasses({ variant, size }), className)}
       ref={ref}
       {...props}
-    >
-      {children}
-    </Comp>
+    />
   )
 })
-
 Button.displayName = "Button"
 
-// Export additional button variants for convenience
-export const BrandButton = React.forwardRef((props, ref) => (
+// ✅ FIXED: Additional button variants with proper display names
+const BrandButton = React.forwardRef((props, ref) => (
   <Button 
     ref={ref} 
-    enhanced={true} 
-    gradient={true}
-    responsive={true}
+    className="btn-enhanced btn-brand"
     {...props} 
   />
 ))
+BrandButton.displayName = "BrandButton"
 
-export const ResponsiveButton = React.forwardRef((props, ref) => (
+const ResponsiveButton = React.forwardRef((props, ref) => (
   <Button 
     ref={ref} 
-    responsive={true}
-    enhanced={true}
+    className="btn-enhanced btn-responsive"
     {...props} 
   />
 ))
+ResponsiveButton.displayName = "ResponsiveButton"
 
-export const MobileButton = React.forwardRef((props, ref) => (
+const MobileButton = React.forwardRef((props, ref) => (
   <Button 
     ref={ref} 
     size="lg"
-    responsive={true}
-    enhanced={true}
-    className="sm:size-default"
+    className="btn-enhanced btn-responsive"
     {...props} 
   />
 ))
+MobileButton.displayName = "MobileButton"
 
-export { Button }
+export { Button, BrandButton, ResponsiveButton, MobileButton }
