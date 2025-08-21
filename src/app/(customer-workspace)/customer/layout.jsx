@@ -1,4 +1,5 @@
-// src/app/(customer-workspace)/customer/layout.jsx
+
+// ===== 2. CUSTOMER WORKSPACE LAYOUT FIX (src/app/(customer-workspace)/customer/layout.jsx) =====
 'use client';
 
 import { useEffect } from 'react';
@@ -8,19 +9,22 @@ import CustomerWorkspaceStructure from '@/components/customer-workspace/Customer
 export default function CustomerWorkspaceLayout({ children }) {
   const { setTheme, actualTheme } = useTheme();
 
-  // Optional: Set default theme preference for customer workspace
-  // But don't force it - let the theme provider handle the logic
+  // Force customer workspace to always use light theme
   useEffect(() => {
-    // Only set a preference if no theme is set
-    // Remove the forcing logic and let users choose
-    console.log('Customer workspace loaded, current theme:', actualTheme);
-  }, [actualTheme]);
+    // Always ensure customer workspace uses light theme
+    document.documentElement.classList.remove('dark');
+    document.documentElement.classList.add('light', 'customer-workspace');
+    console.log('Customer workspace: enforced light theme');
+  }, []);
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
+    <div className="customer-workspace min-h-screen bg-background text-foreground">
       <CustomerWorkspaceStructure>
-        {children}
+        <div className="customer-workspace-mobile lg:customer-workspace-desktop">
+          {children}
+        </div>
       </CustomerWorkspaceStructure>
     </div>
   );
 }
+

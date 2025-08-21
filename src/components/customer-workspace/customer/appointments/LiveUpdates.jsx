@@ -26,13 +26,15 @@ export const LiveUpdates = ({
 }) => {
   const [isAutoRefreshEnabled, setIsAutoRefreshEnabled] = useState(true);
   const [countdown, setCountdown] = useState(autoRefreshInterval / 1000);
-  const [isOnline, setIsOnline] = useState(navigator.onLine);
+  const [isOnline, setIsOnline] = useState(navigator?.onLine ?? true);
   const [newUpdates, setNewUpdates] = useState([]);
   const intervalRef = useRef(null);
   const countdownRef = useRef(null);
 
   // Monitor online status
   useEffect(() => {
+    if (typeof window === 'undefined') return;
+    
     const handleOnline = () => setIsOnline(true);
     const handleOffline = () => setIsOnline(false);
 
@@ -97,7 +99,7 @@ export const LiveUpdates = ({
     setIsAutoRefreshEnabled(prev => !prev);
   };
 
-  // Mock function to simulate new updates (in real app, this would come from WebSocket/polling)
+  // Mock function to simulate new updates
   const simulateNewUpdate = (type = 'new_appointment') => {
     const mockUpdate = {
       id: Date.now(),
@@ -149,84 +151,147 @@ export const LiveUpdates = ({
   };
 
   return (
-    <div className="space-y-4">
-      {/* Live Updates Control Bar */}
-      <div className="flex items-center justify-between bg-muted/30 rounded-lg p-3 border">
-        <div className="flex items-center gap-4">
-          {/* Connection Status */}
-          <div className="flex items-center gap-2">
-            {isOnline ? (
-              <Wifi className="h-4 w-4 text-green-600" />
-            ) : (
-              <WifiOff className="h-4 w-4 text-red-600" />
-            )}
-            <span className={cn(
-              "text-sm font-medium",
-              isOnline ? "text-green-600" : "text-red-600"
-            )}>
-              {isOnline ? 'Online' : 'Offline'}
-            </span>
-          </div>
-
-          {/* Last Updated */}
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <Clock className="h-3 w-3" />
-            <span>Last updated: {formatLastUpdated(lastUpdated)}</span>
-          </div>
-
-          {/* Auto-refresh countdown */}
-          {isAutoRefreshEnabled && isOnline && !isLoading && (
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <span>Next refresh in {countdown}s</span>
+    <div className="space-y-4 w-full">
+      {/* Simplified Mobile-Responsive Control Bar */}
+      <div className="bg-muted/30 rounded-lg p-4 border w-full">
+        
+        {/* Mobile Layout - Stack everything */}
+        <div className="block md:hidden space-y-3">
+          {/* Top row - Status and time */}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2">
+                {isOnline ? (
+                  <Wifi className="h-4 w-4 text-green-600" />
+                ) : (
+                  <WifiOff className="h-4 w-4 text-red-600" />
+                )}
+                <span className={cn(
+                  "text-sm font-medium",
+                  isOnline ? "text-green-600" : "text-red-600"
+                )}>
+                  {isOnline ? 'Online' : 'Offline'}
+                </span>
+              </div>
+              <div className="text-sm text-muted-foreground">
+                {formatLastUpdated(lastUpdated)}
+              </div>
             </div>
-          )}
+          </div>
+          
+          {/* Bottom row - Controls */}
+          <div className="flex items-center justify-between">
+            <div className="text-sm text-muted-foreground">
+              {isAutoRefreshEnabled && isOnline && !isLoading && (
+                <span>Next refresh in {countdown}s</span>
+              )}
+            </div>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleManualRefresh}
+                disabled={isLoading || !isOnline}
+                className="h-9 px-3"
+              >
+                <RefreshCw className={cn(
+                  "h-4 w-4 mr-1",
+                  isLoading && "animate-spin"
+                )} />
+                Refresh
+              </Button>
+              
+              <Button
+                variant={isAutoRefreshEnabled ? "default" : "outline"}
+                size="sm"
+                onClick={toggleAutoRefresh}
+                className="h-9 px-3"
+              >
+                <Wifi className="h-4 w-4 mr-1" />
+                {isAutoRefreshEnabled ? 'On' : 'Off'}
+              </Button>
+            </div>
+          </div>
         </div>
 
-        <div className="flex items-center gap-2">
-          {/* Manual Refresh */}
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={handleManualRefresh}
-            disabled={isLoading || !isOnline}
-            className="h-8"
-          >
-            <RefreshCw className={cn(
-              "h-3 w-3 mr-1",
-              isLoading && "animate-spin"
-            )} />
-            Refresh
-          </Button>
+        {/* Desktop Layout - Single row */}
+        <div className="hidden md:flex items-center justify-between">
+          <div className="flex items-center gap-6">
+            {/* Connection Status */}
+            <div className="flex items-center gap-2">
+              {isOnline ? (
+                <Wifi className="h-4 w-4 text-green-600" />
+              ) : (
+                <WifiOff className="h-4 w-4 text-red-600" />
+              )}
+              <span className={cn(
+                "text-sm font-medium",
+                isOnline ? "text-green-600" : "text-red-600"
+              )}>
+                {isOnline ? 'Online' : 'Offline'}
+              </span>
+            </div>
 
-          {/* Auto-refresh Toggle */}
-          <Button
-            variant={isAutoRefreshEnabled ? "default" : "outline"}
-            size="sm"
-            onClick={toggleAutoRefresh}
-            className="h-8"
-          >
-            <Wifi className="h-3 w-3 mr-1" />
-            Auto {isAutoRefreshEnabled ? 'On' : 'Off'}
-          </Button>
+            {/* Last Updated */}
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <Clock className="h-3 w-3" />
+              <span>Last updated: {formatLastUpdated(lastUpdated)}</span>
+            </div>
 
-          {/* Demo: Simulate Updates */}
-          <div className="hidden lg:flex items-center gap-1">
+            {/* Auto-refresh countdown */}
+            {isAutoRefreshEnabled && isOnline && !isLoading && (
+              <div className="text-sm text-muted-foreground">
+                Next refresh in {countdown}s
+              </div>
+            )}
+          </div>
+
+          <div className="flex items-center gap-2">
+            {/* Manual Refresh */}
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => simulateNewUpdate('new_appointment')}
-              className="h-8 text-xs"
+              onClick={handleManualRefresh}
+              disabled={isLoading || !isOnline}
+              className="h-8"
             >
-              + Appointment
+              <RefreshCw className={cn(
+                "h-3 w-3 mr-1",
+                isLoading && "animate-spin"
+              )} />
+              Refresh
             </Button>
+
+            {/* Auto-refresh Toggle */}
             <Button
-              variant="ghost"
+              variant={isAutoRefreshEnabled ? "default" : "outline"}
               size="sm"
-              onClick={() => simulateNewUpdate('new_response')}
-              className="h-8 text-xs"
+              onClick={toggleAutoRefresh}
+              className="h-8"
             >
-              + Response
+              <Wifi className="h-3 w-3 mr-1" />
+              Auto {isAutoRefreshEnabled ? 'On' : 'Off'}
             </Button>
+
+            {/* Demo Buttons - Desktop only */}
+            <div className="hidden lg:flex items-center gap-1 ml-2">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => simulateNewUpdate('new_appointment')}
+                className="h-8 text-xs"
+              >
+                + Appointment
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => simulateNewUpdate('new_response')}
+                className="h-8 text-xs"
+              >
+                + Response
+              </Button>
+            </div>
           </div>
         </div>
       </div>
@@ -244,14 +309,14 @@ export const LiveUpdates = ({
             >
               <CardContent className="p-3">
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-3 flex-1">
                     <div className={cn(
                       "p-1.5 rounded-full",
                       getUpdateColor(update.type)
                     )}>
                       {getUpdateIcon(update.type)}
                     </div>
-                    <div>
+                    <div className="flex-1">
                       <p className="text-sm font-medium">{update.message}</p>
                       <p className="text-xs text-muted-foreground">
                         {update.timestamp.toLocaleTimeString()} • ID: {update.appointmentId}

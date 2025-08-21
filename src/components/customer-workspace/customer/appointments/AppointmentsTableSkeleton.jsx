@@ -1,148 +1,36 @@
 // src/components/customer-workspace/customer/appointments/AppointmentsTableSkeleton.jsx
 "use client";
 
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Skeleton } from '@/components/ui/skeleton';
-import { 
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
 import { Calendar } from 'lucide-react';
 
-const SkeletonRow = () => (
-  <TableRow className="hover:bg-transparent border-border/50">
-    {/* Service Column */}
-    <TableCell className="py-4">
-      <div className="flex flex-col gap-1.5">
-        <Skeleton className="h-4 w-32" /> {/* Service name */}
-        <div className="flex items-center gap-1">
-          <Skeleton className="h-4 w-16 rounded" /> {/* ID badge */}
-        </div>
-      </div>
-    </TableCell>
-    
-    {/* Request Details Column */}
-    <TableCell className="py-4 max-w-[300px]">
-      <div className="flex flex-col gap-1.5">
-        <Skeleton className="h-4 w-48" /> {/* Title */}
-        <div className="flex items-start gap-2">
-          <Skeleton className="h-3 w-3 mt-0.5 rounded" /> {/* Message icon */}
-          <div className="flex-1 space-y-1">
-            <Skeleton className="h-3 w-full" /> {/* Message line 1 */}
-            <Skeleton className="h-3 w-3/4" /> {/* Message line 2 */}
-          </div>
-        </div>
-      </div>
-    </TableCell>
-    
-    {/* Status Column */}
-    <TableCell className="py-4">
-      <Skeleton className="h-6 w-20 rounded-full" /> {/* Status badge */}
-    </TableCell>
-    
-    {/* Created Column */}
-    <TableCell className="py-4">
-      <div className="flex flex-col gap-1">
-        <div className="flex items-center gap-1.5">
-          <Skeleton className="h-3 w-3 rounded" /> {/* Calendar icon */}
-          <Skeleton className="h-4 w-20" /> {/* Date */}
-        </div>
-        <div className="flex items-center gap-1.5">
-          <Skeleton className="h-3 w-3 rounded" /> {/* Clock icon */}
-          <Skeleton className="h-3 w-16" /> {/* Time */}
-        </div>
-      </div>
-    </TableCell>
-    
-    {/* Responses Column */}
-    <TableCell className="py-4 text-center">
-      <div className="flex flex-col gap-1">
-        <Skeleton className="h-4 w-6 mx-auto" /> {/* Total count */}
-        <Skeleton className="h-3 w-12 mx-auto" /> {/* Active count */}
-      </div>
-    </TableCell>
-    
-    {/* Actions Column */}
-    <TableCell className="py-4 text-right">
-      <Skeleton className="h-8 w-16 ml-auto" /> {/* View button */}
-    </TableCell>
-  </TableRow>
-);
+export const AppointmentsTableSkeleton = ({ rowCount = 5, isMobile: propIsMobile }) => {
+  const [internalIsMobile, setInternalIsMobile] = useState(false);
+  const [isClient, setIsClient] = useState(false);
 
-const SkeletonToolbar = () => (
-  <div className="w-full space-y-4">
-    {/* Toolbar */}
-    <div className="flex items-center justify-between">
-      <div className="flex flex-1 items-center space-x-2">
-        {/* Global Search */}
-        <div className="relative w-full max-w-sm">
-          <Skeleton className="h-10 w-full" /> {/* Search input */}
-        </div>
-        
-        {/* Status Filter */}
-        <Skeleton className="h-10 w-24" /> {/* Status dropdown */}
-      </div>
+  useEffect(() => {
+    setIsClient(true);
+    const checkMobile = () => {
+      setInternalIsMobile(window.innerWidth < 768);
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
-      {/* Column Visibility */}
-      <Skeleton className="h-10 w-20" /> {/* View button */}
-    </div>
-  </div>
-);
+  // Use prop if provided, otherwise use internal detection
+  const shouldShowMobile = propIsMobile !== undefined ? propIsMobile : internalIsMobile;
 
-const SkeletonPagination = () => (
-  <div className="flex items-center justify-between space-x-2 py-4">
-    <div className="flex-1">
-      <Skeleton className="h-4 w-40" /> {/* Selected rows text */}
-    </div>
-    <div className="flex items-center space-x-6 lg:space-x-8">
-      <div className="flex items-center space-x-2">
-        <Skeleton className="h-4 w-20" /> {/* "Rows per page" */}
-        <Skeleton className="h-8 w-16" /> {/* Page size select */}
-      </div>
-      <Skeleton className="h-4 w-24" /> {/* Page indicator */}
-      <div className="flex items-center space-x-2">
-        <Skeleton className="h-8 w-8" /> {/* First page */}
-        <Skeleton className="h-8 w-8" /> {/* Previous page */}
-        <Skeleton className="h-8 w-8" /> {/* Next page */}
-        <Skeleton className="h-8 w-8" /> {/* Last page */}
-      </div>
-    </div>
-  </div>
-);
+  console.log('🖼️ Skeleton Debug:', {
+    propIsMobile,
+    internalIsMobile,
+    shouldShowMobile,
+    isClient,
+    windowWidth: typeof window !== 'undefined' ? window.innerWidth : 'SSR'
+  });
 
-const SkeletonFooter = () => (
-  <div className="border-t border-border bg-muted/20 px-6 py-4 mt-0">
-    <div className="flex items-center justify-between">
-      <div className="flex items-center gap-2">
-        <Skeleton className="w-1.5 h-1.5 rounded-full" />
-        <Skeleton className="h-4 w-32" /> {/* Results text */}
-      </div>
-      
-      <div className="flex items-center gap-6">
-        <div className="flex items-center gap-6">
-          <div className="flex items-center gap-2">
-            <Skeleton className="w-2 h-2 rounded-full" />
-            <Skeleton className="h-3 w-12" />
-          </div>
-          <div className="flex items-center gap-2">
-            <Skeleton className="w-2 h-2 rounded-full" />
-            <Skeleton className="h-3 w-10" />
-          </div>
-          <div className="flex items-center gap-2">
-            <Skeleton className="w-2 h-2 rounded-full" />
-            <Skeleton className="h-3 w-16" />
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-);
-
-export const AppointmentsTableSkeleton = ({ rowCount = 5 }) => {
   return (
     <Card className="animate-fade-in">
       <CardHeader className="pb-4">
@@ -153,54 +41,200 @@ export const AppointmentsTableSkeleton = ({ rowCount = 5 }) => {
           <div>
             <h3 className="text-lg font-semibold">Your Appointments</h3>
             <div className="text-sm text-muted-foreground font-normal">
-              <Skeleton className="h-4 w-24 mt-1" /> {/* Loading count */}
+              <div className="h-4 w-24 mt-1 bg-gray-200 rounded animate-pulse"></div>
             </div>
           </div>
         </CardTitle>
       </CardHeader>
       <CardContent className="p-6">
         <div className="w-full space-y-4">
-          {/* Skeleton Toolbar */}
-          <SkeletonToolbar />
-
-          {/* Skeleton Table */}
-          <div className="rounded-md border">
-            <Table>
-              <TableHeader>
-                <TableRow className="hover:bg-transparent border-border">
-                  <TableHead className="font-semibold text-muted-foreground">
-                    <Skeleton className="h-4 w-16" />
-                  </TableHead>
-                  <TableHead className="font-semibold text-muted-foreground">
-                    <Skeleton className="h-4 w-24" />
-                  </TableHead>
-                  <TableHead className="font-semibold text-muted-foreground">
-                    <Skeleton className="h-4 w-12" />
-                  </TableHead>
-                  <TableHead className="font-semibold text-muted-foreground">
-                    <Skeleton className="h-4 w-16" />
-                  </TableHead>
-                  <TableHead className="font-semibold text-muted-foreground text-center">
-                    <Skeleton className="h-4 w-20 mx-auto" />
-                  </TableHead>
-                  <TableHead className="font-semibold text-muted-foreground text-right">
-                    <Skeleton className="h-4 w-16 ml-auto" />
-                  </TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {Array.from({ length: rowCount }).map((_, index) => (
-                  <SkeletonRow key={index} />
-                ))}
-              </TableBody>
-            </Table>
+          {/* Toolbar Skeleton */}
+          <div className="space-y-3 sm:space-y-0 sm:flex sm:items-center sm:justify-between">
+            <div className="flex flex-col sm:flex-row sm:flex-1 sm:items-center space-y-2 sm:space-y-0 sm:space-x-2">
+              <div className="relative w-full sm:max-w-sm">
+                <div className="w-full h-11 sm:h-10 bg-gray-200 rounded animate-pulse"></div>
+              </div>
+              <div className="w-full sm:w-auto h-11 sm:h-10 bg-gray-200 rounded animate-pulse"></div>
+            </div>
+            <div className="hidden sm:flex h-11 sm:h-10 w-20 bg-gray-200 rounded animate-pulse"></div>
           </div>
 
-          {/* Skeleton Pagination */}
-          <SkeletonPagination />
+          {/* Responsive Content */}
+          {shouldShowMobile ? (
+            // Mobile Card Layout
+            <div className="space-y-3">
+              {Array.from({ length: rowCount }).map((_, index) => (
+                <Card key={index} className="border-l-4 border-l-primary/20">
+                  <CardContent className="p-4">
+                    <div className="flex items-start justify-between mb-3">
+                      <div className="flex-1 pr-2">
+                        <div className="h-4 w-3/4 mb-1 bg-gray-200 rounded animate-pulse"></div>
+                        <div className="h-3 w-1/2 mb-2 bg-gray-200 rounded animate-pulse"></div>
+                        <div className="flex items-center gap-2 mb-2">
+                          <div className="h-5 w-16 bg-gray-200 rounded-full animate-pulse"></div>
+                          <div className="h-3 w-20 bg-gray-200 rounded animate-pulse"></div>
+                        </div>
+                      </div>
+                      <div className="h-9 w-9 bg-gray-200 rounded animate-pulse"></div>
+                    </div>
+                    <div className="mb-3 p-3 bg-muted/30 rounded-md">
+                      <div className="flex items-start gap-2">
+                        <div className="h-3 w-3 mt-0.5 bg-gray-200 rounded animate-pulse"></div>
+                        <div className="flex-1 space-y-1">
+                          <div className="h-3 w-full bg-gray-200 rounded animate-pulse"></div>
+                          <div className="h-3 w-4/5 bg-gray-200 rounded animate-pulse"></div>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-between pt-2 border-t border-muted/50">
+                      <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-1">
+                          <div className="h-3 w-3 bg-gray-200 rounded animate-pulse"></div>
+                          <div className="h-3 w-16 bg-gray-200 rounded animate-pulse"></div>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <div className="h-3 w-3 bg-gray-200 rounded animate-pulse"></div>
+                          <div className="h-3 w-12 bg-gray-200 rounded animate-pulse"></div>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <div className="h-3 w-12 mb-1 bg-gray-200 rounded animate-pulse"></div>
+                        <div className="h-3 w-8 bg-gray-200 rounded animate-pulse"></div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          ) : (
+            // Desktop Table Layout
+            <div className="rounded-md border">
+              <table className="w-full caption-bottom text-sm">
+                <thead className="[&_tr]:border-b">
+                  <tr className="border-b transition-colors hover:bg-muted/50">
+                    <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">
+                      Service
+                    </th>
+                    <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">
+                      Request Details
+                    </th>
+                    <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">
+                      Status
+                    </th>
+                    <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">
+                      Created
+                    </th>
+                    <th className="h-12 px-4 text-center align-middle font-medium text-muted-foreground">
+                      Responses
+                    </th>
+                    <th className="h-12 px-4 text-right align-middle font-medium text-muted-foreground">
+                      Actions
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="[&_tr:last-child]:border-0">
+                  {Array.from({ length: rowCount }).map((_, index) => (
+                    <tr key={index} className="border-b transition-colors hover:bg-muted/50">
+                      {/* Service Column */}
+                      <td className="p-4 align-middle">
+                        <div className="flex flex-col gap-1.5">
+                          <div className="h-4 w-36 bg-gray-200 rounded animate-pulse"></div>
+                          <div className="h-4 w-16 bg-gray-200 rounded animate-pulse"></div>
+                        </div>
+                      </td>
+                      {/* Request Details Column */}
+                      <td className="p-4 align-middle max-w-[300px]">
+                        <div className="flex flex-col gap-1.5">
+                          <div className="h-4 w-48 bg-gray-200 rounded animate-pulse"></div>
+                          <div className="flex items-start gap-2">
+                            <div className="h-3 w-3 mt-0.5 bg-gray-200 rounded animate-pulse"></div>
+                            <div className="flex-1 space-y-1">
+                              <div className="h-3 w-full bg-gray-200 rounded animate-pulse"></div>
+                              <div className="h-3 w-3/4 bg-gray-200 rounded animate-pulse"></div>
+                            </div>
+                          </div>
+                        </div>
+                      </td>
+                      {/* Status Column */}
+                      <td className="p-4 align-middle">
+                        <div className="h-6 w-20 bg-gray-200 rounded-full animate-pulse"></div>
+                      </td>
+                      {/* Created Column */}
+                      <td className="p-4 align-middle">
+                        <div className="flex flex-col gap-1">
+                          <div className="flex items-center gap-1.5">
+                            <div className="h-3 w-3 bg-gray-200 rounded animate-pulse"></div>
+                            <div className="h-4 w-20 bg-gray-200 rounded animate-pulse"></div>
+                          </div>
+                          <div className="flex items-center gap-1.5">
+                            <div className="h-3 w-3 bg-gray-200 rounded animate-pulse"></div>
+                            <div className="h-3 w-16 bg-gray-200 rounded animate-pulse"></div>
+                          </div>
+                        </div>
+                      </td>
+                      {/* Responses Column */}
+                      <td className="p-4 align-middle text-center">
+                        <div className="flex flex-col gap-1 items-center">
+                          <div className="h-4 w-6 bg-gray-200 rounded animate-pulse"></div>
+                          <div className="h-3 w-12 bg-gray-200 rounded animate-pulse"></div>
+                        </div>
+                      </td>
+                      {/* Actions Column */}
+                      <td className="p-4 align-middle text-right">
+                        <div className="h-8 w-16 bg-gray-200 rounded animate-pulse ml-auto"></div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
 
-          {/* Skeleton Footer */}
-          <SkeletonFooter />
+          {/* Pagination Skeleton */}
+          <div className="flex flex-col sm:flex-row items-center justify-between space-y-3 sm:space-y-0 sm:space-x-2 py-4">
+            <div className="text-sm text-muted-foreground order-2 sm:order-1">
+              <div className="h-4 w-40 bg-gray-200 rounded animate-pulse"></div>
+            </div>
+            <div className="flex flex-col sm:flex-row items-center space-y-3 sm:space-y-0 sm:space-x-6 lg:space-x-8 order-1 sm:order-2">
+              <div className="flex items-center space-x-2">
+                <div className="h-4 w-8 bg-gray-200 rounded animate-pulse"></div>
+                <div className="w-16 h-10 bg-gray-200 rounded animate-pulse"></div>
+              </div>
+              <div className="h-4 w-24 bg-gray-200 rounded animate-pulse"></div>
+              <div className="flex items-center space-x-1">
+                <div className="hidden sm:flex h-10 w-10 bg-gray-200 rounded animate-pulse"></div>
+                <div className="h-10 w-10 bg-gray-200 rounded animate-pulse"></div>
+                <div className="h-10 w-10 bg-gray-200 rounded animate-pulse"></div>
+                <div className="hidden sm:flex h-10 w-10 bg-gray-200 rounded animate-pulse"></div>
+              </div>
+            </div>
+          </div>
+
+          {/* Footer */}
+          <div className="border-t border-border bg-muted/20 px-4 sm:px-6 py-3 sm:py-4 mt-0 rounded-b-lg">
+            <div className="flex flex-col sm:flex-row items-center justify-between space-y-2 sm:space-y-0">
+              <div className="flex items-center gap-2">
+                <div className="w-1.5 h-1.5 bg-gray-200 rounded-full animate-pulse"></div>
+                <div className="h-4 w-32 bg-gray-200 rounded animate-pulse"></div>
+              </div>
+              <div className="flex items-center gap-4 sm:gap-6">
+                <div className="flex items-center gap-3 sm:gap-6">
+                  <div className="flex items-center gap-1.5">
+                    <div className="w-2 h-2 bg-gray-200 rounded-full animate-pulse"></div>
+                    <div className="h-3 w-12 bg-gray-200 rounded animate-pulse"></div>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <div className="w-2 h-2 bg-gray-200 rounded-full animate-pulse"></div>
+                    <div className="h-3 w-10 bg-gray-200 rounded animate-pulse"></div>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <div className="w-2 h-2 bg-gray-200 rounded-full animate-pulse"></div>
+                    <div className="h-3 w-16 bg-gray-200 rounded animate-pulse"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </CardContent>
     </Card>

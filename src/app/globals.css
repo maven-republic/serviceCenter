@@ -439,6 +439,15 @@ html.dark.customer-workspace {
   }
 
   /* ===== CUSTOMER WORKSPACE COMPONENTS ===== */
+
+.touch-target {
+  min-height: var(--touch-target-min);
+  min-width: var(--touch-target-min);
+}
+
+.customer-account-mobile {
+  @apply px-4 py-4 sm:px-6 sm:py-6 lg:px-8;
+}
   
   .customer-card {
     @apply bg-card border border-border rounded-lg shadow-sm;
@@ -633,6 +642,8 @@ html.dark.customer-workspace {
     @apply cursor-pointer select-none;
     -webkit-tap-highlight-color: transparent;
   }
+
+
 
   .mobile-header {
     height: var(--nav-height-mobile);

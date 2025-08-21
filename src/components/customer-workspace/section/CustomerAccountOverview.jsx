@@ -1,52 +1,46 @@
-
 "use client";
+
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useUserStore } from "@/store/userStore";
 import { createClient } from '@supabase/supabase-js';
-
-import CustomerNavigation from "../navigation/CustomerNavigation";
-// import Award from "./Award";
-// import ChangePassword from "./ChangePassword";
-// import ConfirmPassword from "./ConfirmPassword";
-// import Education from "./Education";
 import CustomerAccountInformation from "./CustomerAccountInformation";
-// import Competence from "./Competence";
-// import WorkExperience from "./WorkExperience";
-
 
 export default function CustomerAccountOverview() {
-
   const { user, fetchUser, updateUser } = useUserStore();
-    const [selectedImage, setSelectedImage] = useState(null);
-    const [phoneNumber, setPhoneNumber] = useState('');
-    const [phoneLoading, setPhoneLoading] = useState(true);
-
+  const [selectedImage, setSelectedImage] = useState(null);
+  const [phoneNumber, setPhoneNumber] = useState('');
+  const [phoneLoading, setPhoneLoading] = useState(true);
 
   return (
-    <>
-      <div className="dashboard__content ">
-        <div className="row pb40">
-          <div className="col-lg-12">
-            {/* <CustomerNavigation /> */}
+    <div className="w-full min-h-screen bg-background">
+      {/* Remove all the legacy Bootstrap-style classes */}
+      <div className="w-full max-w-none">
+        {/* Mobile-first container with proper padding */}
+        <div className="w-full px-4 py-4 sm:px-6 sm:py-6 lg:px-8">
+          
+          {/* Optional: Welcome Section */}
+          <div className="mb-6 lg:mb-8">
+            {/* Only show welcome message if user exists */}
+            {user?.account?.first_name && (
+              <div className="text-center sm:text-left">
+                <h1 className="text-xl sm:text-2xl lg:text-3xl font-semibold mb-2">
+                  Welcome, {user.account.first_name}!
+                </h1>
+                <p className="text-sm sm:text-base text-muted-foreground">
+                  Manage your account information and preferences
+                </p>
+              </div>
+            )}
           </div>
-          <div className="col-lg-9">
-            <div className="dashboard_title_area">
-    
-              {/* <h2>Welcome! {`${user?.account?.first_name || ''} ${user?.account?.last_name || ''}`}</h2> */}
 
-              {/* <p className="text">Lorem ipsum dolor sit amet, consectetur.</p> */}
-            </div>
-          </div>
-        </div>
-        <div className="row">
-          <div className="col-xl-12">
+          {/* Main Content - Full Width */}
+          <div className="w-full">
             <CustomerAccountInformation />
-                    </div>
+          </div>
         </div>
       </div>
-    </>
+    </div>
   );
 }
-
