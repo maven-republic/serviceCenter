@@ -29,7 +29,11 @@ import {
  MessageSquare,
  Upload,
  Image,
- Users
+ Users,
+ X,
+ Menu,
+ ChevronDown,
+ ChevronUp
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -40,26 +44,69 @@ export default function Appointment({
  onSuccess, 
  onCancel,
  variant = 'marketplace', // 'marketplace' | 'direct'
- selectedProfessionals = [] // NEW: Array of selected professionals for targeted marketplace
+ selectedProfessionals = [] // Array of selected professionals for targeted marketplace
 }) {
  const { user } = useUserStore();
  const [loading, setLoading] = useState(false);
  const [errors, setErrors] = useState({});
  const [currentStep, setCurrentStep] = useState(1);
+ const [isMobile, setIsMobile] = useState(false);
+ const [showStepNav, setShowStepNav] = useState(false);
  
+ // Mobile detection
+ useEffect(() => {
+   const checkMobile = () => {
+     setIsMobile(window.innerWidth < 768);
+   };
+   
+   checkMobile();
+   window.addEventListener('resize', checkMobile);
+   return () => window.removeEventListener('resize', checkMobile);
+ }, []);
+
  // Determine workflow type based on variant and selectedProfessionals
  const isMarketplace = variant === 'marketplace';
  const isTargetedMarketplace = isMarketplace && selectedProfessionals.length > 0;
  const isOpenMarketplace = isMarketplace && selectedProfessionals.length === 0;
  
- // 5-step flow with dedicated file upload step
+ // Enhanced 5-step flow with mobile-friendly descriptions
  const steps = useMemo(() => [
-   { id: 1, title: 'Project', icon: FileText, description: 'Describe your needs' },
-   { id: 2, title: 'Files', icon: Upload, description: 'Upload references' },
-   { id: 3, title: 'Schedule', icon: Calendar, description: isMarketplace ? 'When needed' : 'Pick a time' },
-   { id: 4, title: 'Location', icon: MapPin, description: 'Service address' },
-   { id: 5, title: 'Review', icon: CheckCircle, description: 'Confirm details' }
- ], [isMarketplace]);
+   { 
+     id: 1, 
+     title: isMobile ? 'Project' : 'Project Details', 
+     icon: FileText, 
+     description: isMobile ? 'Describe needs' : 'Describe your needs',
+     mobileDescription: 'What do you need done?'
+   },
+   { 
+     id: 2, 
+     title: 'Files', 
+     icon: Upload, 
+     description: isMobile ? 'Add references' : 'Upload references',
+     mobileDescription: 'Photos & documents'
+   },
+   { 
+     id: 3, 
+     title: 'Schedule', 
+     icon: Calendar, 
+     description: isMobile ? 'When needed' : (isMarketplace ? 'When needed' : 'Pick a time'),
+     mobileDescription: 'Pick your preferred time'
+   },
+   { 
+     id: 4, 
+     title: 'Location', 
+     icon: MapPin, 
+     description: isMobile ? 'Where' : 'Service address',
+     mobileDescription: 'Where should we come?'
+   },
+   { 
+     id: 5, 
+     title: 'Review', 
+     icon: CheckCircle, 
+     description: isMobile ? 'Confirm' : 'Confirm details',
+     mobileDescription: 'Review and submit'
+   }
+ ], [isMarketplace, isMobile]);
 
  // Form state with file attachments
  const [formData, setFormData] = useState({
@@ -108,11 +155,11 @@ export default function Appointment({
 
  // Urgency options with pricing multipliers
  const urgencyOptions = useMemo(() => [
-   { value: 'low', label: 'Flexible (1 week)', priceMultiplier: 0.9, badge: '-10%', color: 'bg-green-100 text-green-800' },
-   { value: 'standard', label: 'Standard (3 days)', priceMultiplier: 1.0, badge: '', color: 'bg-blue-100 text-blue-800' },
-   { value: 'high', label: 'Priority (24hrs)', priceMultiplier: 1.2, badge: '+20%', color: 'bg-orange-100 text-orange-800' },
-   { value: 'urgent', label: 'Urgent (ASAP)', priceMultiplier: 1.5, badge: '+50%', color: 'bg-red-100 text-red-800' }
- ], []);
+   { value: 'low', label: isMobile ? 'Flexible' : 'Flexible (1 week)', priceMultiplier: 0.9, badge: '-10%', color: 'bg-green-100 text-green-800' },
+   { value: 'standard', label: isMobile ? 'Standard' : 'Standard (3 days)', priceMultiplier: 1.0, badge: '', color: 'bg-blue-100 text-blue-800' },
+   { value: 'high', label: isMobile ? 'Priority' : 'Priority (24hrs)', priceMultiplier: 1.2, badge: '+20%', color: 'bg-orange-100 text-orange-800' },
+   { value: 'urgent', label: isMobile ? 'Urgent' : 'Urgent (ASAP)', priceMultiplier: 1.5, badge: '+50%', color: 'bg-red-100 text-red-800' }
+ ], [isMobile]);
 
  // Calculate estimated price
  const estimatedPrice = useMemo(() => {
@@ -171,266 +218,253 @@ export default function Appointment({
    return Object.keys(newErrors).length === 0;
  }, [formData]);
 
-// Enhanced submit handler with TARGETED MARKETPLACE support
-const handleSubmit = useCallback(async () => {
-  if (currentStep !== steps.length) return false;
-  if (!validateForm()) return;
-  if (!user?.profile?.customer_id) {
-    setErrors({ general: 'Please log in to make an appointment request' });
-    return;
-  }
+ // Enhanced submit handler with TARGETED MARKETPLACE support
+ const handleSubmit = useCallback(async () => {
+   if (currentStep !== steps.length) return false;
+   if (!validateForm()) return;
+   if (!user?.profile?.customer_id) {
+     setErrors({ general: 'Please log in to make an appointment request' });
+     return;
+   }
 
-  setLoading(true);
+   setLoading(true);
 
-  try {
-    const supabase = createClient();
-    let addressId = null;
-    
-    // Get customer address if not using different address
-    if (!formData.use_different_address) {
-      console.log('🔍 Fetching customer address for account:', user.account.account_id);
-      
-      const { data: customerAddress, error: addressError } = await supabase
-        .from('address')
-        .select('address_id')
-        .eq('account_id', user.account.account_id)
-        .eq('is_primary', true)
-        .single();
-      
-      if (addressError) {
-        console.error('❌ Address fetch error:', addressError);
-      } else {
-        console.log('✅ Found customer address:', customerAddress);
-      }
-      
-      addressId = customerAddress?.address_id;
-    }
+   try {
+     const supabase = createClient();
+     let addressId = null;
+     
+     // Get customer address if not using different address
+     if (!formData.use_different_address) {
+       console.log('🏠 Fetching customer address for account:', user.account.account_id);
+       
+       const { data: customerAddress, error: addressError } = await supabase
+         .from('address')
+         .select('address_id')
+         .eq('account_id', user.account.account_id)
+         .eq('is_primary', true)
+         .single();
+       
+       if (addressError) {
+         console.error('❌ Address fetch error:', addressError);
+       } else {
+         console.log('✅ Found customer address:', customerAddress);
+       }
+       
+       addressId = customerAddress?.address_id;
+     }
 
-    console.log('📍 Address ID to use:', addressId);
+     console.log('🏠 Address ID to use:', addressId);
 
-   
-// Upload files first if any exist
-let attachmentIds = [];
-if (formData.attachments && formData.attachments.length > 0) {
-  console.log('📤 Uploading', formData.attachments.length, 'files...');
-  
-  // GET SESSION FOR AUTHENTICATION - THIS IS THE KEY FIX
-  const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-  
-  if (sessionError || !session?.access_token) {
-    console.error('❌ Authentication error for file upload:', sessionError);
-    throw new Error('Authentication required for file upload');
-  }
+     // Upload files first if any exist
+     let attachmentIds = [];
+     if (formData.attachments && formData.attachments.length > 0) {
+       console.log('📤 Uploading', formData.attachments.length, 'files...');
+       
+       // GET SESSION FOR AUTHENTICATION
+       const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+       
+       if (sessionError || !session?.access_token) {
+         console.error('❌ Authentication error for file upload:', sessionError);
+         throw new Error('Authentication required for file upload');
+       }
 
-  console.log('🔐 Session found, proceeding with authenticated upload');
-  
-  for (const fileData of formData.attachments) {
-    if (!fileData.uploaded && fileData.file) {
-      try {
-        const uploadData = new FormData();
-        uploadData.append('file', fileData.file);
-        
-        console.log('📤 Uploading file:', fileData.name, 'Size:', fileData.file.size);
-        
-        const uploadResponse = await fetch('/api/assets/upload', {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${session.access_token}`, // ADD THIS AUTH HEADER
-            // Don't set Content-Type - let browser handle it for FormData
-          },
-          body: uploadData
-        });
-        
-        console.log('📡 Upload response status:', uploadResponse.status);
-        
-        if (!uploadResponse.ok) {
-          const errorText = await uploadResponse.text();
-          console.error('❌ Upload response error:', errorText);
-          
-          let errorMessage;
-          try {
-            const errorData = JSON.parse(errorText);
-            errorMessage = errorData.error || `Upload failed with status ${uploadResponse.status}`;
-          } catch {
-            errorMessage = `Upload failed with status ${uploadResponse.status}: ${errorText}`;
-          }
-          
-          throw new Error(errorMessage);
-        }
-        
-        const uploadResult = await uploadResponse.json();
-        console.log('📋 Upload result:', uploadResult);
-        
-        if (uploadResult.success && uploadResult.asset) {
-          attachmentIds.push({
-            asset_id: uploadResult.asset.id,
-            purpose: fileData.purpose || 'reference'
-          });
-          console.log('✅ Upload successful for:', fileData.name, 'Asset ID:', uploadResult.asset.id);
-        } else {
-          console.error('❌ Upload failed for', fileData.name, ':', uploadResult.error);
-          throw new Error(`Upload failed for ${fileData.name}: ${uploadResult.error || 'Unknown error'}`);
-        }
-      } catch (error) {
-        console.error('❌ Upload error for', fileData.name, ':', error.message);
-        throw new Error(`Failed to upload ${fileData.name}: ${error.message}`);
-      }
-    }
-  }
-  
-  console.log('📎 Total attachments ready:', attachmentIds.length);
-}
+       console.log('🔐 Session found, proceeding with authenticated upload');
+       
+       for (const fileData of formData.attachments) {
+         if (!fileData.uploaded && fileData.file) {
+           try {
+             const uploadData = new FormData();
+             uploadData.append('file', fileData.file);
+             
+             console.log('📤 Uploading file:', fileData.name, 'Size:', fileData.file.size);
+             
+             const uploadResponse = await fetch('/api/assets/upload', {
+               method: 'POST',
+               headers: {
+                 'Authorization': `Bearer ${session.access_token}`,
+               },
+               body: uploadData
+             });
+             
+             console.log('📡 Upload response status:', uploadResponse.status);
+             
+             if (!uploadResponse.ok) {
+               const errorText = await uploadResponse.text();
+               console.error('❌ Upload response error:', errorText);
+               
+               let errorMessage;
+               try {
+                 const errorData = JSON.parse(errorText);
+                 errorMessage = errorData.error || `Upload failed with status ${uploadResponse.status}`;
+               } catch {
+                 errorMessage = `Upload failed with status ${uploadResponse.status}: ${errorText}`;
+               }
+               
+               throw new Error(errorMessage);
+             }
+             
+             const uploadResult = await uploadResponse.json();
+             console.log('📋 Upload result:', uploadResult);
+             
+             if (uploadResult.success && uploadResult.asset) {
+               attachmentIds.push({
+                 asset_id: uploadResult.asset.id,
+                 purpose: fileData.purpose || 'reference'
+               });
+               console.log('✅ Upload successful for:', fileData.name, 'Asset ID:', uploadResult.asset.id);
+             } else {
+               console.error('❌ Upload failed for', fileData.name, ':', uploadResult.error);
+               throw new Error(`Upload failed for ${fileData.name}: ${uploadResult.error || 'Unknown error'}`);
+             }
+           } catch (error) {
+             console.error('❌ Upload error for', fileData.name, ':', error.message);
+             throw new Error(`Failed to upload ${fileData.name}: ${error.message}`);
+           }
+         }
+       }
+       
+       console.log('📎 Total attachments ready:', attachmentIds.length);
+     }
 
-    // Create appointment request with ENHANCED VARIANT-BASED logic
-    const requestData = {
-      customer_id: user.profile.customer_id,
-      professional_id: isMarketplace ? null : professional?.professional_id,
-      service_id: serviceInformation.service_id,
-      address_id: addressId,
-      description: formData.description,
-      deadline: formData.deadline || null,
-      session: formData.session,
-      urgency: formData.urgency,
-      customer_message: formData.customer_message || null,
-      attachment_ids: attachmentIds,
-      
-      // UPDATED: Enhanced marketplace logic
-      open_to_all_professionals: isOpenMarketplace, // Only true for open marketplace
-      recipients: isTargetedMarketplace ? selectedProfessionals.map(p => p.professional_id) : [], // Selected professional IDs
-      max_interests: isTargetedMarketplace ? selectedProfessionals.length : (isOpenMarketplace ? 10 : 1),
-      auto_accept_verified: false,
-      
-      service_location: formData.use_different_address ? {
-        ...formData.service_location,
-        latitude: location?.lat,
-        longitude: location?.lng,
-        formatted_address: `${formData.service_location.street_address}, ${formData.service_location.city}, ${formData.service_location.parish}`
-      } : null
-    };
+     // Create appointment request with ENHANCED VARIANT-BASED logic
+     const requestData = {
+       customer_id: user.profile.customer_id,
+       professional_id: isMarketplace ? null : professional?.professional_id,
+       service_id: serviceInformation.service_id,
+       address_id: addressId,
+       description: formData.description,
+       deadline: formData.deadline || null,
+       session: formData.session,
+       urgency: formData.urgency,
+       customer_message: formData.customer_message || null,
+       attachment_ids: attachmentIds,
+       
+       // UPDATED: Enhanced marketplace logic
+       open_to_all_professionals: isOpenMarketplace,
+       recipients: isTargetedMarketplace ? selectedProfessionals.map(p => p.professional_id) : [],
+       max_interests: isTargetedMarketplace ? selectedProfessionals.length : (isOpenMarketplace ? 10 : 1),
+       auto_accept_verified: false,
+       
+       service_location: formData.use_different_address ? {
+         ...formData.service_location,
+         latitude: location?.lat,
+         longitude: location?.lng,
+         formatted_address: `${formData.service_location.street_address}, ${formData.service_location.city}, ${formData.service_location.parish}`
+       } : null
+     };
 
-    // Debug the request data thoroughly
-    console.log('🔍 DETAILED REQUEST DATA CHECK:');
-    console.log('variant:', variant);
-    console.log('selectedProfessionals count:', selectedProfessionals.length);
-    console.log('isMarketplace:', isMarketplace);
-    console.log('isTargetedMarketplace:', isTargetedMarketplace);
-    console.log('isOpenMarketplace:', isOpenMarketplace);
-    console.log('customer_id:', requestData.customer_id);
-    console.log('professional_id:', requestData.professional_id);
-    console.log('service_id:', requestData.service_id);
-    console.log('address_id:', requestData.address_id);
-    console.log('description length:', requestData.description?.length);
-    console.log('session:', requestData.session);
-    console.log('open_to_all_professionals:', requestData.open_to_all_professionals);
-    console.log('recipients:', requestData.recipients);
-    console.log('max_interests:', requestData.max_interests);
-    console.log('service_location:', requestData.service_location);
-    console.log('attachment_ids count:', requestData.attachment_ids?.length);
+     // Debug the request data thoroughly
+     console.log('🔍 DETAILED REQUEST DATA CHECK:');
+     console.log('variant:', variant);
+     console.log('selectedProfessionals count:', selectedProfessionals.length);
+     console.log('isMarketplace:', isMarketplace);
+     console.log('isTargetedMarketplace:', isTargetedMarketplace);
+     console.log('isOpenMarketplace:', isOpenMarketplace);
 
-    // Validate required fields before sending
-    const missingFields = [];
-    if (!requestData.customer_id) missingFields.push('customer_id');
-    if (!requestData.service_id) missingFields.push('service_id');
-    if (!requestData.description) missingFields.push('description');
-    if (!requestData.session) missingFields.push('session');
+     // Validate required fields before sending
+     const missingFields = [];
+     if (!requestData.customer_id) missingFields.push('customer_id');
+     if (!requestData.service_id) missingFields.push('service_id');
+     if (!requestData.description) missingFields.push('description');
+     if (!requestData.session) missingFields.push('session');
 
-    if (missingFields.length > 0) {
-      throw new Error(`Missing required fields: ${missingFields.join(', ')}`);
-    }
+     if (missingFields.length > 0) {
+       throw new Error(`Missing required fields: ${missingFields.join(', ')}`);
+     }
 
-    console.log('📋 Submitting appointment request...');
+     console.log('📋 Submitting appointment request...');
 
-    const response = await fetch('/api/appointments', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(requestData)
-    });
+     const response = await fetch('/api/appointments', {
+       method: 'POST',
+       headers: { 'Content-Type': 'application/json' },
+       body: JSON.stringify(requestData)
+     });
 
-    console.log('📡 Response status:', response.status);
-    console.log('📡 Response headers:', Object.fromEntries(response.headers.entries()));
+     console.log('📡 Response status:', response.status);
 
-    // Get response text first to see what we actually received
-    const responseText = await response.text();
-    console.log('📡 Raw response text:', responseText);
+     const responseText = await response.text();
+     console.log('📡 Raw response text:', responseText);
 
-    let result;
-    try {
-      result = JSON.parse(responseText);
-      console.log('📡 Parsed response:', result);
-    } catch (parseError) {
-      console.error('❌ Failed to parse response as JSON:', parseError);
-      console.error('Response was:', responseText);
-      throw new Error(`Server returned invalid JSON. Response: ${responseText.substring(0, 200)}`);
-    }
+     let result;
+     try {
+       result = JSON.parse(responseText);
+       console.log('📡 Parsed response:', result);
+     } catch (parseError) {
+       console.error('❌ Failed to parse response as JSON:', parseError);
+       throw new Error(`Server returned invalid JSON. Response: ${responseText.substring(0, 200)}`);
+     }
 
-    if (!response.ok) {
-      console.error('❌ API Error Response:', {
-        status: response.status,
-        statusText: response.statusText,
-        body: result
-      });
-      
-      const errorMessage = result?.error || result?.message || `HTTP ${response.status}: ${response.statusText}`;
-      throw new Error(errorMessage);
-    }
+     if (!response.ok) {
+       console.error('❌ API Error Response:', {
+         status: response.status,
+         statusText: response.statusText,
+         body: result
+       });
+       
+       const errorMessage = result?.error || result?.message || `HTTP ${response.status}: ${response.statusText}`;
+       throw new Error(errorMessage);
+     }
 
-    console.log('✅ Appointment created successfully:', {
-      appointment_id: result.appointment?.appointment_id,
-      workflow_type: result.appointment?.workflow_type,
-      variant: variant,
-      targeted_professionals: isTargetedMarketplace ? selectedProfessionals.length : 0,
-      attachments: result.appointment?.attachments?.length || 0,
-      interests: result.appointment?.interests?.length || 0
-    });
+     console.log('✅ Appointment created successfully:', {
+       appointment_id: result.appointment?.appointment_id,
+       workflow_type: result.appointment?.workflow_type,
+       variant: variant,
+       targeted_professionals: isTargetedMarketplace ? selectedProfessionals.length : 0,
+       attachments: result.appointment?.attachments?.length || 0,
+       interests: result.appointment?.interests?.length || 0
+     });
 
-    onSuccess?.(result.appointment);
+     onSuccess?.(result.appointment);
 
-  } catch (error) {
-    console.error('❌ Full error details:', {
-      name: error.name,
-      message: error.message,
-      stack: error.stack
-    });
-    
-    // Enhanced error handling with more specific messages
-    let errorMessage = error.message;
-    
-    if (error.message.includes('Missing required fields')) {
-      errorMessage = 'Please fill in all required information before submitting.';
-    } else if (error.message.includes('Customer not found')) {
-      errorMessage = 'There was an issue with your account. Please try logging out and back in.';
-    } else if (error.message.includes('Service not found')) {
-      errorMessage = 'The selected service is no longer available. Please refresh and try again.';
-    } else if (error.message.includes('Professional not found')) {
-      errorMessage = 'The selected professional is no longer available. Your request will be opened to all qualified professionals.';
-    } else if (error.message.includes('Failed to fetch')) {
-      errorMessage = 'Network error. Please check your internet connection and try again.';
-    } else if (error.message.includes('invalid JSON')) {
-      errorMessage = 'Server error. Please try again in a few minutes.';
-    }
-    
-    setErrors({ general: errorMessage });
-  } finally {
-    setLoading(false);
-  }
-}, [formData, validateForm, user, professional, serviceInformation, location, onSuccess, currentStep, steps.length, variant, isMarketplace, isTargetedMarketplace, isOpenMarketplace, selectedProfessionals]);
+   } catch (error) {
+     console.error('❌ Full error details:', {
+       name: error.name,
+       message: error.message,
+       stack: error.stack
+     });
+     
+     // Enhanced error handling with more specific messages
+     let errorMessage = error.message;
+     
+     if (error.message.includes('Missing required fields')) {
+       errorMessage = 'Please fill in all required information before submitting.';
+     } else if (error.message.includes('Customer not found')) {
+       errorMessage = 'There was an issue with your account. Please try logging out and back in.';
+     } else if (error.message.includes('Service not found')) {
+       errorMessage = 'The selected service is no longer available. Please refresh and try again.';
+     } else if (error.message.includes('Professional not found')) {
+       errorMessage = 'The selected professional is no longer available. Your request will be opened to all qualified professionals.';
+     } else if (error.message.includes('Failed to fetch')) {
+       errorMessage = 'Network error. Please check your internet connection and try again.';
+     } else if (error.message.includes('invalid JSON')) {
+       errorMessage = 'Server error. Please try again in a few minutes.';
+     }
+     
+     setErrors({ general: errorMessage });
+   } finally {
+     setLoading(false);
+   }
+ }, [formData, validateForm, user, professional, serviceInformation, location, onSuccess, currentStep, steps.length, variant, isMarketplace, isTargetedMarketplace, isOpenMarketplace, selectedProfessionals]);
 
  // Step navigation functions
  const nextStep = useCallback(() => {
    if (currentStep < steps.length) {
      setCurrentStep(prev => prev + 1);
+     setShowStepNav(false);
    }
  }, [currentStep, steps.length]);
 
  const prevStep = useCallback(() => {
    if (currentStep > 1) {
      setCurrentStep(prev => prev - 1);
+     setShowStepNav(false);
    }
  }, [currentStep]);
 
  const goToStep = useCallback((stepNumber) => {
    if (stepNumber >= 1 && stepNumber <= steps.length && isStepValid(stepNumber)) {
      setCurrentStep(stepNumber);
+     setShowStepNav(false);
    }
  }, [steps.length]);
 
@@ -484,44 +518,113 @@ if (formData.attachments && formData.attachments.length > 0) {
    }
  }, [isTargetedMarketplace, isOpenMarketplace, selectedProfessionals.length, professionalName]);
 
+ // Mobile Step Navigation Dropdown
+ const MobileStepNavigation = () => (
+   <div className={`${isMobile ? 'relative' : 'hidden'}`}>
+     <Button
+       type="button"
+       variant="outline"
+       onClick={() => setShowStepNav(!showStepNav)}
+       className="w-full justify-between h-12"
+     >
+       <span className="flex items-center gap-2">
+         <Menu className="h-4 w-4" />
+         Step {currentStep}: {steps[currentStep - 1]?.title}
+       </span>
+       {showStepNav ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+     </Button>
+     
+     {showStepNav && (
+       <div className="absolute top-full left-0 right-0 mt-1 bg-background border border-border rounded-md shadow-lg z-50">
+         {steps.map((step) => {
+           const status = getStepStatus(step.id);
+           const StepIcon = step.icon;
+           
+           return (
+             <button
+               key={step.id}
+               type="button"
+               onClick={() => goToStep(step.id)}
+               disabled={status === 'pending'}
+               className={cn(
+                 "w-full flex items-center gap-3 p-3 text-left transition-colors border-b border-border last:border-b-0",
+                 status === 'active' && "bg-primary/10 text-primary",
+                 status === 'completed' && "text-green-700 hover:bg-green-50",
+                 status === 'available' && "text-orange-700 hover:bg-orange-50",
+                 status === 'pending' && "text-muted-foreground opacity-50 cursor-not-allowed"
+               )}
+             >
+               <div className={cn(
+                 "flex h-8 w-8 items-center justify-center rounded-full text-xs",
+                 status === 'active' && "bg-primary text-primary-foreground",
+                 status === 'completed' && "bg-green-100 text-green-700",
+                 status === 'available' && "bg-orange-100 text-orange-700",
+                 status === 'pending' && "bg-muted text-muted-foreground"
+               )}>
+                 {status === 'completed' ? (
+                   <CheckCircle className="h-4 w-4" />
+                 ) : (
+                   <StepIcon className="h-4 w-4" />
+                 )}
+               </div>
+               <div className="flex-1">
+                 <div className="font-medium text-sm">{step.title}</div>
+                 <div className="text-xs opacity-80">{step.mobileDescription}</div>
+               </div>
+             </button>
+           );
+         })}
+       </div>
+     )}
+   </div>
+ );
+
  return (
-   <div className="flex flex-col h-full max-h-[95vh]">
+   <div className={`flex flex-col ${isMobile ? 'h-screen' : 'h-full max-h-[95vh]'}`}>
      
      {/* Fixed Header with Progress and Step Navigation */}
-     <div className="flex-shrink-0 bg-background border-b p-6">
-       <div className="w-full max-w-4xl mx-auto space-y-6">
+     <div className={`flex-shrink-0 bg-background border-b ${isMobile ? 'p-4' : 'p-6'}`}>
+       <div className="w-full max-w-4xl mx-auto space-y-4">
          
          {/* Workflow Type Indicator - ENHANCED */}
          <div className="flex items-center justify-between">
            <div className="flex items-center gap-3">
              {isMarketplace ? (
                <>
-                 <Users className="h-5 w-5 text-blue-600" />
-                 <div>
-                   <h3 className="font-semibold text-blue-900">
+                 <Users className="h-5 w-5 text-blue-600 flex-shrink-0" />
+                 <div className="min-w-0">
+                   <h3 className={`font-semibold text-blue-900 ${isMobile ? 'text-sm' : ''}`}>
                      {isTargetedMarketplace ? 'Targeted Request' : 'Service Request'}
                    </h3>
-                   <p className="text-sm text-blue-600">{getWorkflowDescription()}</p>
+                   <p className={`text-blue-600 ${isMobile ? 'text-xs' : 'text-sm'} truncate`}>
+                     {isMobile ? (
+                       isTargetedMarketplace ? `${selectedProfessionals.length} selected` : 'Multiple quotes'
+                     ) : (
+                       getWorkflowDescription()
+                     )}
+                   </p>
                  </div>
                </>
              ) : (
                <>
-                 <CheckCircle className="h-5 w-5 text-green-600" />
-                 <div>
-                   <h3 className="font-semibold text-green-900">Direct Booking</h3>
-                   <p className="text-sm text-green-600">{getWorkflowDescription()}</p>
+                 <CheckCircle className="h-5 w-5 text-green-600 flex-shrink-0" />
+                 <div className="min-w-0">
+                   <h3 className={`font-semibold text-green-900 ${isMobile ? 'text-sm' : ''}`}>Direct Booking</h3>
+                   <p className={`text-green-600 ${isMobile ? 'text-xs' : 'text-sm'} truncate`}>
+                     {isMobile ? professionalName.split(' ')[0] : getWorkflowDescription()}
+                   </p>
                  </div>
                </>
              )}
            </div>
            
-           <div className="flex items-center gap-2">
+           <div className="flex items-center gap-2 flex-shrink-0">
              {isTargetedMarketplace && (
                <Badge variant="outline" className="text-xs">
-                 {selectedProfessionals.length} Selected
+                 {selectedProfessionals.length}
                </Badge>
              )}
-             <Badge variant={isMarketplace ? "default" : "secondary"} className="text-sm">
+             <Badge variant={isMarketplace ? "default" : "secondary"} className={isMobile ? "text-xs" : "text-sm"}>
                {isTargetedMarketplace ? "Targeted" : isOpenMarketplace ? "Marketplace" : "Direct"}
              </Badge>
            </div>
@@ -530,62 +633,66 @@ if (formData.attachments && formData.attachments.length > 0) {
          {/* Progress Bar */}
          <div className="space-y-3">
            <div className="flex justify-between items-center">
-             <span className="text-sm text-muted-foreground">
+             <span className={`text-muted-foreground ${isMobile ? 'text-xs' : 'text-sm'}`}>
                Step {currentStep} of {steps.length}
              </span>
-             <span className="text-sm text-muted-foreground">
+             <span className={`text-muted-foreground ${isMobile ? 'text-xs' : 'text-sm'}`}>
                {Math.round(calculateProgress())}% Complete
              </span>
            </div>
            <Progress value={calculateProgress()} className="h-2" />
          </div>
 
-         {/* Step Navigation */}
-         <div className="grid grid-cols-5 gap-2">
-           {steps.map((step) => {
-             const status = getStepStatus(step.id);
-             const StepIcon = step.icon;
-             
-             return (
-               <button
-                 key={step.id}
-                 type="button"
-                 onClick={() => goToStep(step.id)}
-                 disabled={status === 'pending'}
-                 className={cn(
-                   "flex flex-col items-center gap-2 p-3 rounded-lg transition-all text-center",
-                   status === 'active' && "bg-primary text-primary-foreground",
-                   status === 'completed' && "bg-green-100 text-green-700 hover:bg-green-200",
-                   status === 'available' && "bg-orange-50 text-orange-700 hover:bg-orange-100",
-                   status === 'pending' && "bg-muted text-muted-foreground cursor-not-allowed opacity-50"
-                 )}
-               >
-                 <StepIcon className="h-5 w-5" />
-                 <div>
-                   <div className="font-medium text-sm">{step.title}</div>
-                   <div className="text-xs opacity-80">{step.description}</div>
-                 </div>
-               </button>
-             );
-           })}
-         </div>
+         {/* Desktop Step Navigation / Mobile Step Dropdown */}
+         {isMobile ? (
+           <MobileStepNavigation />
+         ) : (
+           <div className="grid grid-cols-5 gap-2">
+             {steps.map((step) => {
+               const status = getStepStatus(step.id);
+               const StepIcon = step.icon;
+               
+               return (
+                 <button
+                   key={step.id}
+                   type="button"
+                   onClick={() => goToStep(step.id)}
+                   disabled={status === 'pending'}
+                   className={cn(
+                     "flex flex-col items-center gap-2 p-3 rounded-lg transition-all text-center",
+                     status === 'active' && "bg-primary text-primary-foreground",
+                     status === 'completed' && "bg-green-100 text-green-700 hover:bg-green-200",
+                     status === 'available' && "bg-orange-50 text-orange-700 hover:bg-orange-100",
+                     status === 'pending' && "bg-muted text-muted-foreground cursor-not-allowed opacity-50"
+                   )}
+                 >
+                   <StepIcon className="h-5 w-5" />
+                   <div>
+                     <div className="font-medium text-sm">{step.title}</div>
+                     <div className="text-xs opacity-80">{step.description}</div>
+                   </div>
+                 </button>
+               );
+             })}
+           </div>
+         )}
        </div>
      </div>
 
      {/* Scrollable Content Area */}
      <div className="flex-1 overflow-y-auto">
-       <div className="w-full max-w-4xl mx-auto p-6">
+       <div className={`w-full max-w-4xl mx-auto ${isMobile ? 'p-4' : 'p-6'}`}>
          <div className="space-y-6">
            
            {/* Step 1: Project Description */}
            {currentStep === 1 && (
              <Card>
-               <CardHeader>
-                 <CardTitle className="flex items-center gap-2">
+               <CardHeader className={isMobile ? 'px-4 py-4' : ''}>
+                 <CardTitle className={`flex items-center gap-2 ${isMobile ? 'text-lg' : 'text-xl'}`}>
                    <FileText className="h-5 w-5" />
                    Describe Your Project
                  </CardTitle>
-                 <p className="text-sm text-muted-foreground">
+                 <p className={`text-muted-foreground ${isMobile ? 'text-sm' : 'text-sm'} leading-relaxed`}>
                    {isTargetedMarketplace 
                      ? `Tell your ${selectedProfessionals.length} selected professionals what you need.`
                      : isOpenMarketplace
@@ -594,16 +701,16 @@ if (formData.attachments && formData.attachments.length > 0) {
                    }
                  </p>
                </CardHeader>
-               <CardContent className="space-y-6">
+               <CardContent className={`space-y-6 ${isMobile ? 'px-4' : ''}`}>
                  <div className="space-y-2">
                    <Label htmlFor="description">What do you need done? *</Label>
                    <Textarea
                      id="description"
-                     rows={5}
+                     rows={isMobile ? 6 : 5}
                      value={formData.description}
                      onChange={(e) => handleChange('description', e.target.value)}
                      placeholder="Describe your project in detail. Include any specific requirements, materials needed, or preferences you have..."
-                     className={errors.description ? 'border-destructive' : ''}
+                     className={`${errors.description ? 'border-destructive' : ''} ${isMobile ? 'min-h-[120px]' : ''}`}
                    />
                    {errors.description && (
                      <p className="text-sm text-destructive flex items-center gap-1">
@@ -624,7 +731,7 @@ if (formData.attachments && formData.attachments.length > 0) {
                      value={formData.deadline}
                      onChange={(e) => handleChange('deadline', e.target.value)}
                      min={new Date().toISOString().split('T')[0]}
-                     className={errors.deadline ? 'border-destructive' : ''}
+                     className={`${errors.deadline ? 'border-destructive' : ''} ${isMobile ? 'h-12' : ''}`}
                    />
                    <p className="text-xs text-muted-foreground">
                      When would you like the work to be completed?
@@ -637,12 +744,12 @@ if (formData.attachments && formData.attachments.length > 0) {
            {/* Step 2: File Upload */}
            {currentStep === 2 && (
              <Card>
-               <CardHeader>
-                 <CardTitle className="flex items-center gap-2">
+               <CardHeader className={isMobile ? 'px-4 py-4' : ''}>
+                 <CardTitle className={`flex items-center gap-2 ${isMobile ? 'text-lg' : 'text-xl'}`}>
                    <Upload className="h-5 w-5" />
                    Upload Project Files
                  </CardTitle>
-                 <p className="text-sm text-muted-foreground">
+                 <p className={`text-muted-foreground ${isMobile ? 'text-sm' : 'text-sm'} leading-relaxed`}>
                    {isTargetedMarketplace
                      ? `Share photos, measurements, or specifications to help your ${selectedProfessionals.length} selected professionals understand your project better.`
                      : isOpenMarketplace
@@ -651,7 +758,7 @@ if (formData.attachments && formData.attachments.length > 0) {
                    }
                  </p>
                </CardHeader>
-               <CardContent className="space-y-6">
+               <CardContent className={`space-y-6 ${isMobile ? 'px-4' : ''}`}>
                  
                  {/* File upload component */}
                  <AppointmentFileUpload 
@@ -664,7 +771,7 @@ if (formData.attachments && formData.attachments.length > 0) {
                  {formData.attachments.length === 0 && (
                    <Alert>
                      <AlertCircle className="h-4 w-4" />
-                     <AlertDescription>
+                     <AlertDescription className={isMobile ? 'text-sm' : ''}>
                        <strong>Optional Step:</strong> You can skip this step if you don't have files to upload. 
                        {isTargetedMarketplace 
                          ? ' You can always share files later through messages with your selected professionals.'
@@ -682,12 +789,12 @@ if (formData.attachments && formData.attachments.length > 0) {
            {/* Step 3: Schedule Selection */}
            {currentStep === 3 && (
              <Card className="overflow-hidden">
-               <CardHeader className="border-b bg-muted/30">
-                 <CardTitle className="text-lg flex items-center gap-2">
+               <CardHeader className={`border-b bg-muted/30 ${isMobile ? 'px-4 py-4' : ''}`}>
+                 <CardTitle className={`flex items-center gap-2 ${isMobile ? 'text-lg' : 'text-lg'}`}>
                    <Calendar className="h-5 w-5" />
                    {isMarketplace ? 'When do you need this done?' : 'Select Assessment Time'}
                  </CardTitle>
-                 <p className="text-sm text-muted-foreground">
+                 <p className={`text-muted-foreground ${isMobile ? 'text-sm' : 'text-sm'} leading-relaxed`}>
                    {isMarketplace 
                      ? 'Choose your preferred timeframe for the work to be completed'
                      : 'Choose when you\'d like the professional to assess your project'
@@ -695,7 +802,7 @@ if (formData.attachments && formData.attachments.length > 0) {
                  </p>
                </CardHeader>
                
-               <div className="h-[500px] overflow-hidden">
+               <div className={`overflow-hidden ${isMobile ? 'h-[400px]' : 'h-[500px]'}`}>
                  <CustomerAvailabilityCalendar
                    professionalId={isMarketplace ? null : professional?.professional_id}
                    onSlotSelect={handleSlotSelect}
@@ -715,23 +822,23 @@ if (formData.attachments && formData.attachments.length > 0) {
            {/* Step 4: Service Location */}
            {currentStep === 4 && (
              <Card>
-               <CardHeader>
-                 <CardTitle className="flex items-center gap-2">
+               <CardHeader className={isMobile ? 'px-4 py-4' : ''}>
+                 <CardTitle className={`flex items-center gap-2 ${isMobile ? 'text-lg' : 'text-xl'}`}>
                    <MapPin className="h-5 w-5" />
                    Service Location
                  </CardTitle>
-                 <p className="text-sm text-muted-foreground">
+                 <p className={`text-muted-foreground ${isMobile ? 'text-sm' : 'text-sm'}`}>
                    Where should the service be performed?
                  </p>
                </CardHeader>
-               <CardContent className="space-y-6">
+               <CardContent className={`space-y-6 ${isMobile ? 'px-4' : ''}`}>
                  <div className="flex items-center space-x-2">
                    <Checkbox 
                      id="use_different_address"
                      checked={formData.use_different_address}
                      onCheckedChange={(checked) => handleChange('use_different_address', checked)}
                    />
-                   <Label htmlFor="use_different_address" className="text-sm font-medium">
+                   <Label htmlFor="use_different_address" className={`font-medium ${isMobile ? 'text-sm' : 'text-sm'}`}>
                      Use a different address for this service
                    </Label>
                  </div>
@@ -742,7 +849,7 @@ if (formData.attachments && formData.attachments.length > 0) {
                      <AlertDescription>
                        <div className="space-y-1">
                          <div className="font-medium">Using your primary address</div>
-                         <div className="text-sm">
+                         <div className={isMobile ? 'text-xs' : 'text-sm'}>
                            {formData.service_location?.formatted_address || 'Your confirmed location will be used'}
                          </div>
                        </div>
@@ -750,8 +857,8 @@ if (formData.attachments && formData.attachments.length > 0) {
                    </Alert>
                  ) : (
                    <div className="space-y-4">
-                     <div className="p-4 border rounded-lg bg-muted/30">
-                       <h4 className="font-medium mb-2">Service Address</h4>
+                     <div className={`p-4 border rounded-lg bg-muted/30 ${isMobile ? 'p-3' : ''}`}>
+                       <h4 className={`font-medium mb-2 ${isMobile ? 'text-sm' : ''}`}>Service Address</h4>
                        <AppointmentAddressSelector
                          onAddressSelect={(address) => {
                            setFormData(prev => ({
@@ -771,12 +878,12 @@ if (formData.attachments && formData.attachments.length > 0) {
            {/* Step 5: Review & Confirm - ENHANCED */}
            {currentStep === 5 && (
              <Card>
-               <CardHeader>
-                 <CardTitle className="flex items-center gap-2">
+               <CardHeader className={isMobile ? 'px-4 py-4' : ''}>
+                 <CardTitle className={`flex items-center gap-2 ${isMobile ? 'text-lg' : 'text-xl'}`}>
                    <CheckCircle className="h-5 w-5" />
                    Review & Confirm
                  </CardTitle>
-                 <p className="text-sm text-muted-foreground">
+                 <p className={`text-muted-foreground ${isMobile ? 'text-sm' : 'text-sm'} leading-relaxed`}>
                    {isTargetedMarketplace 
                      ? `Please review your request before sending to ${selectedProfessionals.length} selected professionals`
                      : isOpenMarketplace
@@ -785,20 +892,20 @@ if (formData.attachments && formData.attachments.length > 0) {
                    }
                  </p>
                </CardHeader>
-               <CardContent className="space-y-6">
+               <CardContent className={`space-y-6 ${isMobile ? 'px-4' : ''}`}>
                  
                  {/* Service Summary */}
-                 <div className="space-y-4 p-4 bg-muted/30 rounded-lg">
-                   <div className="flex items-start justify-between">
+                 <div className={`space-y-4 p-4 bg-muted/30 rounded-lg ${isMobile ? 'p-3' : ''}`}>
+                   <div className={`flex items-start justify-between ${isMobile ? 'flex-col gap-3' : ''}`}>
                      <div className="flex-1">
-                       <h4 className="font-semibold">{serviceInformation?.name}</h4>
-                       <p className="text-sm text-muted-foreground mt-1">
-                         {formData.description.substring(0, 150)}
-                         {formData.description.length > 150 && '...'}
+                       <h4 className={`font-semibold ${isMobile ? 'text-base' : ''}`}>{serviceInformation?.name}</h4>
+                       <p className={`text-muted-foreground mt-1 ${isMobile ? 'text-sm' : 'text-sm'}`}>
+                         {formData.description.substring(0, isMobile ? 100 : 150)}
+                         {formData.description.length > (isMobile ? 100 : 150) && '...'}
                        </p>
                      </div>
                      {serviceInformation?.base_price && (
-                       <Badge variant="outline" className="text-lg font-semibold ml-4">
+                       <Badge variant="outline" className={`font-semibold ${isMobile ? 'text-base self-start' : 'text-lg ml-4'}`}>
                          {isMarketplace ? 'Est. ' : ''}JMD ${estimatedPrice}
                        </Badge>
                      )}
@@ -807,18 +914,18 @@ if (formData.attachments && formData.attachments.length > 0) {
                    <Separator />
 
                    {/* Appointment Details Grid */}
-                   <div className="grid gap-4 sm:grid-cols-2">
+                   <div className={`grid gap-4 ${isMobile ? 'grid-cols-1' : 'sm:grid-cols-2'}`}>
                      <div className="flex items-center gap-3">
-                       <Calendar className="h-4 w-4 text-muted-foreground" />
-                       <div>
-                         <div className="font-medium">
+                       <Calendar className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                       <div className="min-w-0">
+                         <div className={`font-medium ${isMobile ? 'text-sm' : ''}`}>
                            {isMarketplace ? 'Preferred Date' : 'Assessment Date'}
                          </div>
-                         <div className="text-sm text-muted-foreground">
+                         <div className={`text-muted-foreground ${isMobile ? 'text-xs' : 'text-sm'}`}>
                            {formData.session && new Date(formData.session).toLocaleDateString('en-US', {
-                             weekday: 'long',
+                             weekday: isMobile ? 'short' : 'long',
                              year: 'numeric',
-                             month: 'long',
+                             month: isMobile ? 'short' : 'long',
                              day: 'numeric'
                            })}
                          </div>
@@ -826,10 +933,10 @@ if (formData.attachments && formData.attachments.length > 0) {
                      </div>
 
                      <div className="flex items-center gap-3">
-                       <Clock className="h-4 w-4 text-muted-foreground" />
-                       <div>
-                         <div className="font-medium">Time</div>
-                         <div className="text-sm text-muted-foreground">
+                       <Clock className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                       <div className="min-w-0">
+                         <div className={`font-medium ${isMobile ? 'text-sm' : ''}`}>Time</div>
+                         <div className={`text-muted-foreground ${isMobile ? 'text-xs' : 'text-sm'}`}>
                            {formData.session && new Date(formData.session).toLocaleTimeString('en-US', {
                              hour: 'numeric',
                              minute: '2-digit',
@@ -841,10 +948,10 @@ if (formData.attachments && formData.attachments.length > 0) {
 
                      {formData.deadline && (
                        <div className="flex items-center gap-3">
-                         <CheckCircle className="h-4 w-4 text-muted-foreground" />
-                         <div>
-                           <div className="font-medium">Complete by</div>
-                           <div className="text-sm text-muted-foreground">
+                         <CheckCircle className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                         <div className="min-w-0">
+                           <div className={`font-medium ${isMobile ? 'text-sm' : ''}`}>Complete by</div>
+                           <div className={`text-muted-foreground ${isMobile ? 'text-xs' : 'text-sm'}`}>
                              {new Date(formData.deadline).toLocaleDateString()}
                            </div>
                          </div>
@@ -866,28 +973,28 @@ if (formData.attachments && formData.attachments.length > 0) {
                    <div className="flex items-center gap-3">
                      {isTargetedMarketplace ? (
                        <>
-                         <Users className="h-4 w-4 text-purple-600" />
-                         <div>
-                           <div className="font-medium text-purple-900">Targeted Request</div>
-                           <div className="text-sm text-purple-600">
+                         <Users className="h-4 w-4 text-purple-600 flex-shrink-0" />
+                         <div className="min-w-0">
+                           <div className={`font-medium text-purple-900 ${isMobile ? 'text-sm' : ''}`}>Targeted Request</div>
+                           <div className={`text-purple-600 ${isMobile ? 'text-xs' : 'text-sm'}`}>
                              Sending to {selectedProfessionals.length} selected professional{selectedProfessionals.length !== 1 ? 's' : ''}
                            </div>
                          </div>
                        </>
                      ) : isOpenMarketplace ? (
                        <>
-                         <Users className="h-4 w-4 text-blue-600" />
-                         <div>
-                           <div className="font-medium text-blue-900">Open Marketplace Request</div>
-                           <div className="text-sm text-blue-600">Multiple professionals will respond with quotes</div>
+                         <Users className="h-4 w-4 text-blue-600 flex-shrink-0" />
+                         <div className="min-w-0">
+                           <div className={`font-medium text-blue-900 ${isMobile ? 'text-sm' : ''}`}>Open Marketplace Request</div>
+                           <div className={`text-blue-600 ${isMobile ? 'text-xs' : 'text-sm'}`}>Multiple professionals will respond with quotes</div>
                          </div>
                        </>
                      ) : (
                        <>
-                         <CheckCircle className="h-4 w-4 text-green-600" />
-                         <div>
-                           <div className="font-medium text-green-900">Direct Booking</div>
-                           <div className="text-sm text-green-600">Sending directly to {professionalName}</div>
+                         <CheckCircle className="h-4 w-4 text-green-600 flex-shrink-0" />
+                         <div className="min-w-0">
+                           <div className={`font-medium text-green-900 ${isMobile ? 'text-sm' : ''}`}>Direct Booking</div>
+                           <div className={`text-green-600 ${isMobile ? 'text-xs' : 'text-sm'} truncate`}>Sending directly to {professionalName}</div>
                          </div>
                        </>
                      )}
@@ -900,13 +1007,13 @@ if (formData.attachments && formData.attachments.length > 0) {
                        <div className="space-y-3">
                          <div className="flex items-center gap-2">
                            <Users className="h-4 w-4 text-muted-foreground" />
-                           <div className="font-medium">Selected Professionals ({selectedProfessionals.length})</div>
+                           <div className={`font-medium ${isMobile ? 'text-sm' : ''}`}>Selected Professionals ({selectedProfessionals.length})</div>
                          </div>
-                         <div className="grid gap-2 sm:grid-cols-2">
+                         <div className={`grid gap-2 ${isMobile ? 'grid-cols-1' : 'sm:grid-cols-2'}`}>
                            {selectedProfessionals.map((prof) => (
                              <div key={prof.professional_id} className="flex items-center gap-2 p-2 bg-background rounded border">
-                               <CheckCircle className="h-3 w-3 text-green-600" />
-                               <span className="text-sm truncate flex-1">
+                               <CheckCircle className="h-3 w-3 text-green-600 flex-shrink-0" />
+                               <span className={`truncate flex-1 ${isMobile ? 'text-sm' : 'text-sm'}`}>
                                  {prof.first_name && prof.last_name 
                                    ? `${prof.first_name} ${prof.last_name}`
                                    : prof.business_name || 'Professional'
@@ -929,13 +1036,13 @@ if (formData.attachments && formData.attachments.length > 0) {
                        <div className="space-y-3">
                          <div className="flex items-center gap-2">
                            <Upload className="h-4 w-4 text-muted-foreground" />
-                           <div className="font-medium">Attached Files ({formData.attachments.length})</div>
+                           <div className={`font-medium ${isMobile ? 'text-sm' : ''}`}>Attached Files ({formData.attachments.length})</div>
                          </div>
-                         <div className="grid gap-2 sm:grid-cols-2">
+                         <div className={`grid gap-2 ${isMobile ? 'grid-cols-1' : 'sm:grid-cols-2'}`}>
                            {formData.attachments.map((file, index) => (
                              <div key={file.id || index} className="flex items-center gap-2 p-2 bg-background rounded border">
-                               <FileText className="h-3 w-3 text-muted-foreground" />
-                               <span className="text-sm truncate flex-1">{file.name}</span>
+                               <FileText className="h-3 w-3 text-muted-foreground flex-shrink-0" />
+                               <span className={`truncate flex-1 ${isMobile ? 'text-sm' : 'text-sm'}`}>{file.name}</span>
                                <Badge variant="secondary" className="text-xs">
                                  {file.purpose}
                                </Badge>
@@ -951,10 +1058,10 @@ if (formData.attachments && formData.attachments.length > 0) {
                      <>
                        <Separator />
                        <div className="flex items-start gap-3">
-                         <MapPin className="h-4 w-4 text-muted-foreground mt-0.5" />
-                         <div>
-                           <div className="font-medium">Service Location</div>
-                           <div className="text-sm text-muted-foreground">
+                         <MapPin className="h-4 w-4 text-muted-foreground mt-0.5 flex-shrink-0" />
+                         <div className="min-w-0">
+                           <div className={`font-medium ${isMobile ? 'text-sm' : ''}`}>Service Location</div>
+                           <div className={`text-muted-foreground ${isMobile ? 'text-xs' : 'text-sm'}`}>
                              {formData.service_location.street_address}<br />
                              {formData.service_location.city}, {formData.service_location.parish}
                            </div>
@@ -969,7 +1076,7 @@ if (formData.attachments && formData.attachments.length > 0) {
                    <Label htmlFor="customer_message">Additional Message (Optional)</Label>
                    <Textarea
                      id="customer_message"
-                     rows={3}
+                     rows={isMobile ? 4 : 3}
                      value={formData.customer_message}
                      onChange={(e) => handleChange('customer_message', e.target.value)}
                      placeholder={isTargetedMarketplace 
@@ -978,6 +1085,7 @@ if (formData.attachments && formData.attachments.length > 0) {
                        ? "Any special instructions, preferences, or questions for the professionals..."
                        : `Any special instructions, preferences, or questions for ${professionalName}...`
                      }
+                     className={isMobile ? 'min-h-[100px]' : ''}
                    />
                  </div>
 
@@ -985,14 +1093,14 @@ if (formData.attachments && formData.attachments.length > 0) {
                  {errors.general && (
                    <Alert variant="destructive">
                      <AlertCircle className="h-4 w-4" />
-                     <AlertDescription>{errors.general}</AlertDescription>
+                     <AlertDescription className={isMobile ? 'text-sm' : ''}>{errors.general}</AlertDescription>
                    </Alert>
                  )}
 
                  {/* Terms Notice - ENHANCED */}
                  <Alert>
                    <MessageSquare className="h-4 w-4" />
-                   <AlertDescription>
+                   <AlertDescription className={isMobile ? 'text-sm' : ''}>
                      <strong>Next Steps:</strong> 
                      {isTargetedMarketplace 
                        ? ` Your request will be sent to your ${selectedProfessionals.length} selected professionals. They will review your requirements and send you individual quotes. You'll be able to compare their offers and choose the best one.`
@@ -1010,20 +1118,20 @@ if (formData.attachments && formData.attachments.length > 0) {
      </div>
 
      {/* Fixed Footer with Action Buttons */}
-     <div className="flex-shrink-0 bg-background border-t shadow-lg">
-       <div className="w-full max-w-4xl mx-auto p-6">
-         <div className="flex justify-between items-center">
+     <div className={`flex-shrink-0 bg-background border-t shadow-lg ${isMobile ? 'p-4' : ''}`}>
+       <div className={`w-full max-w-4xl mx-auto ${isMobile ? '' : 'p-6'}`}>
+         <div className={`flex justify-between items-center ${isMobile ? 'gap-2' : ''}`}>
            <div className="flex gap-2">
              {currentStep > 1 && (
                <Button 
                  type="button"
                  variant="outline"
                  onClick={prevStep}
-                 className="gap-2"
+                 className={`gap-2 ${isMobile ? 'h-12 flex-1' : ''}`}
                  disabled={loading}
                >
                  <ArrowLeft className="h-4 w-4" />
-                 Back
+                 {isMobile ? 'Back' : 'Back'}
                </Button>
              )}
              
@@ -1033,53 +1141,88 @@ if (formData.attachments && formData.attachments.length > 0) {
                  variant="outline"
                  onClick={onCancel}
                  disabled={loading}
+                 className={isMobile ? 'h-12 flex-1' : ''}
                >
                  Cancel
                </Button>
              )}
            </div>
 
-           {/* Show file count indicator on file step */}
-           {currentStep === 2 && formData.attachments.length > 0 && (
+           {/* Mobile step indicators */}
+           {isMobile && currentStep < steps.length && (
              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-               <Upload className="h-4 w-4" />
-               <span>{formData.attachments.length} file{formData.attachments.length !== 1 ? 's' : ''} selected</span>
+               {/* Show file count on file step */}
+               {currentStep === 2 && formData.attachments.length > 0 && (
+                 <>
+                   <Upload className="h-4 w-4" />
+                   <span>{formData.attachments.length} file{formData.attachments.length !== 1 ? 's' : ''}</span>
+                 </>
+               )}
+
+               {/* Show selected time on schedule step */}
+               {currentStep === 3 && formData.session && (
+                 <>
+                   <Calendar className="h-4 w-4" />
+                   <span>
+                     {new Date(formData.session).toLocaleDateString('en-US', {
+                       month: 'short',
+                       day: 'numeric',
+                       hour: 'numeric',
+                       minute: '2-digit',
+                       hour12: true
+                     })}
+                   </span>
+                 </>
+               )}
              </div>
            )}
 
-           {/* Show selected time on schedule step */}
-           {currentStep === 3 && formData.session && (
+           {/* Desktop indicators (non-mobile) */}
+           {!isMobile && (
              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-               <Calendar className="h-4 w-4" />
-               <span>
-                 {new Date(formData.session).toLocaleDateString('en-US', {
-                   month: 'short',
-                   day: 'numeric',
-                   hour: 'numeric',
-                   minute: '2-digit',
-                   hour12: true
-                 })}
-               </span>
-             </div>
-           )}
+               {/* Show file count indicator on file step */}
+               {currentStep === 2 && formData.attachments.length > 0 && (
+                 <>
+                   <Upload className="h-4 w-4" />
+                   <span>{formData.attachments.length} file{formData.attachments.length !== 1 ? 's' : ''} selected</span>
+                 </>
+               )}
 
-           {/* Show workflow type on review step - ENHANCED */}
-           {currentStep === 5 && (
-             <div className="flex items-center gap-2 text-sm text-muted-foreground">
-               {isTargetedMarketplace ? (
+               {/* Show selected time on schedule step */}
+               {currentStep === 3 && formData.session && (
                  <>
-                   <Users className="h-4 w-4" />
-                   <span>Targeted ({selectedProfessionals.length})</span>
+                   <Calendar className="h-4 w-4" />
+                   <span>
+                     {new Date(formData.session).toLocaleDateString('en-US', {
+                       month: 'short',
+                       day: 'numeric',
+                       hour: 'numeric',
+                       minute: '2-digit',
+                       hour12: true
+                     })}
+                   </span>
                  </>
-               ) : isOpenMarketplace ? (
+               )}
+
+               {/* Show workflow type on review step - ENHANCED */}
+               {currentStep === 5 && (
                  <>
-                   <Users className="h-4 w-4" />
-                   <span>Open Marketplace</span>
-                 </>
-               ) : (
-                 <>
-                   <CheckCircle className="h-4 w-4" />
-                   <span>Direct Booking</span>
+                   {isTargetedMarketplace ? (
+                     <>
+                       <Users className="h-4 w-4" />
+                       <span>Targeted ({selectedProfessionals.length})</span>
+                     </>
+                   ) : isOpenMarketplace ? (
+                     <>
+                       <Users className="h-4 w-4" />
+                       <span>Open Marketplace</span>
+                     </>
+                   ) : (
+                     <>
+                       <CheckCircle className="h-4 w-4" />
+                       <span>Direct Booking</span>
+                     </>
+                   )}
                  </>
                )}
              </div>
@@ -1091,7 +1234,7 @@ if (formData.attachments && formData.attachments.length > 0) {
                type="button"
                onClick={nextStep}
                disabled={!isStepValid(currentStep) || loading}
-               className="gap-2"
+               className={`gap-2 ${isMobile ? 'h-12 flex-1' : ''}`}
              >
                {currentStep === 2 && formData.attachments.length === 0 ? 'Skip Files' : 'Continue'}
                <ArrowRight className="h-4 w-4" />
@@ -1101,28 +1244,35 @@ if (formData.attachments && formData.attachments.length > 0) {
                type="button"
                onClick={handleSubmit}
                disabled={loading}
-               size="lg"
-               className="gap-2 px-8"
+               size={isMobile ? "default" : "lg"}
+               className={`gap-2 ${isMobile ? 'h-12 flex-1 text-sm' : 'px-8'}`}
              >
                {loading ? (
                  <>
                    <Loader2 className="h-4 w-4 animate-spin" />
                    {isTargetedMarketplace 
-                     ? 'Sending Request...'
+                     ? 'Sending...'
                      : isOpenMarketplace
-                     ? 'Posting Request...' 
-                     : 'Creating Request...'
+                     ? 'Posting...' 
+                     : 'Creating...'
                    }
                  </>
                ) : (
                  <>
                    <CheckCircle className="h-4 w-4" />
-                   {isTargetedMarketplace 
-                     ? `Send to ${selectedProfessionals.length} Professionals`
-                     : isOpenMarketplace
-                     ? 'Post Service Request' 
-                     : 'Send Appointment Request'
-                   }
+                   {isMobile ? (
+                     isTargetedMarketplace 
+                       ? `Send to ${selectedProfessionals.length}`
+                       : isOpenMarketplace
+                       ? 'Post Request' 
+                       : 'Send Request'
+                   ) : (
+                     isTargetedMarketplace 
+                       ? `Send to ${selectedProfessionals.length} Professionals`
+                       : isOpenMarketplace
+                       ? 'Post Service Request' 
+                       : 'Send Appointment Request'
+                   )}
                  </>
                )}
              </Button>

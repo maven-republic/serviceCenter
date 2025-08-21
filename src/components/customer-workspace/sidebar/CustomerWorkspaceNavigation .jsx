@@ -1,16 +1,18 @@
-// CustomerWorkspaceNavigation.jsx - Improved Mobile Spacing
+// CustomerWorkspaceNavigation.jsx 
 "use client";
 
 import { useState } from "react";
 import { usePathname } from "next/navigation";
 import { customerNavigation } from "@/data/dashboard";
+import { useUserStore } from "@/store/userStore"; // Import user store
 import SidebarLogo from "./navigation/SidebarLogo";
 import NavigationSection from "./navigation/NavigationSection";
 import NavigationItem from "./navigation/NavigationItem";
 import LogoutButton from "./navigation/LogoutButton";
 import { getIconComponent } from "./navigation/iconMapper";
 import { Button } from "@/components/ui/button";
-import { Menu, X, Home, User, Settings, LogOut } from "lucide-react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Menu, X, Home, User, Settings, LogOut, Loader2 } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle, SheetClose } from "@/components/ui/sheet";
 import { Separator } from "@/components/ui/separator";
 import Link from "next/link";
@@ -18,6 +20,9 @@ import Link from "next/link";
 export default function CustomerWorkspaceNavigation() {
   const pathname = usePathname();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  
+  // Get user data from store
+  const { user, isLoading } = useUserStore();
 
   // Get specific navigation items
   const accountInfoItem = customerNavigation.account?.find(
@@ -34,6 +39,51 @@ export default function CustomerWorkspaceNavigation() {
   ) || [];
 
   const closeMobileMenu = () => setIsMobileMenuOpen(false);
+
+  // Get user display information
+  const getUserDisplayInfo = () => {
+    if (isLoading) {
+      return {
+        name: "Loading...",
+        email: "",
+        initials: "...",
+        accountType: "Loading account..."
+      };
+    }
+
+    if (!user || !user.account) {
+      return {
+        name: "Guest User",
+        email: "",
+        initials: "GU",
+        accountType: "No account"
+      };
+    }
+
+    const { account, email } = user;
+    const firstName = account.first_name || "";
+    const lastName = account.last_name || "";
+    const fullName = `${firstName} ${lastName}`.trim();
+    
+    // Generate initials
+    const initials = firstName && lastName 
+      ? `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase()
+      : firstName 
+        ? firstName.charAt(0).toUpperCase()
+        : email 
+          ? email.charAt(0).toUpperCase()
+          : "CU";
+
+    return {
+      name: fullName || email || "Customer",
+      email: email || "",
+      initials,
+      accountType: "Customer Account",
+      avatar: account.profile_picture_url || null
+    };
+  };
+
+  const userInfo = getUserDisplayInfo();
 
   // Enhanced Mobile Navigation Item Component
   const MobileNavItem = ({ item, isActive, onClick }) => {
@@ -60,7 +110,37 @@ export default function CustomerWorkspaceNavigation() {
     );
   };
 
-  // Mobile Navigation Component with Improved Spacing
+  // User Info Display Component
+  const UserInfoDisplay = () => (
+    <div className="flex items-center gap-3 px-2 py-2">
+      <Avatar className="w-8 h-8">
+        <AvatarImage src={userInfo.avatar} alt={userInfo.name} />
+        <AvatarFallback className="bg-primary text-primary-foreground text-xs font-semibold">
+          {userInfo.initials}
+        </AvatarFallback>
+      </Avatar>
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-2">
+          <p className="text-sm font-medium truncate">
+            {userInfo.name}
+          </p>
+          {isLoading && (
+            <Loader2 className="h-3 w-3 animate-spin text-muted-foreground" />
+          )}
+        </div>
+        <p className="text-xs text-muted-foreground truncate">
+          {userInfo.accountType}
+        </p>
+        {userInfo.email && (
+          <p className="text-xs text-muted-foreground truncate">
+            {userInfo.email}
+          </p>
+        )}
+      </div>
+    </div>
+  );
+
+  // Mobile Navigation Component with Real User Data
   const MobileNavigation = () => (
     <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
       <SheetTrigger asChild>
@@ -85,7 +165,6 @@ export default function CustomerWorkspaceNavigation() {
               <SheetTitle className="text-base font-semibold text-left">maven republic</SheetTitle>
             </div>
           </div>
-          
         </SheetHeader>
 
         {/* Navigation Content */}
@@ -154,19 +233,11 @@ export default function CustomerWorkspaceNavigation() {
           </nav>
         </div>
 
-        {/* Bottom Section with Better Spacing */}
+        {/* Bottom Section with Real User Data */}
         <div className="border-t bg-muted/30 p-4">
           <div className="space-y-3">
-            {/* User Info Section */}
-            <div className="flex items-center gap-3 px-2 py-2">
-              <div className="w-8 h-8 bg-accent rounded-full flex items-center justify-center">
-                <User className="h-4 w-4 text-accent-foreground" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium truncate">John Doe</p>
-                <p className="text-xs text-muted-foreground">Customer Account</p>
-              </div>
-            </div>
+            {/* Real User Info Section */}
+            <UserInfoDisplay />
             
             <Separator />
             
@@ -174,7 +245,7 @@ export default function CustomerWorkspaceNavigation() {
             {logoutItem && (
               <Button
                 variant="ghost"
-                className="w-full justify-start gap-3 h-11 px-4 text-muted-foreground hover:text-foreground"
+                className="w-full justify-start gap-3 h-11 px-4 text-muted-foreground hover:text-foreground hover:text-destructive"
                 onClick={closeMobileMenu}
               >
                 <LogOut className="h-4 w-4" />
@@ -187,6 +258,26 @@ export default function CustomerWorkspaceNavigation() {
     </Sheet>
   );
 
+  // Desktop User Info (Optional - for consistency)
+  const DesktopUserInfo = () => (
+    <div className="px-2 py-3">
+      <div className="flex flex-col items-center space-y-2">
+        <Avatar className="w-10 h-10">
+          <AvatarImage src={userInfo.avatar} alt={userInfo.name} />
+          <AvatarFallback className="bg-primary text-primary-foreground text-sm font-semibold">
+            {userInfo.initials}
+          </AvatarFallback>
+        </Avatar>
+        <div className="text-center">
+          <p className="text-xs font-medium text-foreground truncate max-w-20" title={userInfo.name}>
+            {userInfo.name}
+          </p>
+          <p className="text-xs text-muted-foreground">Customer</p>
+        </div>
+      </div>
+    </div>
+  );
+
   return (
     <>
       {/* Mobile Navigation */}
@@ -194,7 +285,7 @@ export default function CustomerWorkspaceNavigation() {
         <MobileNavigation />
       </div>
 
-      {/* Desktop Navigation - Unchanged */}
+      {/* Desktop Navigation - Enhanced with User Info */}
       <div className="hidden lg:block w-28 bg-background sticky top-0 h-screen z-10 border-r border-border">
         <div className="flex h-full flex-col items-center">
           
@@ -230,6 +321,11 @@ export default function CustomerWorkspaceNavigation() {
                 variant="default"
               />
             )}
+
+            <Separator className="w-16" />
+
+            {/* Desktop User Info - Now below Account Information */}
+            <DesktopUserInfo />
 
             {/* Logout */}
             {logoutItem && (

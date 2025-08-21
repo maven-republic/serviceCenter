@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -23,14 +23,16 @@ import {
   DollarSign, 
   MessageSquare, 
   CheckCircle, 
-  XCircle, 
+  X, 
   FileText,
   Loader2,
   Heart,
   Target,
   AlertTriangle,
   Users,
-  MapPin
+  MapPin,
+  ChevronDown,
+  ChevronUp
 } from "lucide-react";
 
 export default function AppointmentInteractionForm({
@@ -42,6 +44,26 @@ export default function AppointmentInteractionForm({
   onCancel,
   loading = false
 }) {
+  // Mobile detection
+  const [isMobile, setIsMobile] = useState(false);
+  const [expandedSections, setExpandedSections] = useState({
+    scheduling: true,
+    pricing: true,
+    assessment: false,
+    availability: false,
+    additional: false
+  });
+
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
   // Initialize form data based on action and existing data
   const getInitialFormData = () => {
     const baseData = {
@@ -100,6 +122,16 @@ export default function AppointmentInteractionForm({
 
   const [formData, setFormData] = useState(getInitialFormData())
   const [errors, setErrors] = useState({});
+
+  // Toggle section expansion on mobile
+  const toggleSection = useCallback((section) => {
+    if (isMobile) {
+      setExpandedSections(prev => ({
+        ...prev,
+        [section]: !prev[section]
+      }));
+    }
+  }, [isMobile]);
 
   // Handle form field changes
   const handleChange = useCallback((field, value) => {
@@ -281,7 +313,7 @@ export default function AppointmentInteractionForm({
       case 'decline':
         return {
           title: 'Decline Appointment',
-          icon: XCircle,
+          icon: X,
           color: 'destructive',
           variant: 'destructive',
           submitText: loading ? 'Declining...' : 'Decline Appointment'
@@ -324,17 +356,50 @@ export default function AppointmentInteractionForm({
   const actionConfig = getActionConfig();
   const ActionIcon = actionConfig.icon;
 
+  // Collapsible Section Component for Mobile
+  const CollapsibleSection = ({ title, children, section, icon: Icon, required = false }) => {
+    const isExpanded = expandedSections[section];
+    
+    return (
+      <div className="border border-border rounded-lg overflow-hidden">
+        <button
+          type="button"
+          onClick={() => toggleSection(section)}
+          className={`w-full p-4 text-left bg-muted/30 hover:bg-muted/50 transition-colors ${isMobile ? 'cursor-pointer' : 'cursor-default'}`}
+          disabled={!isMobile}
+        >
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Icon className="h-4 w-4" />
+              <span className="font-medium">{title}</span>
+              {required && <Badge variant="destructive" className="text-xs">Required</Badge>}
+            </div>
+            {isMobile && (
+              isExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />
+            )}
+          </div>
+        </button>
+        
+        <div className={`transition-all duration-200 ${isMobile ? (isExpanded ? 'block' : 'hidden') : 'block'}`}>
+          <div className="p-4 space-y-4">
+            {children}
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   return (
     <Card className="w-full max-w-4xl mx-auto">
       {/* Form Header */}
-      <CardHeader className="space-y-4">
+      <CardHeader className={`space-y-4 ${isMobile ? 'px-4 py-4' : ''}`}>
         <div className="flex items-center gap-4">
-          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
+          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 flex-shrink-0">
             <ActionIcon className="h-6 w-6 text-primary" />
           </div>
-          <div className="space-y-1">
-            <CardTitle className="text-xl">{actionConfig.title}</CardTitle>
-            <p className="text-sm text-muted-foreground">
+          <div className="space-y-1 flex-1 min-w-0">
+            <CardTitle className={`${isMobile ? 'text-lg' : 'text-xl'}`}>{actionConfig.title}</CardTitle>
+            <p className={`text-muted-foreground ${isMobile ? 'text-sm' : 'text-sm'} leading-relaxed`}>
               {action === 'express_interest' 
                 ? `Express interest in "${appointment?.service?.name || appointment?.title}"`
                 : action === 'update_interest'
@@ -358,17 +423,17 @@ export default function AppointmentInteractionForm({
       </CardHeader>
 
       <form onSubmit={handleSubmit} className="space-y-6">
-        <CardContent className="space-y-6">
+        <CardContent className={`space-y-6 ${isMobile ? 'px-4' : ''}`}>
           
           {/* Accept Form Fields */}
           {action === 'accept' && (
-            <div className="space-y-4">
-              <div className="flex items-center gap-2 mb-4">
-                <Calendar className="h-4 w-4" />
-                <h3 className="text-lg font-medium">Confirm Scheduling Details</h3>
-              </div>
-              
-              <div className="grid gap-4 md:grid-cols-2">
+            <CollapsibleSection 
+              title="Confirm Scheduling Details" 
+              section="scheduling" 
+              icon={Calendar}
+              required
+            >
+              <div className={`grid gap-4 ${isMobile ? 'grid-cols-1' : 'md:grid-cols-2'}`}>
                 <div className="space-y-2">
                   <Label htmlFor="suggested_start">Start Date & Time *</Label>
                   <Input
@@ -378,7 +443,7 @@ export default function AppointmentInteractionForm({
                     onChange={(e) => handleChange('suggested_start', e.target.value)}
                     min={minDateTime}
                     required
-                    className={errors.suggested_start ? 'border-destructive' : ''}
+                    className={`${errors.suggested_start ? 'border-destructive' : ''} ${isMobile ? 'h-12' : ''}`}
                   />
                   {errors.suggested_start && (
                     <p className="text-sm text-destructive">{errors.suggested_start}</p>
@@ -396,7 +461,7 @@ export default function AppointmentInteractionForm({
                     max="480"
                     step="15"
                     required
-                    className={errors.estimated_duration ? 'border-destructive' : ''}
+                    className={`${errors.estimated_duration ? 'border-destructive' : ''} ${isMobile ? 'h-12' : ''}`}
                   />
                   {errors.estimated_duration && (
                     <p className="text-sm text-destructive">{errors.estimated_duration}</p>
@@ -413,10 +478,11 @@ export default function AppointmentInteractionForm({
                 <Label htmlFor="requirements">Requirements & Preparation</Label>
                 <Textarea
                   id="requirements"
-                  rows={3}
+                  rows={isMobile ? 4 : 3}
                   value={formData.requirements}
                   onChange={(e) => handleChange('requirements', e.target.value)}
                   placeholder="Any requirements the customer should prepare before the appointment..."
+                  className={isMobile ? 'min-h-[100px]' : ''}
                 />
               </div>
 
@@ -424,24 +490,25 @@ export default function AppointmentInteractionForm({
                 <Label htmlFor="next_steps">Next Steps</Label>
                 <Textarea
                   id="next_steps"
-                  rows={2}
+                  rows={isMobile ? 3 : 2}
                   value={formData.next_steps}
                   onChange={(e) => handleChange('next_steps', e.target.value)}
                   placeholder="What happens after you accept this appointment..."
+                  className={isMobile ? 'min-h-[80px]' : ''}
                 />
               </div>
-            </div>
+            </CollapsibleSection>
           )}
 
           {/* Quote Form Fields */}
           {action === 'quote' && (
-            <div className="space-y-4">
-              <div className="flex items-center gap-2 mb-4">
-                <DollarSign className="h-4 w-4" />
-                <h3 className="text-lg font-medium">Pricing & Quote Details</h3>
-              </div>
-              
-              <div className="grid gap-4 md:grid-cols-2">
+            <CollapsibleSection 
+              title="Pricing & Quote Details" 
+              section="pricing" 
+              icon={DollarSign}
+              required
+            >
+              <div className={`grid gap-4 ${isMobile ? 'grid-cols-1' : 'md:grid-cols-2'}`}>
                 <div className="space-y-2">
                   <Label htmlFor="quoted_price">Quoted Price (JMD) *</Label>
                   <div className="relative">
@@ -455,7 +522,7 @@ export default function AppointmentInteractionForm({
                       step="0.01"
                       placeholder="0.00"
                       required
-                      className={`pl-10 ${errors.quoted_price ? 'border-destructive' : ''}`}
+                      className={`pl-10 ${errors.quoted_price ? 'border-destructive' : ''} ${isMobile ? 'h-12' : ''}`}
                     />
                   </div>
                   {errors.quoted_price && (
@@ -475,7 +542,7 @@ export default function AppointmentInteractionForm({
                       min="15"
                       max="480"
                       step="15"
-                      className="pl-10"
+                      className={`pl-10 ${isMobile ? 'h-12' : ''}`}
                     />
                   </div>
                 </div>
@@ -485,10 +552,11 @@ export default function AppointmentInteractionForm({
                 <Label htmlFor="price_breakdown">Price Breakdown (Optional)</Label>
                 <Textarea
                   id="price_breakdown"
-                  rows={3}
+                  rows={isMobile ? 4 : 3}
                   value={formData.price_breakdown}
                   onChange={(e) => handleChange('price_breakdown', e.target.value)}
                   placeholder="Labor: $X, Materials: $Y, etc..."
+                  className={isMobile ? 'min-h-[100px]' : ''}
                 />
               </div>
 
@@ -496,26 +564,26 @@ export default function AppointmentInteractionForm({
                 <Label htmlFor="professional_notes">Quote Details & Notes *</Label>
                 <Textarea
                   id="professional_notes"
-                  rows={4}
+                  rows={isMobile ? 5 : 4}
                   value={formData.professional_notes}
                   onChange={(e) => handleChange('professional_notes', e.target.value)}
                   placeholder="Explain what's included in your quote, timeline, terms, etc..."
                   required
-                  className={errors.professional_notes ? 'border-destructive' : ''}
+                  className={`${errors.professional_notes ? 'border-destructive' : ''} ${isMobile ? 'min-h-[120px]' : ''}`}
                 />
                 {errors.professional_notes && (
                   <p className="text-sm text-destructive">{errors.professional_notes}</p>
                 )}
               </div>
-            </div>
+            </CollapsibleSection>
           )}
 
           {/* Decline Form Fields */}
           {action === 'decline' && (
-            <div className="space-y-4">
+            <div className="space-y-6">
               <div className="flex items-center gap-2 mb-4">
-                <XCircle className="h-4 w-4" />
-                <h3 className="text-lg font-medium">Decline Information</h3>
+                <X className="h-4 w-4" />
+                <h3 className={`font-medium ${isMobile ? 'text-base' : 'text-lg'}`}>Decline Information</h3>
               </div>
               
               <div className="space-y-2">
@@ -524,7 +592,7 @@ export default function AppointmentInteractionForm({
                   value={formData.decline_reason} 
                   onValueChange={(value) => handleChange('decline_reason', value)}
                 >
-                  <SelectTrigger className={errors.decline_reason ? 'border-destructive' : ''}>
+                  <SelectTrigger className={`${errors.decline_reason ? 'border-destructive' : ''} ${isMobile ? 'h-12' : ''}`}>
                     <SelectValue placeholder="Select a reason..." />
                   </SelectTrigger>
                   <SelectContent>
@@ -547,10 +615,11 @@ export default function AppointmentInteractionForm({
                 <Label htmlFor="professional_notes">Additional Notes</Label>
                 <Textarea
                   id="professional_notes"
-                  rows={3}
+                  rows={isMobile ? 4 : 3}
                   value={formData.professional_notes}
                   onChange={(e) => handleChange('professional_notes', e.target.value)}
                   placeholder="Provide more details about why you're declining..."
+                  className={isMobile ? 'min-h-[100px]' : ''}
                 />
               </div>
 
@@ -558,10 +627,11 @@ export default function AppointmentInteractionForm({
                 <Label htmlFor="alternative_suggestions">Alternative Suggestions</Label>
                 <Textarea
                   id="alternative_suggestions"
-                  rows={3}
+                  rows={isMobile ? 4 : 3}
                   value={formData.alternative_suggestions}
                   onChange={(e) => handleChange('alternative_suggestions', e.target.value)}
                   placeholder="Suggest other professionals, different timing, or alternative approaches..."
+                  className={isMobile ? 'min-h-[100px]' : ''}
                 />
               </div>
             </div>
@@ -572,17 +642,17 @@ export default function AppointmentInteractionForm({
             <div className="space-y-6">
               <div className="flex items-center gap-2 mb-4">
                 <Heart className="h-4 w-4" />
-                <h3 className="text-lg font-medium">Express Your Interest</h3>
+                <h3 className={`font-medium ${isMobile ? 'text-base' : 'text-lg'}`}>Express Your Interest</h3>
               </div>
 
-              {/* Intent Level - FIXED: Removed 'urgent' option */}
+              {/* Intent Level */}
               <div className="space-y-2">
                 <Label htmlFor="intent">Interest Level</Label>
                 <Select 
                   value={formData.intent} 
                   onValueChange={(value) => handleChange('intent', value)}
                 >
-                  <SelectTrigger>
+                  <SelectTrigger className={isMobile ? 'h-12' : ''}>
                     <SelectValue placeholder="Select interest level..." />
                   </SelectTrigger>
                   <SelectContent>
@@ -613,12 +683,12 @@ export default function AppointmentInteractionForm({
                 <Label htmlFor="message">Interest Message *</Label>
                 <Textarea
                   id="message"
-                  rows={4}
+                  rows={isMobile ? 5 : 4}
                   value={formData.message}
                   onChange={(e) => handleChange('message', e.target.value)}
                   placeholder="Explain why you're interested in this project and what makes you the right professional for the job..."
                   required
-                  className={errors.message ? 'border-destructive' : ''}
+                  className={`${errors.message ? 'border-destructive' : ''} ${isMobile ? 'min-h-[120px]' : ''}`}
                 />
                 {errors.message && (
                   <p className="text-sm text-destructive">{errors.message}</p>
@@ -626,65 +696,71 @@ export default function AppointmentInteractionForm({
               </div>
 
               {/* Assessment Requirements */}
-              <div className="space-y-4">
-                <div className="flex items-center space-x-2">
-                  <Switch
-                    id="assessment"
-                    checked={formData.assessment}
-                    onCheckedChange={(checked) => handleChange('assessment', checked)}
-                  />
-                  <Label htmlFor="assessment">Site assessment required</Label>
-                </div>
+              <CollapsibleSection 
+                title="Assessment Requirements" 
+                section="assessment" 
+                icon={AlertTriangle}
+              >
+                <div className="space-y-4">
+                  <div className="flex items-center space-x-2">
+                    <Switch
+                      id="assessment"
+                      checked={formData.assessment}
+                      onCheckedChange={(checked) => handleChange('assessment', checked)}
+                    />
+                    <Label htmlFor="assessment">Site assessment required</Label>
+                  </div>
 
-                {formData.assessment && (
-                  <div className="ml-6 space-y-4 p-4 border border-border rounded-md bg-muted/30">
-                    <div className="space-y-2">
-                      <Label htmlFor="modality">Assessment Method *</Label>
-                      <Select 
-                        value={formData.modality} 
-                        onValueChange={(value) => handleChange('modality', value)}
-                      >
-                        <SelectTrigger className={errors.modality ? 'border-destructive' : ''}>
-                          <SelectValue placeholder="Select assessment method..." />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="local">Local visit</SelectItem>
-                          <SelectItem value="remote">Remote assessment</SelectItem>
-                          <SelectItem value="phone">Phone consultation</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      {errors.modality && (
-                        <p className="text-sm text-destructive">{errors.modality}</p>
+                  {formData.assessment && (
+                    <div className="ml-6 space-y-4 p-4 border border-border rounded-md bg-muted/30">
+                      <div className="space-y-2">
+                        <Label htmlFor="modality">Assessment Method *</Label>
+                        <Select 
+                          value={formData.modality} 
+                          onValueChange={(value) => handleChange('modality', value)}
+                        >
+                          <SelectTrigger className={`${errors.modality ? 'border-destructive' : ''} ${isMobile ? 'h-12' : ''}`}>
+                            <SelectValue placeholder="Select assessment method..." />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="local">Local visit</SelectItem>
+                            <SelectItem value="remote">Remote assessment</SelectItem>
+                            <SelectItem value="phone">Phone consultation</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        {errors.modality && (
+                          <p className="text-sm text-destructive">{errors.modality}</p>
+                        )}
+                      </div>
+
+                      {formData.modality === 'local' && (
+                        <div className="space-y-2">
+                          <Label htmlFor="fee">Assessment Fee (JMD)</Label>
+                          <div className="relative">
+                            <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                            <Input
+                              type="number"
+                              id="fee"
+                              value={formData.fee}
+                              onChange={(e) => handleChange('fee', parseFloat(e.target.value) || 0)}
+                              min="0"
+                              step="0.01"
+                              placeholder="0.00"
+                              className={`pl-10 ${errors.fee ? 'border-destructive' : ''} ${isMobile ? 'h-12' : ''}`}
+                            />
+                          </div>
+                          {errors.fee && (
+                            <p className="text-sm text-destructive">{errors.fee}</p>
+                          )}
+                          <p className="text-xs text-muted-foreground">
+                            Fee for traveling to customer location (can be deducted from final quote)
+                          </p>
+                        </div>
                       )}
                     </div>
-
-                    {formData.modality === 'local' && (
-                      <div className="space-y-2">
-                        <Label htmlFor="fee">Assessment Fee (JMD)</Label>
-                        <div className="relative">
-                          <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                          <Input
-                            type="number"
-                            id="fee"
-                            value={formData.fee}
-                            onChange={(e) => handleChange('fee', parseFloat(e.target.value) || 0)}
-                            min="0"
-                            step="0.01"
-                            placeholder="0.00"
-                            className={`pl-10 ${errors.fee ? 'border-destructive' : ''}`}
-                          />
-                        </div>
-                        {errors.fee && (
-                          <p className="text-sm text-destructive">{errors.fee}</p>
-                        )}
-                        <p className="text-xs text-muted-foreground">
-                          Fee for traveling to customer location (can be deducted from final quote)
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
+                  )}
+                </div>
+              </CollapsibleSection>
 
               {/* Optional Quote */}
               <div className="space-y-4">
@@ -700,7 +776,7 @@ export default function AppointmentInteractionForm({
                       min="0"
                       step="0.01"
                       placeholder="0.00"
-                      className={`pl-10 ${errors.amount ? 'border-destructive' : ''}`}
+                      className={`pl-10 ${errors.amount ? 'border-destructive' : ''} ${isMobile ? 'h-12' : ''}`}
                     />
                   </div>
                   {errors.amount && (
@@ -713,9 +789,12 @@ export default function AppointmentInteractionForm({
               </div>
 
               {/* Availability Window */}
-              <div className="space-y-4">
-                <h4 className="font-medium text-foreground">Availability Window (Optional)</h4>
-                <div className="grid gap-4 md:grid-cols-2">
+              <CollapsibleSection 
+                title="Availability Window (Optional)" 
+                section="availability" 
+                icon={Calendar}
+              >
+                <div className={`grid gap-4 ${isMobile ? 'grid-cols-1' : 'md:grid-cols-2'}`}>
                   <div className="space-y-2">
                     <Label htmlFor="earliest_start">Earliest Available</Label>
                     <Input
@@ -724,6 +803,7 @@ export default function AppointmentInteractionForm({
                       value={formData.earliest_start}
                       onChange={(e) => handleChange('earliest_start', e.target.value)}
                       min={minDateTime}
+                      className={isMobile ? 'h-12' : ''}
                     />
                   </div>
 
@@ -735,20 +815,22 @@ export default function AppointmentInteractionForm({
                       value={formData.latest_start}
                       onChange={(e) => handleChange('latest_start', e.target.value)}
                       min={formData.earliest_start || minDateTime}
+                      className={isMobile ? 'h-12' : ''}
                     />
                   </div>
                 </div>
-              </div>
+              </CollapsibleSection>
 
               {/* Additional Notes */}
               <div className="space-y-2">
                 <Label htmlFor="notes">Additional Notes</Label>
                 <Textarea
                   id="notes"
-                  rows={3}
+                  rows={isMobile ? 4 : 3}
                   value={formData.notes}
                   onChange={(e) => handleChange('notes', e.target.value)}
                   placeholder="Any additional information about your approach, experience, or special considerations..."
+                  className={isMobile ? 'min-h-[100px]' : ''}
                 />
               </div>
             </div>
@@ -759,7 +841,7 @@ export default function AppointmentInteractionForm({
             <div className="space-y-6">
               <div className="flex items-center gap-2 mb-4">
                 <Target className="h-4 w-4" />
-                <h3 className="text-lg font-medium">Update Your Interest</h3>
+                <h3 className={`font-medium ${isMobile ? 'text-base' : 'text-lg'}`}>Update Your Interest</h3>
               </div>
 
               {/* Current Interest Status */}
@@ -790,7 +872,7 @@ export default function AppointmentInteractionForm({
                     min="0"
                     step="0.01"
                     placeholder="0.00"
-                    className={`pl-10 ${errors.amount ? 'border-destructive' : ''}`}
+                    className={`pl-10 ${errors.amount ? 'border-destructive' : ''} ${isMobile ? 'h-12' : ''}`}
                   />
                 </div>
                 {errors.amount && (
@@ -799,79 +881,89 @@ export default function AppointmentInteractionForm({
               </div>
 
               {/* Assessment Updates */}
-              <div className="space-y-4">
-                <div className="flex items-center space-x-2">
-                  <Switch
-                    id="assessment"
-                    checked={formData.assessment}
-                    onCheckedChange={(checked) => handleChange('assessment', checked)}
-                  />
-                  <Label htmlFor="assessment">Site assessment required</Label>
-                </div>
+              <CollapsibleSection 
+                title="Assessment Updates" 
+                section="assessment" 
+                icon={AlertTriangle}
+              >
+                <div className="space-y-4">
+                  <div className="flex items-center space-x-2">
+                    <Switch
+                      id="assessment"
+                      checked={formData.assessment}
+                      onCheckedChange={(checked) => handleChange('assessment', checked)}
+                    />
+                    <Label htmlFor="assessment">Site assessment required</Label>
+                  </div>
 
-                {formData.assessment && (
-                  <div className="ml-6 space-y-4 p-4 border border-border rounded-md bg-muted/30">
-                    <div className="space-y-2">
-                      <Label htmlFor="modality">Assessment Method *</Label>
-                      <Select 
-                        value={formData.modality} 
-                        onValueChange={(value) => handleChange('modality', value)}
-                      >
-                        <SelectTrigger className={errors.modality ? 'border-destructive' : ''}>
-                          <SelectValue placeholder="Select assessment method..." />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="local">Local visit</SelectItem>
-                          <SelectItem value="remote">Remote assessment</SelectItem>
-                          <SelectItem value="phone">Phone consultation</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      {errors.modality && (
-                        <p className="text-sm text-destructive">{errors.modality}</p>
-                      )}
-                    </div>
-
-                    {formData.modality === 'local' && (
+                  {formData.assessment && (
+                    <div className="ml-6 space-y-4 p-4 border border-border rounded-md bg-muted/30">
                       <div className="space-y-2">
-                        <Label htmlFor="fee">Updated Assessment Fee (JMD)</Label>
-                        <div className="relative">
-                          <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                          <Input
-                            type="number"
-                            id="fee"
-                            value={formData.fee}
-                            onChange={(e) => handleChange('fee', parseFloat(e.target.value) || 0)}
-                            min="0"
-                            step="0.01"
-                            placeholder="0.00"
-                            className={`pl-10 ${errors.fee ? 'border-destructive' : ''}`}
-                          />
-                        </div>
-                        {errors.fee && (
-                          <p className="text-sm text-destructive">{errors.fee}</p>
+                        <Label htmlFor="modality">Assessment Method *</Label>
+                        <Select 
+                          value={formData.modality} 
+                          onValueChange={(value) => handleChange('modality', value)}
+                        >
+                          <SelectTrigger className={`${errors.modality ? 'border-destructive' : ''} ${isMobile ? 'h-12' : ''}`}>
+                            <SelectValue placeholder="Select assessment method..." />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="local">Local visit</SelectItem>
+                            <SelectItem value="remote">Remote assessment</SelectItem>
+                            <SelectItem value="phone">Phone consultation</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        {errors.modality && (
+                          <p className="text-sm text-destructive">{errors.modality}</p>
                         )}
                       </div>
-                    )}
-                  </div>
-                )}
-              </div>
+
+                      {formData.modality === 'local' && (
+                        <div className="space-y-2">
+                          <Label htmlFor="fee">Updated Assessment Fee (JMD)</Label>
+                          <div className="relative">
+                            <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                            <Input
+                              type="number"
+                              id="fee"
+                              value={formData.fee}
+                              onChange={(e) => handleChange('fee', parseFloat(e.target.value) || 0)}
+                              min="0"
+                              step="0.01"
+                              placeholder="0.00"
+                              className={`pl-10 ${errors.fee ? 'border-destructive' : ''} ${isMobile ? 'h-12' : ''}`}
+                            />
+                          </div>
+                          {errors.fee && (
+                            <p className="text-sm text-destructive">{errors.fee}</p>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </CollapsibleSection>
 
               {/* Updated Message */}
               <div className="space-y-2">
                 <Label htmlFor="message">Updated Message</Label>
                 <Textarea
                   id="message"
-                  rows={4}
+                  rows={isMobile ? 5 : 4}
                   value={formData.message}
                   onChange={(e) => handleChange('message', e.target.value)}
                   placeholder="Update your interest message or provide additional information..."
+                  className={isMobile ? 'min-h-[120px]' : ''}
                 />
               </div>
 
               {/* Updated Availability */}
-              <div className="space-y-4">
-                <h4 className="font-medium text-foreground">Updated Availability</h4>
-                <div className="grid gap-4 md:grid-cols-2">
+              <CollapsibleSection 
+                title="Updated Availability" 
+                section="availability" 
+                icon={Calendar}
+              >
+                <div className={`grid gap-4 ${isMobile ? 'grid-cols-1' : 'md:grid-cols-2'}`}>
                   <div className="space-y-2">
                     <Label htmlFor="earliest_start">Earliest Available</Label>
                     <Input
@@ -880,6 +972,7 @@ export default function AppointmentInteractionForm({
                       value={formData.earliest_start}
                       onChange={(e) => handleChange('earliest_start', e.target.value)}
                       min={minDateTime}
+                      className={isMobile ? 'h-12' : ''}
                     />
                   </div>
 
@@ -891,20 +984,22 @@ export default function AppointmentInteractionForm({
                       value={formData.latest_start}
                       onChange={(e) => handleChange('latest_start', e.target.value)}
                       min={formData.earliest_start || minDateTime}
+                      className={isMobile ? 'h-12' : ''}
                     />
                   </div>
                 </div>
-              </div>
+              </CollapsibleSection>
 
               {/* Updated Notes */}
               <div className="space-y-2">
                 <Label htmlFor="notes">Updated Notes</Label>
                 <Textarea
                   id="notes"
-                  rows={3}
+                  rows={isMobile ? 4 : 3}
                   value={formData.notes}
                   onChange={(e) => handleChange('notes', e.target.value)}
                   placeholder="Any updates to your approach or additional information..."
+                  className={isMobile ? 'min-h-[100px]' : ''}
                 />
               </div>
             </div>
@@ -914,19 +1009,18 @@ export default function AppointmentInteractionForm({
           {(action === 'accept' || action === 'quote') && (
             <>
               <Separator />
-              <div className="space-y-4">
-                <div className="flex items-center gap-2">
-                  <MessageSquare className="h-4 w-4" />
-                  <h3 className="text-lg font-medium">Additional Notes</h3>
-                </div>
-                
+              <CollapsibleSection 
+                title="Additional Notes" 
+                section="additional" 
+                icon={MessageSquare}
+              >
                 <div className="space-y-2">
                   <Label htmlFor="professional_notes">
                     {action === 'quote' ? 'Additional Information' : 'Professional Notes'}
                   </Label>
                   <Textarea
                     id="professional_notes"
-                    rows={3}
+                    rows={isMobile ? 4 : 3}
                     value={formData.professional_notes}
                     onChange={(e) => handleChange('professional_notes', e.target.value)}
                     placeholder={
@@ -934,35 +1028,42 @@ export default function AppointmentInteractionForm({
                         ? "Any additional information for the customer..."
                         : "Additional details about your response..."
                     }
+                    className={isMobile ? 'min-h-[100px]' : ''}
                   />
                 </div>
-              </div>
+              </CollapsibleSection>
             </>
           )}
         </CardContent>
 
-        {/* Form Actions */}
-        <div className="flex justify-between items-center p-6 bg-muted/30 border-t">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={onCancel}
-            disabled={loading}
-          >
-            Cancel
-          </Button>
-          
-          <Button
-            type="submit"
-            variant={actionConfig.variant}
-            disabled={loading}
-            className="gap-2"
-          >
-            {loading && <Loader2 className="h-4 w-4 animate-spin" />}
-            <ActionIcon className="h-4 w-4" />
-            {actionConfig.submitText}
-          </Button>
+        {/* Fixed Mobile Footer / Desktop Form Actions */}
+        <div className={`${isMobile ? 'fixed bottom-0 left-0 right-0 bg-background border-t shadow-lg p-4 z-50' : 'flex justify-between items-center p-6 bg-muted/30 border-t'}`}>
+          <div className={`${isMobile ? 'flex gap-2 w-full' : 'flex justify-between items-center w-full'}`}>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={onCancel}
+              disabled={loading}
+              className={isMobile ? 'flex-1 h-12' : ''}
+            >
+              Cancel
+            </Button>
+            
+            <Button
+              type="submit"
+              variant={actionConfig.variant}
+              disabled={loading}
+              className={`gap-2 ${isMobile ? 'flex-1 h-12' : ''}`}
+            >
+              {loading && <Loader2 className="h-4 w-4 animate-spin" />}
+              <ActionIcon className="h-4 w-4" />
+              <span className={isMobile ? 'text-sm' : ''}>{actionConfig.submitText}</span>
+            </Button>
+          </div>
         </div>
+
+        {/* Mobile bottom padding to prevent content being hidden behind fixed footer */}
+        {isMobile && <div className="h-20" />}
       </form>
     </Card>
   );
