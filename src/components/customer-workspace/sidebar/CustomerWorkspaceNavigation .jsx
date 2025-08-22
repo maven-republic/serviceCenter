@@ -140,7 +140,7 @@ export default function CustomerWorkspaceNavigation() {
     </div>
   );
 
-  // Mobile Navigation Component with Real User Data
+  // Mobile Navigation Component with Fixed Header Alignment
   const MobileNavigation = () => (
     <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
       <SheetTrigger asChild>
@@ -155,15 +155,14 @@ export default function CustomerWorkspaceNavigation() {
       </SheetTrigger>
       
       <SheetContent side="left" className="w-80 p-0 bg-background flex flex-col">
-        {/* Header with Better Spacing */}
-        <SheetHeader className="flex items-center justify-between p-6 border-b bg-muted/30">
+        {/* FIXED: Better aligned header */}
+        <SheetHeader className="p-4 border-b bg-muted/30">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
-              <Home className="h-4 w-4 text-primary-foreground" />
+            <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center flex-shrink-0">
             </div>
-            <div>
-              <SheetTitle className="text-base font-semibold text-left">maven republic</SheetTitle>
-            </div>
+            <SheetTitle className="text-base font-semibold text-left">
+              maven republic
+            </SheetTitle>
           </div>
         </SheetHeader>
 
