@@ -1,3 +1,4 @@
+// Updated middleware.js - Add public routes for service browsing
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse } from 'next/server'
 
@@ -103,7 +104,7 @@ export async function middleware(request) {
       // Check if we have a cached valid session
       const cachedSession = getCachedSession(user.id)
       if (cachedSession) {
-        console.log('📋 Using cached session for user:', user.email)
+        console.log('🔋 Using cached session for user:', user.email)
       } else {
         // Get fresh session and cache it
         try {
@@ -182,6 +183,28 @@ export async function middleware(request) {
     '/sign-up'
   ].some(route => pathname.startsWith(route))
 
+  // Define public routes that don't require authentication
+  const isPublicRoute = [
+    '/',
+    '/about',
+    '/contact',
+    '/help',
+    '/faq',
+    '/terms',
+    '/pricing',
+    '/browse-services', // <-- NEW: Allow public access to services
+    '/services', // <-- NEW: Allow public service browsing
+    '/service-single', // <-- NEW: Allow viewing individual services
+    '/blog',
+    '/become-seller'
+  ].some(route => pathname.startsWith(route))
+
+  // Allow public routes without authentication
+  if (isPublicRoute && !isProtectedRoute) {
+    console.log(`🌐 Public route accessed: ${pathname}`)
+    return response
+  }
+
   // Handle unauthenticated users on protected routes
   if (!user && isProtectedRoute) {
     const redirectUrl = request.nextUrl.clone()
@@ -197,7 +220,7 @@ export async function middleware(request) {
       redirectUrl.searchParams.set('error', 'rate_limited')
     }
     
-    console.log(`🔐 Redirecting unauthenticated user from ${pathname} to login`)
+    console.log(`🔒 Redirecting unauthenticated user from ${pathname} to login`)
     return NextResponse.redirect(redirectUrl)
   }
 
