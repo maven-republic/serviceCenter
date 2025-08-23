@@ -292,7 +292,7 @@ export default function BrowseServicesPage() {
               </Button>
               <Button 
                 onClick={() => router.push('/register')}
-                className=" text-white font-semibold px-6 rounded-full"
+                className="text-white font-semibold px-6 rounded-full"
               >
                 Create account
               </Button>

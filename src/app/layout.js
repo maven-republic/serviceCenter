@@ -1,4 +1,4 @@
-// ===== 1. ROOT LAYOUT FIX (src/app/layout.js) =====
+// =====  (src/app/layout.js) =====
 import { DM_Sans } from 'next/font/google'
 import './globals.css'
 import { createClient } from '@/utils/supabase/server'
@@ -60,10 +60,15 @@ export default async function InterfaceFoundation({ children }) {
                   // Remove any existing theme classes
                   document.documentElement.classList.remove('light', 'dark', 'professional-workspace', 'customer-workspace');
                   
-                  if (pathname.includes('/customer')) {
-                    // 👤 CUSTOMER WORKSPACE - Force light theme (white background)
-                    document.documentElement.classList.add('light', 'customer-workspace');
-                    console.log('👤 Applied customer workspace theme (white)');
+                  if (pathname.includes('/customer') || pathname === '/browse-services' || pathname.startsWith('/browse')) {
+                    // 👤 CUSTOMER WORKSPACE + BROWSE PAGES - Force light theme (white background)
+                    if (pathname.includes('/customer')) {
+                      document.documentElement.classList.add('light', 'customer-workspace');
+                      console.log('👤 Applied customer workspace theme (white)');
+                    } else {
+                      document.documentElement.classList.add('light');
+                      console.log('🔍 Applied light theme for browse pages');
+                    }
                     
                   } else if (pathname.includes('/professional')) {
                     // 🏢 PROFESSIONAL WORKSPACE - Add workspace class, default to light
