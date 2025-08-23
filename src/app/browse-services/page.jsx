@@ -153,7 +153,7 @@ export default function BrowseServicesPage() {
       setError(null);
 
       const params = new URLSearchParams({
-        limit: '20', // Reduced from 50 for better UX
+        limit: '50', // Reduced from 50 for better UX
         offset: '0'
       });
 
@@ -263,10 +263,8 @@ export default function BrowseServicesPage() {
           <div className="flex items-center justify-between h-20">
             {/* Logo/Brand */}
             <div className="flex items-center gap-2">
-              <div className="w-8 h-8 bg-red-600 rounded-full flex items-center justify-center">
-                <span className="text-white font-bold text-lg">M</span>
-              </div>
-              <h1 className="text-xl font-bold text-gray-900 hidden sm:block">Maven Republic</h1>
+             
+              <h1 className="text-xl font-bold text-gray-900 hidden sm:block">maven republic</h1>
               <h1 className="text-xl font-bold text-gray-900 sm:hidden">Maven</h1>
             </div>
 
@@ -294,7 +292,7 @@ export default function BrowseServicesPage() {
               </Button>
               <Button 
                 onClick={() => router.push('/register')}
-                className="bg-red-600 hover:bg-red-700 text-white font-semibold px-6 rounded-full"
+                className=" text-white font-semibold px-6 rounded-full"
               >
                 Create account
               </Button>
@@ -371,7 +369,7 @@ export default function BrowseServicesPage() {
         </div>
       </div>
 
-      {/* Controls Bar */}
+      {/* Controls Bar
       <div className="bg-muted/30 border-b">
         <div className="container mx-auto px-4 py-4">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
@@ -405,7 +403,7 @@ export default function BrowseServicesPage() {
             </div>
           </div>
         </div>
-      </div>
+      </div> */}
 
       {/* Main Content */}
       <div className="container mx-auto px-4 py-8">
@@ -468,7 +466,7 @@ export default function BrowseServicesPage() {
           </div>
         )}
 
-        {/* Bottom Call to Action */}
+        {/* Bottom Call to Action
         {!isLoading && filteredServices.length > 0 && (
           <div className="mt-16 text-center">
             <div className="bg-gradient-to-r from-primary/5 to-primary/10 rounded-xl p-8 border border-primary/20">
@@ -487,7 +485,7 @@ export default function BrowseServicesPage() {
               </div>
             </div>
           </div>
-        )}
+        )} */}
       </div>
     </div>
   );
