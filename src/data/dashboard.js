@@ -16,12 +16,12 @@ export const customerNavigation = {
     }
   ],
   account: [
-    {
-      id: 3,
-      name: "Analytics",
-      icon: "flaticon-home",
-      path: "/customer/analytics",
-    },
+    // {
+    //   id: 3,
+    //   name: "Analytics",
+    //   icon: "flaticon-home",
+    //   path: "/customer/analytics",
+    // },
     {
       id: 4,
       name: "Account Information",
