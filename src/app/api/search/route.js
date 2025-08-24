@@ -1,4 +1,4 @@
-// src/app/api/search/route.js - COMPLETE REWRITE
+// src/app/api/search/route.js - WITH PAGINATION SUPPORT
 import { createClient } from '@/utils/supabase/server';
 import { NextResponse } from 'next/server';
 
@@ -8,7 +8,11 @@ export async function GET(request) {
     const query = searchParams.get('q');
     const useFuzzy = searchParams.get('fuzzy') === 'true';
     const useKeywords = searchParams.get('keywords') === 'true';
+    
+    // 🚀 PAGINATION SUPPORT
+    const page = parseInt(searchParams.get('page')) || 1;
     const limit = parseInt(searchParams.get('limit')) || 20;
+    const offset = (page - 1) * limit;
     
     // Filter parameters
     const filters = {
@@ -20,17 +24,35 @@ export async function GET(request) {
       featured: searchParams.get('featured') === 'true'
     };
 
-    console.log('🔍 Search API called:', { query, useFuzzy, useKeywords, filters });
+    console.log('🔍 Search API called:', { 
+      query, 
+      page, 
+      limit, 
+      offset,
+      useFuzzy, 
+      useKeywords, 
+      filters 
+    });
 
     const startTime = performance.now();
     const supabase = await createClient();
     let results = [];
+    let totalCount = 0;
     let searchMethod = 'none';
 
     if (!query || query.trim().length < 2) {
-      // Return all services if no query
-      console.log('📋 Fetching all services (no query)');
+      // Return paginated services if no query
+      console.log(`📋 Fetching services page ${page} (${limit} items, offset ${offset})`);
       
+      // Get total count first
+      const { count: total } = await supabase
+        .from('service')
+        .select('*', { count: 'exact', head: true })
+        .eq('is_active', true);
+      
+      totalCount = total || 0;
+      
+      // Get paginated results
       const { data: allServices, error } = await supabase
         .from('service')
         .select(`
@@ -57,10 +79,10 @@ export async function GET(request) {
         .eq('is_active', true)
         .order('is_featured', { ascending: false })
         .order('name', { ascending: true })
-        .limit(limit);
+        .range(offset, offset + limit - 1); // Supabase uses inclusive range
 
       if (error) {
-        console.error('Error fetching all services:', error);
+        console.error('Error fetching services:', error);
         throw error;
       }
 
@@ -80,16 +102,17 @@ export async function GET(request) {
       searchMethod = 'all_services';
       
     } else {
-      // Perform search based on method
+      // Perform paginated search
       if (useKeywords) {
         console.log('🎯 Using keyword-based search for:', query);
         searchMethod = 'keyword';
         
         try {
-          // Try the optimized database function first
+          // Try the optimized database function with pagination
           const { data, error } = await supabase.rpc('search_services_by_keywords', {
             search_query: query.trim(),
-            max_results: limit
+            max_results: limit,
+            offset_results: offset
           });
 
           if (error) {
@@ -113,13 +136,16 @@ export async function GET(request) {
               relevance_score: service.relevance_score
             }));
             
+            // For search results, we estimate total count
+            totalCount = data.length === limit ? (page * limit) + 1 : (offset + data.length);
+            
             console.log(`✅ Database function found ${results.length} keyword results`);
           }
 
         } catch (dbError) {
           console.log('🔄 Database function failed, using manual keyword search');
           
-          // Manual keyword search fallback
+          // Manual keyword search with pagination
           const { data: keywordMatches, error: keywordError } = await supabase
             .from('skeyword')
             .select('search_term, service_id')
@@ -132,6 +158,8 @@ export async function GET(request) {
 
           if (keywordMatches && keywordMatches.length > 0) {
             const serviceIds = [...new Set(keywordMatches.map(match => match.service_id))];
+            totalCount = serviceIds.length;
+            
             console.log(`🎯 Manual search found ${serviceIds.length} service IDs`);
 
             const { data: services, error: serviceError } = await supabase
@@ -161,7 +189,7 @@ export async function GET(request) {
               .eq('is_active', true)
               .order('is_featured', { ascending: false })
               .order('name', { ascending: true })
-              .limit(limit);
+              .range(offset, offset + limit - 1);
 
             if (serviceError) {
               throw serviceError;
@@ -195,127 +223,96 @@ export async function GET(request) {
         }
       }
 
-      // If no keyword results or not using keyword search, try hybrid/direct search
+      // If no keyword results, try direct search with pagination
       if (results.length === 0) {
-        console.log('🔄 No keyword results, trying hybrid search');
-        searchMethod = 'hybrid';
+        console.log('🔄 No keyword results, trying direct search');
+        searchMethod = 'direct';
         
-        try {
-          // Try hybrid database function
-          const { data, error } = await supabase.rpc('search_services_hybrid', {
-            search_query: query.trim(),
-            max_results: limit,
-            min_similarity: useFuzzy ? 0.2 : 0.3
-          });
-
-          if (error) {
-            console.warn('⚠️ Hybrid function failed, using direct search:', error);
-            throw error;
-          }
-
-          if (data && data.length > 0) {
-            results = data.map(service => ({
-              service_id: service.service_id,
-              service_name: service.service_name,
-              description: service.description,
-              base_price: service.base_price,
-              duration_minutes: service.duration_minutes,
-              is_featured: service.is_featured,
-              industry_name: service.industry_name,
-              vertical_name: service.vertical_name,
-              portfolio_name: service.portfolio_name,
-              matched_keyword: service.matched_keyword,
-              match_type: service.match_type,
-              relevance_score: service.relevance_score
-            }));
-            
-            console.log(`✅ Hybrid search found ${results.length} results`);
-          }
-
-        } catch (hybridError) {
-          console.log('🔄 Hybrid function failed, using direct service search');
-          searchMethod = 'direct';
+        // Get total count for direct search
+        const { count: directTotal } = await supabase
+          .from('service')
+          .select('*', { count: 'exact', head: true })
+          .eq('is_active', true)
+          .or(`name.ilike.%${query.trim()}%,description.ilike.%${query.trim()}%`);
           
-          // Direct service name/description search
-          const { data: directResults, error: directError } = await supabase
-            .from('service')
-            .select(`
-              service_id,
+        totalCount = directTotal || 0;
+        
+        // Get paginated direct results
+        const { data: directResults, error: directError } = await supabase
+          .from('service')
+          .select(`
+            service_id,
+            name,
+            description,
+            base_price,
+            duration_minutes,
+            is_featured,
+            is_active,
+            portfolio:portfolio_id (
+              portfolio_id,
               name,
-              description,
-              base_price,
-              duration_minutes,
-              is_featured,
-              is_active,
-              portfolio:portfolio_id (
-                portfolio_id,
+              vertical:vertical_id (
+                vertical_id,
                 name,
-                vertical:vertical_id (
-                  vertical_id,
-                  name,
-                  industry:industry_id (
-                    industry_id,
-                    name
-                  )
+                industry:industry_id (
+                  industry_id,
+                  name
                 )
               )
-            `)
-            .eq('is_active', true)
-            .or(`name.ilike.%${query.trim()}%,description.ilike.%${query.trim()}%`)
-            .order('is_featured', { ascending: false })
-            .order('name', { ascending: true })
-            .limit(limit);
+            )
+          `)
+          .eq('is_active', true)
+          .or(`name.ilike.%${query.trim()}%,description.ilike.%${query.trim()}%`)
+          .order('is_featured', { ascending: false })
+          .order('name', { ascending: true })
+          .range(offset, offset + limit - 1);
 
-          if (directError) {
-            throw directError;
-          }
-
-          results = directResults?.map(service => ({
-            service_id: service.service_id,
-            service_name: service.name,
-            description: service.description,
-            base_price: service.base_price,
-            duration_minutes: service.duration_minutes,
-            is_featured: service.is_featured,
-            industry_name: service.portfolio?.vertical?.industry?.name,
-            vertical_name: service.portfolio?.vertical?.name,
-            portfolio_name: service.portfolio?.name,
-            match_type: 'direct'
-          })) || [];
-
-          console.log(`✅ Direct search found ${results.length} results`);
+        if (directError) {
+          throw directError;
         }
+
+        results = directResults?.map(service => ({
+          service_id: service.service_id,
+          service_name: service.name,
+          description: service.description,
+          base_price: service.base_price,
+          duration_minutes: service.duration_minutes,
+          is_featured: service.is_featured,
+          industry_name: service.portfolio?.vertical?.industry?.name,
+          vertical_name: service.portfolio?.vertical?.name,
+          portfolio_name: service.portfolio?.name,
+          match_type: 'direct'
+        })) || [];
+
+        console.log(`✅ Direct search found ${results.length} results`);
       }
     }
 
-    // Apply additional filters
+    // Apply additional filters (this might need adjustment for large datasets)
     let filteredResults = results;
     let filtersApplied = [];
     
-    if (filters.minPrice && filters.maxPrice) {
+    if (filters.minPrice || filters.maxPrice) {
       const originalCount = filteredResults.length;
       filteredResults = filteredResults.filter(result => {
         const price = result.base_price || 0;
-        return price >= parseFloat(filters.minPrice) && price <= parseFloat(filters.maxPrice);
+        if (filters.minPrice && filters.maxPrice) {
+          return price >= parseFloat(filters.minPrice) && price <= parseFloat(filters.maxPrice);
+        } else if (filters.minPrice) {
+          return price >= parseFloat(filters.minPrice);
+        } else if (filters.maxPrice) {
+          return price <= parseFloat(filters.maxPrice);
+        }
+        return true;
       });
       if (filteredResults.length !== originalCount) {
-        filtersApplied.push(`price: J$${filters.minPrice}-${filters.maxPrice}`);
-      }
-    } else if (filters.minPrice) {
-      const originalCount = filteredResults.length;
-      filteredResults = filteredResults.filter(result => 
-        (result.base_price || 0) >= parseFloat(filters.minPrice)
-      );
-      if (filteredResults.length !== originalCount) {
-        filtersApplied.push(`min price: J$${filters.minPrice}`);
-      }
-    } else if (filters.maxPrice) {
-      const originalCount = filteredResults.length;
-      filteredResults = filteredResults.filter(result => 
-        (result.base_price || 0) <= parseFloat(filters.maxPrice)
-      );
-      if (filteredResults.length !== originalCount) {
-        filtersApplied.push(`max price: J$${filters.maxPrice}`);
+        if (filters.minPrice && filters.maxPrice) {
+          filtersApplied.push(`price: J$${filters.minPrice}-${filters.maxPrice}`);
+        } else if (filters.minPrice) {
+          filtersApplied.push(`min price: J$${filters.minPrice}`);
+        } else if (filters.maxPrice) {
+          filtersApplied.push(`max price: J$${filters.maxPrice}`);
+        }
       }
     }
 
@@ -339,16 +336,6 @@ export async function GET(request) {
       }
     }
 
-    if (filters.parish) {
-      const originalCount = filteredResults.length;
-      filteredResults = filteredResults.filter(result => 
-        result.parish?.toLowerCase().includes(filters.parish.toLowerCase())
-      );
-      if (filteredResults.length !== originalCount) {
-        filtersApplied.push(`parish: ${filters.parish}`);
-      }
-    }
-
     if (filters.featured) {
       const originalCount = filteredResults.length;
       filteredResults = filteredResults.filter(result => result.is_featured);
@@ -359,21 +346,17 @@ export async function GET(request) {
 
     const searchTimeMs = Math.round(performance.now() - startTime);
     
-    // Log search attempt
-    try {
-      await supabase.rpc('log_search', {
-        p_query: query?.trim() || '',
-        p_results_count: filteredResults.length,
-        p_search_time_ms: searchTimeMs,
-        p_filters_applied: filters
-      });
-    } catch (logError) {
-      console.warn('⚠️ Failed to log search:', logError);
-    }
-
+    // Calculate pagination info
+    const totalPages = Math.ceil(totalCount / limit);
+    const hasMore = page < totalPages;
+    
     const responseData = {
       results: filteredResults,
-      total: filteredResults.length,
+      total: totalCount,
+      page: page,
+      limit: limit,
+      totalPages: totalPages,
+      hasMore: hasMore,
       query: query?.trim() || '',
       searchTimeMs,
       usedFuzzy: useFuzzy,
@@ -381,10 +364,17 @@ export async function GET(request) {
       filters,
       filtersApplied,
       searchMethod,
-      usedOptimizedSearch: !!query && query.trim().length >= 2
+      pagination: {
+        page,
+        limit,
+        total: totalCount,
+        totalPages,
+        hasMore,
+        hasPrevious: page > 1
+      }
     };
 
-    console.log(`✅ Search completed: ${filteredResults.length} results in ${searchTimeMs}ms using ${searchMethod}`);
+    console.log(`✅ Search completed: ${filteredResults.length}/${totalCount} results (page ${page}/${totalPages}) in ${searchTimeMs}ms using ${searchMethod}`);
     
     return NextResponse.json(responseData);
 
@@ -395,7 +385,10 @@ export async function GET(request) {
       message: error.message,
       details: process.env.NODE_ENV === 'development' ? error.stack : undefined,
       results: [],
-      total: 0
+      total: 0,
+      page: 1,
+      totalPages: 0,
+      hasMore: false
     }, { status: 500 });
   }
 }

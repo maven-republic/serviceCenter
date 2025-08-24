@@ -24,7 +24,7 @@ export { default as KeywordFilter } from './core/KeywordFilter';
 
 
 // 📄 Navigation Components
-export { default as DiscoveriesPagination } from './navigation/DiscoveriesPagination';
+// export { default as DiscoveriesPagination } from './navigation/DiscoveriesPagination';
 
 // 🎨 Legacy Components (Your existing beautiful components)
 export { default as Manifest } from './legacy/Manifest';
