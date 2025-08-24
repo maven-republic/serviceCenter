@@ -1,51 +1,13 @@
 // src/components/discoveries/core/DiscoveriesList.jsx
-// Masonry layout with infinite scroll using your beautiful Manifest component
+// FIXED - Skeleton cards flow naturally in same masonry container
+
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { Loader2, AlertCircle, ArrowUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
 import Manifest from '../legacy/Manifest';
-
-// Enhanced loading skeleton for masonry (matching your Manifest style)
-const MasonryLoadingSkeleton = ({ count = 4 }) => {
-  const heights = ['h-48', 'h-64', 'h-80', 'h-96'];
-  
-  return (
-    <>
-      {[...Array(count)].map((_, i) => {
-        const height = heights[i % heights.length];
-        return (
-          <div key={`loading-${i}`} className="break-inside-avoid mb-6">
-            <Card className={`${height} animate-pulse bg-gradient-to-br from-gray-50 to-gray-100 border border-gray-200`}>
-              <CardContent className="p-4 h-full flex flex-col justify-between">
-                <div className="flex-shrink-0">
-                  <div className="flex items-start justify-between mb-3">
-                    <div className="h-12 w-12 bg-gray-200 rounded-xl"></div>
-                    <div className="h-6 w-6 bg-gray-200 rounded"></div>
-                  </div>
-                  <div className="space-y-2 mb-3">
-                    <div className="h-4 bg-gray-200 rounded w-full"></div>
-                    <div className="h-4 bg-gray-200 rounded w-3/4"></div>
-                  </div>
-                  <div className="h-5 w-20 bg-gray-200 rounded-full"></div>
-                </div>
-                <div className="flex-shrink-0 space-y-3">
-                  <div className="flex justify-between">
-                    <div className="h-4 w-16 bg-gray-200 rounded"></div>
-                    <div className="h-4 w-12 bg-gray-200 rounded"></div>
-                  </div>
-                  <div className="h-9 w-full bg-gray-200 rounded"></div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        );
-      })}
-    </>
-  );
-};
+import DiscoveriesLoading, { MasonrySkeletonCard } from './DiscoveriesLoading'; // ✅ Import individual skeleton
 
 export default function DiscoveriesList({ 
   results = [], 
@@ -150,14 +112,10 @@ export default function DiscoveriesList({
     handleLoadMore();
   };
 
-  // Safety check
+  // Safety check - Show loading state
   if (!displayedResults || !Array.isArray(displayedResults) || displayedResults.length === 0) {
     if (loading) {
-      return (
-        <div className="columns-1 sm:columns-2 md:columns-2 lg:columns-3 xl:columns-4 2xl:columns-5 gap-6 space-y-6">
-          <MasonryLoadingSkeleton count={8} />
-        </div>
-      );
+      return <DiscoveriesLoading viewMode={viewMode} count={8} />;
     }
 
     return (
@@ -187,6 +145,7 @@ export default function DiscoveriesList({
   return (
     <>
       <div className="columns-1 sm:columns-2 md:columns-2 lg:columns-3 xl:columns-4 2xl:columns-5 gap-6 space-y-6">
+        {/* Real service cards */}
         {displayedResults.map((result, index) => (
           <div 
             key={`${result.service_id || result.id || index}-${Math.floor(index / itemsPerPage)}`}
@@ -196,13 +155,16 @@ export default function DiscoveriesList({
           </div>
         ))}
 
-        {/* Loading More Skeleton */}
-        {isLoadingMore && (
-          <MasonryLoadingSkeleton count={4} />
-        )}
+        {/* 🎯 FIXED: Individual skeleton cards in same masonry flow */}
+        {isLoadingMore && [...Array(4)].map((_, i) => (
+          <MasonrySkeletonCard 
+            key={`loading-skeleton-${i}`} 
+            index={displayedResults.length + i} 
+          />
+        ))}
       </div>
 
-      {/* Intersection Observer Sentinel (only show if we have onLoadMore function) */}
+      {/* Intersection Observer Sentinel */}
       {onLoadMore && <div ref={sentinelRef} className="h-4 w-full" />}
 
       {/* End of Results Message */}

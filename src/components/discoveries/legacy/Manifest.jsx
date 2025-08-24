@@ -15,9 +15,8 @@ export default function Manifest({ data }) {
 
   // Safely extract data with fallbacks
   const serviceInformation = {
-    id: data?.service_id || 'unknown',
-  title: data?.alias || data?.name || 'Service', // Use DB friendly name
-  originalTitle: data?.name, // Keep for reference
+    id: data?.id || data?.service_id || 'unknown',
+    title: data?.title || data?.name || data?.service_name || 'Service',
     description: data?.description || '',
     price: data?.price || data?.base_price || 0,
     category: data?.category || data?.vertical_name || data?.industry_name || 'General',

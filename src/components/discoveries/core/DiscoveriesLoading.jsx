@@ -1,10 +1,10 @@
 // src/components/discoveries/core/DiscoveriesLoading.jsx
-// REFACTORED - Single component for all loading states
+// UPDATED - Export MasonrySkeletonCard for individual use
 import { Skeleton } from '@/components/ui/skeleton';
 import { Card, CardContent } from '@/components/ui/card';
 
-// Masonry-style skeleton card that matches your Manifest component
-const MasonrySkeletonCard = ({ index = 0 }) => {
+// ✅ EXPORTED - Single skeleton card that matches your Manifest component
+export const MasonrySkeletonCard = ({ index = 0 }) => {
   // Variable heights matching your Manifest card variants
   const cardVariants = [
     { height: 'min-h-[240px]', variant: 'compact' },
@@ -156,7 +156,7 @@ const ListSkeletonCard = ({ index = 0 }) => {
   );
 };
 
-// Main DiscoveriesLoading component
+// Main DiscoveriesLoading component for initial page loads
 export default function DiscoveriesLoading({ 
   viewMode = 'grid', 
   count = 12,
@@ -173,7 +173,7 @@ export default function DiscoveriesLoading({
     );
   }
 
-  // Grid/Masonry view skeletons
+  // Grid/Masonry view skeletons - for INITIAL page loads only
   return (
     <div className={`columns-1 sm:columns-2 md:columns-2 lg:columns-3 xl:columns-4 2xl:columns-5 gap-6 space-y-6 ${className}`}>
       {[...Array(count)].map((_, i) => (
