@@ -1,9 +1,9 @@
 // src/app/browse-services/page.jsx
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { Search, Grid, List, ArrowRight, AlertCircle, MoreVertical, LogIn } from 'lucide-react';
+import { Search, Grid, List, ArrowRight, AlertCircle, MoreVertical, LogIn, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -139,11 +139,36 @@ export default function BrowseServicesPage() {
   const [filters, setFilters] = useState({
     category: ''
   });
+  
+  // Mobile search expansion state
+  const [isSearchExpanded, setIsSearchExpanded] = useState(false);
+  const searchInputRef = useRef(null);
 
   // Fetch services
   useEffect(() => {
     fetchServices();
   }, [filters]);
+
+  // Handle search expansion focus
+  useEffect(() => {
+    if (isSearchExpanded && searchInputRef.current) {
+      searchInputRef.current.focus();
+    }
+  }, [isSearchExpanded]);
+
+  // Close search on outside click (mobile)
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (searchInputRef.current && !searchInputRef.current.parentElement.contains(event.target)) {
+        setIsSearchExpanded(false);
+      }
+    };
+
+    if (isSearchExpanded) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => document.removeEventListener('mousedown', handleClickOutside);
+    }
+  }, [isSearchExpanded]);
 
   const fetchServices = async () => {
     let hasError = false;
@@ -255,34 +280,96 @@ export default function BrowseServicesPage() {
     router.push(`/login?returnTo=${returnUrl}`);
   };
 
+  const handleSearchToggle = () => {
+    setIsSearchExpanded(!isSearchExpanded);
+    if (isSearchExpanded && !searchQuery) {
+      // If closing and no search query, ensure it's cleared
+      setSearchQuery('');
+    }
+  };
+
+  const clearSearch = () => {
+    setSearchQuery('');
+    setIsSearchExpanded(false);
+  };
+
   return (
     <div className="min-h-screen bg-background">
       {/* Pinterest-Style Header */}
       <div className="sticky top-0 z-50 bg-white border-b border-gray-200">
         <div className="container mx-auto px-4">
           <div className="flex items-center justify-between h-20">
-            {/* Logo/Brand */}
-            <div className="flex items-center gap-2">
-             
-              <h1 className="text-xl font-bold text-gray-900 hidden sm:block">maven republic</h1>
-              <h1 className="text-xl font-bold text-gray-900 sm:hidden">Maven</h1>
+            {/* Logo/Brand - Hide when search is expanded on mobile */}
+            <div className={cn(
+              "flex items-center gap-2 transition-all duration-300",
+              isSearchExpanded ? "lg:flex hidden" : "flex"
+            )}>
+              <h1 className="text-xl font-bold text-gray-900">maven republic</h1>
             </div>
 
-            {/* Search Bar */}
-            <div className="flex-1 max-w-2xl mx-4 lg:mx-8 relative">
+            {/* Desktop Search Bar - Always visible on desktop */}
+            <div className="hidden lg:block lg:flex-1 lg:max-w-2xl lg:mx-8">
               <div className="relative">
                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
                 <Input
                   placeholder="Search services, categories, or descriptions..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-12 pr-4 h-12 text-base bg-gray-50 border-gray-200 rounded-full hover:bg-white hover:shadow-sm focus:bg-white focus:shadow-sm transition-all duration-200"
+                  className="w-full pl-12 pr-12 h-12 text-base bg-gray-50 border-gray-200 rounded-full hover:bg-white hover:shadow-sm focus:bg-white focus:shadow-sm transition-all duration-200"
                 />
+                {/* Clear button - only show when there's text */}
+                {searchQuery && (
+                  <button
+                    onClick={() => setSearchQuery('')}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400 hover:text-gray-600 transition-colors"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                )}
               </div>
             </div>
 
-            {/* Auth Buttons */}
-            <div className="flex items-center gap-3">
+            {/* Mobile Expandable Search Bar - Only visible when expanded */}
+            {isSearchExpanded && (
+              <div className="flex-1 mx-2 lg:hidden">
+                <div className="relative">
+                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+                  <Input
+                    ref={searchInputRef}
+                    placeholder="Search services..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="w-full pl-12 pr-12 h-12 text-base bg-gray-50 border-gray-200 rounded-full hover:bg-white hover:shadow-sm focus:bg-white focus:shadow-sm transition-all duration-200"
+                  />
+                  {/* Clear button - only show when there's text */}
+                  {searchQuery && (
+                    <button
+                      onClick={clearSearch}
+                      className="absolute right-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400 hover:text-gray-600 transition-colors"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Mobile Search Button - Only visible when search is not expanded */}
+            <button
+              onClick={handleSearchToggle}
+              className={cn(
+                "lg:hidden p-2 rounded-full hover:bg-gray-100 transition-colors",
+                isSearchExpanded ? "hidden" : "block"
+              )}
+            >
+              <Search className="h-5 w-5 text-gray-600" />
+            </button>
+
+            {/* Auth Buttons - Hide when search is expanded on mobile */}
+            <div className={cn(
+              "flex items-center gap-3 transition-all duration-300",
+              isSearchExpanded ? "lg:flex hidden" : "flex"
+            )}>
               <Button 
                 variant="ghost" 
                 onClick={handleLoginRedirect}
@@ -292,7 +379,7 @@ export default function BrowseServicesPage() {
               </Button>
               <Button 
                 onClick={() => router.push('/register')}
-                className="text-white font-semibold px-6 rounded-full"
+                className="text-white font-semibold px-6 rounded-full hidden sm:flex"
               >
                 Create account
               </Button>
@@ -302,10 +389,24 @@ export default function BrowseServicesPage() {
                 <MoreVertical className="h-5 w-5" />
               </Button>
             </div>
+
+            {/* Mobile Search Close Button - Only visible when search is expanded */}
+            <button
+              onClick={handleSearchToggle}
+              className={cn(
+                "lg:hidden p-2 rounded-full hover:bg-gray-100 transition-colors",
+                isSearchExpanded ? "block" : "hidden"
+              )}
+            >
+              <X className="h-5 w-5 text-gray-600" />
+            </button>
           </div>
 
-          {/* Category Pills */}
-          <div className="pb-4">
+          {/* Category Pills - Hide when search is expanded on mobile */}
+          <div className={cn(
+            "pb-4 transition-all duration-300",
+            isSearchExpanded ? "lg:block hidden" : "block"
+          )}>
             <div className="flex items-center gap-3 overflow-x-auto scrollbar-none [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
               <div 
                 className={cn(
@@ -369,42 +470,6 @@ export default function BrowseServicesPage() {
         </div>
       </div>
 
-      {/* Controls Bar
-      <div className="bg-muted/30 border-b">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-            <div className="flex items-center gap-4">
-              <div className="text-sm text-muted-foreground">
-                <span className="font-medium">{filteredServices.length}</span> services 
-                {searchQuery && <span> matching "{searchQuery}"</span>}
-                {filters.category && <span> in {filters.category}</span>}
-              </div>
-            </div>
-
-            <div className="flex items-center gap-3">
-              <div className="flex rounded-md border">
-                <Button
-                  variant={viewMode === 'grid' ? 'default' : 'ghost'}
-                  size="sm"
-                  onClick={() => setViewMode('grid')}
-                  className="rounded-r-none"
-                >
-                  <Grid className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant={viewMode === 'list' ? 'default' : 'ghost'}
-                  size="sm"
-                  onClick={() => setViewMode('list')}
-                  className="rounded-l-none"
-                >
-                  <List className="h-4 w-4" />
-                </Button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div> */}
-
       {/* Main Content */}
       <div className="container mx-auto px-4 py-8">
         {isLoading ? (
@@ -465,27 +530,6 @@ export default function BrowseServicesPage() {
             ))}
           </div>
         )}
-
-        {/* Bottom Call to Action
-        {!isLoading && filteredServices.length > 0 && (
-          <div className="mt-16 text-center">
-            <div className="bg-gradient-to-r from-primary/5 to-primary/10 rounded-xl p-8 border border-primary/20">
-              <h2 className="text-2xl font-bold mb-3">Ready to book a service?</h2>
-              <p className="text-muted-foreground mb-6">
-                Join thousands of satisfied customers who trust our platform for their service needs.
-              </p>
-              <div className="flex flex-col sm:flex-row gap-3 justify-center">
-                <Button onClick={handleLoginRedirect} size="lg" className="gap-2">
-                  <LogIn className="h-5 w-5" />
-                  Login to Get Started
-                </Button>
-                <Button variant="outline" size="lg" onClick={() => router.push('/register')}>
-                  Create Account
-                </Button>
-              </div>
-            </div>
-          </div>
-        )} */}
       </div>
     </div>
   );

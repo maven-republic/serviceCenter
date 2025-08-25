@@ -270,24 +270,18 @@ export default function AddressConfirmation({
   return (
     <Card className={className}>
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <MapPin className="h-5 w-5" />
-          Confirm Service Location
-        </CardTitle>
+        
         
         {/* User status badge */}
         <div className="flex items-center gap-2">
-          <Badge variant="outline" className="w-fit">
-            <User className="h-3 w-3 mr-1" />
-            Registered Customer
-          </Badge>
           
-          {registeredAddress && (
+          
+          {/* {registeredAddress && (
             <Badge variant="outline" className="w-fit">
               <Home className="h-3 w-3 mr-1" />
               Address on File
             </Badge>
-          )}
+          )} */}
         </div>
       </CardHeader>
 
@@ -309,7 +303,7 @@ export default function AddressConfirmation({
                 <div className="flex-1">
                   <h3 className="font-medium text-green-800 mb-2 flex items-center gap-2">
                     <Home className="h-4 w-4" />
-                    Your Registered Address
+                    Your registered address
                   </h3>
                   <p className="text-green-700 text-sm leading-relaxed">
                     {registeredAddress.formatted_address}
@@ -387,7 +381,7 @@ export default function AddressConfirmation({
           <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
             <h4 className="font-medium text-gray-800 mb-2 flex items-center gap-2">
               <MapPin className="h-4 w-4" />
-              Selected Service Location
+              Selected service location
             </h4>
             <p className="text-gray-700 text-sm">
               {selectedAddress.formatted_address}
@@ -422,32 +416,7 @@ export default function AddressConfirmation({
           )}
         </Button>
 
-        {/* Development Debug Info */}
-        {process.env.NODE_ENV === 'development' && (
-          <details className="text-xs text-gray-500 bg-yellow-50 p-3 rounded border">
-            <summary className="font-medium cursor-pointer">🔍 Debug Info</summary>
-            <pre className="mt-2 whitespace-pre-wrap text-xs">
-              {JSON.stringify({
-                accountId,
-                addressMode,
-                hasRegisteredAddress: !!registeredAddress,
-                hasSelectedAddress: !!selectedAddress,
-                registeredAddressPreview: registeredAddress ? {
-                  formatted_address: registeredAddress.formatted_address,
-                  lat: registeredAddress.lat,
-                  lng: registeredAddress.lng
-                } : null,
-                selectedAddressPreview: selectedAddress ? {
-                  formatted_address: selectedAddress.formatted_address,
-                  lat: selectedAddress.lat,
-                  lng: selectedAddress.lng
-                } : null,
-                isLoading,
-                error
-              }, null, 2)}
-            </pre>
-          </details>
-        )}
+        
       </CardContent>
     </Card>
   )
