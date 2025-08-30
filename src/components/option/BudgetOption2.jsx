@@ -30,7 +30,7 @@ export default function BudgetOption2() {
 
   return (
     <>
-      <div className="card-body card-body px-0 pt-0">
+      <div className="px-0 pt-0">
         <div className="range-slider-style2">
           <div className="range-wrapper">
             <div className="price__range__box">
@@ -45,10 +45,11 @@ export default function BudgetOption2() {
                 minDistance={10}
               />
             </div>
-            <div className="d-flex gap-1 align-items-center pt-4">
+
+            <div className="flex items-center gap-1 pt-4">
               <input
                 type="number"
-                className="amount w-100"
+                className="amount w-full"
                 placeholder="$20"
                 min={0}
                 value={getPrice.min}
@@ -62,7 +63,7 @@ export default function BudgetOption2() {
               <span className="fa-sharp fa-solid fa-minus mx-1 dark-color" />
               <input
                 type="number"
-                className="amount2 w-100"
+                className="amount2 w-full"
                 placeholder="$100000"
                 min={0}
                 max={100000}
@@ -81,4 +82,3 @@ export default function BudgetOption2() {
     </>
   );
 }
-

@@ -25,54 +25,54 @@ export default function PopularServiceCard1({
         } ${path === "/home-7" ? "style5" : ""} ${style}`}
         style={path === "/home-20" ? { border: "none", boxShadow: "none" } : {}}
       >
-        <div className="list-thumb">
+        <div className="list-thumb relative">
           <Image
             height={247}
             width={331}
-            className="w-100"
+            className="w-full"
             src={data.img}
             alt="thumbnail"
           />
           <a
             onClick={() => setFavActive(!isFavActive)}
-            className={`listing-fav fz12 ${isFavActive ? "ui-fav-active" : ""}`}
+            className={`listing-fav text-xs ${isFavActive ? "ui-fav-active" : ""}`}
           >
             <span className="far fa-heart" />
           </a>
         </div>
         <div className={`list-content ${isContentExpanded ? "px-0" : ""}`}>
-          <p className="list-text body-color fz14 mb-1">{data.category}</p>
+          <p className="list-text body-color text-sm mb-1">{data.category}</p>
           <h5 className="list-title">
             <Link href={`/service-single/${data.id}`}>
               {data.title.slice(0, 40) + "..."}
             </Link>
           </h5>
-          <div className="review-meta d-flex align-items-center">
-            <i className="fas fa-star fz10 review-color me-2" />
-            <p className="mb-0 body-color fz14">
-              <span className="dark-color me-2">{data.rating}</span>
+          <div className="review-meta flex items-center">
+            <i className="fas fa-star text-[10px] review-color mr-2" />
+            <p className="mb-0 body-color text-sm">
+              <span className="dark-color mr-2">{data.rating}</span>
               {data.review} reviews
             </p>
           </div>
           <hr className="my-2" />
-          <div className="list-meta d-flex justify-content-between align-items-center mt15">
-            <Link className="d-flex" href="/">
-              <span className="position-relative mr10">
+          <div className="list-meta flex justify-between items-center mt-[15px]">
+            <Link className="flex" href="/">
+              <span className="relative mr-[10px]">
                 <Image
                   height={30}
                   width={30}
-                  className="rounded-circle wa"
+                  className="rounded-full object-contain"
                   src={data.author.img}
                   alt="Freelancer Photo"
                 />
                 <span className="online-badges" />
               </span>
-              <span className="fz14">{data.author.name}</span>
+              <span className="text-sm">{data.author.name}</span>
             </Link>
             <div className="budget">
               <p className="mb-0 body-color">
                 Starting at
-                <span className="fz17 fw500 dark-color ms-1">
+                <span className="text-lg font-medium dark-color ml-1">
                   ${data.price}
                 </span>
               </p>
@@ -83,4 +83,3 @@ export default function PopularServiceCard1({
     </>
   );
 }
-

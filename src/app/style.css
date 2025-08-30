@@ -280,7 +280,7 @@ li {
 }
 .footer-style1.at-home18 {
   background-color: transparent;
-  background-image: url(../images/background/home18-footer-bg.png);
+  background-image: url(/images/background/home18-footer-bg.png);
   background-size: cover;
   background-position: top;
   background-repeat: no-repeat;
@@ -684,7 +684,7 @@ li {
 
 .breadcumb-section2 {
   align-items: center;
-  /* background-image: url(../images/background/about-page-bg.html); */
+  /* background-image: url(/images/background/about-page-bg.html); */
   background-size: cover;
   background-position: center;
   display: flex;
@@ -693,7 +693,7 @@ li {
 
 .breadcumb-section3 {
   align-items: center;
-  /* background-image: url(../images/background/compare-bg.html); */
+  /* background-image: url(/images/background/compare-bg.html); */
   background-size: cover;
   background-position: center;
   display: flex;
@@ -2067,7 +2067,7 @@ li {
 }
 
 .property_video {
-  /* background-image: url(../images/listings/listing-single-6.html); */
+  /* background-image: url(/images/listings/listing-single-6.html); */
   background-position: center;
   background-repeat: no-repeat;
   background-size: cover;
@@ -2594,7 +2594,7 @@ li {
 /*	Home 2 Banner  */
 /*	Home 3 Banner */
 .home3-hero {
-  background-image: url(../images/background/home3-bg.png);
+  background-image: url(/images/background/home3-bg.png);
   align-items: center;
   display: flex;
   height: 670px;
@@ -2742,7 +2742,7 @@ li {
 
 /*	Home 2 Banner */
 .hero-home2 {
-  background-image: url(../images/background/home2-hero-bg.jpg);
+  background-image: url(/images/background/home2-hero-bg.jpg);
   background-position: center bottom;
   background-size: cover;
   align-items: flex-end;
@@ -2933,7 +2933,7 @@ li {
 }
 
 .home6-newslatter {
-  background-image: url(../images/background/home6-newslatter-bg.jpg);
+  background-image: url(/images/background/home6-newslatter-bg.jpg);
   background-size: cover;
   background-repeat: no-repeat;
 }
@@ -2993,7 +2993,7 @@ li {
 
 /*	Home 8 Banner */
 .hero-home8 {
-  background-image: url(../images/background/home8-hero-bg.jpg);
+  background-image: url(/images/background/home8-hero-bg.jpg);
   background-size: cover;
   background-repeat: no-repeat;
   align-items: center;
@@ -3166,7 +3166,7 @@ li {
 
 /*	Home 12 Banner */
 .hero-home12 {
-  background-image: url(../images/background/home12-hero-bg.png);
+  background-image: url(/images/background/home12-hero-bg.png);
   display: flex;
   align-items: center;
   height: 860px;
@@ -3282,7 +3282,7 @@ li {
 
 /*	Home 13 Banner */
 .hero-home13 {
-  background-image: url(../images/background/home13-hero-bg.png);
+  background-image: url(/images/background/home13-hero-bg.png);
   display: flex;
   align-items: center;
   height: 660px;
@@ -3294,14 +3294,14 @@ li {
   }
 }
 .hero-home13.at-home17 {
-  background-image: url(../images/background/home17-hero-bg.png);
+  background-image: url(/images/background/home17-hero-bg.png);
 }
 .hero-home13.at-home18 {
-  background-image: url(../images/background/home18-hero-bg.png);
+  background-image: url(/images/background/home18-hero-bg.png);
   border-radius: 30px;
 }
 .hero-home13.at-home20 {
-  background-image: url(../images/background/home20-hero-bg.png);
+  background-image: url(/images/background/home20-hero-bg.png);
   background-position: center;
   background-repeat: no-repeat;
 }
@@ -3522,7 +3522,7 @@ li {
 
 /*	Home 16 Banner */
 .hero-home16 {
-  background-image: url(../images/background/home16-hero-bg.png);
+  background-image: url(/images/background/home16-hero-bg.png);
   background-position: center center;
   background-repeat: no-repeat;
   background-size: cover;
@@ -4248,7 +4248,7 @@ section.full-height {
 /* Custom Search Sugguestions Code End */
 .preloader {
   background-color: #eaeaea;
-  background-image: url("../images/preloader.gif");
+  background-image: url("/images/preloader.gif");
   background-position: center center;
   background-repeat: no-repeat;
   height: 100%;
@@ -4412,7 +4412,7 @@ section.full-height {
 
 /*	All CTA Styles Here  */
 .cta-service-v1 {
-  background-image: url(../images/background/cta-service-v1-bg.jpg);
+  background-image: url(/images/background/cta-service-v1-bg.jpg);
   background-repeat: no-repeat;
   background-size: cover;
   height: 300px;
@@ -4431,28 +4431,28 @@ section.full-height {
 }
 
 .cta-service-v2 {
-  background-image: url(../images/background/cta-service-v2-bg.jpg);
+  background-image: url(/images/background/cta-service-v2-bg.jpg);
   background-repeat: no-repeat;
   background-size: cover;
   height: 300px;
 }
 
 .cta-service-v3 {
-  background-image: url(../images/background/cta-service-v3-bg.jpg);
+  background-image: url(/images/background/cta-service-v3-bg.jpg);
   background-repeat: no-repeat;
   background-size: cover;
   height: 300px;
 }
 
 .cta-service-v4 {
-  background-image: url(../images/background/cta-service-v4-bg.jpg);
+  background-image: url(/images/background/cta-service-v4-bg.jpg);
   background-repeat: no-repeat;
   background-size: cover;
   height: 300px;
 }
 
 .cta-service-v6 {
-  background-image: url(../images/background/cta-service-v6-bg.jpg);
+  background-image: url(/images/background/cta-service-v6-bg.jpg);
   background-repeat: no-repeat;
   background-size: cover;
   height: 300px;
@@ -4464,7 +4464,7 @@ section.full-height {
 }
 
 .cta-service-single {
-  background-image: url(../images/background/cta-service-signle-bg.jpg);
+  background-image: url(/images/background/cta-service-signle-bg.jpg);
   background-repeat: no-repeat;
   background-size: cover;
   height: 300px;
@@ -4476,7 +4476,7 @@ section.full-height {
 }
 
 .cta-employee-single {
-  background-image: url(../images/background/cta-employee-list-v1.jpg);
+  background-image: url(/images/background/cta-employee-list-v1.jpg);
   background-repeat: no-repeat;
   background-size: cover;
   height: 300px;
@@ -4488,7 +4488,7 @@ section.full-height {
 }
 
 .cta-job-v1 {
-  background-image: url(../images/background/cta-job-list-v1.jpg);
+  background-image: url(/images/background/cta-job-list-v1.jpg);
   background-repeat: no-repeat;
   background-size: cover;
   height: 300px;
@@ -4509,14 +4509,14 @@ section.full-height {
 }
 
 .cta-about-v1 {
-  background-image: url(../images/background/cta-about-banner.jpg);
+  background-image: url(/images/background/cta-about-banner.jpg);
   background-repeat: no-repeat;
   background-size: cover;
   height: 300px;
 }
 
 .cta-home3-last {
-  background-image: url(../images/background/home3-cta-last.jpg);
+  background-image: url(/images/background/home3-cta-last.jpg);
   background-size: cover;
   background-repeat: no-repeat;
 }
@@ -4616,7 +4616,7 @@ section.full-height {
 
 .cta-banner4 {
   background-attachment: fixed;
-  /* background-image: url(../images/background/cta-bg-1.html); */
+  /* background-image: url(/images/background/cta-bg-1.html); */
   background-position: center center;
   background-repeat: no-repeat;
   background-size: cover;
@@ -4653,7 +4653,7 @@ section.full-height {
 }
 
 .cta-banner5:before {
-  background-image: url(../images/about/about-7.jpg);
+  background-image: url(/images/about/about-7.jpg);
   background-size: cover;
   content: "";
   position: absolute;
@@ -4688,7 +4688,7 @@ section.full-height {
 }
 
 .cta-banner6:before {
-  /* background-image: url(../images/about/cta-side-bg-3.html); */
+  /* background-image: url(/images/about/cta-side-bg-3.html); */
   background-size: cover;
   content: "";
   position: absolute;
@@ -4898,10 +4898,10 @@ section.full-height {
   }
 }
 .cta-home4.at-home12 {
-  background-image: url(../images/background/home12-cta-1.png);
+  background-image: url(/images/background/home12-cta-1.png);
 }
 .cta-home4.at-home13 {
-  background-image: url(../images/background/home13-cta-1.png);
+  background-image: url(/images/background/home13-cta-1.png);
 }
 
 .cta-home5-style {
@@ -5008,11 +5008,11 @@ section.full-height {
 }
 
 .home11-cta-2 {
-  background-image: url(../images/background/home11-cta-2.png);
+  background-image: url(/images/background/home11-cta-2.png);
 }
 
 .home11-cta-3 {
-  background-image: url(../images/background/home11-cta-3.png);
+  background-image: url(/images/background/home11-cta-3.png);
   display: flex;
   align-items: center;
   height: 500px;
@@ -5023,7 +5023,7 @@ section.full-height {
   }
 }
 .home11-cta-3.at-home13 {
-  background-image: url(../images/background/home13-cta-1.png);
+  background-image: url(/images/background/home13-cta-1.png);
 }
 .home11-cta-3.at-home15 {
   background-image: inherit;
@@ -6719,21 +6719,18 @@ textarea {
 
 .online-badge,
 .online-badges {
-  right: 3px;
-  top: -9px;
+  right: -2px;
+  top: -2px;
   height: 9px;
   width: 9px;
 }
-@media (max-width: 575.98px) {
+/* @media (max-width: 575.98px) {
   .online-badge,
   .online-badges {
     right: 0;
   }
-}
-
-.online-badges {
-  top: 0;
-}
+} */
+ 
 
 .online-badge2 {
   height: 9px;
@@ -7228,7 +7225,7 @@ textarea {
 }
 
 .btn-thm {
-  background-color: var(--primary-color);
+  background-color: var(--primary-color)!important;
   border: 2px solid var(--primary-color);
   color: #ffffff;
 }
@@ -7865,7 +7862,7 @@ textarea {
 }
 
 .home11-funfact {
-  background-image: url(../images/background/home11-cta-1.png);
+  background-image: url(/images/background/home11-cta-1.png);
   background-size: cover;
 }
 
@@ -9927,7 +9924,7 @@ input:focus-visible {
   width: 150px;
 }
 .service-single-sldier button.owl-dot:first-child {
-  background-image: url(../images/listings/service-details-s-1.jpg);
+  background-image: url(/images/listings/service-details-s-1.jpg);
   background-size: cover;
   background-repeat: no-repeat;
 }
@@ -9937,7 +9934,7 @@ input:focus-visible {
   }
 }
 .service-single-sldier button.owl-dot:nth-child(2) {
-  background-image: url(../images/listings/service-details-s-2.jpg);
+  background-image: url(/images/listings/service-details-s-2.jpg);
   background-size: cover;
   background-repeat: no-repeat;
 }
@@ -9947,7 +9944,7 @@ input:focus-visible {
   }
 }
 .service-single-sldier button.owl-dot:nth-child(3) {
-  background-image: url(../images/listings/service-details-s-3.jpg);
+  background-image: url(/images/listings/service-details-s-3.jpg);
   background-size: cover;
   background-repeat: no-repeat;
 }
@@ -9989,7 +9986,7 @@ input:focus-visible {
   width: 150px;
 }
 .employee-single-slider button.owl-dot:first-child {
-  background-image: url(../images/about/employee-single-2.jpg);
+  background-image: url(/images/about/employee-single-2.jpg);
   background-size: cover;
   background-repeat: no-repeat;
 }
@@ -9999,7 +9996,7 @@ input:focus-visible {
   }
 }
 .employee-single-slider button.owl-dot:nth-child(2) {
-  background-image: url(../images/about/employee-single-3.jpg);
+  background-image: url(/images/about/employee-single-3.jpg);
   background-size: cover;
   background-repeat: no-repeat;
 }
@@ -10009,7 +10006,7 @@ input:focus-visible {
   }
 }
 .employee-single-slider button.owl-dot:nth-child(3) {
-  background-image: url(../images/about/employee-single-4.jpg);
+  background-image: url(/images/about/employee-single-4.jpg);
   background-size: cover;
   background-repeat: no-repeat;
 }
@@ -11089,22 +11086,22 @@ input:focus-visible {
 }
 
 .ps-v6-slider.owl-theme .owl-dots .owl-dot:first-child {
-  /* background-image: url(../images/listings/listing-single-6-1.html); */
+  /* background-image: url(/images/listings/listing-single-6-1.html); */
   background-position: center;
   background-size: cover;
 }
 .ps-v6-slider.owl-theme .owl-dots .owl-dot:nth-child(2) {
-  /* background-image: url(../images/listings/listing-single-6-2.html); */
+  /* background-image: url(/images/listings/listing-single-6-2.html); */
   background-position: center;
   background-size: cover;
 }
 .ps-v6-slider.owl-theme .owl-dots .owl-dot:nth-child(3) {
-  /* background-image: url(../images/listings/listing-single-6-3.html); */
+  /* background-image: url(/images/listings/listing-single-6-3.html); */
   background-position: center;
   background-size: cover;
 }
 .ps-v6-slider.owl-theme .owl-dots .owl-dot:nth-child(4) {
-  /* background-image: url(../images/listings/listing-single-6-4.html); */
+  /* background-image: url(/images/listings/listing-single-6-4.html); */
   background-position: center;
   background-size: cover;
 }
@@ -11997,7 +11994,7 @@ input:focus-visible {
 }
 
 .bgc-thm4 {
-  /* background-color: #ffede8; */
+  background-color: #ffede8;
 }
 
 .bgc-thm5 {

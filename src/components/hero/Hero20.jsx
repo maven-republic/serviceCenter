@@ -1,156 +1,135 @@
 "use client";
 import Image from "next/image";
 import HeroSearch1 from "../element/HeroSearch1";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 
-const role = ["City, state, or zip", "Miami", "New York"];
-
+const roleOptions = ["City, state, or zip", "Miami", "New York"];
 const popular = ["Designer", "Developer", "Web", "IOS", "PHP", "Senior"];
 
 export default function Hero20() {
   const [getSelectedRole, setSelectedRole] = useState(null);
-
-  // role handler
-  const roleHandler = (select) => {
-    setSelectedRole(select);
-  };
+  const [openRole, setOpenRole] = useState(false);
+  const roleRef = useRef(null);
   const router = useRouter();
 
-  // search handler
-  const searchHandler = () => {
-    router.push("/project-1");
+  const roleHandler = (select) => {
+    setSelectedRole(select);
+    setOpenRole(false);
   };
+  const searchHandler = () => router.push("/project-1");
+
+  useEffect(() => {
+    function onClickOutside(e) {
+      if (roleRef.current && !roleRef.current.contains(e.target)) setOpenRole(false);
+    }
+    document.addEventListener("mousedown", onClickOutside);
+    return () => document.removeEventListener("mousedown", onClickOutside);
+  }, []);
 
   return (
     <section className="hero-home13 at-home20 overflow-hidden">
-      <div className="home20-hero-imgs-left d-none d-lg-block">
-        <Image
-          width={94}
-          height={94}
-          src="/images/about/home20-hero-1.png"
-          alt=" image "
-          className="img-1 bounce-y"
-        /> 
-        <Image
-          width={68}
-          height={67}
-          src="/images/about/home20-hero-3.png"
-          alt=" image "
-          className="img-3 bounce-y"
-        />
-        <Image
-          width={93}
-          height={94}
-          src="/images/about/home20-hero-4.png"
-          alt=" image "
-          className="img-4 bounce-y"
-        />
+      {/* Floating decorations kept as-is */}
+      <div className="home20-hero-imgs-left hidden lg:block">
+        <Image width={94} height={94} src="/images/about/home20-hero-1.png" alt=" image " className="img-1 bounce-y" />
+        <Image width={68} height={67} src="/images/about/home20-hero-3.png" alt=" image " className="img-3 bounce-y" />
+        <Image width={93} height={94} src="/images/about/home20-hero-4.png" alt=" image " className="img-4 bounce-y" />
       </div>
-      <div className="home20-hero-imgs-right d-none d-lg-block">
-        <Image
-          width={65}
-          height={66}
-          src="/images/about/home20-hero-5.png"
-          alt=" image "
-          className="img-1 bounce-y"
-        /> 
-        <Image
-          width={94}
-          height={94}
-          src="/images/about/home20-hero-7.png"
-          alt=" image "
-          className="img-3 bounce-y"
-        />
-        <Image
-          width={94}
-          height={94}
-          src="/images/about/home20-hero-8.png"
-          alt=" image "
-          className="img-4 bounce-y"
-        />
+      <div className="home20-hero-imgs-right hidden lg:block">
+        <Image width={65} height={66} src="/images/about/home20-hero-5.png" alt=" image " className="img-1 bounce-y" />
+        <Image width={94} height={94} src="/images/about/home20-hero-7.png" alt=" image " className="img-3 bounce-y" />
+        <Image width={94} height={94} src="/images/about/home20-hero-8.png" alt=" image " className="img-4 bounce-y" />
       </div>
-      <div className="container">
-        <div className="row align-items-center justify-content-center">
-          <div className="col-xl-7">
+
+      <div className="max-w-7xl mx-auto px-4">
+        <div className="flex flex-wrap items-center justify-center">
+          <div className="w-full">
             <div className="home20-hero-content text-center">
-              <h1 className="animate-up-1 mb25 title">
-                Join us & Explore <br className="d-none d-xl-block" />
+              <h1 className="animate-up-1 mb-6 title">
+                Join us & Explore <br className="hidden xl:block" />
                 Thousands of Freelancer
               </h1>
-              <p className="text mb30 animate-up-2">
+
+              <p className="text mb-6 animate-up-2">
                 Work with talented people at the most affordable price to get
-                the most <br className="d-none d-lg-block" />
+                the most <br className="hidden lg:block" />
                 out of your time and cost
               </p>
-              <div className="advance-search-tab bgc-white bdr1-dark bdrs60 p10 bdrs4-sm banner-btn position-relative zi9 animate-up-3">
-                <div className="row">
-                  <div className="col-md-5 col-lg-6 col-xl-6">
-                    <div className="advance-search-field mb10-sm bdrr1 bdrn-sm">
-                      <HeroSearch1 />
-                    </div>
+
+              {/* === SEARCH BAR: single rounded pill === */} 
+              <div className="relative z-[9] animate-up-3">
+                <div className="
+                    flex flex-nowrap items-center gap-4
+                    border border-gray-300 rounded-full bg-white shadow-sm
+                    px-4 py-3
+                  ">
+                  {/* Left: Search input (bare) */}
+                  <div className="flex-1 min-w-0">
+                    <HeroSearch1 variant="bare" placeholder="What are you looking for?" />
                   </div>
-                  <div className="col-md-4 col-lg-4 col-xl-3">
-                    <div className="bselect-style1">
-                      <div className="dropdown bootstrap-select">
-                        <button
-                          type="button"
-                          className="btn dropdown-toggle btn-light"
-                          data-bs-toggle="dropdown"
+
+                  {/* Divider */}
+                  <div className="hidden sm:block h-6 w-px bg-gray-300 shrink-0" />
+
+                  {/* Location selector */}
+                  <div ref={roleRef} className="relative shrink-0 hidden sm:block">
+                    <button
+                      type="button"
+                      onClick={() => setOpenRole((s) => !s)}
+                      className="flex items-center gap-2 text-gray-900 whitespace-nowrap"
+                      aria-haspopup="listbox"
+                      aria-expanded={openRole}
+                    >
+                      {getSelectedRole ?? "City, state, or zip"}
+                      <span className="text-xs translate-y-[1px]">▾</span>
+                    </button>
+
+                    {/* Dropdown */}
+                    <ul
+                      className={`absolute right-0 mt-2 w-56 max-h-60 overflow-auto rounded-xl border bg-white shadow-lg transition-all duration-200
+                        ${openRole ? "opacity-100 visible translate-y-0" : "opacity-0 invisible -translate-y-1"}`}
+                      role="listbox"
+                    >
+                      {roleOptions.map((item) => (
+                        <li
+                          key={item}
+                          role="option"
+                          aria-selected={getSelectedRole === item}
+                          onMouseDown={() => roleHandler(item)}
+                          className={`px-4 py-2 cursor-pointer hover:bg-gray-100 ${
+                            getSelectedRole === item ? "bg-gray-100 font-medium" : ""
+                          }`}
                         >
-                          <div className="filter-option">
-                            <div className="filter-option-inner">
-                              <div className="filter-option-inner-inner">
-                                {getSelectedRole !== null
-                                  ? getSelectedRole
-                                  : "City, state, or zip"}
-                              </div>
-                            </div>{" "}
-                          </div>
-                        </button>
-                        <div className="dropdown-menu ">
-                          <div className="inner show">
-                            <ul className="dropdown-menu inner show">
-                              {role.map((item, index) => (
-                                <li
-                                  onClick={() => roleHandler(item)}
-                                  key={index}
-                                  className="selected active"
-                                >
-                                  <a
-                                    className={`dropdown-item selected ${
-                                      getSelectedRole === item ? "active" : ""
-                                    }`}
-                                  >
-                                    <span className="text">{item}</span>
-                                  </a>
-                                </li>
-                              ))}
-                            </ul>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
+                          {item}
+                        </li>
+                      ))}
+                    </ul>
                   </div>
-                  <div className="col-md-3 col-lg-2 col-xl-3">
-                    <div className="text-center text-xl-start">
-                      <button
-                        className="ud-btn btn-thm default-box-shadow2 bdrs60 bdrs4-sm w-100"
-                        type="button"
-                        onClick={searchHandler}
-                      >
-                        Search
-                      </button>
-                    </div>
-                  </div>
+
+                  {/* Search button (green pill) */}
+                  <button
+                    type="button"
+                    onClick={searchHandler}
+                    className="shrink-0 rounded-full bg-[#52B87A] text-white font-semibold
+                              px-7 py-3 hover:bg-[#45a46c] transition"
+                  >
+                    Search
+                  </button>
                 </div>
               </div>
-              <div className="d-block d-md-flex justify-content-center mt30 text-center animate-up-4">
-                <p className="hero-text fz15 me-2 mb-0">Popular Searches</p>
 
-                {popular.map((elm,i)=><a key={i} className="text" style={{marginRight:'5px'}} >
-                          {`${elm}${(i != (popular.length -1)) ? ',':' '}`}
-                        </a>)}
+
+              {/* === /SEARCH BAR === */}
+
+              {/* Popular Searches */}
+              <div className="block md:flex justify-center mt-8 text-center animate-up-4">
+                <p className="hero-text text-sm mr-2 mb-0">Popular Searches :</p>
+                {popular.map((elm, i) => (
+                  <span key={i} className="text text-gray-700">
+                    {elm}
+                    {i !== popular.length - 1 ? ", " : ""}
+                  </span>
+                ))}
               </div>
             </div>
           </div>
@@ -159,4 +138,3 @@ export default function Hero20() {
     </section>
   );
 }
-

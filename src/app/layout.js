@@ -1,6 +1,7 @@
 // src/app/layout.js
 import { DM_Sans } from 'next/font/google'
 import './globals.css'
+// import './style.css'
 import { createClient } from '@/utils/supabase/server'
 import ClientProviders from '@/components/ClientProviders'
 

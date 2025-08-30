@@ -2,67 +2,94 @@ import Image from "next/image";
 import Link from "next/link";
 
 export default function ProjectCard1({ data }) {
+  const shownTags = data.tags?.slice(0, 3) ?? [];
+  const extraCount = Math.max(0, (data.tags?.length || 0) - shownTags.length);
+
   return (
-    <>
-      <div className="freelancer-style1 bdr1 hover-box-shadow row ms-0 align-items-lg-center">
-        <div className="col-lg-8 ps-0">
-          <div className="d-lg-flex bdrr1 bdrn-xl pr15 pr0-lg">
-            <div className="thumb w60 position-relative rounded-circle mb15-md">
-              <Image
-                height={60}
-                width={60}
-                className="rounded-circle mx-auto"
-                src={data.img}
-                alt="rounded-circle"
-              />
-              <span className="online-badge2" />
-            </div>
-            <div className="details ml15 ml0-md mb15-md">
-              <h5 className="title mb-3">{data.title}</h5>
-              <p className="mb-0 fz14 list-inline-item mb5-sm pe-1">
-                <i className="flaticon-place fz16 vam text-thm2 me-1" />{" "}
-                {data.location}
-              </p>
-              <p className="mb-0 fz14 list-inline-item mb5-sm pe-1">
-                <i className="flaticon-30-days fz16 vam text-thm2 me-1 bdrl1 pl15 pl0-xs bdrn-xs" />{" "}
-                2 hours ago
-              </p>
-              <p className="mb-0 fz14 list-inline-item mb5-sm">
-                <i className="flaticon-contract fz16 vam text-thm2 me-1 bdrl1 pl15 pl0-xs bdrn-xs" />{" "}
-                1 Received
-              </p>
-              <p className="text mt10">{data.brief}</p>
-              <div className="skill-tags d-flex align-items-center justify-content-start">
-                {data.tags.map((item, i) => (
-                  <span key={i} className={`tag ${i === 1 ? "mx10" : ""}`}>
-                    {item}
-                  </span>
-                ))}
-              </div>
-            </div>
+    <div className="relative flex flex-col md:flex-row items-start rounded-xl border bg-white p-6 md:p-7 hover:shadow-sm">
+      {/* fav */}
+      <button
+        type="button"
+        aria-label="favorite"
+        className="absolute right-3 top-3 grid h-8 w-8 place-content-center rounded-full border border-slate-200 text-slate-500 hover:text-emerald-600"
+      >
+        <i className="far fa-heart" />
+      </button>
+
+      {/* left */}
+      <div className="flex min-w-0 flex-1 gap-4 md:gap-5">
+        <Image
+          height={60}
+          width={60}
+          src={data.img}
+          alt={data.title}
+          className="h-[60px] w-[60px] rounded-lg object-cover"
+        />
+
+        <div className="min-w-0">
+          <h5 className="mb-1.5 text-[18px] md:text-[20px] font-semibold text-slate-900">
+            {data.title}
+          </h5>
+
+          {/* meta */}
+          <div className="mb-3 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-slate-600">
+            <span className="inline-flex items-center gap-2">
+              <i className="flaticon-place text-emerald-600" />
+              {data.location}
+            </span>
+            <span className="hidden h-4 w-px bg-slate-200 md:inline-block" />
+            <span className="inline-flex items-center gap-2">
+              <i className="flaticon-30-days text-emerald-600" />
+              Posted 3 years ago
+            </span>
+            <span className="hidden h-4 w-px bg-slate-200 md:inline-block" />
+            <span className="inline-flex items-center gap-2">
+              <i className="flaticon-contract text-emerald-600" />
+              2 Proposals
+            </span>
           </div>
-        </div>
-        <div className="col-lg-4 ps-0 ps-xl-3 pe-0">
-          <div className="details">
-            <div className="text-lg-end">
-              <h4>
-                ${data.price.min} - ${data.price.max}
-              </h4>
-              <p className="text">Hourly Rate</p>
-            </div>
-            <div className="d-grid mt15">
-              <Link
-                href={`/project-single/${data.id}`}
-                className="ud-btn btn-light-thm"
+
+          {/* brief */}
+          <p className="mb-4 max-w-[60ch] text-slate-600/90 line-clamp-2">
+            {data.brief}
+          </p>
+
+          {/* tags */}
+          <div className="flex flex-wrap items-center gap-2 md:gap-3">
+            {shownTags.map((t, i) => (
+              <span
+                key={i}
+                className="rounded-full bg-[#F7E7E3] px-3 py-1 text-sm text-slate-700"
               >
-                Send Proposal
-                <i className="fal fa-arrow-right-long" />
-              </Link>
-            </div>
+                {t}
+              </span>
+            ))}
+            {extraCount > 0 && (
+              <span className="text-slate-600">+{extraCount}</span>
+            )}
           </div>
         </div>
       </div>
-    </>
+
+      {/* divider */}
+      <span className="my-5 hidden self-stretch md:mx-6 md:block md:w-px md:bg-slate-200" />
+
+      {/* right */}
+      <div className="w-full md:w-[300px] md:pl-0 flex items-center md:block md:text-right gap-4 md:gap-3">
+        <div className="md:ml-auto">
+          <h4 className="text-[18px] md:text-[20px] font-semibold text-slate-900">
+            ${data.price.min} – ${data.price.max}
+          </h4>
+          <p className="text-sm text-slate-500">Hourly rate</p>
+        </div>
+
+        <Link
+          href={`/project-single/${data.id}`}
+          className="ml-auto md:ml-0 inline-flex h-12 md:h-14 w-[220px] md:w-[260px] items-center justify-center gap-2 rounded-xl border border-[#DCEFE6] bg-[#E6F3EB] text-emerald-700 font-semibold hover:bg-[#DCF0E4] transition"
+        >
+          Send Proposal <span aria-hidden>↗</span>
+        </Link>
+      </div>
+    </div>
   );
 }
-

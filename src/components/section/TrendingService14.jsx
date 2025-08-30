@@ -17,73 +17,71 @@ const categories = [
 
 export default function TrendingService14() {
   const [getCurrentCategory, setCurrentCategory] = useState("All");
-
-  // tab handler
-  const tabHandler = (select) => {
-    setCurrentCategory(select);
-  };
-
   const path = usePathname();
 
+  const tabHandler = (select) => setCurrentCategory(select);
+
+  const filtered = product1
+    .filter((item) =>
+      getCurrentCategory === "All" ? item : item.tag === getCurrentCategory
+    )
+    .slice(0, 4);
+
   return (
-    <>
-      <section className={`pt-0 ${path === "/home-9" ? "pb0" : "pb100"}`}>
-        <div className="container">
-          <div className="row align-items-center wow fadeInUp">
-            <div className="col-xl-4">
-              <div className="main-title mb30-lg">
-                <h2 className="title" style={{whiteSpace:"nowrap"}}>Trending Services</h2>
-                <p className="paragraph">
-                  Most viewed and all-time top-selling services
-                </p>
-              </div>
+    <section className={`pt-0 ${path === "/home-9" ? "pb-0" : "pb-24"}`}>
+      <div className="max-w-7xl mx-auto px-4">
+        {/* Header row */}
+        <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-6">
+          {/* Left: Title */}
+          <div className="w-full xl:w-4/12">
+            <div className="main-title">
+              <h2 className="title whitespace-nowrap">Trending Services</h2>
+              <p className="paragraph">
+                Most viewed and all-time top-selling services
+              </p>
             </div>
-            <div className="col-xl-8">
-              <div className="navpill-style2 at-home9 mb50-lg">
-                <ul
-                  className="nav nav-pills mb20 justify-content-xl-end"
-                  id="pills-tab"
-                >
-                  {categories.map((item, index) => (
-                    <li key={index} className="nav-item">
+          </div>
+
+          {/* Right: Tabs */}
+          <div className="w-full xl:w-8/12">
+            <div className="navpill-style2 at-home9">
+              <ul className="flex flex-wrap gap-2 justify-center xl:justify-end mb-8">
+                {categories.map((item) => {
+                  const active = getCurrentCategory === item;
+                  return (
+                    <li key={item}>
                       <button
                         onClick={() => tabHandler(item)}
-                        className={`nav-link fw500 dark-color ${
-                          getCurrentCategory === item ? "active" : ""
-                        }`}
+                        className={[
+                          "px-4 py-2 rounded-full text-sm font-medium transition",
+                          active
+                            ? "bg-primary text-white"
+                            : "bg-white text-gray-800 border border-gray-300 hover:bg-gray-50",
+                        ].join(" ")}
                       >
                         {item}
                       </button>
                     </li>
-                  ))}
-                </ul>
-              </div>
-            </div>
-          </div>
-          <div className="row">
-            <div className="col-lg-12">
-              <div className="row">
-                {product1.filter((item) =>
-                    getCurrentCategory === "All"
-                      ? item
-                      : item.tag === getCurrentCategory && item,
-                  )
-                  .slice(0, 4)
-                  .map((item,i) => (
-                    <div key={ i } className="col-sm-6 col-xl-3">
-                      {item.gallery ? (
-                        <PopularServiceSlideCard1 data={item} />
-                      ) : (
-                        <PopularServiceCard1 data={item} />
-                      )}
-                    </div>
-                  ))}
-              </div>
+                  );
+                })}
+              </ul>
             </div>
           </div>
         </div>
-      </section>
-    </>
+
+        {/* Cards grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6">
+          {filtered.map((item, i) => (
+            <div key={i} className="w-full">
+              {item.gallery ? (
+                <PopularServiceSlideCard1 data={item} />
+              ) : (
+                <PopularServiceCard1 data={item} />
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
   );
 }
-

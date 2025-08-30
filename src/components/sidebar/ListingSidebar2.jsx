@@ -10,195 +10,76 @@ import SpeakOption1 from "../option/SpeakOption1";
 export default function ListingSidebar2() {
   return (
     <>
-      <div className="list-sidebar-style1 d-none d-lg-block">
-        <div className="accordion" id="accordionExample">
-          <div className="card mb20 pb10 mt-0">
-            <div className="card-header" id="heading0">
-              <h4>
-                <button
-                  className="btn btn-link ps-0 pt-0 collapsed"
-                  type="button"
-                  data-bs-toggle="collapse"
-                  data-bs-target="#collapse0"
-                  aria-expanded="false"
-                  aria-controls="collapse0"
-                >
-                  Category
-                </button>
-              </h4>
+      <div className="list-sidebar-style1 hidden lg:block">
+        {/* sections with Upwork-style spacing & dividers */}
+        <div className="divide-y divide-slate-200">
+          {/* Categories */}
+          <section className="py-6 first:pt-0">
+            <h4 className="text-lg font-semibold text-slate-900 mb-4">Categories</h4>
+            <div className="space-y-3">
+              <CategoryOption1 />
+              <button className="inline-flex items-center text-emerald-600 hover:text-emerald-700 text-sm font-medium">
+                <svg className="h-4 w-4 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                  <path d="M10 4a1 1 0 011 1v4h4a1 1 0 110 2h-4v4a1 1 0 11-2 0v-4H5a1 1 0 110-2h4V5a1 1 0 011-1z" />
+                </svg>
+                Show More
+              </button>
             </div>
-            <div
-              id="collapse0"
-              className="collapse show"
-              aria-labelledby="heading0"
-              data-parent="#accordionExample"
-            >
-              <div className="card-body card-body px-0 pt-0">
-                <CategoryOption1 />
-                <a className="text-thm">+20 more</a>
-              </div>
+          </section>
+
+          {/* Project type */}
+          <section className="py-6">
+            <h4 className="text-lg font-semibold text-slate-900 mb-4">Project type</h4>
+            <div className="space-y-3">
+              <ProjectTypeOption1 />
             </div>
-          </div>
-          <div className="card mb20 pb10">
-            <div className="card-header" id="heading01">
-              <h4>
-                <button
-                  className="btn btn-link ps-0 collapsed"
-                  type="button"
-                  data-bs-toggle="collapse"
-                  data-bs-target="#collapse01"
-                  aria-expanded="false"
-                  aria-controls="collapse01"
-                >
-                  Project type
-                </button>
-              </h4>
+          </section>
+
+          {/* Price */}
+          <section className="py-6">
+            <h4 className="text-lg font-semibold text-slate-900 mb-4">Price</h4>
+            <div className="pt-2">
+              <BudgetOption2 />
             </div>
-            <div
-              id="collapse01"
-              className="collapse show"
-              aria-labelledby="heading01"
-              data-parent="#accordionExample"
-            >
-              <div className="card-body card-body px-0 pt-0">
-                <ProjectTypeOption1 />
-              </div>
+          </section>
+
+          {/* Skills */}
+          <section className="py-6">
+            <h4 className="text-lg font-semibold text-slate-900 mb-4">Skills</h4>
+            <div className="space-y-3">
+              <DesignToolOption1 />
             </div>
-          </div>
-          <div className="card mb20 pb0">
-            <div className="card-header" id="heading1">
-              <h4>
-                <button
-                  className="btn btn-link ps-0 collapsed"
-                  type="button"
-                  data-bs-toggle="collapse"
-                  data-bs-target="#collapse1"
-                  aria-expanded="false"
-                  aria-controls="collapse1"
-                >
-                  Price
-                </button>
-              </h4>
+          </section>
+
+          {/* Location */}
+          <section className="py-6">
+            <h4 className="text-lg font-semibold text-slate-900 mb-4">Location</h4>
+            <div className="space-y-3">
+              <LocationOption1 />
             </div>
-            <div
-              id="collapse1"
-              className="collapse show"
-              aria-labelledby="heading1"
-              data-parent="#accordionExample"
-            >
-              <div className="card-body card-body px-0 pt-4">
-                <BudgetOption2 />
-              </div>
+          </section>
+
+          {/* Language */}
+          <section className="py-6">
+            <h4 className="text-lg font-semibold text-slate-900 mb-4">Language</h4>
+            <div className="space-y-3">
+              <SpeakOption1 />
             </div>
-          </div>
-          <div className="card mb20 pb10">
-            <div className="card-header" id="heading0">
-              <h4>
-                <button
-                  className="btn btn-link ps-0 collapsed"
-                  type="button"
-                  data-bs-toggle="collapse"
-                  data-bs-target="#collapse02"
-                  aria-expanded="false"
-                  aria-controls="collapse02"
-                >
-                  Skills
-                </button>
-              </h4>
+          </section>
+
+          {/* English Level */}
+          <section className="py-6">
+            <h4 className="text-lg font-semibold text-slate-900 mb-4">English Level</h4>
+            <div className="space-y-3">
+              <EnglishLevelOption1 />
             </div>
-            <div
-              id="collapse02"
-              className="collapse show"
-              aria-labelledby="heading0"
-              data-parent="#accordionExample"
-            >
-              <div className="card-body card-body px-0 pt-0">
-                <DesignToolOption1 />
-              </div>
-            </div>
-          </div>
-          <div className="card mb20 pb5">
-            <div className="card-header" id="heading2">
-              <h4>
-                <button
-                  className="btn btn-link ps-0 collapsed"
-                  type="button"
-                  data-bs-toggle="collapse"
-                  data-bs-target="#collapse2"
-                  aria-expanded="false"
-                  aria-controls="collapse2"
-                >
-                  Location
-                </button>
-              </h4>
-            </div>
-            <div
-              id="collapse2"
-              className="collapse show"
-              aria-labelledby="heading2"
-              data-parent="#accordionExample"
-            >
-              <div className="card-body card-body px-0 pt-0">
-                <LocationOption1 />
-              </div>
-            </div>
-          </div>
-          <div className="card mb20 pb5">
-            <div className="card-header" id="heading3">
-              <h4>
-                <button
-                  className="btn btn-link ps-0 collapsed"
-                  type="button"
-                  data-bs-toggle="collapse"
-                  data-bs-target="#collapse3"
-                  aria-expanded="false"
-                  aria-controls="collapse3"
-                >
-                  Languange
-                </button>
-              </h4>
-            </div>
-            <div
-              id="collapse3"
-              className="collapse show"
-              aria-labelledby="heading3"
-              data-parent="#accordionExample"
-            >
-              <div className="card-body card-body px-0 pt-0">
-                <SpeakOption1 />
-              </div>
-            </div>
-          </div>
-          <div className="card mb20 pb5">
-            <div className="card-header" id="heading4">
-              <h4>
-                <button
-                  className="btn btn-link ps-0 collapsed"
-                  type="button"
-                  data-bs-toggle="collapse"
-                  data-bs-target="#collapse4"
-                  aria-expanded="false"
-                  aria-controls="collapse4"
-                >
-                  English Level
-                </button>
-              </h4>
-            </div>
-            <div
-              id="collapse4"
-              className="collapse show"
-              aria-labelledby="heading4"
-              data-parent="#accordionExample"
-            >
-              <div className="card-body card-body px-0 pt-0">
-                <EnglishLevelOption1 />
-              </div>
-            </div>
-          </div>
+          </section>
         </div>
-        <Undo />
+
+        <div className="mt-6">
+          <Undo />
+        </div>
       </div>
     </>
   );
 }
-

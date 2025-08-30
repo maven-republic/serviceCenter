@@ -28,47 +28,67 @@ const extraService = [
 export default function ServiceDetailExtra1() {
   const [getSelect, setSelect] = useState([]);
 
-  // handler
   const serviceSelectHandler = (value) => {
-    const isExist = getSelect.includes(value);
-
-    if (!isExist) {
-      return setSelect((old) => [...old, value]);
-    }
-
-    const deleted = getSelect.filter((item) => item !== value);
-    setSelect(deleted);
+    setSelect((prev) =>
+      prev.includes(value) ? prev.filter((v) => v !== value) : [...prev, value]
+    );
   };
 
   return (
-    <>
-      <div className="extra-service-tab mb40 mt30">
-        <nav>
-          <div className="nav flex-column nav-tabs">
-            {extraService.map((item,i) => (
-              <button
-                key={ i }
-                className={`nav-link ${
-                  getSelect?.includes(item.value) ? "active" : ""
-                }`}
+    <div className="mt-8 mb-10">
+      <nav>
+        <div className="flex flex-col gap-3">
+          {extraService.map((item) => {
+            const checked = getSelect.includes(item.value);
+            const id = `extra-${item.id}`;
+
+            return (
+              <label
+                key={item.id}
+                htmlFor={id}
+                className={`flex items-start justify-between gap-4 rounded-xl border p-4 cursor-pointer transition
+                  ${checked ? "border-emerald-500 bg-emerald-50" : "border-slate-200 hover:border-emerald-200"}
+                `}
               >
-                <label className="custom_checkbox fw500 text-start">
-                  {item.title}
-                  <span className="text text-bottom">{item.brief}</span>
+                <div className="flex items-start gap-3">
+                  {/* hidden native checkbox + custom box */}
                   <input
+                    id={id}
                     type="checkbox"
-                    checked={getSelect?.includes(item.value)}
+                    checked={checked}
                     onChange={() => serviceSelectHandler(item.value)}
+                    className="peer sr-only"
                   />
-                  <span className="checkmark" />
-                </label>
-                <span className="price">${item.price}</span>
-              </button>
-            ))}
-          </div>
-        </nav>
-      </div>
-    </>
+                  <span
+                    className="
+                      mt-1 grid h-4 w-4 place-content-center rounded-[4px] border border-slate-300
+                      peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-emerald-200
+                      peer-checked:border-emerald-500 peer-checked:bg-emerald-500
+                      after:block after:h-2 after:w-1.5 after:rotate-45
+                      after:border-b-2 after:border-r-2 after:border-white
+                      after:opacity-0 peer-checked:after:opacity-100
+                    "
+                  />
+                  <div>
+                    <div className={`font-medium ${checked ? "text-emerald-700" : "text-slate-900"}`}>
+                      {item.title}
+                    </div>
+                    <div className="text-sm text-slate-500">{item.brief}</div>
+                  </div>
+                </div>
+
+                <span
+                  className={`shrink-0 rounded-full px-3 py-1 text-sm font-medium
+                    ${checked ? "bg-emerald-100 text-emerald-700" : "bg-slate-100 text-slate-700"}
+                  `}
+                >
+                  ${item.price}
+                </span>
+              </label>
+            );
+          })}
+        </div>
+      </nav>
+    </div>
   );
 }
-

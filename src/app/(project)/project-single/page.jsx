@@ -13,7 +13,7 @@ export default function page() {
     return (
         <>
             <Header20 />
-            <TabSection1 />
+            {/* <TabSection1 /> */}
             <Breadcumb10 path={["Home", "Services", "Design & Creative"]} />
             <Breadcumb11 />
             <ProjectDetail1 />

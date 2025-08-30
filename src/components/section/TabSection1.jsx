@@ -15,11 +15,8 @@ const categories = [
   "Trending",
 ];
 
-// categories_list_section overflow-hidden
-
 export default function TabSection1() {
   const [getCurrentTab, setCurrentTab] = useState("All Categories");
-
   const path = usePathname();
 
   return (
@@ -29,11 +26,11 @@ export default function TabSection1() {
           path === "/home-3" ? "bgc-thm5" : ""
         }`}
       >
-        <div className="container">
-          <div className="row">
-            <div className="col-lg-12">
+        <div className="mx-auto max-w-[1200px] px-4">
+          <div className="flex flex-wrap">
+            <div className="w-full">
               <div className="listings_category_nav_list_menu">
-                <ul className="mb0 d-flex ps-0">
+                <ul className="mb-0 flex pl-0">
                   {categories.map((item, index) => (
                     <li key={index}>
                       <a
@@ -53,4 +50,3 @@ export default function TabSection1() {
     </>
   );
 }
-

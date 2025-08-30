@@ -24,37 +24,35 @@ export default function PopularServiceSlideCard1({
 
   // Safely extract and process data
   const safeData = {
-    id: data?.id || data?.service_id || 'unknown',
-    title: data?.title || data?.name || 'Service',
-    category: data?.category || 'General',
+    id: data?.id || data?.service_id || "unknown",
+    title: data?.title || data?.name || "Service",
+    category: data?.category || "General",
     price: data?.price || data?.base_price || 0,
-    rating: data?.rating || '4.8',
+    rating: data?.rating || "4.8",
     review: data?.review || Math.floor(Math.random() * 500) + 50,
     gallery: [],
     author: {
-      name: data?.author?.name || 'Professional',
-      img: data?.author?.img || '/images/team/fl-1.png'
-    }
+      name: data?.author?.name || "Professional",
+      img: data?.author?.img || "/images/team/fl-1.png",
+    },
   };
 
   // Process gallery images safely
   if (Array.isArray(data?.gallery) && data.gallery.length > 0) {
-    safeData.gallery = data.gallery.map(item => {
-      if (typeof item === 'string') {
-        return item; // If it's already a URL string
+    safeData.gallery = data.gallery.map((item) => {
+      if (typeof item === "string") {
+        return item;
       } else if (item?.image_url) {
-        return item.image_url; // If it's an object with image_url
+        return item.image_url;
       } else if (item?.url) {
-        return item.url; // If it's an object with url
+        return item.url;
       }
-      return '/images/services/default-service.jpg'; // Fallback
+      return "/images/services/default-service.jpg";
     });
-  } else if (data?.img && data.img !== '/images/services/default-service.jpg') {
-    // Use main image if no gallery
+  } else if (data?.img && data.img !== "/images/services/default-service.jpg") {
     safeData.gallery = [data.img];
   } else {
-    // Default gallery with placeholder
-    safeData.gallery = ['/images/services/default-service.jpg'];
+    safeData.gallery = ["/images/services/default-service.jpg"];
   }
 
   return (
@@ -73,7 +71,7 @@ export default function PopularServiceSlideCard1({
         style={path === "/home-20" ? { border: "none", boxShadow: "none" } : {}}
       >
         <div className="list-thumb">
-          <div className="listing-thumbIn-slider position-relative navi_pagi_bottom_center slider-1-grid">
+          <div className="listing-thumbIn-slider relative navi_pagi_bottom_center slider-1-grid">
             <div className="item">
               {showSwiper && (
                 <Swiper
@@ -94,29 +92,29 @@ export default function PopularServiceSlideCard1({
                       <Image
                         height={247}
                         width={331}
-                        className="w-100 object-fit-cover"
+                        className="w-full object-cover"
                         src={item}
                         alt={`${safeData.title} ${index + 1}`}
                         onError={(e) => {
-                          e.target.src = '/images/services/default-service.jpg';
+                          e.target.src = "/images/services/default-service.jpg";
                         }}
                       />
                     </SwiperSlide>
                   ))}
-                  
+
                   {/* Only show navigation if multiple images */}
                   {safeData.gallery.length > 1 && (
                     <div className="swiper__parent">
-                      <div className="row justify-content-center">
-                        <div className="col-auto">
+                      <div className="flex justify-center items-center gap-3">
+                        <div className="w-auto">
                           <button className="swiper__btn swiper__btn-2 btn__prev__005">
                             <i className="far fa-arrow-left-long" />
                           </button>
                         </div>
-                        <div className="col-auto">
+                        <div className="w-auto">
                           <div className="swiper__pagination swiper__pagination-2 swiper__pagination__005"></div>
                         </div>
-                        <div className="col-auto">
+                        <div className="w-auto">
                           <button className="swiper__btn swiper__btn-2 btn__next__005">
                             <i className="far fa-arrow-right-long" />
                           </button>
@@ -128,7 +126,7 @@ export default function PopularServiceSlideCard1({
               )}
               <a
                 onClick={() => setFavActive(!isFavActive)}
-                className={`listing-fav fz12 z-1 ${
+                className={`listing-fav fz12 z-[1] ${
                   isFavActive ? "ui-fav-active" : ""
                 }`}
               >
@@ -142,25 +140,25 @@ export default function PopularServiceSlideCard1({
           <h5 className="list-title">
             <Link href={`/service-single/${safeData.id}`}>{safeData.title}</Link>
           </h5>
-          <div className="review-meta d-flex align-items-center">
-            <i className="fas fa-star fz10 review-color me-2" />
+          <div className="review-meta flex items-center">
+            <i className="fas fa-star fz10 review-color mr-2" />
             <p className="mb-0 body-color fz14">
-              <span className="dark-color me-2">{safeData.rating}</span>
+              <span className="dark-color mr-2">{safeData.rating}</span>
               {safeData.review} reviews
             </p>
           </div>
           <hr className="my-2" />
-          <div className="list-meta d-flex justify-content-between align-items-center mt15">
+          <div className="list-meta flex justify-between items-center mt15">
             <a>
-              <span className="position-relative mr10">
+              <span className="relative mr10">
                 <Image
                   height={30}
                   width={30}
-                  className="rounded-circle object-fit-contain"
+                  className="rounded-full object-contain"
                   src={safeData.author.img}
                   alt="Professional Photo"
                   onError={(e) => {
-                    e.target.src = '/images/team/fl-1.png';
+                    e.target.src = "/images/team/fl-1.png";
                   }}
                 />
                 <span className="online-badge" />
@@ -170,8 +168,11 @@ export default function PopularServiceSlideCard1({
             <div className="budget">
               <p className="mb-0 body-color">
                 Starting at
-                <span className="fz17 fw500 dark-color ms-1">
-                  ${typeof safeData.price === 'number' ? safeData.price.toFixed(2) : safeData.price}
+                <span className="fz17 fw500 dark-color ml-1">
+                  $
+                  {typeof safeData.price === "number"
+                    ? safeData.price.toFixed(2)
+                    : safeData.price}
                 </span>
               </p>
             </div>

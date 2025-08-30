@@ -50,44 +50,54 @@ export default function Listing14() {
   const sortByFilter = (item) =>
     getBestSeller === "best-seller" ? item : item.sort === getBestSeller;
 
-  
-    // .slice(0, 9)
-    // .filter(categoryFilter)
-    // .filter(priceFilter)
-    // .filter(locationFilter)
-    // .filter(searchFilter)
-    // .filter(levelFilter)
-    // .filter(languageFilter)
-    // .filter(sortByFilter)
-  const content = freelancer1
-    .map((item,i) => (
-      <div key={ i } className="col-sm-6 col-xl-4">
-        <FreelancerCard2 data={item} />
-      </div>
-    ));
+  // .slice(0, 9)
+  // .filter(categoryFilter)
+  // .filter(priceFilter)
+  // .filter(locationFilter)
+  // .filter(searchFilter)
+  // .filter(levelFilter)
+  // .filter(languageFilter)
+  // .filter(sortByFilter)
+
+  const content = freelancer1.map((item, i) => (
+    <div key={i}>
+      <FreelancerCard2 data={item} />
+    </div>
+  ));
 
   return (
     <>
-      <section className="pt30 pb90">
-        <div className="container">
-          <div className="row">
-            <div className="col-lg-3">
+      <section className="pt-[30px] pb-[90px]">
+        <div className="mx-auto max-w-[1200px] px-4">
+          <div className="flex flex-wrap">
+            {/* Sidebar */}
+            <div className="w-full lg:w-3/12">
               <ListingSidebar5 />
             </div>
-            <div className="col-lg-9">
+
+            {/* Main */}
+            <div className="w-full lg:w-9/12 lg:pl-8">
               <ListingOption2 itemLength={content?.length} />
-              <div className="row">
-                {content?.length !== 0 ? content : "Data not found!"}
+
+              {/* Cards grid */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-2 gap-6">
+                {content?.length !== 0 ? content : (
+                  <div className="col-span-full text-center text-slate-500">
+                    Data not found!
+                  </div>
+                )}
               </div>
-              <div className="row mt30">
+
+              {/* Pagination */}
+              <div className="mt-[30px]">
                 <Pagination1 />
               </div>
             </div>
           </div>
         </div>
       </section>
+
       <ListingSidebarModal5 />
     </>
   );
 }
-

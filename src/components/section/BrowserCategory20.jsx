@@ -18,13 +18,12 @@ export default function BrowserCategory20() {
 
   return (
     <>
-      <section 
-        className="mx-auto maxw1700 bgc-thm4 bdrs24"
-        style={{ padding: "65px 0", backgroundColor: "#5bbb7b17" }}
+      <section
+        className="mx-auto maxw1700 bgc-thm4 bdrs24 bg-[#5bbb7b17] py-[65px]"
       >
-        <div className="container">
-          <div className="row align-items-center wow fadeInUp">
-            <div className="col-lg-9">
+        <div className="mx-auto max-w-[1200px] px-4">
+          <div className="flex flex-wrap items-center wow fadeInUp">
+            <div className="w-full lg:w-9/12">
               <div className="main-title">
                 <h2 className="title">Browse talent by category</h2>
                 <p className="paragraph">
@@ -32,17 +31,18 @@ export default function BrowserCategory20() {
                 </p>
               </div>
             </div>
-            <div className="col-lg-3">
-              <div className="text-lg-end mb-3">
+            <div className="w-full lg:w-3/12">
+              <div className="lg:text-right mb-3">
                 <Link href="/freelancer-1" className="ud-btn2">
                   All Categories <i className="fal fa-arrow-right-long"></i>
                 </Link>
               </div>
             </div>
           </div>
-          <div className="row position-relative">
-            <div className="col-lg-12">
-              <div className="ui-hightest-rated ">
+
+          <div className="relative">
+            <div className="w-full">
+              <div className="ui-hightest-rated">
                 {showSwiper && (
                   <Swiper
                     spaceBetween={30}
@@ -54,18 +54,10 @@ export default function BrowserCategory20() {
                     className="mySwiper"
                     loop={true}
                     breakpoints={{
-                      0: {
-                        slidesPerView: 1,
-                      },
-                      768: {
-                        slidesPerView: 2,
-                      },
-                      992: {
-                        slidesPerView: 3,
-                      },
-                      1200: {
-                        slidesPerView: 4,
-                      },
+                      0: { slidesPerView: 1 },
+                      768: { slidesPerView: 2 },
+                      992: { slidesPerView: 3 },
+                      1200: { slidesPerView: 4 },
                     }}
                   >
                     {browserCategory.map((elm, index) => (
@@ -75,9 +67,11 @@ export default function BrowserCategory20() {
                             <div className="icon">
                               <span className={elm.icon}></span>
                             </div>
-                            <div className="details mt20">
-                              <p className="text mb5">{elm.skill} skills</p>
-                              <h4 className="title"><Link href="/service-1">{elm.title}</Link></h4>
+                            <div className="details mt-5">
+                              <p className="text mb-[5px]">{elm.skill} skills</p>
+                              <h4 className="title">
+                                <Link href="/service-1">{elm.title}</Link>
+                              </h4>
                               <p className="mb-0">{elm.brif}</p>
                             </div>
                           </div>
@@ -88,17 +82,16 @@ export default function BrowserCategory20() {
                 )}
               </div>
             </div>
+
             <button
               type="button"
-              style={{ left: "5px", top: "100%", transform: "scale(0.8)" }}
-              className="prev-btn pre-slide3 unique-13-pre"
+              className="prev-btn pre-slide3 unique-13-pre absolute left-[5px] top-full scale-90"
             >
               <i className="far fa-chevron-left" />
             </button>
             <button
-              style={{ left: "70px", top: "100%", transform: "scale(0.8)" }}
               type="button"
-              className="next-btn next-slide3 unique-13-next"
+              className="next-btn next-slide3 unique-13-next absolute left-[70px] top-full scale-90"
             >
               <i className="far fa-chevron-right" />
             </button>
@@ -108,4 +101,3 @@ export default function BrowserCategory20() {
     </>
   );
 }
-

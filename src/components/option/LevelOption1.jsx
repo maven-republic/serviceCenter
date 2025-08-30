@@ -6,30 +6,60 @@ export default function LevelOption1() {
   const getLevel = listingStore((state) => state.getLevel);
   const setLevel = listingStore((state) => state.setLevel);
 
-  // handler
-  const levelHandler = (data) => {
-    setLevel(data);
-  };
+  const levelHandler = (val) => setLevel(val);
 
   return (
-    <>
-      <div className="card-body card-body px-0 pt-0">
-        <div className="checkbox-style1">
-          {level.map((item,i) => (
-            <label key={ i } className="custom_checkbox">
-              {item.title}
+    <div className="px-0 pt-0">
+      <div className="space-y-3">
+        {level.map((item, i) => {
+          const id = `level-${i}`;
+          const checked = getLevel.includes(item.value);
+
+          return (
+            <label
+              key={id}
+              htmlFor={id}
+              className="group flex cursor-pointer select-none items-center gap-3"
+            >
+              {/* hidden native checkbox + custom square */}
               <input
+                id={id}
                 type="checkbox"
+                checked={checked}
                 onChange={() => levelHandler(item.value)}
-                checked={getLevel.includes(item.value)}
+                className="peer sr-only"
               />
-              <span className="checkmark" />
-              <span className="right-tags">({item.total})</span>
+              <span
+                className={`
+                  grid h-4 w-4 place-content-center rounded-[4px] border border-slate-300
+                  transition-colors
+                  peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-emerald-200
+                  peer-checked:border-emerald-500 peer-checked:bg-emerald-500
+                  after:block after:h-2 after:w-1.5 after:rotate-45
+                  after:border-b-2 after:border-r-2 after:border-white
+                  after:opacity-0 peer-checked:after:opacity-100
+                `}
+              />
+              <span
+                className={`flex-1 text-sm transition-colors ${
+                  checked
+                    ? "font-medium text-emerald-600"
+                    : "text-slate-800 group-hover:text-emerald-600"
+                }`}
+              >
+                {item.title}
+              </span>
+              <span
+                className={`ml-auto inline-flex items-center rounded-full px-2.5 py-1 text-xs transition-colors ${
+                  checked ? "bg-emerald-50 text-emerald-600" : "bg-slate-100 text-slate-600"
+                }`}
+              >
+                ({item.total})
+              </span>
             </label>
-          ))}
-        </div>
+          );
+        })}
       </div>
-    </>
+    </div>
   );
 }
-
