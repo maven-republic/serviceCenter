@@ -605,11 +605,9 @@ export default function AppointmentFileUpload({
         <div className="space-y-3">
           <div className="flex items-center justify-between">
             <h4 className={`font-medium text-foreground ${isMobile ? 'text-base' : ''}`}>
-              {isMobile ? `Files (${files.length}/${maxFiles})` : `Uploaded Files (${files.length}/${maxFiles})`}
+              {isMobile ? `Files (${files.length}/${maxFiles})` : ` Files (${files.length}/${maxFiles})`}
             </h4>
-            <Badge variant="secondary" className="text-xs">
-              {files.filter(f => f.uploaded).length} uploaded
-            </Badge>
+           
           </div>
 
           <div className="space-y-2">

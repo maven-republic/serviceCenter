@@ -1,14 +1,8 @@
 // =====  (src/app/layout.js) =====
-import { DM_Sans } from 'next/font/google'
+import { GeistSans } from 'geist/font/sans'
 import './globals.css'
 import { createClient } from '@/utils/supabase/server'
 import ClientProviders from '@/components/ClientProviders'
-
-const dmSans = DM_Sans({
-  subsets: ['latin'],
-  weight: ['400', '500', '700'],
-  variable: '--font-dm-sans',
-})
 
 // CRITICAL: Add metadata for mobile viewport
 export const metadata = {
@@ -109,7 +103,7 @@ export default async function InterfaceFoundation({ children }) {
           }}
         />
       </head>
-      <body className={`${dmSans.className} min-h-screen bg-background text-foreground antialiased`}>
+      <body className={`${GeistSans.className} min-h-screen bg-background text-foreground antialiased`}>
         <ClientProviders initialSession={initialSession}>
           {children}
         </ClientProviders>

@@ -21,23 +21,31 @@ export default function AppointmentModal({
   serviceInformation, 
   location,
   variant = 'marketplace', // 'marketplace' | 'direct'
-  selectedProfessionals = [] // For targeted marketplace
+  selectedProfessionals = [], // For targeted marketplace
+  onSuccess,
+  isMobile = false
 }) {
   // Handle appointment success
   const handleAppointmentSuccess = useCallback((appointmentRequest) => {
-    console.log('✅ appointment successful:', appointmentRequest)
+    console.log('Appointment successful:', appointmentRequest)
     
-    // Show success message or redirect
-    // You might want to replace this with a toast notification
+    // Show success message based on variant
     if (variant === 'marketplace') {
-      alert('Request posted! Multiple professionals will respond with quotes.')
+      if (selectedProfessionals.length > 0) {
+        alert(`Success! Your request has been sent to ${selectedProfessionals.length} professional${selectedProfessionals.length !== 1 ? 's' : ''}. You'll receive quotes soon!`)
+      } else {
+        alert('Request posted! Multiple professionals will respond with quotes.')
+      }
     } else {
       alert('Appointment sent! You will receive a confirmation email shortly.')
     }
     
+    // Call onSuccess prop if provided
+    onSuccess?.(appointmentRequest)
+    
     // Close modal
     onClose?.()
-  }, [onClose, variant])
+  }, [onClose, variant, selectedProfessionals.length, onSuccess])
 
   // Format professional name for display
   const professionalName = professional?.first_name && professional?.last_name 
@@ -61,22 +69,25 @@ export default function AppointmentModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-5xl max-h-[95vh] overflow-hidden flex flex-col p-0 gap-0">
+      <DialogContent className={cn(
+        "max-w-5xl max-h-[95vh] overflow-hidden flex flex-col p-0 gap-0",
+        isMobile && "max-w-full max-h-full w-full h-full rounded-none"
+      )}>
         
-        {/* Updated DialogHeader with dynamic content */}
+        {/* DialogHeader - Hidden but accessible */}
         <DialogHeader className="sr-only">
           <DialogTitle>{modalTitle}</DialogTitle>
           <DialogDescription>{modalDescription}</DialogDescription>
         </DialogHeader>
 
-        {/* Modal Body - Appointment Form */}
+        {/* Modal Body - Appointment Form with fixed props */}
         <div className="flex-1 overflow-y-auto">
           <Appointment
             professional={variant === 'marketplace' ? null : professional}
             serviceInformation={serviceInformation}
             location={location}
             variant={variant}
-            selectedProfessionals={selectedProfessionals}
+            selectedProfessionals={selectedProfessionals} // ✅ Always pass this prop
             onSuccess={handleAppointmentSuccess}
             onCancel={onClose}
           />

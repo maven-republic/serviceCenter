@@ -108,12 +108,14 @@ export default function Appointment({
    }
  ], [isMarketplace, isMobile]);
 
- // Form state with file attachments
+ // Form state with file attachments and enhanced slot tracking
  const [formData, setFormData] = useState({
    title: serviceInformation?.name || '',
    description: '',
    deadline: '',
-   session: '',
+   session: '', // Primary selection for validation
+   professionalSelections: {}, // Store per-professional selections
+   selectedSlotInfo: null, // For direct booking compatibility
    urgency: 'standard',
    customer_message: '',
    attachments: [], // File attachments array
@@ -134,10 +136,10 @@ export default function Appointment({
 
  // Debug component lifecycle
  useEffect(() => {
-   console.log('🔥 APPOINTMENT FORM MOUNTED - Variant:', variant);
-   console.log('🔥 Selected Professionals:', selectedProfessionals.length);
-   console.log('🔥 Workflow Type:', { isMarketplace, isTargetedMarketplace, isOpenMarketplace });
-   return () => console.log('🔥 APPOINTMENT FORM UNMOUNTED');
+   console.log('APPOINTMENT FORM MOUNTED - Variant:', variant);
+   console.log('Selected Professionals:', selectedProfessionals.length);
+   console.log('Workflow Type:', { isMarketplace, isTargetedMarketplace, isOpenMarketplace });
+   return () => console.log('APPOINTMENT FORM UNMOUNTED');
  }, [variant, selectedProfessionals.length, isMarketplace, isTargetedMarketplace, isOpenMarketplace]);
 
  // Update form data when props change
@@ -179,7 +181,7 @@ export default function Appointment({
  // Handle file upload changes
  const handleFilesChange = useCallback((files) => {
    setFormData(prev => ({ ...prev, attachments: files }));
-   console.log('📎 Files updated:', files.length, 'files');
+   console.log('Files updated:', files.length, 'files');
  }, []);
 
  // Form validation
@@ -192,12 +194,18 @@ export default function Appointment({
    }
    
    // Step 3 validation - Schedule required
-   if (!formData.session) {
-     newErrors.session = 'Please select your preferred start time';
+   if (isTargetedMarketplace) {
+     if (Object.keys(formData.professionalSelections).length === 0) {
+       newErrors.session = 'Please select at least one preferred time slot';
+     }
    } else {
-     const startDate = new Date(formData.session);
-     if (startDate <= new Date()) {
-       newErrors.session = 'Start time must be in the future';
+     if (!formData.session) {
+       newErrors.session = 'Please select your preferred start time';
+     } else {
+       const startDate = new Date(formData.session);
+       if (startDate <= new Date()) {
+         newErrors.session = 'Start time must be in the future';
+       }
      }
    }
 
@@ -216,7 +224,7 @@ export default function Appointment({
 
    setErrors(newErrors);
    return Object.keys(newErrors).length === 0;
- }, [formData]);
+ }, [formData, isTargetedMarketplace]);
 
  // Enhanced submit handler with TARGETED MARKETPLACE support
  const handleSubmit = useCallback(async () => {
@@ -235,7 +243,7 @@ export default function Appointment({
      
      // Get customer address if not using different address
      if (!formData.use_different_address) {
-       console.log('🏠 Fetching customer address for account:', user.account.account_id);
+       console.log('Fetching customer address for account:', user.account.account_id);
        
        const { data: customerAddress, error: addressError } = await supabase
          .from('address')
@@ -245,30 +253,30 @@ export default function Appointment({
          .single();
        
        if (addressError) {
-         console.error('❌ Address fetch error:', addressError);
+         console.error('Address fetch error:', addressError);
        } else {
-         console.log('✅ Found customer address:', customerAddress);
+         console.log('Found customer address:', customerAddress);
        }
        
        addressId = customerAddress?.address_id;
      }
 
-     console.log('🏠 Address ID to use:', addressId);
+     console.log('Address ID to use:', addressId);
 
      // Upload files first if any exist
      let attachmentIds = [];
      if (formData.attachments && formData.attachments.length > 0) {
-       console.log('📤 Uploading', formData.attachments.length, 'files...');
+       console.log('Uploading', formData.attachments.length, 'files...');
        
        // GET SESSION FOR AUTHENTICATION
        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
        
        if (sessionError || !session?.access_token) {
-         console.error('❌ Authentication error for file upload:', sessionError);
+         console.error('Authentication error for file upload:', sessionError);
          throw new Error('Authentication required for file upload');
        }
 
-       console.log('🔐 Session found, proceeding with authenticated upload');
+       console.log('Session found, proceeding with authenticated upload');
        
        for (const fileData of formData.attachments) {
          if (!fileData.uploaded && fileData.file) {
@@ -276,7 +284,7 @@ export default function Appointment({
              const uploadData = new FormData();
              uploadData.append('file', fileData.file);
              
-             console.log('📤 Uploading file:', fileData.name, 'Size:', fileData.file.size);
+             console.log('Uploading file:', fileData.name, 'Size:', fileData.file.size);
              
              const uploadResponse = await fetch('/api/assets/upload', {
                method: 'POST',
@@ -286,11 +294,11 @@ export default function Appointment({
                body: uploadData
              });
              
-             console.log('📡 Upload response status:', uploadResponse.status);
+             console.log('Upload response status:', uploadResponse.status);
              
              if (!uploadResponse.ok) {
                const errorText = await uploadResponse.text();
-               console.error('❌ Upload response error:', errorText);
+               console.error('Upload response error:', errorText);
                
                let errorMessage;
                try {
@@ -304,29 +312,29 @@ export default function Appointment({
              }
              
              const uploadResult = await uploadResponse.json();
-             console.log('📋 Upload result:', uploadResult);
+             console.log('Upload result:', uploadResult);
              
              if (uploadResult.success && uploadResult.asset) {
                attachmentIds.push({
                  asset_id: uploadResult.asset.id,
                  purpose: fileData.purpose || 'reference'
                });
-               console.log('✅ Upload successful for:', fileData.name, 'Asset ID:', uploadResult.asset.id);
+               console.log('Upload successful for:', fileData.name, 'Asset ID:', uploadResult.asset.id);
              } else {
-               console.error('❌ Upload failed for', fileData.name, ':', uploadResult.error);
+               console.error('Upload failed for', fileData.name, ':', uploadResult.error);
                throw new Error(`Upload failed for ${fileData.name}: ${uploadResult.error || 'Unknown error'}`);
              }
            } catch (error) {
-             console.error('❌ Upload error for', fileData.name, ':', error.message);
+             console.error('Upload error for', fileData.name, ':', error.message);
              throw new Error(`Failed to upload ${fileData.name}: ${error.message}`);
            }
          }
        }
        
-       console.log('📎 Total attachments ready:', attachmentIds.length);
+       console.log('Total attachments ready:', attachmentIds.length);
      }
 
-     // Create appointment request with ENHANCED VARIANT-BASED logic
+     // Enhanced request data with professional selection info
      const requestData = {
        customer_id: user.profile.customer_id,
        professional_id: isMarketplace ? null : professional?.professional_id,
@@ -339,11 +347,15 @@ export default function Appointment({
        customer_message: formData.customer_message || null,
        attachment_ids: attachmentIds,
        
-       // UPDATED: Enhanced marketplace logic
+       // Enhanced marketplace logic
        open_to_all_professionals: isOpenMarketplace,
        recipients: isTargetedMarketplace ? selectedProfessionals.map(p => p.professional_id) : [],
        max_interests: isTargetedMarketplace ? selectedProfessionals.length : (isOpenMarketplace ? 10 : 1),
        auto_accept_verified: false,
+       
+       // Include multi-professional selections for targeted marketplace
+       professional_preferences: isTargetedMarketplace ? formData.professionalSelections : null,
+       selected_professional_id: formData.selectedSlotInfo?.selectedProfessional?.professional_id || null,
        
        service_location: formData.use_different_address ? {
          ...formData.service_location,
@@ -354,12 +366,13 @@ export default function Appointment({
      };
 
      // Debug the request data thoroughly
-     console.log('🔍 DETAILED REQUEST DATA CHECK:');
+     console.log('DETAILED REQUEST DATA CHECK:');
      console.log('variant:', variant);
      console.log('selectedProfessionals count:', selectedProfessionals.length);
      console.log('isMarketplace:', isMarketplace);
      console.log('isTargetedMarketplace:', isTargetedMarketplace);
      console.log('isOpenMarketplace:', isOpenMarketplace);
+     console.log('professionalSelections:', formData.professionalSelections);
 
      // Validate required fields before sending
      const missingFields = [];
@@ -372,7 +385,7 @@ export default function Appointment({
        throw new Error(`Missing required fields: ${missingFields.join(', ')}`);
      }
 
-     console.log('📋 Submitting appointment request...');
+     console.log('Submitting appointment request...');
 
      const response = await fetch('/api/appointments', {
        method: 'POST',
@@ -380,22 +393,22 @@ export default function Appointment({
        body: JSON.stringify(requestData)
      });
 
-     console.log('📡 Response status:', response.status);
+     console.log('Response status:', response.status);
 
      const responseText = await response.text();
-     console.log('📡 Raw response text:', responseText);
+     console.log('Raw response text:', responseText);
 
      let result;
      try {
        result = JSON.parse(responseText);
-       console.log('📡 Parsed response:', result);
+       console.log('Parsed response:', result);
      } catch (parseError) {
-       console.error('❌ Failed to parse response as JSON:', parseError);
+       console.error('Failed to parse response as JSON:', parseError);
        throw new Error(`Server returned invalid JSON. Response: ${responseText.substring(0, 200)}`);
      }
 
      if (!response.ok) {
-       console.error('❌ API Error Response:', {
+       console.error('API Error Response:', {
          status: response.status,
          statusText: response.statusText,
          body: result
@@ -405,19 +418,20 @@ export default function Appointment({
        throw new Error(errorMessage);
      }
 
-     console.log('✅ Appointment created successfully:', {
+     console.log('Appointment created successfully:', {
        appointment_id: result.appointment?.appointment_id,
        workflow_type: result.appointment?.workflow_type,
        variant: variant,
        targeted_professionals: isTargetedMarketplace ? selectedProfessionals.length : 0,
        attachments: result.appointment?.attachments?.length || 0,
-       interests: result.appointment?.interests?.length || 0
+       interests: result.appointment?.interests?.length || 0,
+       professional_preferences: Object.keys(formData.professionalSelections).length
      });
 
      onSuccess?.(result.appointment);
 
    } catch (error) {
-     console.error('❌ Full error details:', {
+     console.error('Full error details:', {
        name: error.name,
        message: error.message,
        stack: error.stack
@@ -473,7 +487,14 @@ export default function Appointment({
    switch (step) {
      case 1: return formData.description.trim() !== '';
      case 2: return true; // File upload is optional
-     case 3: return formData.session !== '';
+     case 3: 
+       if (isTargetedMarketplace) {
+         // For targeted marketplace: at least one professional selection required
+         return Object.keys(formData.professionalSelections).length > 0;
+       } else {
+         // For direct booking: single session required
+         return formData.session !== '';
+       }
      case 4: return !formData.use_different_address || (
        formData.service_location.street_address &&
        formData.service_location.city &&
@@ -482,7 +503,7 @@ export default function Appointment({
      case 5: return true;
      default: return false;
    }
- }, [formData]);
+ }, [formData, isTargetedMarketplace]);
 
  // Progress calculation
  const calculateProgress = useCallback(() => {
@@ -497,10 +518,76 @@ export default function Appointment({
    return 'pending';
  }, [currentStep, isStepValid]);
 
- // Handle calendar slot selection
- const handleSlotSelect = useCallback((datetime) => {
-   handleChange('session', datetime);
- }, [handleChange]);
+ // Enhanced calendar slot selection handler with conflict prevention
+ const handleSlotSelect = useCallback((datetime, slotInfo) => {
+   console.log('Slot selected:', { datetime, slotInfo });
+   
+   if (isTargetedMarketplace) {
+     // For targeted marketplace: store per-professional selections with conflict prevention
+     const professionalId = slotInfo.selectedProfessional?.professional_id;
+     
+     if (professionalId) {
+       // Check for time conflicts with other professional selections
+       const conflictingProfessional = Object.entries(formData.professionalSelections).find(
+         ([otherProfId, selection]) => {
+           if (otherProfId === professionalId) return false; // Skip same professional
+           
+           const otherTime = new Date(selection.datetime);
+           const newTime = new Date(datetime);
+           
+           // Check if times are the same (within same hour)
+           return otherTime.getTime() === newTime.getTime();
+         }
+       );
+       
+       if (conflictingProfessional) {
+         const [conflictProfId, conflictSelection] = conflictingProfessional;
+         const conflictProfessional = selectedProfessionals.find(p => p.professional_id === conflictProfId);
+         const conflictProfName = conflictProfessional 
+           ? `${conflictProfessional.first_name} ${conflictProfessional.last_name}`
+           : `Professional ${conflictProfId.slice(0, 8)}`;
+         
+         // Show conflict error
+         setErrors(prev => ({
+           ...prev,
+           session: `This time conflicts with your selection for ${conflictProfName}. Please choose a different time slot.`
+         }));
+         
+         return; // Don't save the conflicting selection
+       }
+       
+       // No conflicts - save the selection and clear any previous errors
+       setFormData(prev => ({
+         ...prev,
+         session: datetime,
+         professionalSelections: {
+           ...prev.professionalSelections,
+           [professionalId]: {
+             datetime,
+             slotInfo
+           }
+         }
+       }));
+       
+       // Clear any previous session errors
+       if (errors.session) {
+         setErrors(prev => ({ ...prev, session: null }));
+       }
+     }
+   } else {
+     // For direct booking: single selection (no conflict checking needed)
+     setFormData(prev => ({
+       ...prev,
+       session: datetime,
+       selectedSlotInfo: slotInfo
+     }));
+     
+     // Clear any previous session errors
+     if (errors.session) {
+       setErrors(prev => ({ ...prev, session: null }));
+     }
+   }
+ }, [errors.session, isTargetedMarketplace, formData.professionalSelections, selectedProfessionals]);
 
  // Get professional name for display
  const professionalName = professional?.first_name && professional?.last_name 
@@ -517,6 +604,13 @@ export default function Appointment({
      return `Booking with ${professionalName}`;
    }
  }, [isTargetedMarketplace, isOpenMarketplace, selectedProfessionals.length, professionalName]);
+
+ // Helper to get selected professional name
+ const getSelectedProfessionalName = useCallback(() => {
+   if (!formData.selectedSlotInfo?.selectedProfessional) return null;
+   const prof = formData.selectedSlotInfo.selectedProfessional;
+   return `${prof.first_name || ''} ${prof.last_name || ''}`.trim() || `Professional ${prof.professional_id?.slice(0, 8)}`;
+ }, [formData.selectedSlotInfo]);
 
  // Mobile Step Navigation Dropdown
  const MobileStepNavigation = () => (
@@ -591,17 +685,16 @@ export default function Appointment({
            <div className="flex items-center gap-3">
              {isMarketplace ? (
                <>
-                 <Users className="h-5 w-5 text-blue-600 flex-shrink-0" />
+                 <Users className="h-5 w-5 text-purple-600 flex-shrink-0" />
                  <div className="min-w-0">
-                   <h3 className={`font-semibold text-blue-900 ${isMobile ? 'text-sm' : ''}`}>
-                     {isTargetedMarketplace ? 'Targeted Request' : 'Service Request'}
+                   <h3 className={`font-semibold text-purple-900 ${isMobile ? 'text-sm' : ''}`}>
+                     {isTargetedMarketplace ? 'Targeted Request' : 'Marketplace Request'}
                    </h3>
-                   <p className={`text-blue-600 ${isMobile ? 'text-xs' : 'text-sm'} truncate`}>
-                     {isMobile ? (
-                       isTargetedMarketplace ? `${selectedProfessionals.length} selected` : 'Multiple quotes'
-                     ) : (
-                       getWorkflowDescription()
-                     )}
+                   <p className={`text-purple-600 ${isMobile ? 'text-xs' : 'text-sm'} truncate`}>
+                     {isMobile 
+                       ? (isTargetedMarketplace ? `${selectedProfessionals.length} selected` : 'Open request')
+                       : getWorkflowDescription()
+                     }
                    </p>
                  </div>
                </>
@@ -617,61 +710,49 @@ export default function Appointment({
                </>
              )}
            </div>
-           
-           <div className="flex items-center gap-2 flex-shrink-0">
-             {isTargetedMarketplace && (
-               <Badge variant="outline" className="text-xs">
-                 {selectedProfessionals.length}
-               </Badge>
-             )}
-             <Badge variant={isMarketplace ? "default" : "secondary"} className={isMobile ? "text-xs" : "text-sm"}>
-               {isTargetedMarketplace ? "Targeted" : isOpenMarketplace ? "Marketplace" : "Direct"}
-             </Badge>
-           </div>
-         </div>
-         
-         {/* Progress Bar */}
-         <div className="space-y-3">
-           <div className="flex justify-between items-center">
-             <span className={`text-muted-foreground ${isMobile ? 'text-xs' : 'text-sm'}`}>
-               Step {currentStep} of {steps.length}
-             </span>
-             <span className={`text-muted-foreground ${isMobile ? 'text-xs' : 'text-sm'}`}>
-               {Math.round(calculateProgress())}% Complete
-             </span>
-           </div>
-           <Progress value={calculateProgress()} className="h-2" />
          </div>
 
          {/* Desktop Step Navigation / Mobile Step Dropdown */}
          {isMobile ? (
            <MobileStepNavigation />
          ) : (
-           <div className="grid grid-cols-5 gap-2">
-             {steps.map((step) => {
+           <div className="flex items-center justify-center gap-1">
+             {steps.map((step, index) => {
                const status = getStepStatus(step.id);
                const StepIcon = step.icon;
                
                return (
-                 <button
-                   key={step.id}
-                   type="button"
-                   onClick={() => goToStep(step.id)}
-                   disabled={status === 'pending'}
-                   className={cn(
-                     "flex flex-col items-center gap-2 p-3 rounded-lg transition-all text-center",
-                     status === 'active' && "bg-primary text-primary-foreground",
-                     status === 'completed' && "bg-green-100 text-green-700 hover:bg-green-200",
-                     status === 'available' && "bg-orange-50 text-orange-700 hover:bg-orange-100",
-                     status === 'pending' && "bg-muted text-muted-foreground cursor-not-allowed opacity-50"
+                 <div key={step.id} className="flex items-center">
+                   <button
+                     type="button"
+                     onClick={() => goToStep(step.id)}
+                     disabled={status === 'pending'}
+                     className={cn(
+                       "flex items-center justify-center w-8 h-8 rounded-full transition-all",
+                       status === 'active' && "bg-primary text-primary-foreground",
+                       status === 'completed' && "bg-green-600 text-white hover:bg-green-700",
+                       status === 'available' && "bg-orange-200 text-orange-800 hover:bg-orange-300",
+                       status === 'pending' && "bg-muted text-muted-foreground cursor-not-allowed opacity-50"
+                     )}
+                     title={`${step.title} - ${step.description}`}
+                   >
+                     {status === 'completed' ? (
+                       <CheckCircle className="h-4 w-4" />
+                     ) : (
+                       <StepIcon className="h-4 w-4" />
+                     )}
+                   </button>
+                   
+                   {/* Connector line */}
+                   {index < steps.length - 1 && (
+                     <div className={cn(
+                       "w-6 h-px mx-1",
+                       (status === 'completed' || (status === 'active' && getStepStatus(steps[index + 1].id) !== 'pending')) 
+                         ? "bg-primary" 
+                         : "bg-muted"
+                     )} />
                    )}
-                 >
-                   <StepIcon className="h-5 w-5" />
-                   <div>
-                     <div className="font-medium text-sm">{step.title}</div>
-                     <div className="text-xs opacity-80">{step.description}</div>
-                   </div>
-                 </button>
+                 </div>
                );
              })}
            </div>
@@ -680,441 +761,210 @@ export default function Appointment({
      </div>
 
      {/* Scrollable Content Area */}
-     <div className="flex-1 overflow-y-auto">
-       <div className={`w-full max-w-4xl mx-auto ${isMobile ? 'p-4' : 'p-6'}`}>
-         <div className="space-y-6">
+     <div className={`w-full max-w-3xl mx-auto ${isMobile ? 'p-4' : 'p-6'}`}>
+       
+       {/* Step 1: Project Description */}
+       {currentStep === 1 && (
+         <div className="space-y-4">
+           <div className="space-y-2">
+             <Label htmlFor="description">What do you need done? *</Label>
+             <Textarea
+               id="description"
+               rows={isMobile ? 6 : 5}
+               value={formData.description}
+               onChange={(e) => handleChange('description', e.target.value)}
+               placeholder="Describe your project in detail..."
+               className={errors.description ? 'border-destructive' : ''}
+             />
+             {errors.description && (
+               <p className="text-sm text-destructive flex items-center gap-1">
+                 <AlertCircle className="h-3 w-3" />
+                 {errors.description}
+               </p>
+             )}
+           </div>
+         </div>
+       )}
+
+       {/* Step 2: File Upload */}
+       {currentStep === 2 && (
+         <div className="space-y-4">
+           <AppointmentFileUpload 
+             onFilesChange={handleFilesChange}
+             initialFiles={formData.attachments}
+             maxFiles={10}
+           />
            
-           {/* Step 1: Project Description */}
-           {currentStep === 1 && (
-             <Card>
-               <CardHeader className={isMobile ? 'px-4 py-4' : ''}>
-                 <CardTitle className={`flex items-center gap-2 ${isMobile ? 'text-lg' : 'text-xl'}`}>
-                   <FileText className="h-5 w-5" />
-                   Describe Your Project
-                 </CardTitle>
-                 <p className={`text-muted-foreground ${isMobile ? 'text-sm' : 'text-sm'} leading-relaxed`}>
-                   {isTargetedMarketplace 
-                     ? `Tell your ${selectedProfessionals.length} selected professionals what you need.`
-                     : isOpenMarketplace
-                     ? 'Tell us what you need so we can match you with qualified professionals.'
-                     : `Tell ${professionalName} what you need help with.`
-                   }
-                 </p>
-               </CardHeader>
-               <CardContent className={`space-y-6 ${isMobile ? 'px-4' : ''}`}>
-                 <div className="space-y-2">
-                   <Label htmlFor="description">What do you need done? *</Label>
-                   <Textarea
-                     id="description"
-                     rows={isMobile ? 6 : 5}
-                     value={formData.description}
-                     onChange={(e) => handleChange('description', e.target.value)}
-                     placeholder="Describe your project in detail. Include any specific requirements, materials needed, or preferences you have..."
-                     className={`${errors.description ? 'border-destructive' : ''} ${isMobile ? 'min-h-[120px]' : ''}`}
-                   />
-                   {errors.description && (
-                     <p className="text-sm text-destructive flex items-center gap-1">
-                       <AlertCircle className="h-3 w-3" />
-                       {errors.description}
-                     </p>
-                   )}
-                   <p className="text-xs text-muted-foreground">
-                     Minimum 20 characters. Be specific about what you need to get better quotes.
-                   </p>
-                 </div>
-
-                 <div className="space-y-2">
-                   <Label htmlFor="deadline">Preferred completion date (Optional)</Label>
-                   <Input
-                     type="date"
-                     id="deadline"
-                     value={formData.deadline}
-                     onChange={(e) => handleChange('deadline', e.target.value)}
-                     min={new Date().toISOString().split('T')[0]}
-                     className={`${errors.deadline ? 'border-destructive' : ''} ${isMobile ? 'h-12' : ''}`}
-                   />
-                   <p className="text-xs text-muted-foreground">
-                     When would you like the work to be completed?
-                   </p>
-                 </div>
-               </CardContent>
-             </Card>
-           )}
-
-           {/* Step 2: File Upload */}
-           {currentStep === 2 && (
-             <Card>
-               <CardHeader className={isMobile ? 'px-4 py-4' : ''}>
-                 <CardTitle className={`flex items-center gap-2 ${isMobile ? 'text-lg' : 'text-xl'}`}>
-                   <Upload className="h-5 w-5" />
-                   Upload Project Files
-                 </CardTitle>
-                 <p className={`text-muted-foreground ${isMobile ? 'text-sm' : 'text-sm'} leading-relaxed`}>
-                   {isTargetedMarketplace
-                     ? `Share photos, measurements, or specifications to help your ${selectedProfessionals.length} selected professionals understand your project better.`
-                     : isOpenMarketplace
-                     ? 'Share photos, measurements, or specifications to help professionals understand your project better.'
-                     : `Share photos, measurements, or specifications to help ${professionalName} understand your project better.`
-                   }
-                 </p>
-               </CardHeader>
-               <CardContent className={`space-y-6 ${isMobile ? 'px-4' : ''}`}>
-                 
-                 {/* File upload component */}
-                 <AppointmentFileUpload 
-                   onFilesChange={handleFilesChange}
-                   initialFiles={formData.attachments}
-                   maxFiles={10}
-                 />
-
-                 {/* Optional step notice */}
-                 {formData.attachments.length === 0 && (
-                   <Alert>
-                     <AlertCircle className="h-4 w-4" />
-                     <AlertDescription className={isMobile ? 'text-sm' : ''}>
-                       <strong>Optional Step:</strong> You can skip this step if you don't have files to upload. 
-                       {isTargetedMarketplace 
-                         ? ' You can always share files later through messages with your selected professionals.'
-                         : isOpenMarketplace
-                         ? ' You can always share files later through messages with professionals.'
-                         : ` You can always share files later through messages with ${professionalName}.`
-                       }
-                     </AlertDescription>
-                   </Alert>
-                 )}
-               </CardContent>
-             </Card>
-           )}
-
-           {/* Step 3: Schedule Selection */}
-           {currentStep === 3 && (
-             <Card className="overflow-hidden">
-               <CardHeader className={`border-b bg-muted/30 ${isMobile ? 'px-4 py-4' : ''}`}>
-                 <CardTitle className={`flex items-center gap-2 ${isMobile ? 'text-lg' : 'text-lg'}`}>
-                   <Calendar className="h-5 w-5" />
-                   {isMarketplace ? 'When do you need this done?' : 'Select Assessment Time'}
-                 </CardTitle>
-                 <p className={`text-muted-foreground ${isMobile ? 'text-sm' : 'text-sm'} leading-relaxed`}>
-                   {isMarketplace 
-                     ? 'Choose your preferred timeframe for the work to be completed'
-                     : 'Choose when you\'d like the professional to assess your project'
-                   }
-                 </p>
-               </CardHeader>
-               
-               <div className={`overflow-hidden ${isMobile ? 'h-[400px]' : 'h-[500px]'}`}>
-                 <CustomerAvailabilityCalendar
-                   professionalId={isMarketplace ? null : professional?.professional_id}
-                   onSlotSelect={handleSlotSelect}
-                   selectedSlot={formData.session}
-                 />
-                 
-                 {errors.session && (
-                   <Alert variant="destructive" className="m-4">
-                     <AlertCircle className="h-4 w-4" />
-                     <AlertDescription>{errors.session}</AlertDescription>
-                   </Alert>
-                 )}
-               </div>
-             </Card>
-           )}
-
-           {/* Step 4: Service Location */}
-           {currentStep === 4 && (
-             <Card>
-               <CardHeader className={isMobile ? 'px-4 py-4' : ''}>
-                 <CardTitle className={`flex items-center gap-2 ${isMobile ? 'text-lg' : 'text-xl'}`}>
-                   <MapPin className="h-5 w-5" />
-                   Service Location
-                 </CardTitle>
-                 <p className={`text-muted-foreground ${isMobile ? 'text-sm' : 'text-sm'}`}>
-                   Where should the service be performed?
-                 </p>
-               </CardHeader>
-               <CardContent className={`space-y-6 ${isMobile ? 'px-4' : ''}`}>
-                 <div className="flex items-center space-x-2">
-                   <Checkbox 
-                     id="use_different_address"
-                     checked={formData.use_different_address}
-                     onCheckedChange={(checked) => handleChange('use_different_address', checked)}
-                   />
-                   <Label htmlFor="use_different_address" className={`font-medium ${isMobile ? 'text-sm' : 'text-sm'}`}>
-                     Use a different address for this service
-                   </Label>
-                 </div>
-
-                 {!formData.use_different_address ? (
-                   <Alert>
-                     <MapPin className="h-4 w-4" />
-                     <AlertDescription>
-                       <div className="space-y-1">
-                         <div className="font-medium">Using your primary address</div>
-                         <div className={isMobile ? 'text-xs' : 'text-sm'}>
-                           {formData.service_location?.formatted_address || 'Your confirmed location will be used'}
-                         </div>
-                       </div>
-                     </AlertDescription>
-                   </Alert>
-                 ) : (
-                   <div className="space-y-4">
-                     <div className={`p-4 border rounded-lg bg-muted/30 ${isMobile ? 'p-3' : ''}`}>
-                       <h4 className={`font-medium mb-2 ${isMobile ? 'text-sm' : ''}`}>Service Address</h4>
-                       <AppointmentAddressSelector
-                         onAddressSelect={(address) => {
-                           setFormData(prev => ({
-                             ...prev,
-                             service_location: address
-                           }));
-                         }}
-                         currentAddress={formData.service_location}
-                       />
-                     </div>
-                   </div>
-                 )}
-               </CardContent>
-             </Card>
-           )}
-
-           {/* Step 5: Review & Confirm - ENHANCED */}
-           {currentStep === 5 && (
-             <Card>
-               <CardHeader className={isMobile ? 'px-4 py-4' : ''}>
-                 <CardTitle className={`flex items-center gap-2 ${isMobile ? 'text-lg' : 'text-xl'}`}>
-                   <CheckCircle className="h-5 w-5" />
-                   Review & Confirm
-                 </CardTitle>
-                 <p className={`text-muted-foreground ${isMobile ? 'text-sm' : 'text-sm'} leading-relaxed`}>
-                   {isTargetedMarketplace 
-                     ? `Please review your request before sending to ${selectedProfessionals.length} selected professionals`
-                     : isOpenMarketplace
-                     ? 'Please review your service request before posting'
-                     : 'Please review your appointment details before submitting'
-                   }
-                 </p>
-               </CardHeader>
-               <CardContent className={`space-y-6 ${isMobile ? 'px-4' : ''}`}>
-                 
-                 {/* Service Summary */}
-                 <div className={`space-y-4 p-4 bg-muted/30 rounded-lg ${isMobile ? 'p-3' : ''}`}>
-                   <div className={`flex items-start justify-between ${isMobile ? 'flex-col gap-3' : ''}`}>
-                     <div className="flex-1">
-                       <h4 className={`font-semibold ${isMobile ? 'text-base' : ''}`}>{serviceInformation?.name}</h4>
-                       <p className={`text-muted-foreground mt-1 ${isMobile ? 'text-sm' : 'text-sm'}`}>
-                         {formData.description.substring(0, isMobile ? 100 : 150)}
-                         {formData.description.length > (isMobile ? 100 : 150) && '...'}
-                       </p>
-                     </div>
-                     {serviceInformation?.base_price && (
-                       <Badge variant="outline" className={`font-semibold ${isMobile ? 'text-base self-start' : 'text-lg ml-4'}`}>
-                         {isMarketplace ? 'Est. ' : ''}JMD ${estimatedPrice}
-                       </Badge>
-                     )}
-                   </div>
-
-                   <Separator />
-
-                   {/* Appointment Details Grid */}
-                   <div className={`grid gap-4 ${isMobile ? 'grid-cols-1' : 'sm:grid-cols-2'}`}>
-                     <div className="flex items-center gap-3">
-                       <Calendar className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-                       <div className="min-w-0">
-                         <div className={`font-medium ${isMobile ? 'text-sm' : ''}`}>
-                           {isMarketplace ? 'Preferred Date' : 'Assessment Date'}
-                         </div>
-                         <div className={`text-muted-foreground ${isMobile ? 'text-xs' : 'text-sm'}`}>
-                           {formData.session && new Date(formData.session).toLocaleDateString('en-US', {
-                             weekday: isMobile ? 'short' : 'long',
-                             year: 'numeric',
-                             month: isMobile ? 'short' : 'long',
-                             day: 'numeric'
-                           })}
-                         </div>
-                       </div>
-                     </div>
-
-                     <div className="flex items-center gap-3">
-                       <Clock className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-                       <div className="min-w-0">
-                         <div className={`font-medium ${isMobile ? 'text-sm' : ''}`}>Time</div>
-                         <div className={`text-muted-foreground ${isMobile ? 'text-xs' : 'text-sm'}`}>
-                           {formData.session && new Date(formData.session).toLocaleTimeString('en-US', {
-                             hour: 'numeric',
-                             minute: '2-digit',
-                             hour12: true
-                           })}
-                         </div>
-                       </div>
-                     </div>
-
-                     {formData.deadline && (
-                       <div className="flex items-center gap-3">
-                         <CheckCircle className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-                         <div className="min-w-0">
-                           <div className={`font-medium ${isMobile ? 'text-sm' : ''}`}>Complete by</div>
-                           <div className={`text-muted-foreground ${isMobile ? 'text-xs' : 'text-sm'}`}>
-                             {new Date(formData.deadline).toLocaleDateString()}
-                           </div>
-                         </div>
-                       </div>
-                     )}
-
-                     <div className="flex items-center gap-3">
-                       <Badge 
-                         variant="secondary" 
-                         className={cn("text-sm", urgencyOptions.find(opt => opt.value === formData.urgency)?.color)}
-                       >
-                         {urgencyOptions.find(opt => opt.value === formData.urgency)?.label}
-                       </Badge>
-                     </div>
-                   </div>
-
-                   {/* Workflow Type Display - ENHANCED */}
-                   <Separator />
-                   <div className="flex items-center gap-3">
-                     {isTargetedMarketplace ? (
-                       <>
-                         <Users className="h-4 w-4 text-purple-600 flex-shrink-0" />
-                         <div className="min-w-0">
-                           <div className={`font-medium text-purple-900 ${isMobile ? 'text-sm' : ''}`}>Targeted Request</div>
-                           <div className={`text-purple-600 ${isMobile ? 'text-xs' : 'text-sm'}`}>
-                             Sending to {selectedProfessionals.length} selected professional{selectedProfessionals.length !== 1 ? 's' : ''}
-                           </div>
-                         </div>
-                       </>
-                     ) : isOpenMarketplace ? (
-                       <>
-                         <Users className="h-4 w-4 text-blue-600 flex-shrink-0" />
-                         <div className="min-w-0">
-                           <div className={`font-medium text-blue-900 ${isMobile ? 'text-sm' : ''}`}>Open Marketplace Request</div>
-                           <div className={`text-blue-600 ${isMobile ? 'text-xs' : 'text-sm'}`}>Multiple professionals will respond with quotes</div>
-                         </div>
-                       </>
-                     ) : (
-                       <>
-                         <CheckCircle className="h-4 w-4 text-green-600 flex-shrink-0" />
-                         <div className="min-w-0">
-                           <div className={`font-medium text-green-900 ${isMobile ? 'text-sm' : ''}`}>Direct Booking</div>
-                           <div className={`text-green-600 ${isMobile ? 'text-xs' : 'text-sm'} truncate`}>Sending directly to {professionalName}</div>
-                         </div>
-                       </>
-                     )}
-                   </div>
-
-                   {/* Selected Professionals Display for Targeted Marketplace */}
-                   {isTargetedMarketplace && selectedProfessionals.length > 0 && (
-                     <>
-                       <Separator />
-                       <div className="space-y-3">
-                         <div className="flex items-center gap-2">
-                           <Users className="h-4 w-4 text-muted-foreground" />
-                           <div className={`font-medium ${isMobile ? 'text-sm' : ''}`}>Selected Professionals ({selectedProfessionals.length})</div>
-                         </div>
-                         <div className={`grid gap-2 ${isMobile ? 'grid-cols-1' : 'sm:grid-cols-2'}`}>
-                           {selectedProfessionals.map((prof) => (
-                             <div key={prof.professional_id} className="flex items-center gap-2 p-2 bg-background rounded border">
-                               <CheckCircle className="h-3 w-3 text-green-600 flex-shrink-0" />
-                               <span className={`truncate flex-1 ${isMobile ? 'text-sm' : 'text-sm'}`}>
-                                 {prof.first_name && prof.last_name 
-                                   ? `${prof.first_name} ${prof.last_name}`
-                                   : prof.business_name || 'Professional'
-                                 }
-                               </span>
-                               <Badge variant="secondary" className="text-xs">
-                                 Selected
-                               </Badge>
-                             </div>
-                           ))}
-                         </div>
-                       </div>
-                     </>
-                   )}
-
-                   {/* Attached Files */}
-                   {formData.attachments && formData.attachments.length > 0 && (
-                     <>
-                       <Separator />
-                       <div className="space-y-3">
-                         <div className="flex items-center gap-2">
-                           <Upload className="h-4 w-4 text-muted-foreground" />
-                           <div className={`font-medium ${isMobile ? 'text-sm' : ''}`}>Attached Files ({formData.attachments.length})</div>
-                         </div>
-                         <div className={`grid gap-2 ${isMobile ? 'grid-cols-1' : 'sm:grid-cols-2'}`}>
-                           {formData.attachments.map((file, index) => (
-                             <div key={file.id || index} className="flex items-center gap-2 p-2 bg-background rounded border">
-                               <FileText className="h-3 w-3 text-muted-foreground flex-shrink-0" />
-                               <span className={`truncate flex-1 ${isMobile ? 'text-sm' : 'text-sm'}`}>{file.name}</span>
-                               <Badge variant="secondary" className="text-xs">
-                                 {file.purpose}
-                               </Badge>
-                             </div>
-                           ))}
-                         </div>
-                       </div>
-                     </>
-                   )}
-
-                   {/* Service Location */}
-                   {formData.use_different_address && formData.service_location.street_address && (
-                     <>
-                       <Separator />
-                       <div className="flex items-start gap-3">
-                         <MapPin className="h-4 w-4 text-muted-foreground mt-0.5 flex-shrink-0" />
-                         <div className="min-w-0">
-                           <div className={`font-medium ${isMobile ? 'text-sm' : ''}`}>Service Location</div>
-                           <div className={`text-muted-foreground ${isMobile ? 'text-xs' : 'text-sm'}`}>
-                             {formData.service_location.street_address}<br />
-                             {formData.service_location.city}, {formData.service_location.parish}
-                           </div>
-                         </div>
-                       </div>
-                     </>
-                   )}
-                 </div>
-
-                 {/* Additional Message */}
-                 <div className="space-y-2">
-                   <Label htmlFor="customer_message">Additional Message (Optional)</Label>
-                   <Textarea
-                     id="customer_message"
-                     rows={isMobile ? 4 : 3}
-                     value={formData.customer_message}
-                     onChange={(e) => handleChange('customer_message', e.target.value)}
-                     placeholder={isTargetedMarketplace 
-                       ? `Any special instructions, preferences, or questions for your ${selectedProfessionals.length} selected professionals...`
-                       : isOpenMarketplace
-                       ? "Any special instructions, preferences, or questions for the professionals..."
-                       : `Any special instructions, preferences, or questions for ${professionalName}...`
-                     }
-                     className={isMobile ? 'min-h-[100px]' : ''}
-                   />
-                 </div>
-
-                 {/* Error Display */}
-                 {errors.general && (
-                   <Alert variant="destructive">
-                     <AlertCircle className="h-4 w-4" />
-                     <AlertDescription className={isMobile ? 'text-sm' : ''}>{errors.general}</AlertDescription>
-                   </Alert>
-                 )}
-
-                 {/* Terms Notice - ENHANCED */}
-                 <Alert>
-                   <MessageSquare className="h-4 w-4" />
-                   <AlertDescription className={isMobile ? 'text-sm' : ''}>
-                     <strong>Next Steps:</strong> 
-                     {isTargetedMarketplace 
-                       ? ` Your request will be sent to your ${selectedProfessionals.length} selected professionals. They will review your requirements and send you individual quotes. You'll be able to compare their offers and choose the best one.`
-                       : isOpenMarketplace
-                       ? ' Your service request will be posted to qualified professionals. Multiple professionals will review your requirements and send you quotes. You\'ll be able to compare offers and choose the best one.'
-                       : ` Your appointment request will be sent to ${professionalName}. They will review your requirements and either accept, decline, or send you a custom quote. You\'ll be notified via email and in your dashboard.`
-                     }
-                   </AlertDescription>
-                 </Alert>
-               </CardContent>
-             </Card>
+           {formData.attachments.length === 0 && (
+             <div className="text-center text-sm text-muted-foreground p-4">
+               <p>No files selected. You can skip this step and add files later.</p>
+             </div>
            )}
          </div>
-       </div>
+       )}
+
+       {/* Step 3: Schedule Selection - ENHANCED WITH MULTI-SELECT SUPPORT */}
+       {currentStep === 3 && (
+         <div className={`${isMobile ? 'h-[400px]' : 'h-[500px]'}`}>
+           <CustomerAvailabilityCalendar
+             professionalId={isMarketplace ? null : professional?.professional_id}
+             serviceId={serviceInformation?.service_id}
+             selectedProfessionals={isMarketplace ? selectedProfessionals : []}
+             onSlotSelect={handleSlotSelect}
+             selectedSlot={isTargetedMarketplace ? formData.professionalSelections : formData.selectedSlotInfo}
+             isMultiSelect={isTargetedMarketplace} // NEW prop to enable multi-select mode
+           />
+           
+           {errors.session && (
+             <Alert variant="destructive" className="mt-4">
+               <AlertCircle className="h-4 w-4" />
+               <AlertDescription>{errors.session}</AlertDescription>
+             </Alert>
+           )}
+         </div>
+       )}
+
+       {/* Step 4: Service Location */}
+       {currentStep === 4 && (
+         <div className="space-y-4">
+           <div className="flex items-center space-x-2">
+             <Checkbox 
+               id="use_different_address"
+               checked={formData.use_different_address}
+               onCheckedChange={(checked) => handleChange('use_different_address', checked)}
+             />
+             <Label htmlFor="use_different_address">Use a different address for this service</Label>
+           </div>
+
+           {!formData.use_different_address ? (
+             <div className="p-4 bg-muted/20 rounded-lg border">
+               <p className="font-medium">Using your primary address</p>
+               <p className="text-sm text-muted-foreground">
+                 {formData.service_location?.formatted_address || 'Your confirmed location will be used'}
+               </p>
+             </div>
+           ) : (
+             <AppointmentAddressSelector
+               onAddressSelect={(address) => {
+                 setFormData(prev => ({
+                   ...prev,
+                   service_location: address
+                 }));
+               }}
+               currentAddress={formData.service_location}
+             />
+           )}
+         </div>
+       )}
+
+       {/* Step 5: Review & Confirm - ENHANCED WITH PROFESSIONAL SELECTION INFO */}
+       {currentStep === 5 && (
+         <div className="space-y-6">
+           
+           {/* Service Summary */}
+           <div className="p-4 bg-muted/20 rounded-lg space-y-4">
+             <div>
+               <h4 className="font-semibold">{serviceInformation?.name}</h4>
+               <p className="text-sm text-muted-foreground mt-1">
+                 {formData.description.substring(0, 150)}
+                 {formData.description.length > 150 && '...'}
+               </p>
+             </div>
+
+             <div className="grid grid-cols-2 gap-4 text-sm">
+               <div>
+                 <p className="font-medium">Date</p>
+                 <p className="text-muted-foreground">
+                   {formData.session && new Date(formData.session).toLocaleDateString('en-US', {
+                     weekday: 'short',
+                     month: 'short',
+                     day: 'numeric'
+                   })}
+                 </p>
+               </div>
+               
+               <div>
+                 <p className="font-medium">Time</p>
+                 <p className="text-muted-foreground">
+                   {formData.session && new Date(formData.session).toLocaleTimeString('en-US', {
+                     hour: 'numeric',
+                     minute: '2-digit',
+                     hour12: true
+                   })}
+                 </p>
+               </div>
+             </div>
+
+             {/* Enhanced Professional Selection Display */}
+             {formData.selectedSlotInfo?.selectedProfessional && isMarketplace && (
+               <div className="pt-2 border-t">
+                 <p className="font-medium text-sm">Selected Professional</p>
+                 <p className="text-muted-foreground text-sm">
+                   {getSelectedProfessionalName()}
+                 </p>
+                 {formData.selectedSlotInfo.selectedProfessional.hourly_rate && (
+                   <p className="text-xs text-muted-foreground">
+                     ${formData.selectedSlotInfo.selectedProfessional.hourly_rate}/hour
+                   </p>
+                 )}
+               </div>
+             )}
+
+             {/* Files */}
+             {formData.attachments && formData.attachments.length > 0 && (
+               <div>
+                 <p className="font-medium text-sm">{formData.attachments.length} file(s) attached</p>
+               </div>
+             )}
+
+             {/* Enhanced Workflow type display */}
+             <div className="pt-2 border-t">
+               {isTargetedMarketplace ? (
+                 <p className="text-sm text-purple-600">
+                   Sending to {selectedProfessionals.length} selected professional{selectedProfessionals.length !== 1 ? 's' : ''}
+                   {formData.selectedSlotInfo?.selectedProfessional && (
+                     <span className="block text-xs mt-1">
+                       Time slot reserved with {getSelectedProfessionalName()}
+                     </span>
+                   )}
+                 </p>
+               ) : isOpenMarketplace ? (
+                 <p className="text-sm text-blue-600">
+                   Open marketplace request
+                   {formData.selectedSlotInfo?.selectedProfessional && (
+                     <span className="block text-xs mt-1">
+                       Preferred professional: {getSelectedProfessionalName()}
+                     </span>
+                   )}
+                 </p>
+               ) : (
+                 <p className="text-sm text-green-600">Direct booking with {professionalName}</p>
+               )}
+             </div>
+           </div>
+
+           {/* Additional Message */}
+           <div className="space-y-2">
+             <Label htmlFor="customer_message">Additional Message (Optional)</Label>
+             <Textarea
+               id="customer_message"
+               rows={3}
+               value={formData.customer_message}
+               onChange={(e) => handleChange('customer_message', e.target.value)}
+               placeholder="Any special instructions or questions..."
+             />
+           </div>
+
+           {/* Error Display */}
+           {errors.general && (
+             <Alert variant="destructive">
+               <AlertCircle className="h-4 w-4" />
+               <AlertDescription>{errors.general}</AlertDescription>
+             </Alert>
+           )}
+         </div>
+       )}
+       
      </div>
 
      {/* Fixed Footer with Action Buttons */}
@@ -1159,7 +1009,7 @@ export default function Appointment({
                  </>
                )}
 
-               {/* Show selected time on schedule step */}
+               {/* Show selected time on schedule step - Enhanced */}
                {currentStep === 3 && formData.session && (
                  <>
                    <Calendar className="h-4 w-4" />
@@ -1172,6 +1022,11 @@ export default function Appointment({
                        hour12: true
                      })}
                    </span>
+                   {formData.selectedSlotInfo?.selectedProfessional && isMarketplace && (
+                     <span className="text-xs">
+                       - {getSelectedProfessionalName()?.split(' ')[0]}
+                     </span>
+                   )}
                  </>
                )}
              </div>
@@ -1188,7 +1043,7 @@ export default function Appointment({
                  </>
                )}
 
-               {/* Show selected time on schedule step */}
+               {/* Show selected time on schedule step - Enhanced */}
                {currentStep === 3 && formData.session && (
                  <>
                    <Calendar className="h-4 w-4" />
@@ -1201,6 +1056,9 @@ export default function Appointment({
                        hour12: true
                      })}
                    </span>
+                   {formData.selectedSlotInfo?.selectedProfessional && isMarketplace && (
+                     <span>- {getSelectedProfessionalName()}</span>
+                   )}
                  </>
                )}
 
