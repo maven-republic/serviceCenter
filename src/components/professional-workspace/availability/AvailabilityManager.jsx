@@ -306,24 +306,22 @@ export default function AvailabilityManager({
             </TabsTrigger>
           </TabsList>
 
-          {/* Schedule Tab */}
+          {/* Schedule Tab - Remove Card wrapper */}
           <TabsContent value="schedule" className="space-y-4">
-            <Card>
-              <CardHeader className="pb-4">
-                <CardTitle className="flex items-center gap-2 text-lg">
-                  <Calendar className="h-5 w-5" />
-                  Working Hours
-                </CardTitle>
-                <CardDescription className="text-sm">
-                  Set your regular availability and manage date-specific overrides.
-                  {overrides.length > 0 && (
-                    <span className="block mt-1 text-amber-600 font-medium">
-                      {overrides.length} override{overrides.length !== 1 ? 's' : ''} configured.
-                    </span>
-                  )}
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
+            <div>
+              <div className="flex items-center gap-2 pb-4">
+                <Calendar className="h-5 w-5" />
+                <CardTitle className="text-lg">Working Hours</CardTitle>
+              </div>
+              <CardDescription className="text-sm pb-4">
+                Set your regular availability and manage date-specific overrides.
+                {overrides.length > 0 && (
+                  <span className="block mt-1 text-amber-600 font-medium">
+                    {overrides.length} override{overrides.length !== 1 ? 's' : ''} configured.
+                  </span>
+                )}
+              </CardDescription>
+              <div>
                 <AvailabilityInterface
                   availability={availability}
                   overrides={overrides}
@@ -337,23 +335,21 @@ export default function AvailabilityManager({
                   }}
                   onSave={handleSaveAvailability}
                 />
-              </CardContent>
-            </Card>
+              </div>
+            </div>
           </TabsContent>
 
-          {/* Protocol Tab */}
+          {/* Protocol Tab - Remove Card wrapper */}
           <TabsContent value="protocol" className="space-y-4">
-            <Card>
-              <CardHeader className="pb-4">
-                <CardTitle className="flex items-center gap-2 text-lg">
-                  <Settings className="h-5 w-5" />
-                  Booking Rules
-                </CardTitle>
-                <CardDescription className="text-sm">
-                  Configure advance notice requirements, buffer times, and booking limits.
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
+            <div>
+              <div className="flex items-center gap-2 pb-4">
+                <Settings className="h-5 w-5" />
+                <CardTitle className="text-lg">Booking Rules</CardTitle>
+              </div>
+              <CardDescription className="text-sm pb-4">
+                Configure advance notice requirements, buffer times, and booking limits.
+              </CardDescription>
+              <div>
                 <AvailabilityProtocol
                   rules={protocolRules}
                   setRules={(newRules) => {
@@ -363,8 +359,8 @@ export default function AvailabilityManager({
                   onSave={handleSaveProtocol}
                   isSaving={isSaving}
                 />
-              </CardContent>
-            </Card>
+              </div>
+            </div>
           </TabsContent>
         </Tabs>
       </div>

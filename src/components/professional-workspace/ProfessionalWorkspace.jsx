@@ -1,4 +1,4 @@
-// ===== ENHANCED ProfessionalWorkspace.jsx - BORDERLESS =====
+// ===== ENHANCED ProfessionalWorkspace.jsx - SMOOTH SIDEBAR ANIMATIONS =====
 // File: src/components/professional-workspace/ProfessionalWorkspace.jsx
 
 'use client'
@@ -15,7 +15,7 @@ import { AlertCircle, User, RefreshCw, Menu, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import DashboardSidebar from './sidebar/DashboardSidebar'
 
-// Simplified loading component (unchanged)
+// Simplified loading component
 const SimpleLoading = ({ message = "Loading..." }) => (
   <div className="min-h-screen bg-background flex items-center justify-center p-6">
     <Card className="w-full max-w-md">
@@ -33,7 +33,7 @@ const SimpleLoading = ({ message = "Loading..." }) => (
   </div>
 )
 
-// Simple error component (unchanged)
+// Simple error component
 const SimpleError = ({ title, description, onRetry }) => (
   <div className="min-h-screen bg-background flex items-center justify-center p-6">
     <Card className="w-full max-w-md">
@@ -67,7 +67,7 @@ const SimpleError = ({ title, description, onRetry }) => (
   </div>
 )
 
-// Mobile Header Component - REMOVED BORDER
+// Mobile Header Component - BORDERLESS
 const MobileHeader = ({ onToggleSidebar, sidebarOpen }) => (
   <header className="fixed top-0 left-0 right-0 z-50 h-16 bg-card lg:hidden">
     <div className="flex items-center justify-between h-full px-4">
@@ -88,7 +88,7 @@ const MobileHeader = ({ onToggleSidebar, sidebarOpen }) => (
         <span className="font-semibold text-foreground">Workspace</span>
       </div>
       
-      <div className="w-10" /> {/* Spacer for centering */}
+      <div className="w-10" />
     </div>
   </header>
 )
@@ -99,7 +99,7 @@ const SidebarBackdrop = ({ isVisible, onClick }) => {
   
   return (
     <div
-      className="fixed inset-0 z-40 bg-black/50 lg:hidden"
+      className="fixed inset-0 z-40 bg-black/50 lg:hidden transition-opacity duration-200"
       onClick={onClick}
       aria-hidden="true"
     />
@@ -116,6 +116,12 @@ export default function ProfessionalWorkspace({ children }) {
   // Mobile sidebar state
   const [sidebarOpen, setSidebarOpen] = useState(false)
   
+  // Desktop sidebar collapsed state
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
+  
+  // Animation state to prevent layout shift during initial load
+  const [isInitialized, setIsInitialized] = useState(false)
+  
   const [authState, setAuthState] = useState({
     isReady: false,
     error: null
@@ -124,7 +130,7 @@ export default function ProfessionalWorkspace({ children }) {
   const fetchAttempted = useRef(false)
   const authChecked = useRef(false)
 
-  console.log('🏢 ProfessionalWorkspace render:', {
+  console.log('Professional Workspace render:', {
     hasSession: !!session,
     sessionUser: session?.user?.email,
     hasUser: !!user,
@@ -132,8 +138,26 @@ export default function ProfessionalWorkspace({ children }) {
     isLoading,
     authState,
     isMobile,
-    sidebarOpen
+    sidebarOpen,
+    sidebarCollapsed
   })
+
+  // Initialize and load collapsed state from localStorage
+  useEffect(() => {
+    const savedState = localStorage.getItem('sidebar-collapsed')
+    if (savedState !== null) {
+      setSidebarCollapsed(JSON.parse(savedState))
+    }
+    // Prevent animation on initial load
+    setTimeout(() => setIsInitialized(true), 100)
+  }, [])
+
+  // Save collapsed state to localStorage with smooth animation
+  const toggleSidebarCollapsed = () => {
+    const newState = !sidebarCollapsed
+    setSidebarCollapsed(newState)
+    localStorage.setItem('sidebar-collapsed', JSON.stringify(newState))
+  }
 
   // Close sidebar on route change (mobile only)
   useEffect(() => {
@@ -155,49 +179,49 @@ export default function ProfessionalWorkspace({ children }) {
     }
   }, [isMobile, sidebarOpen])
 
-  // ONE-TIME authentication check (unchanged)
+  // ONE-TIME authentication check
   useEffect(() => {
     if (authChecked.current) return
     authChecked.current = true
     
-    console.log('🔍 One-time authentication check...')
+    console.log('One-time authentication check...')
     
     if (session?.user && user?.account?.account_id) {
-      console.log('✅ Already authenticated and user loaded')
+      console.log('Already authenticated and user loaded')
       setAuthState({ isReady: true, error: null })
       return
     }
     
     if (session?.user) {
-      console.log('✅ Session found, waiting for user data...')
+      console.log('Session found, waiting for user data...')
       setAuthState({ isReady: true, error: null })
       return
     }
     
-    console.log('❌ No session found')
+    console.log('No session found')
     setAuthState({ 
       isReady: false, 
       error: 'Maximum authentication attempts reached. Please refresh the page.' 
     })
   }, [session, user])
 
-  // Fetch user data when we have a session (unchanged)
+  // Fetch user data when we have a session
   useEffect(() => {
     if (!session?.user?.email || user || isLoading || fetchAttempted.current) {
       return
     }
     
-    console.log('👤 Fetching user data for:', session.user.email)
+    console.log('Fetching user data for:', session.user.email)
     fetchAttempted.current = true
     fetchUser(session.user, supabase)
   }, [session?.user?.email, user, isLoading, fetchUser, supabase])
 
-  // Reset fetch attempt when user changes (unchanged)
+  // Reset fetch attempt when user changes
   useEffect(() => {
     fetchAttempted.current = false
   }, [session?.user?.email])
 
-  // Retry handler (unchanged)
+  // Retry handler
   const handleRetry = () => {
     authChecked.current = false
     fetchAttempted.current = false
@@ -208,7 +232,7 @@ export default function ProfessionalWorkspace({ children }) {
   const toggleSidebar = () => setSidebarOpen(!sidebarOpen)
   const closeSidebar = () => setSidebarOpen(false)
 
-  // If we have an error, show it (unchanged)
+  // Error state
   if (authState.error) {
     return (
       <SimpleError
@@ -219,22 +243,22 @@ export default function ProfessionalWorkspace({ children }) {
     )
   }
 
-  // If we're not ready and don't have everything, show loading (unchanged)
+  // Loading state - authentication check
   if (!authState.isReady || !session?.user) {
     return <SimpleLoading message="Checking authentication..." />
   }
 
-  // Show loading while fetching user data (unchanged)
+  // Loading state - user data
   if (isLoading || !user?.account?.account_id) {
     return <SimpleLoading message="Loading your dashboard..." />
   }
 
   // Success! Render the responsive workspace
-  console.log('🎉 Rendering workspace for:', user.account.email)
+  console.log('Rendering workspace for:', user.account.email)
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      {/* Mobile Header - REMOVED BORDER */}
+      {/* Mobile Header - BORDERLESS */}
       {isMobile && (
         <MobileHeader 
           onToggleSidebar={toggleSidebar}
@@ -249,36 +273,46 @@ export default function ProfessionalWorkspace({ children }) {
       />
 
       <div className="flex h-screen overflow-hidden">
-        {/* Responsive Sidebar - REMOVED RIGHT BORDER */}
+        {/* Responsive Sidebar - ENHANCED SMOOTH ANIMATIONS */}
         <aside
           className={cn(
-            // Base styles - REMOVED: border-r border-border
+            // Base styles - REMOVED borders + SMOOTH ANIMATIONS
             "flex-shrink-0 bg-card",
-            // Desktop styles
-            "lg:w-[280px] lg:relative lg:translate-x-0",
+            // Smooth transition classes
+            isInitialized && "transition-all duration-300 ease-in-out",
+            // Desktop styles - Dynamic width based on collapsed state
+            sidebarCollapsed ? "lg:w-16" : "lg:w-[185px]",
+            "lg:relative lg:translate-x-0",
             // Mobile styles
             "fixed lg:relative z-50 lg:z-auto",
-            "w-80 h-full transition-transform duration-300 ease-in-out lg:transition-none",
-            // Mobile positioning
+            "w-80 h-full",
+            // Mobile positioning with smooth transitions
             isMobile 
-              ? sidebarOpen 
-                ? "translate-x-0" 
-                : "-translate-x-full"
+              ? cn(
+                  "transition-transform duration-300 ease-in-out",
+                  sidebarOpen ? "translate-x-0" : "-translate-x-full"
+                )
               : "translate-x-0"
           )}
         >
-          <DashboardSidebar />
+          <DashboardSidebar 
+            isCollapsed={sidebarCollapsed}
+            onToggleCollapsed={toggleSidebarCollapsed}
+            isAnimating={isInitialized}
+          />
         </aside>
         
-        {/* Main Content - BORDERLESS CONTAINER */}
+        {/* Main Content - BORDERLESS CONTAINER with SMOOTH TRANSITIONS */}
         <main 
           className={cn(
             "flex-1 overflow-y-auto",
+            // Smooth content reflow
+            isInitialized && "transition-all duration-300 ease-in-out",
             // Add top padding on mobile for fixed header
             isMobile && "pt-16"
           )}
         >
-          {/* REMOVED CONTAINER BORDERS - Using custom borderless container */}
+          {/* BORDERLESS CONTAINER - Removed borders and constraints */}
           <div className="mx-auto p-6 space-y-6 max-w-7xl w-full">
             {children}
           </div>

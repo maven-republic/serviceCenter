@@ -254,7 +254,7 @@ export default function AvailabilityFramework({ availability = [], setAvailabili
         </CardContent>
       </Card>
 
-      {/* Mobile Weekly Schedule */}
+      {/* Mobile Weekly Schedule - Remove Card borders around each day */}
       <div className="space-y-3">
         {daysOfWeek.map(({ label, value, short }) => {
           const blocks = weeklySlots[value] || []
@@ -262,8 +262,8 @@ export default function AvailabilityFramework({ availability = [], setAvailabili
           const hasBlocks = blocks.length > 0
 
           return (
-            <Card key={value} className={`${hasBlocks ? 'border-primary/20 bg-muted/20' : ''}`}>
-              <CardHeader className="pb-3">
+            <div key={value} className={`p-4 ${hasBlocks ? 'bg-muted/20 rounded-lg' : ''}`}>
+              <div className="pb-3">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <div className={`
@@ -317,9 +317,9 @@ export default function AvailabilityFramework({ availability = [], setAvailabili
                     )}
                   </div>
                 )}
-              </CardHeader>
+              </div>
 
-              <CardContent className="space-y-3">
+              <div className="space-y-3">
                 {/* Time Blocks */}
                 {blocks.length > 0 ? (
                   <div className="space-y-3">
@@ -396,8 +396,8 @@ export default function AvailabilityFramework({ availability = [], setAvailabili
                     </AlertDescription>
                   </Alert>
                 )}
-              </CardContent>
-            </Card>
+              </div>
+            </div>
           )
         })}
       </div>

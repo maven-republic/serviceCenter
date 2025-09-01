@@ -86,49 +86,7 @@ export default function ProfessionalAccountOverview() {
 
   return (
     <div className="space-y-6 sm:space-y-8 p-1">
-      {/* Enhanced Welcome Header - Mobile Responsive */}
-      <div className="space-y-4 sm:space-y-6">
-        <div className="flex flex-col space-y-4 lg:flex-row lg:items-start lg:justify-between lg:gap-6 lg:space-y-0">
-          <div className="space-y-3 sm:space-y-4 flex-1">
-            <div className="space-y-2 sm:space-y-3">
-              <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
-                <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-foreground leading-tight">
-                  Welcome back, {user?.account?.first_name || 'Professional'}! 👋
-                </h1>
-                <div className="flex flex-wrap gap-2">
-                  {isProfileComplete && (
-                    <Badge className="gradient-brand text-white border-0 gap-1.5 px-2 sm:px-3 py-1 text-xs sm:text-sm">
-                      <Star className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
-                      Elite Profile
-                    </Badge>
-                  )}
-                  {profileCompletion >= 80 && profileCompletion < 90 && (
-                    <Badge variant="default" className="gap-1.5 px-2 sm:px-3 py-1 text-xs sm:text-sm">
-                      <CheckCircle className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
-                      Complete
-                    </Badge>
-                  )}
-                </div>
-              </div>
-              <p className="text-sm sm:text-base lg:text-lg text-muted-foreground max-w-3xl leading-relaxed">
-                Manage your professional profile and account settings to attract more clients and grow your business.
-              </p>
-            </div>
-          </div>
-          
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3 w-full sm:w-auto lg:flex-shrink-0">
-            <Button variant="outline" size="sm" className="btn-enhanced gap-2 h-10 sm:h-11 text-sm w-full sm:w-auto">
-              <Eye className="h-4 w-4" />
-              Preview Profile
-            </Button>
-            <Button size="sm" className="btn-enhanced btn-brand gap-2 h-10 sm:h-11 text-sm w-full sm:w-auto">
-              <Edit className="h-4 w-4" />
-              Quick Edit
-            </Button>
-          </div>
-        </div>
-
-      </div>
+    
 
       {/* Enhanced Main Content - Mobile Responsive - BORDERLESS */}
       <div className="space-y-6 sm:space-y-8">

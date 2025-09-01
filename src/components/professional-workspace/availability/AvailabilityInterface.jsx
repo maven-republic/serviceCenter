@@ -227,63 +227,59 @@ export default function AvailabilityInterface({
         </Alert>
       )}
 
-      {/* Main Content Card */}
-      <Card>
-        <CardHeader className="pb-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              {viewMode === 'List' ? (
-                <List className="h-5 w-5" />
-              ) : (
-                <Calendar className="h-5 w-5" />
-              )}
-              <CardTitle className="text-lg">
-                {viewMode === 'List' ? 'Weekly Schedule' : 'Calendar View'}
-              </CardTitle>
-            </div>
-            
-            <Badge variant="outline" className="flex items-center gap-1 text-xs">
-              {viewMode === 'List' ? (
-                <>
-                  <Edit3 className="h-3 w-3" />
-                  Edit
-                </>
-              ) : (
-                <>
-                  <Eye className="h-3 w-3" />
-                  Interactive
-                </>
-              )}
-            </Badge>
+      {/* Main Content - Remove Card wrapper */}
+      <div>
+        <div className="flex items-center justify-between pb-4">
+          <div className="flex items-center gap-2">
+            {viewMode === 'List' ? (
+              <List className="h-5 w-5" />
+            ) : (
+              <Calendar className="h-5 w-5" />
+            )}
+            <CardTitle className="text-lg">
+              {viewMode === 'List' ? 'Weekly Schedule' : 'Calendar View'}
+            </CardTitle>
           </div>
           
-          <CardDescription className="text-sm">
-            {viewMode === 'List' 
-              ? 'Set your regular weekly availability for each day'
-              : 'View schedule in calendar format and create date overrides'
-            }
-          </CardDescription>
-        </CardHeader>
-        
-        <CardContent className="p-0">
-          <div className="p-4">
+          <Badge variant="outline" className="flex items-center gap-1 text-xs">
             {viewMode === 'List' ? (
-              <AvailabilityFramework
-                availability={localAvailability}
-                setAvailability={handleUpdateAvailability}
-              />
+              <>
+                <Edit3 className="h-3 w-3" />
+                Edit
+              </>
             ) : (
-              <AvailabilityCalendarView
-                availability={localAvailability}
-                overrides={localOverrides}
-                onUpdateOverride={handleUpdateOverride}
-                onDeleteOverride={handleDeleteOverride}
-                onUpdateRecurring={handleUpdateAvailability}
-              />
+              <>
+                <Eye className="h-3 w-3" />
+                Interactive
+              </>
             )}
-          </div>
-        </CardContent>
-      </Card>
+          </Badge>
+        </div>
+        
+        <CardDescription className="text-sm pb-4">
+          {viewMode === 'List' 
+            ? 'Set your regular weekly availability for each day'
+            : 'View schedule in calendar format and create date overrides'
+          }
+        </CardDescription>
+        
+        <div>
+          {viewMode === 'List' ? (
+            <AvailabilityFramework
+              availability={localAvailability}
+              setAvailability={handleUpdateAvailability}
+            />
+          ) : (
+            <AvailabilityCalendarView
+              availability={localAvailability}
+              overrides={localOverrides}
+              onUpdateOverride={handleUpdateOverride}
+              onDeleteOverride={handleDeleteOverride}
+              onUpdateRecurring={handleUpdateAvailability}
+            />
+          )}
+        </div>
+      </div>
 
       {/* Mobile Summary Card */}
       <Card className="border-muted bg-muted/20">

@@ -134,7 +134,7 @@ export const professionalNavigation = [
   // },
   {
     id: 15,
-    name: "Account Information",
+    name: "Account",
     icon: "flaticon-photo",
     path: "/professional/account-information",
   },
