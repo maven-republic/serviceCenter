@@ -1,4 +1,4 @@
-// ===== MOBILE RESPONSIVE AccountOverview.jsx =====
+// ===== MOBILE RESPONSIVE AccountOverview.jsx - BORDERLESS =====
 
 'use client'
 
@@ -150,8 +150,8 @@ export default function AccountOverview() {
 
   return (
     <div className="space-y-4 sm:space-y-6">
-      {/* Profile Image Section - Mobile Responsive */}
-      <div className="flex flex-col sm:flex-row items-center sm:items-start space-y-4 sm:space-y-0 sm:space-x-4 lg:space-x-6 p-4 sm:p-6 rounded-lg border-2 border-dashed border-border hover:border-primary/50 transition-colors">
+      {/* Profile Image Section - Mobile Responsive - REMOVED BORDER */}
+      <div className="flex flex-col sm:flex-row items-center sm:items-start space-y-4 sm:space-y-0 sm:space-x-4 lg:space-x-6 p-4 sm:p-6 rounded-lg bg-muted/10 hover:bg-muted/20 transition-colors">
         <div className="relative group flex-shrink-0">
           <Avatar className="h-16 w-16 sm:h-20 sm:w-20">
             <AvatarImage 
@@ -181,9 +181,9 @@ export default function AccountOverview() {
         </div>
       </div>
 
-      {/* Save Status Messages - Mobile Responsive */}
+      {/* Save Status Messages - Mobile Responsive - REMOVED BORDERS */}
       {saveStatus === 'success' && (
-        <Alert className="border-green-200 bg-green-50 text-green-800 dark:border-green-800 dark:bg-green-950 dark:text-green-200">
+        <Alert className="bg-green-50 text-green-800 dark:bg-green-950 dark:text-green-200">
           <CheckCircle className="h-4 w-4" />
           <AlertDescription className="text-sm">
             Your account information has been updated successfully!
@@ -192,7 +192,7 @@ export default function AccountOverview() {
       )}
 
       {saveStatus === 'error' && (
-        <Alert variant="destructive">
+        <Alert variant="destructive" className="border-0">
           <AlertCircle className="h-4 w-4" />
           <AlertDescription className="text-sm">
             There was an error updating your information. Please try again.
@@ -306,8 +306,8 @@ export default function AccountOverview() {
         </div>
       </div>
 
-      {/* Save Button - Mobile Responsive */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pt-4 sm:pt-6 border-t">
+      {/* Save Button - Mobile Responsive - REMOVED BORDER */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pt-4 sm:pt-6">
         <div className="text-sm text-muted-foreground text-center sm:text-left">
           {hasChanges ? (
             <span className="text-orange-600 dark:text-orange-400">You have unsaved changes</span>

@@ -13,7 +13,9 @@ import LoadingSkeletons from './components/LoadingSkeletons'
 import ViewModeToggle from './components/ViewModeToggle'
 import SelectedProfessionalsBar from './components/SelectedProfessionalsBar'
 import ProfessionalManifest from '@/components/ProfessionalManifest'
-import NoProfessionalsFound from '@/components/NoProfessionalFound/NoProfessionalsFound'
+// import NoProfessionalsFound from '@/components/NoProfessionalFound/NoProfessionalsFound'
+import NoServiceProfessionalsFound from '@/components/NoProfessionalFound/NoServiceProfessionalsFound'
+
 import AppointmentModal from '@/components/modal/AppointmentModal'
 
 // Import UI components
@@ -340,15 +342,7 @@ export default function ServicePage() {
             {serviceInformation.description && (
               <p className="text-muted-foreground mb-4">{serviceInformation.description}</p>
             )}
-            <div className="flex flex-wrap items-center gap-4 text-sm">
-              {serviceInformation.base_price && (
-                <div className="flex items-center gap-1">
-                  <DollarSign className="h-4 w-4" />
-                  <span>From ${serviceInformation.base_price}</span>
-                </div>
-              )}
-             
-            </div>
+            
           </div>
         </div>
       )}
@@ -357,7 +351,7 @@ export default function ServicePage() {
         <LoadingSkeletons type="professionals" viewMode={viewMode} isMobile={isMobile} />
       ) : professionals.length === 0 ? (
         <div className="max-w-2xl mx-auto py-4 sm:py-0">
-          <NoProfessionalsFound serviceId={serviceId} />
+          <NoServiceProfessionalsFound serviceId={serviceId} />
         </div>
       ) : (
         <div className={cn(

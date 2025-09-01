@@ -128,69 +128,12 @@ export default function ProfessionalAccountOverview() {
           </div>
         </div>
 
-        {/* Enhanced Profile Completion Progress - Mobile Responsive */}
-        <div className={`border rounded-lg p-4 sm:p-6 ${needsProfileBoost ? "border-amber-200 bg-gradient-to-r from-amber-50 to-orange-50 dark:border-amber-700 dark:from-amber-950 dark:to-orange-950" : "border-green-200 bg-gradient-to-r from-green-50 to-emerald-50 dark:border-green-700 dark:from-green-950 dark:to-emerald-950"}`}>
-          <div className="space-y-4 sm:space-y-6">
-            <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
-              <div className="space-y-2 flex-1">
-                <div className="flex items-center gap-3">
-                  <div className={`p-1.5 sm:p-2 rounded-lg sm:rounded-xl ${needsProfileBoost ? "bg-amber-100 dark:bg-amber-900" : "bg-green-100 dark:bg-green-900"}`}>
-                    <BarChart3 className={`h-4 w-4 sm:h-5 sm:w-5 ${needsProfileBoost ? "text-amber-600 dark:text-amber-400" : "text-green-600 dark:text-green-400"}`} />
-                  </div>
-                  <h3 className="text-lg sm:text-xl font-semibold">Profile Strength</h3>
-                </div>
-                <p className="text-sm sm:text-base text-muted-foreground leading-relaxed">
-                  {profileCompletion >= 90 ? "Outstanding! Your profile is optimized for maximum visibility" : 
-                   profileCompletion >= 80 ? "Your profile looks great and attracts clients effectively" : 
-                   "Complete your profile to attract up to 40% more clients"}
-                </p>
-              </div>
-              <div className="text-center sm:text-right flex-shrink-0">
-                <div className={`text-3xl sm:text-4xl font-bold ${needsProfileBoost ? "text-amber-600 dark:text-amber-400" : "text-green-600 dark:text-green-400"}`}>
-                  {profileCompletion}%
-                </div>
-                <div className="text-xs sm:text-sm text-muted-foreground font-medium">Complete</div>
-              </div>
-            </div>
-            
-            <div className="space-y-3">
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-muted-foreground">Progress</span>
-                <span className={`font-medium ${needsProfileBoost ? "text-amber-600 dark:text-amber-400" : "text-green-600 dark:text-green-400"}`}>
-                  {profileCompletion >= 90 ? "Elite" : profileCompletion >= 80 ? "Strong" : "Building"}
-                </span>
-              </div>
-              <Progress 
-                value={profileCompletion} 
-                className={`h-2 sm:h-3 ${needsProfileBoost ? "[&>div]:bg-gradient-to-r [&>div]:from-amber-500 [&>div]:to-orange-500" : "[&>div]:bg-gradient-to-r [&>div]:from-green-500 [&>div]:to-emerald-500"}`}
-              />
-            </div>
-            
-            {needsProfileBoost && (
-              <Alert className="border-amber-200 bg-amber-50 dark:border-amber-700 dark:bg-amber-900/30">
-                <TrendingUp className="h-4 w-4 text-amber-600 dark:text-amber-400" />
-                <AlertDescription className="text-amber-800 dark:text-amber-200 text-sm">
-                  <strong>Boost your visibility:</strong> Complete your profile to improve search ranking and attract up to 40% more clients.
-                </AlertDescription>
-              </Alert>
-            )}
-
-            {isProfileComplete && (
-              <Alert className="border-green-200 bg-green-50 dark:border-green-700 dark:bg-green-900/30">
-                <Star className="h-4 w-4 text-green-600 dark:text-green-400" />
-                <AlertDescription className="text-green-800 dark:text-green-200 text-sm">
-                  <strong>Excellent work!</strong> Your elite profile maximizes visibility and client trust.
-                </AlertDescription>
-              </Alert>
-            )}
-          </div>
-        </div>
       </div>
 
-      {/* Enhanced Main Content - Mobile Responsive */}
+      {/* Enhanced Main Content - Mobile Responsive - BORDERLESS */}
       <div className="space-y-6 sm:space-y-8">
-        {/* Account Overview Section */}
-        <div className="border border-primary/10 hover:border-primary/20 transition-colors duration-300 rounded-lg">
+        {/* Account Overview Section - REMOVED OUTER BORDER */}
+        <div className="hover:bg-muted/20 transition-colors duration-300 rounded-lg">
           <div className="p-4 sm:p-6 border-b border-border">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
               <div className="flex items-center space-x-3 sm:space-x-4">
@@ -215,8 +158,8 @@ export default function ProfessionalAccountOverview() {
           </div>
         </div>
 
-        {/* Professional Services Section */}
-        <div className="border border-purple/10 hover:border-purple/20 transition-colors duration-300 rounded-lg">
+        {/* Professional Services Section - REMOVED OUTER BORDER */}
+        <div className="hover:bg-muted/20 transition-colors duration-300 rounded-lg">
           <div className="p-4 sm:p-6 border-b border-border">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
               <div className="flex items-center space-x-3 sm:space-x-4">
@@ -241,8 +184,8 @@ export default function ProfessionalAccountOverview() {
           </div>
         </div>
 
-        {/* Education Section */}
-        <div className="border border-primary/10 hover:border-primary/20 transition-colors duration-300 rounded-lg">
+        {/* Education Section - REMOVED OUTER BORDER */}
+        <div className="hover:bg-muted/20 transition-colors duration-300 rounded-lg">
           <div className="p-4 sm:p-6 border-b border-border">
             <div className="flex items-center space-x-3 sm:space-x-4">
               <div className="p-2 sm:p-3 rounded-lg sm:rounded-xl bg-gradient-to-br from-green-100 to-emerald-200 dark:from-green-900 dark:to-emerald-800 flex-shrink-0">
@@ -259,8 +202,8 @@ export default function ProfessionalAccountOverview() {
           </div>
         </div>
 
-        {/* Work Experience Section */}
-        <div className="border border-primary/10 hover:border-primary/20 transition-colors duration-300 rounded-lg">
+        {/* Work Experience Section - REMOVED OUTER BORDER */}
+        <div className="hover:bg-muted/20 transition-colors duration-300 rounded-lg">
           <div className="p-4 sm:p-6 border-b border-border">
             <div className="flex items-center space-x-3 sm:space-x-4">
               <div className="p-2 sm:p-3 rounded-lg sm:rounded-xl bg-gradient-to-br from-orange-100 to-amber-200 dark:from-orange-900 dark:to-amber-800 flex-shrink-0">
@@ -277,8 +220,8 @@ export default function ProfessionalAccountOverview() {
           </div>
         </div>
 
-        {/* Security Settings Section */}
-        <div className="border border-primary/10 hover:border-primary/20 transition-colors duration-300 rounded-lg">
+        {/* Security Settings Section - REMOVED OUTER BORDER */}
+        <div className="hover:bg-muted/20 transition-colors duration-300 rounded-lg">
           <div className="p-4 sm:p-6 border-b border-border">
             <div className="flex items-center space-x-3 sm:space-x-4">
               <div className="p-2 sm:p-3 rounded-lg sm:rounded-xl bg-gradient-to-br from-red-100 to-pink-200 dark:from-red-900 dark:to-pink-800 flex-shrink-0">

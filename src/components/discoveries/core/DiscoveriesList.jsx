@@ -86,7 +86,7 @@ export default function DiscoveriesList({
 
     try {
       const nextPage = currentPage + 1;
-      console.log(`🔄 Loading page ${nextPage}...`);
+      console.log(`📄 Loading page ${nextPage}...`);
       
       const newResults = await onLoadMore(nextPage, itemsPerPage);
       
@@ -131,7 +131,7 @@ export default function DiscoveriesList({
       <div className="space-y-6">
         {displayedResults.map((result, index) => (
           <div 
-            key={`${result.service_id || result.id || index}`}
+            key={`list-service-${result.service_id || result.id || `item-${index}`}-${index}`}
             className="w-full"
           >
             <Manifest data={result} />
@@ -148,7 +148,7 @@ export default function DiscoveriesList({
         {/* Real service cards */}
         {displayedResults.map((result, index) => (
           <div 
-            key={`${result.service_id || result.id || index}-${Math.floor(index / itemsPerPage)}`}
+            key={`service-${result.service_id || result.id || `item-${index}`}-${index}`}
             className="w-full break-inside-avoid"
           >
             <Manifest data={result} />
@@ -158,7 +158,7 @@ export default function DiscoveriesList({
         {/* 🎯 FIXED: Individual skeleton cards in same masonry flow */}
         {isLoadingMore && [...Array(4)].map((_, i) => (
           <MasonrySkeletonCard 
-            key={`loading-skeleton-${i}`} 
+            key={`loading-skeleton-${displayedResults.length}-${i}`} 
             index={displayedResults.length + i} 
           />
         ))}

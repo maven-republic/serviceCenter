@@ -182,29 +182,11 @@ export default function Discoveries() {
         {/* Left side - Search info & stats */}
         {(query || results.length > 0) && (
           <div className="flex-1">
-            <h2 className="text-xl font-semibold text-foreground mb-1">
-              {query ? (
-                <>Discoveries for "<span className="text-primary">{query}</span>"</>
-              ) : (
-                'All Services'
-              )}
-            </h2>
+           
             
             <div className="flex items-center gap-3 text-sm text-muted-foreground flex-wrap">
-              <div className="flex items-center gap-1">
-                <span className="font-medium">{totalResults.toLocaleString()}</span>
-                <span>{totalResults === 1 ? 'result' : 'results'}</span>
-              </div>
+             
               
-              {searchTimeMs && (
-                <>
-                  <span>•</span>
-                  <div className="flex items-center gap-1">
-                    <Clock className="h-3 w-3" />
-                    <span>{searchTimeMs}ms</span>
-                  </div>
-                </>
-              )}
               
               {usedFuzzy && (
                 <>
@@ -216,14 +198,7 @@ export default function Discoveries() {
                 </>
               )}
               
-              {hasMore && results.length > 0 && (
-                <>
-                  <span>•</span>
-                  <div className="flex items-center gap-1">
-                    <span className="text-green-600">Infinite scroll enabled</span>
-                  </div>
-                </>
-              )}
+             
             </div>
           </div>
         )}

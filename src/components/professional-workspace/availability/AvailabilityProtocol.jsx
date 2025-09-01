@@ -225,7 +225,7 @@ export default function AvailabilityProtocol({ rules, setRules, onSave, isSaving
       </div>
 
       {/* Mobile How It Works */}
-      <Card className="border-blue-200 bg-blue-50/50">
+      <Card className="border-blue-200 ">
         <CardHeader className="pb-3">
           <CardTitle className="text-base flex items-center gap-2 text-blue-700">
             <Info className="h-4 w-4" />
@@ -266,7 +266,7 @@ export default function AvailabilityProtocol({ rules, setRules, onSave, isSaving
       </Card>
 
       {/* Mobile Pro Tips */}
-      <Card className="border-green-200 bg-green-50/50">
+      <Card className="border-green-200 ">
         <CardHeader className="pb-3">
           <CardTitle className="text-base flex items-center gap-2 text-green-700">
             <CheckCircle2 className="h-4 w-4" />

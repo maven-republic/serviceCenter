@@ -1,4 +1,4 @@
-// ===== ENHANCED ProfessionalWorkspace.jsx =====
+// ===== ENHANCED ProfessionalWorkspace.jsx - BORDERLESS =====
 // File: src/components/professional-workspace/ProfessionalWorkspace.jsx
 
 'use client'
@@ -67,9 +67,9 @@ const SimpleError = ({ title, description, onRetry }) => (
   </div>
 )
 
-// Mobile Header Component
+// Mobile Header Component - REMOVED BORDER
 const MobileHeader = ({ onToggleSidebar, sidebarOpen }) => (
-  <header className="fixed top-0 left-0 right-0 z-50 h-16 bg-card border-b border-border lg:hidden">
+  <header className="fixed top-0 left-0 right-0 z-50 h-16 bg-card lg:hidden">
     <div className="flex items-center justify-between h-full px-4">
       <Button
         variant="ghost"
@@ -234,7 +234,7 @@ export default function ProfessionalWorkspace({ children }) {
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      {/* Mobile Header */}
+      {/* Mobile Header - REMOVED BORDER */}
       {isMobile && (
         <MobileHeader 
           onToggleSidebar={toggleSidebar}
@@ -249,11 +249,11 @@ export default function ProfessionalWorkspace({ children }) {
       />
 
       <div className="flex h-screen overflow-hidden">
-        {/* Responsive Sidebar */}
+        {/* Responsive Sidebar - REMOVED RIGHT BORDER */}
         <aside
           className={cn(
-            // Base styles
-            "flex-shrink-0 border-r border-border bg-card",
+            // Base styles - REMOVED: border-r border-border
+            "flex-shrink-0 bg-card",
             // Desktop styles
             "lg:w-[280px] lg:relative lg:translate-x-0",
             // Mobile styles
@@ -270,7 +270,7 @@ export default function ProfessionalWorkspace({ children }) {
           <DashboardSidebar />
         </aside>
         
-        {/* Main Content */}
+        {/* Main Content - BORDERLESS CONTAINER */}
         <main 
           className={cn(
             "flex-1 overflow-y-auto",
@@ -278,7 +278,8 @@ export default function ProfessionalWorkspace({ children }) {
             isMobile && "pt-16"
           )}
         >
-          <div className="container mx-auto p-6 space-y-6 max-w-7xl">
+          {/* REMOVED CONTAINER BORDERS - Using custom borderless container */}
+          <div className="mx-auto p-6 space-y-6 max-w-7xl w-full">
             {children}
           </div>
         </main>

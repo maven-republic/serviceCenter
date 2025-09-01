@@ -1,4 +1,4 @@
-// ===== MOBILE RESPONSIVE WorkExperience.jsx =====
+// ===== MOBILE RESPONSIVE WorkExperience.jsx - BORDERLESS =====
 
 "use client";
 
@@ -133,7 +133,7 @@ export default function WorkExperience() {
         </Button>
       </div>
 
-      {/* Timeline - Mobile Responsive */}
+      {/* Timeline - Mobile Responsive - BORDERLESS CARDS */}
       <div className="relative">
         {/* Timeline line - Hidden on mobile, visible on sm+ */}
         <div className="hidden sm:block absolute left-6 lg:left-8 top-0 bottom-16 w-0.5 bg-gradient-to-b from-primary via-primary/50 to-transparent"></div>
@@ -151,113 +151,111 @@ export default function WorkExperience() {
               )}
             </div>
 
-            {/* Experience content - Mobile Responsive */}
+            {/* Experience content - Mobile Responsive - REMOVED OUTER BORDER */}
             <div className="flex-1 min-w-0">
-              <Card className="hover:shadow-md transition-shadow duration-200">
-                <CardContent className="p-4 sm:p-6">
-                  <div className="space-y-3 sm:space-y-4">
-                    {/* Header - Mobile Responsive */}
-                    <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3 sm:gap-4">
-                      <div className="space-y-2 flex-1 min-w-0">
-                        <div className="flex flex-wrap items-center gap-2">
-                          <Badge variant="secondary" className="gap-1 text-xs">
-                            <Calendar className="h-3 w-3" />
-                            {experience.period}
-                          </Badge>
-                          <Badge variant="outline" className="gap-1 text-xs">
-                            <Building className="h-3 w-3" />
-                            {experience.type}
-                          </Badge>
-                          <span className="text-xs text-muted-foreground">
-                            ({calculateDuration(experience.startDate, experience.endDate)})
-                          </span>
-                        </div>
-                        
-                        <div>
-                          <h3 className="text-lg sm:text-xl font-semibold text-foreground leading-tight">
-                            {experience.position}
-                          </h3>
-                          <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2 mt-1">
-                            <h4 className="text-base sm:text-lg font-medium text-primary">
-                              {experience.company}
-                            </h4>
-                            {experience.location && (
-                              <div className="flex items-center gap-1 text-muted-foreground">
-                                <span className="hidden sm:inline">•</span>
-                                <MapPin className="h-3 w-3 sm:hidden" />
-                                <span className="text-sm">{experience.location}</span>
-                              </div>
-                            )}
-                          </div>
-                        </div>
+              <div className="hover:bg-muted/10 rounded-lg p-4 sm:p-6 transition-colors duration-200">
+                <div className="space-y-3 sm:space-y-4">
+                  {/* Header - Mobile Responsive */}
+                  <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3 sm:gap-4">
+                    <div className="space-y-2 flex-1 min-w-0">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <Badge variant="secondary" className="gap-1 text-xs">
+                          <Calendar className="h-3 w-3" />
+                          {experience.period}
+                        </Badge>
+                        <Badge variant="outline" className="gap-1 text-xs">
+                          <Building className="h-3 w-3" />
+                          {experience.type}
+                        </Badge>
+                        <span className="text-xs text-muted-foreground">
+                          ({calculateDuration(experience.startDate, experience.endDate)})
+                        </span>
                       </div>
-
-                      {/* Action buttons - Mobile Responsive */}
-                      <div className="flex gap-1 self-start">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8 text-muted-foreground hover:text-primary"
-                          title="Edit"
-                          onClick={() => setIsEditing(experience.id)}
-                        >
-                          <Edit3 className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8 text-muted-foreground hover:text-destructive"
-                          title="Delete"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
+                      
+                      <div>
+                        <h3 className="text-lg sm:text-xl font-semibold text-foreground leading-tight">
+                          {experience.position}
+                        </h3>
+                        <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2 mt-1">
+                          <h4 className="text-base sm:text-lg font-medium text-primary">
+                            {experience.company}
+                          </h4>
+                          {experience.location && (
+                            <div className="flex items-center gap-1 text-muted-foreground">
+                              <span className="hidden sm:inline">•</span>
+                              <MapPin className="h-3 w-3 sm:hidden" />
+                              <span className="text-sm">{experience.location}</span>
+                            </div>
+                          )}
+                        </div>
                       </div>
                     </div>
 
-                    {/* Description */}
-                    <p className="text-sm sm:text-base text-muted-foreground leading-relaxed">
-                      {experience.description}
-                    </p>
-
-                    {/* Skills - Mobile Responsive */}
-                    {experience.skills && experience.skills.length > 0 && (
-                      <div className="space-y-2">
-                        <h5 className="text-sm font-medium text-foreground">Key Skills</h5>
-                        <div className="flex flex-wrap gap-2">
-                          {experience.skills.map((skill, skillIndex) => (
-                            <Badge key={skillIndex} variant="outline" className="text-xs">
-                              {skill}
-                            </Badge>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Achievements - Mobile Responsive */}
-                    {experience.achievements && experience.achievements.length > 0 && (
-                      <div className="space-y-2">
-                        <h5 className="text-sm font-medium text-foreground">Key Achievements</h5>
-                        <ul className="space-y-1">
-                          {experience.achievements.map((achievement, achIndex) => (
-                            <li key={achIndex} className="flex items-start gap-2 text-sm text-muted-foreground">
-                              <CheckCircle className="h-3 w-3 text-green-600 mt-0.5 flex-shrink-0" />
-                              <span className="leading-relaxed">{achievement}</span>
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    )}
+                    {/* Action buttons - Mobile Responsive */}
+                    <div className="flex gap-1 self-start">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 text-muted-foreground hover:text-primary"
+                        title="Edit"
+                        onClick={() => setIsEditing(experience.id)}
+                      >
+                        <Edit3 className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                        title="Delete"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </div>
-                </CardContent>
-              </Card>
+
+                  {/* Description */}
+                  <p className="text-sm sm:text-base text-muted-foreground leading-relaxed">
+                    {experience.description}
+                  </p>
+
+                  {/* Skills - Mobile Responsive */}
+                  {experience.skills && experience.skills.length > 0 && (
+                    <div className="space-y-2">
+                      <h5 className="text-sm font-medium text-foreground">Key Skills</h5>
+                      <div className="flex flex-wrap gap-2">
+                        {experience.skills.map((skill, skillIndex) => (
+                          <Badge key={skillIndex} variant="outline" className="text-xs">
+                            {skill}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Achievements - Mobile Responsive */}
+                  {experience.achievements && experience.achievements.length > 0 && (
+                    <div className="space-y-2">
+                      <h5 className="text-sm font-medium text-foreground">Key Achievements</h5>
+                      <ul className="space-y-1">
+                        {experience.achievements.map((achievement, achIndex) => (
+                          <li key={achIndex} className="flex items-start gap-2 text-sm text-muted-foreground">
+                            <CheckCircle className="h-3 w-3 text-green-600 mt-0.5 flex-shrink-0" />
+                            <span className="leading-relaxed">{achievement}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </div>
+              </div>
             </div>
           </div>
         ))}
       </div>
 
-      {/* Completion encouragement - Mobile Responsive */}
+      {/* Completion encouragement - Mobile Responsive - REMOVED BORDER */}
       {workExperiences.length > 0 && workExperiences.length < 3 && (
-        <Alert className="border-purple-200 bg-purple-50 text-purple-800 dark:border-purple-800 dark:bg-purple-950 dark:text-purple-200">
+        <Alert className="bg-purple-50 text-purple-800 dark:bg-purple-950 dark:text-purple-200">
           <Briefcase className="h-4 w-4" />
           <AlertDescription className="text-sm">
             Consider adding more work experience to showcase your full professional journey.
@@ -265,8 +263,8 @@ export default function WorkExperience() {
         </Alert>
       )}
 
-      {/* Save button - Mobile Responsive */}
-      <div className="flex justify-start pt-4 border-t">
+      {/* Save button - Mobile Responsive - REMOVED BORDER */}
+      <div className="flex justify-start pt-4">
         <Button className="gap-2 w-full sm:w-auto">
           <Save className="h-4 w-4" />
           Save Changes

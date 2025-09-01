@@ -102,7 +102,7 @@ export default function Education() {
 
   if (error) {
     return (
-      <Alert className="border-red-200 bg-gradient-to-r from-red-50 to-pink-50 dark:border-red-700 dark:from-red-950 dark:to-pink-950">
+      <Alert className="bg-gradient-to-r from-red-50 to-pink-50 text-red-800 dark:from-red-950 dark:to-pink-950 dark:text-red-200">
         <AlertCircle className="h-5 w-5 text-red-600 dark:text-red-400" />
         <AlertDescription className="space-y-4">
           <div>
@@ -113,7 +113,7 @@ export default function Education() {
             variant="outline" 
             size="sm" 
             onClick={() => window.location.reload()}
-            className="border-red-300 text-red-700 hover:bg-red-100 dark:border-red-600 dark:text-red-300 dark:hover:bg-red-900"
+            className="text-red-700 hover:bg-red-100 dark:text-red-300 dark:hover:bg-red-900"
           >
             Try Again
           </Button>
@@ -163,9 +163,9 @@ export default function Education() {
           </div>
         </div>
 
-        {/* Enhanced Education Categories - Mobile Responsive */}
+        {/* Enhanced Education Categories - Mobile Responsive - REMOVED BORDERS */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-          <div className="border-2 border-blue-200 bg-gradient-to-br from-blue-50 to-indigo-50 dark:border-blue-700 dark:from-blue-950 dark:to-indigo-950 hover:border-blue-300 dark:hover:border-blue-600 transition-colors duration-300 rounded-lg p-4 sm:p-6">
+          <div className="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-950 dark:to-indigo-950 hover:bg-gradient-to-br hover:from-blue-100 hover:to-indigo-100 dark:hover:from-blue-900 dark:hover:to-indigo-900 transition-colors duration-300 rounded-lg p-4 sm:p-6">
             <div className="space-y-3 sm:space-y-4">
               <div className="flex items-center gap-3">
                 <div className="p-2 rounded-xl bg-blue-100 dark:bg-blue-900">
@@ -183,7 +183,7 @@ export default function Education() {
             </div>
           </div>
 
-          <div className="border-2 border-purple-200 bg-gradient-to-br from-purple-50 to-violet-50 dark:border-purple-700 dark:from-purple-950 dark:to-violet-950 hover:border-purple-300 dark:hover:border-purple-600 transition-colors duration-300 rounded-lg p-4 sm:p-6">
+          <div className="bg-gradient-to-br from-purple-50 to-violet-50 dark:from-purple-950 dark:to-violet-950 hover:bg-gradient-to-br hover:from-purple-100 hover:to-violet-100 dark:hover:from-purple-900 dark:hover:to-violet-900 transition-colors duration-300 rounded-lg p-4 sm:p-6">
             <div className="space-y-3 sm:space-y-4">
               <div className="flex items-center gap-3">
                 <div className="p-2 rounded-xl bg-purple-100 dark:bg-purple-900">
@@ -201,7 +201,7 @@ export default function Education() {
             </div>
           </div>
 
-          <div className="border-2 border-orange-200 bg-gradient-to-br from-orange-50 to-amber-50 dark:border-orange-700 dark:from-orange-950 dark:to-amber-950 hover:border-orange-300 dark:hover:border-orange-600 transition-colors duration-300 rounded-lg p-4 sm:p-6 sm:col-span-2 lg:col-span-1">
+          <div className="bg-gradient-to-br from-orange-50 to-amber-50 dark:from-orange-950 dark:to-amber-950 hover:bg-gradient-to-br hover:from-orange-100 hover:to-amber-100 dark:hover:from-orange-900 dark:hover:to-amber-900 transition-colors duration-300 rounded-lg p-4 sm:p-6 sm:col-span-2 lg:col-span-1">
             <div className="space-y-3 sm:space-y-4">
               <div className="flex items-center gap-3">
                 <div className="p-2 rounded-xl bg-orange-100 dark:bg-orange-900">
@@ -220,8 +220,8 @@ export default function Education() {
           </div>
         </div>
 
-        {/* Pro Tips Section - Mobile Responsive */}
-        <div className="bg-gradient-to-r from-slate-50 to-gray-50 dark:from-slate-900 dark:to-gray-900 border-2 border-dashed border-gray-200 dark:border-gray-700 rounded-lg p-4 sm:p-6">
+        {/* Pro Tips Section - Mobile Responsive - REMOVED BORDER */}
+        <div className="bg-gradient-to-r from-slate-50 to-gray-50 dark:from-slate-900 dark:to-gray-900 rounded-lg p-4 sm:p-6">
           <div className="space-y-3 sm:space-y-4">
             <div className="flex items-center gap-3">
               <div className="p-2 rounded-xl bg-gradient-to-br from-primary/10 to-primary/20">
@@ -263,7 +263,7 @@ export default function Education() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div className="space-y-2">
           <div className="flex flex-wrap items-center gap-2">
-            <Badge className="bg-gradient-to-r from-primary to-primary/90 text-white border-0 gap-1.5 px-3 py-1">
+            <Badge className="bg-gradient-to-r from-primary to-primary/90 text-white gap-1.5 px-3 py-1">
               <CheckCircle className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
               {artifacts.length} Education Record{artifacts.length !== 1 ? 's' : ''}
             </Badge>
@@ -289,6 +289,8 @@ export default function Education() {
       <div className="space-y-6">
         <ArtifactInterface artifacts={artifacts} />
       </div>
+
+      {/* Enhanced Completion Encouragement - Mobile Responsive - REMOVED BORDER */}
 
       {/* Enhanced Completion Encouragement - Mobile Responsive */}
       {artifacts.length > 0 && artifacts.length < 3 && (

@@ -146,8 +146,8 @@ export default function Manifest({ data }) {
                 </Button> */}
               </div>
 
-              {/* Service Title */}
-              <h3 className="font-semibold text-base leading-tight mb-2 text-gray-900 line-clamp-2 group-hover:text-primary transition-colors">
+              {/* Service Title - Enhanced Typography */}
+              <h3 className="font-bold text-base leading-snug mb-2 text-slate-950 line-clamp-2 group-hover:text-primary transition-colors">
                 {serviceInformation.title}
               </h3>
 
@@ -160,19 +160,19 @@ export default function Manifest({ data }) {
             {/* Content Section - Variable based on card variant */}
             <div className="px-4 flex-1 flex flex-col justify-between">
               
-              {/* Description */}
+              {/* Description - Enhanced Typography */}
               <div className="mb-4">
                 {cardVariant === 'compact' ? (
-                  <p className="text-sm text-gray-600 line-clamp-2">
+                  <p className="text-sm text-slate-700 line-clamp-2 leading-relaxed">
                     {serviceInformation.description}
                   </p>
                 ) : cardVariant === 'standard' ? (
-                  <p className="text-sm text-gray-600 line-clamp-3">
+                  <p className="text-sm text-slate-700 line-clamp-3 leading-relaxed">
                     {serviceInformation.description}
                   </p>
                 ) : (
                   <div className="space-y-3">
-                    <p className="text-sm text-gray-600 line-clamp-4">
+                    <p className="text-sm text-slate-700 line-clamp-4 leading-relaxed">
                       {serviceInformation.description}
                     </p>
                     
@@ -199,15 +199,15 @@ export default function Manifest({ data }) {
                 )}
               </div>
 
-              {/* Bottom Section */}
+              {/* Bottom Section - Enhanced Typography */}
               <div className="space-y-3">
                 {/* Price and Duration */}
                 <div className="flex items-center justify-between text-sm">
-                  <div className="font-semibold text-gray-900">
+                  <div className="font-medium text-slate-950">
                     {formatPrice(serviceInformation.price)}
                   </div>
                   {serviceInformation.duration && (
-                    <div className="text-gray-500 text-xs">
+                    <div className="text-slate-600 text-xs">
                       {formatDuration(serviceInformation.duration)}
                     </div>
                   )}
