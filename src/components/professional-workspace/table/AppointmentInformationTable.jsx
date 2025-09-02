@@ -30,28 +30,28 @@ import { useTableData } from './primitives/useTableData'
 // Import our column definitions
 import { getColumnsForMode } from './columns'
 
-// Ultra-flat Table components with thin borders
+// Minimal Table components with clean design
 const Table = ({ className, ...props }) => (
   <div className="relative w-full overflow-auto">
     <table
-      className={cn("w-full caption-bottom text-sm border-collapse border-spacing-0", className)}
+      className={cn("w-full caption-bottom text-sm", className)}
       {...props}
     />
   </div>
 )
 
 const TableHeader = ({ className, ...props }) => (
-  <thead className={cn("", className)} {...props} />
+  <thead className={cn("border-b", className)} {...props} />
 )
 
 const TableBody = ({ className, ...props }) => (
-  <tbody className={cn("", className)} {...props} />
+  <tbody className={className} {...props} />
 )
 
 const TableRow = ({ className, ...props }) => (
   <tr
     className={cn(
-      "border-b border-gray-50 hover:bg-gray-50",
+      "border-b border-border/40 hover:bg-muted/30 transition-colors last:border-b-0",
       className
     )}
     {...props}
@@ -61,7 +61,7 @@ const TableRow = ({ className, ...props }) => (
 const TableHead = ({ className, ...props }) => (
   <th
     className={cn(
-      "h-11 px-3 text-left align-middle font-medium text-gray-600 bg-gray-50 border-b border-gray-100",
+      "h-10 px-3 text-left align-middle font-medium text-muted-foreground",
       className
     )}
     {...props}
@@ -71,7 +71,7 @@ const TableHead = ({ className, ...props }) => (
 const TableCell = ({ className, ...props }) => (
   <td
     className={cn(
-      "p-3 align-middle text-gray-900",
+      "px-3 py-2 align-middle",
       className
     )}
     {...props}
@@ -266,16 +266,16 @@ export default function AppointmentInformationTable({
         ) : (
           <div
             className={cn(
-              "flex items-center gap-1 text-left font-medium text-gray-600 select-none cursor-default",
-              isSortable && "hover:text-gray-900 cursor-pointer"
+              "flex items-center gap-1 text-left font-medium select-none cursor-default",
+              isSortable && "hover:text-foreground cursor-pointer"
             )}
             onClick={isSortable ? () => handleSort(column.key) : undefined}
           >
             <span className="text-sm font-medium">{column.header}</span>
             {isSortable && (
-              sortIconData.icon === 'asc' ? <ArrowUp className="h-3 w-3 text-gray-900" /> :
-              sortIconData.icon === 'desc' ? <ArrowDown className="h-3 w-3 text-gray-900" /> :
-              <ArrowUpDown className="h-3 w-3 text-gray-400" />
+              sortIconData.icon === 'asc' ? <ArrowUp className="h-3 w-3" /> :
+              sortIconData.icon === 'desc' ? <ArrowDown className="h-3 w-3" /> :
+              <ArrowUpDown className="h-3 w-3 opacity-50" />
             )}
           </div>
         )}
@@ -319,31 +319,26 @@ export default function AppointmentInformationTable({
   // ===== LOADING STATE =====
   if (loading) {
     return (
-      <Card className={cn("w-full border border-gray-200", className)}>
-        <CardHeader className="py-3 px-4 bg-gray-50 border-b border-gray-100">
+      <Card className={cn("w-full border-0 shadow-none", className)}>
+        <CardHeader className="pb-3">
           <div className="flex items-center justify-between">
-            <Skeleton className="h-5 w-32 bg-gray-200" />
-            <Skeleton className="h-8 w-24 bg-gray-200" />
+            <Skeleton className="h-5 w-32" />
+            <Skeleton className="h-4 w-16" />
           </div>
         </CardHeader>
-        <CardContent className="p-6">
-          <div className="space-y-3">
+        <CardContent className="p-0">
+          <div className="space-y-2">
             {[...Array(5)].map((_, i) => (
-              <div key={i} className="flex items-center space-x-4 py-3 border-b border-gray-50 last:border-b-0">
-                <Skeleton className="h-4 w-4 bg-gray-200" />
-                <div className="flex items-center space-x-3">
-                  <Skeleton className="h-8 w-8 rounded-full bg-gray-200" />
-                  <div className="space-y-1">
-                    <Skeleton className="h-4 w-32 bg-gray-200" />
-                    <Skeleton className="h-3 w-24 bg-gray-200" />
-                  </div>
+              <div key={i} className="flex items-center space-x-3 py-2 px-3">
+                <Skeleton className="h-4 w-4" />
+                <Skeleton className="h-6 w-6 rounded-full" />
+                <div className="flex-1 space-y-1">
+                  <Skeleton className="h-4 w-32" />
                 </div>
-                <Skeleton className="h-4 w-24 bg-gray-200" />
-                <Skeleton className="h-4 w-32 bg-gray-200" />
-                <Skeleton className="h-5 w-16 bg-gray-200" />
-                <Skeleton className="h-4 w-16 bg-gray-200" />
-                <Skeleton className="h-4 w-24 bg-gray-200" />
-                <Skeleton className="h-6 w-6 bg-gray-200" />
+                <Skeleton className="h-4 w-24" />
+                <Skeleton className="h-5 w-16" />
+                <Skeleton className="h-4 w-16" />
+                <Skeleton className="h-4 w-4" />
               </div>
             ))}
           </div>
@@ -379,18 +374,18 @@ export default function AppointmentInformationTable({
       : message.description
 
     return (
-      <Card className={cn("border border-gray-100 shadow-none", className)}>
+      <Card className={cn("border-0 shadow-none", className)}>
         <CardContent className="flex flex-col items-center justify-center py-12">
-          <Calendar className="h-12 w-12 text-gray-400 mb-4" />
-          <h3 className="text-lg font-medium mb-2 text-gray-900">{actualTitle}</h3>
-          <p className="text-gray-600 text-center max-w-md mb-4">
+          <Calendar className="h-8 w-8 text-muted-foreground mb-3" />
+          <h3 className="font-medium mb-2">{actualTitle}</h3>
+          <p className="text-sm text-muted-foreground text-center max-w-md mb-4">
             {actualDescription}
           </p>
           {isFiltered && (
             <Button 
               variant="outline" 
               onClick={clearAllFilters}
-              className="border-gray-300 text-gray-700"
+              size="sm"
             >
               Clear all filters
             </Button>
@@ -411,73 +406,72 @@ export default function AppointmentInformationTable({
   // ===== MAIN RENDER =====
   return (
     <TooltipProvider>
-      <Card className={cn("w-full border border-gray-100 shadow-none", className)} {...cardProps}>
-        {/* Flat Header */}
-        <CardHeader className="py-3 px-4 bg-gray-50 border-b border-gray-100">
+      <Card className={cn("w-full border-0 shadow-none", className)} {...cardProps}>
+        {/* Minimal Header */}
+        <CardHeader className="pb-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
-              <h3 className="text-base font-medium text-gray-900">{getTableTitle()}</h3>
+              <h3 className="font-medium">{getTableTitle()}</h3>
               
               {/* Selection Badge */}
               {selectionState.hasSelection && (
-                <Badge variant="outline" className="text-xs bg-blue-50 text-blue-700 border-blue-200">
-                  {selectionState.selectedCount} of {selectionState.totalCount} selected
+                <Badge variant="secondary" className="text-xs">
+                  {selectionState.selectedCount} selected
                 </Badge>
               )}
               
-              {/* Data Stats Badge */}
+              {/* Filter Badge */}
               {dataStats.hasActiveFilters && (
-                <Badge variant="outline" className="text-xs bg-gray-100 text-gray-600 border-gray-200">
-                  {dataStats.filtered} of {dataStats.total} shown
+                <Badge variant="outline" className="text-xs">
+                  {dataStats.filtered} of {dataStats.total}
                 </Badge>
               )}
             </div>
             
             <div className="flex items-center space-x-2">
-              {/* Bulk Actions */}
+              {/* Bulk Actions - Minimal */}
               {selectionState.hasSelection && (
-                <div className="flex items-center space-x-2">
+                <div className="flex items-center space-x-1">
                   <Button 
-                    variant="outline" 
+                    variant="ghost" 
                     size="sm" 
                     onClick={handleBulkMessage}
-                    className="border-gray-300 text-gray-700"
+                    className="h-7 px-2"
                   >
-                    <MessageSquare className="h-4 w-4 mr-1" />
-                    Message ({selectionState.selectedCount})
+                    <MessageSquare className="h-3 w-3 mr-1" />
+                    Message
                   </Button>
                   <Button 
-                    variant="outline" 
+                    variant="ghost" 
                     size="sm" 
                     onClick={handleBulkArchive}
-                    className="border-gray-300 text-gray-600 hover:text-red-600"
+                    className="h-7 px-2 text-muted-foreground"
                   >
-                    <Trash2 className="h-4 w-4 mr-1" />
-                    Archive ({selectionState.selectedCount})
+                    <Trash2 className="h-3 w-3 mr-1" />
+                    Archive
                   </Button>
                 </div>
               )}
               
-              {/* Customize Button */}
+              {/* Settings */}
               <Button 
-                variant="outline" 
+                variant="ghost" 
                 size="sm" 
                 onClick={handleCustomize}
-                className="border-gray-300 text-gray-700"
+                className="h-7 w-7 p-0"
               >
-                <Settings className="h-4 w-4 mr-1" />
-                Customize
+                <Settings className="h-3 w-3" />
               </Button>
             </div>
           </div>
         </CardHeader>
 
-        {/* Flat Table Content */}
+        {/* Table Content */}
         <CardContent className="p-0">
-          <div className="overflow-x-auto max-h-[600px] overflow-y-auto">
+          <div className="overflow-x-auto">
             <Table>
-              <TableHeader className="sticky top-0 bg-gray-50 z-10">
-                <TableRow className="border-b border-gray-100">
+              <TableHeader>
+                <TableRow className="hover:bg-transparent">
                   {columns.map(renderColumnHeader)}
                 </TableRow>
               </TableHeader>
@@ -496,8 +490,8 @@ export default function AppointmentInformationTable({
                     <TableRow 
                       key={appointmentId}
                       className={cn(
-                        "h-12 cursor-pointer border-b border-gray-50",
-                        itemIsSelected && "bg-blue-50 border-l border-l-blue-500"
+                        "cursor-pointer",
+                        itemIsSelected && "bg-muted/40"
                       )}
                       onClick={() => handleRowClick(item)}
                     >
@@ -510,38 +504,27 @@ export default function AppointmentInformationTable({
           </div>
         </CardContent>
 
-        {/* Flat Pagination */}
+        {/* Minimal Pagination */}
         {activePagination && activePagination.totalPages > 1 && (
-          <div className="flex items-center justify-between px-4 py-3 border-t border-gray-100 bg-gray-50">
-            <div className="flex items-center space-x-4 text-sm text-gray-600">
-              <span>
-                Showing {activePagination.startIndex} to {activePagination.endIndex} of {activePagination.totalItems} results
-              </span>
-              
-              {/* Selection Summary */}
+          <div className="flex items-center justify-between px-3 py-2 border-t border-border/40">
+            <div className="text-sm text-muted-foreground">
+              {activePagination.startIndex}–{activePagination.endIndex} of {activePagination.totalItems}
               {selectionState.hasSelection && (
-                <span className="text-blue-600 font-medium">
-                  {selectionState.selectedCount} selected
-                </span>
-              )}
-              
-              {/* Filter Summary */}
-              {dataStats.hasActiveFilters && (
-                <span className="text-orange-600">
-                  Filtered ({dataStats.filterEfficiency}% match)
+                <span className="ml-2 font-medium">
+                  • {selectionState.selectedCount} selected
                 </span>
               )}
             </div>
             
-            <div className="flex items-center space-x-2">
+            <div className="flex items-center space-x-1">
               <Button
-                variant="outline"
+                variant="ghost"
                 size="sm"
                 onClick={() => activePageChange(activePagination.currentPage - 1)}
                 disabled={!activePagination.hasPreviousPage}
-                className="border-gray-300 text-gray-700"
+                className="h-7 px-2"
               >
-                <ChevronLeft className="h-4 w-4 mr-1" />
+                <ChevronLeft className="h-3 w-3" />
                 Previous
               </Button>
               
@@ -556,18 +539,13 @@ export default function AppointmentInformationTable({
                   .map((page, index, array) => (
                     <div key={page} className="flex items-center">
                       {index > 0 && array[index - 1] !== page - 1 && (
-                        <span className="px-2 text-gray-400">...</span>
+                        <span className="px-1 text-muted-foreground text-sm">…</span>
                       )}
                       <Button
-                        variant={page === activePagination.currentPage ? "default" : "outline"}
+                        variant={page === activePagination.currentPage ? "default" : "ghost"}
                         size="sm"
                         onClick={() => activePageChange(page)}
-                        className={cn(
-                          "w-8 h-8 p-0",
-                          page === activePagination.currentPage 
-                            ? "bg-blue-600 text-white border-blue-600" 
-                            : "border-gray-300 text-gray-700"
-                        )}
+                        className="w-7 h-7 p-0 text-sm"
                       >
                         {page}
                       </Button>
@@ -576,14 +554,14 @@ export default function AppointmentInformationTable({
               </div>
               
               <Button
-                variant="outline"
+                variant="ghost"
                 size="sm"
                 onClick={() => activePageChange(activePagination.currentPage + 1)}
                 disabled={!activePagination.hasNextPage}
-                className="border-gray-300 text-gray-700"
+                className="h-7 px-2"
               >
                 Next
-                <ChevronRight className="h-4 w-4 ml-1" />
+                <ChevronRight className="h-3 w-3" />
               </Button>
             </div>
           </div>
