@@ -403,7 +403,7 @@ const CustomerAppointmentDashboard = ({ appointmentId }) => {
       />
 
       {/* Debug Panel */}
-      {process.env.NODE_ENV === 'development' && (
+      {/* {process.env.NODE_ENV === 'development' && (
         <div className="bg-gray-50 rounded-xl p-4">
           <details className="text-gray-600 text-sm">
             <summary className="cursor-pointer font-medium">Debug Info</summary>
@@ -420,7 +420,7 @@ const CustomerAppointmentDashboard = ({ appointmentId }) => {
             </div>
           </details>
         </div>
-      )}
+      )} */}
 
       {/* Main Content Tabs */}
       <Tabs defaultValue={selectedInterest ? "selected" : "responses"} className="space-y-6">

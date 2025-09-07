@@ -3,17 +3,7 @@
 
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { 
-  CheckCircle, 
-  Plus, 
-  Calendar, 
-  Clock, 
-  Users, 
-  TrendingUp,
-  Loader2
-} from 'lucide-react';
+import { Plus, Users, Calendar } from 'lucide-react';
 
 export const AppointmentsHeader = ({ customerInformation }) => {
   const router = useRouter();
@@ -23,51 +13,46 @@ export const AppointmentsHeader = ({ customerInformation }) => {
 
   return (
     <div className="space-y-4 mb-6">
-      {/* Welcome Message - Mobile Optimized */}
+      {/* Simple Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-foreground">
+          <h1 className="text-2xl font-bold">
             {customerName ? `${customerName}'s Appointments` : 'Your Appointments'}
           </h1>
-          <p className="text-sm sm:text-base text-muted-foreground mt-1">
+          <p className="text-muted-foreground">
             Manage your service requests and view responses from professionals
           </p>
         </div>
         
         <Button 
           onClick={() => router.push('/customer/workspace')}
-          className="w-full sm:w-auto gap-2 h-11 touch-target btn-responsive"
+          className="w-full sm:w-auto"
         >
-          <Plus className="h-4 w-4" />
-          <span>New Request</span>
+          <Plus className="h-4 w-4 mr-2" />
+          New Request
         </Button>
       </div>
 
-
-      {/* Quick Action Buttons - Mobile Optimized */}
-      <div className="flex flex-wrap gap-2 sm:gap-3">
+      {/* Simple Quick Actions */}
+      <div className="flex flex-wrap gap-2">
         <Button 
           variant="outline" 
           size="sm" 
-          className="gap-2 h-9 touch-target btn-responsive-sm"
           onClick={() => router.push('/customer/explore')}
         >
-          <Users className="h-3 w-3" />
-          <span className="hidden sm:inline">Find</span> Professionals
+          <Users className="h-4 w-4 mr-2" />
+          Find Professionals
         </Button>
         
         <Button 
           variant="outline" 
           size="sm" 
-          className="gap-2 h-9 touch-target btn-responsive-sm"
           onClick={() => router.push('/customer/workspace')}
         >
-          <Calendar className="h-3 w-3" />
-          <span className="hidden sm:inline">Browse</span> Services
+          <Calendar className="h-4 w-4 mr-2" />
+          Browse Services
         </Button>
       </div>
-
-     
     </div>
   );
 };

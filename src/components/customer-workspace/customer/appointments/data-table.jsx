@@ -2,161 +2,73 @@
 "use client";
 
 import React from "react";
-import {
-  flexRender,
-  getCoreRowModel,
-  getFilteredRowModel,
-  getPaginationRowModel,
-  getSortedRowModel,
-  useReactTable,
-} from "@tanstack/react-table";
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Search } from 'lucide-react';
 
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import {
-  DropdownMenu,
-  DropdownMenuCheckboxItem,
-  DropdownMenuContent,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { 
-  ChevronDown, 
-  Search, 
-  Settings2, 
-  ChevronLeft, 
-  ChevronRight,
-  ChevronsLeft,
-  ChevronsRight,
-  Calendar,
-  Clock,
-  MessageSquare,
-  Eye,
-  SortAsc,
-  SortDesc
-} from "lucide-react";
-import { cn } from "@/lib/utils";
-
-// Mobile Card Component for Individual Appointments
-const AppointmentMobileCard = ({ appointment, onViewAppointment }) => {
-  const getStatusColor = (status) => {
-    const colors = {
-      'pending': 'text-yellow-700 bg-yellow-50 border-yellow-200',
-      'interested': 'text-blue-700 bg-blue-50 border-blue-200', 
-      'competing': 'text-purple-700 bg-purple-50 border-purple-200',
-      'evaluating': 'text-orange-700 bg-orange-50 border-orange-200',
-      'quoted': 'text-green-700 bg-green-50 border-green-200',
-      'converted': 'text-emerald-700 bg-emerald-50 border-emerald-200',
-      'cancelled': 'text-red-700 bg-red-50 border-red-200',
-    };
-    return colors[status] || 'text-muted-foreground bg-muted border-border';
+// Simplified status variant mapping
+const getStatusVariant = (status) => {
+  const variants = {
+    'pending': 'secondary',
+    'interested': 'default', 
+    'competing': 'outline',
+    'evaluating': 'secondary',
+    'quoted': 'default',
+    'converted': 'default',
+    'cancelled': 'destructive',
   };
+  return variants[status] || 'outline';
+};
 
+// Utility function to convert status to proper case
+const toProperCase = (status) => {
+  return status
+    .split('_')
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .join(' ');
+};
+
+// Minimal Mobile Card Component
+const AppointmentMobileCard = ({ appointment, onViewAppointment }) => {
   const formatDate = (dateString) => {
     return new Date(dateString).toLocaleDateString('en-US', {
       month: 'short',
-      day: 'numeric',
-      year: 'numeric'
+      day: 'numeric'
     });
-  };
-
-  const formatTime = (dateString) => {
-    return new Date(dateString).toLocaleTimeString('en-US', {
-      hour: '2-digit',
-      minute: '2-digit'
-    });
-  };
-
-  const truncateText = (text, maxLength = 80) => {
-    if (!text) return '';
-    return text.length > maxLength ? `${text.substring(0, maxLength)}...` : text;
   };
 
   return (
     <Card 
-      className="mb-3 hover:shadow-md transition-all duration-200 border-l-4 border-l-primary/20 cursor-pointer relative"
+      className="cursor-pointer hover:bg-muted/50 transition-colors"
       onClick={() => onViewAppointment(appointment.appointment_id)}
     >
       <CardContent className="p-4">
-        {/* Header Row */}
-        <div className="flex items-start justify-between mb-3">
-          <div className="flex-1 min-w-0 pr-2">
-            <h3 className="font-semibold text-sm text-foreground mb-1 line-clamp-2 leading-tight">
-              {appointment.title || 'Untitled Request'}
-            </h3>
-            <p className="text-xs text-muted-foreground mb-2">
-              {appointment.service?.name || 'Service Request'}
-            </p>
-            <div className="flex items-center gap-2 mb-2 flex-wrap">
-              <Badge 
-                className={cn(
-                  "text-xs px-2 py-0.5 font-medium capitalize",
-                  getStatusColor(appointment.status)
-                )}
-                variant="outline"
-              >
-                {appointment.status.replace('_', ' ')}
-              </Badge>
-              <span className="text-xs text-muted-foreground font-mono">
+        <div className="flex items-start justify-between">
+          <div className="flex-1 min-w-0 space-y-2">
+            <div className="flex items-center gap-2">
+              <div className="font-semibold text-sm text-primary truncate">
+                {appointment.service?.name}
+              </div>
+              <div className="text-xs text-muted-foreground font-mono bg-muted/50 px-1.5 py-0.5 rounded">
                 #{appointment.appointment_id.slice(0, 8)}
+              </div>
+            </div>
+            <div className="font-medium text-sm truncate">
+              {appointment.title || 'Draft'}
+            </div>
+            <div className="flex items-center gap-2">
+              <Badge variant={getStatusVariant(appointment.status)} className="text-xs">
+                {toProperCase(appointment.status)}
+              </Badge>
+              <span className="text-xs text-muted-foreground">
+                {appointment.interest_summary?.total_interests || 0} responses
               </span>
             </div>
           </div>
-          
-          <Button
-            size="sm"
-            variant="ghost"
-            className="h-9 w-9 p-0 flex-shrink-0 touch-target"
-            onClick={(e) => {
-              e.stopPropagation();
-              onViewAppointment(appointment.appointment_id);
-            }}
-          >
-            <Eye className="h-4 w-4" />
-          </Button>
-        </div>
-
-        {/* Message Preview */}
-        {appointment.customer_message && (
-          <div className="mb-3 p-3 bg-muted/30 rounded-md">
-            <div className="flex items-start gap-2">
-              <MessageSquare className="h-3 w-3 text-muted-foreground mt-0.5 flex-shrink-0" />
-              <p className="text-xs text-muted-foreground leading-relaxed">
-                {truncateText(appointment.customer_message, 120)}
-              </p>
-            </div>
-          </div>
-        )}
-
-        {/* Footer Row */}
-        <div className="flex items-center justify-between text-xs text-muted-foreground pt-2 border-t border-muted/50">
-          <div className="flex items-center gap-3">
-            <div className="flex items-center gap-1">
-              <Calendar className="h-3 w-3" />
-              <span>{formatDate(appointment.created_at)}</span>
-            </div>
-            <div className="flex items-center gap-1">
-              <Clock className="h-3 w-3" />
-              <span>{formatTime(appointment.created_at)}</span>
-            </div>
-          </div>
-          
-          <div className="text-right">
-            <div className="font-semibold text-xs text-foreground">
-              {appointment.interest_summary?.total_interests || 0} responses
-            </div>
-            <div className="text-xs text-muted-foreground">
-              {appointment.interest_summary?.active_interests || 0} active
-            </div>
+          <div className="text-xs text-muted-foreground text-right space-y-1">
+            <div>{formatDate(appointment.created_at)}</div>
           </div>
         </div>
       </CardContent>
@@ -169,17 +81,13 @@ export function DataTable({
   data,
   onRowClick,
 }) {
-  const [sorting, setSorting] = React.useState([]);
-  const [columnFilters, setColumnFilters] = React.useState([]);
-  const [columnVisibility, setColumnVisibility] = React.useState({});
-  const [rowSelection, setRowSelection] = React.useState({});
   const [globalFilter, setGlobalFilter] = React.useState("");
   const [isMobile, setIsMobile] = React.useState(false);
 
-  // Detect mobile screen size
+  // Mobile detection
   React.useEffect(() => {
     const checkMobile = () => {
-      setIsMobile(window.innerWidth < 768); // md breakpoint
+      setIsMobile(window.innerWidth < 768);
     };
 
     checkMobile();
@@ -187,122 +95,50 @@ export function DataTable({
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
-  const table = useReactTable({
-    data,
-    columns,
-    onSortingChange: setSorting,
-    onColumnFiltersChange: setColumnFilters,
-    getCoreRowModel: getCoreRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
-    getSortedRowModel: getSortedRowModel(),
-    getFilteredRowModel: getFilteredRowModel(),
-    onColumnVisibilityChange: setColumnVisibility,
-    onRowSelectionChange: setRowSelection,
-    onGlobalFilterChange: setGlobalFilter,
-    globalFilterFn: "includesString",
-    state: {
-      sorting,
-      columnFilters,
-      columnVisibility,
-      rowSelection,
-      globalFilter,
-    },
-    initialState: {
-      pagination: {
-        pageSize: isMobile ? 5 : 10, // Fewer items on mobile
-      },
-    },
-  });
+  // Simple filter function
+  const filteredData = React.useMemo(() => {
+    if (!globalFilter) return data;
+    
+    return data.filter((item) => {
+      const searchableText = [
+        item.title,
+        item.service?.name,
+        item.status,
+        item.customer_message,
+        item.appointment_id
+      ].join(' ').toLowerCase();
+      
+      return searchableText.includes(globalFilter.toLowerCase());
+    });
+  }, [data, globalFilter]);
 
   return (
     <div className="w-full space-y-4">
-      {/* Mobile-First Toolbar */}
-      <div className="space-y-3 sm:space-y-0 sm:flex sm:items-center sm:justify-between">
-        <div className="flex flex-col sm:flex-row sm:flex-1 sm:items-center space-y-2 sm:space-y-0 sm:space-x-2">
-          {/* Global Search - Full width on mobile */}
-          <div className="relative w-full sm:max-w-sm">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 text-muted-foreground -translate-y-1/2" />
-            <Input
-              placeholder="Search appointments..."
-              value={globalFilter ?? ""}
-              onChange={(event) => setGlobalFilter(event.target.value)}
-              className="pl-9 h-11 sm:h-10 touch-target"
-            />
-          </div>
-          
-          {/* Status Filter */}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" className="w-full sm:w-auto h-11 sm:h-10 touch-target">
-                Status <ChevronDown className="ml-2 h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-48">
-              {['pending', 'interested', 'competing', 'evaluating', 'quoted', 'converted', 'cancelled'].map((status) => {
-                const isSelected = table.getColumn("status")?.getFilterValue()?.includes(status);
-                return (
-                  <DropdownMenuCheckboxItem
-                    key={status}
-                    className="capitalize"
-                    checked={isSelected}
-                    onCheckedChange={(value) => {
-                      const currentFilter = table.getColumn("status")?.getFilterValue() || [];
-                      if (value) {
-                        table.getColumn("status")?.setFilterValue([...currentFilter, status]);
-                      } else {
-                        table.getColumn("status")?.setFilterValue(
-                          currentFilter.filter((s) => s !== status)
-                        );
-                      }
-                    }}
-                  >
-                    {status.replace('_', ' ')}
-                  </DropdownMenuCheckboxItem>
-                );
-              })}
-            </DropdownMenuContent>
-          </DropdownMenu>
+      {/* Simple Search */}
+      <div className="flex items-center space-x-2">
+        <div className="relative flex-1 max-w-sm">
+          <Search className="absolute left-3 top-1/2 h-4 w-4 text-muted-foreground -translate-y-1/2" />
+          <Input
+            placeholder="Search appointments..."
+            value={globalFilter}
+            onChange={(event) => setGlobalFilter(event.target.value)}
+            className="pl-9"
+          />
         </div>
-
-        {/* Column Visibility - Hidden on mobile */}
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="outline" className="hidden sm:flex h-11 sm:h-10">
-              <Settings2 className="mr-2 h-4 w-4" />
-              View
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            {table
-              .getAllColumns()
-              .filter((column) => column.getCanHide())
-              .map((column) => {
-                return (
-                  <DropdownMenuCheckboxItem
-                    key={column.id}
-                    className="capitalize"
-                    checked={column.getIsVisible()}
-                    onCheckedChange={(value) =>
-                      column.toggleVisibility(!!value)
-                    }
-                  >
-                    {column.id}
-                  </DropdownMenuCheckboxItem>
-                );
-              })}
-          </DropdownMenuContent>
-        </DropdownMenu>
+        <div className="text-sm text-muted-foreground">
+          {filteredData.length} of {data.length}
+        </div>
       </div>
 
-      {/* Mobile Cards or Desktop Table */}
+      {/* Content */}
       {isMobile ? (
         // Mobile Card Layout
         <div className="space-y-3">
-          {table.getRowModel().rows?.length ? (
-            table.getRowModel().rows.map((row) => (
+          {filteredData.length ? (
+            filteredData.map((appointment) => (
               <AppointmentMobileCard
-                key={row.id}
-                appointment={row.original}
+                key={appointment.appointment_id}
+                appointment={appointment}
                 onViewAppointment={(appointmentId) => {
                   const appointment = data.find(apt => apt.appointment_id === appointmentId);
                   if (appointment) onRowClick?.(appointment);
@@ -316,189 +152,141 @@ export function DataTable({
           )}
         </div>
       ) : (
-        // Desktop Table Layout
-        <div className="rounded-md border">
-          <Table>
-            <TableHeader>
-              {table.getHeaderGroups().map((headerGroup) => (
-                <TableRow key={headerGroup.id} className="hover:bg-transparent border-border">
-                  {headerGroup.headers.map((header) => {
-                    return (
-                      <TableHead 
-                        key={header.id}
-                        className="font-semibold text-muted-foreground"
-                      >
-                        {header.isPlaceholder ? null : (
-                          <div
-                            className={cn(
-                              header.column.getCanSort()
-                                ? "cursor-pointer select-none flex items-center space-x-1 hover:text-foreground"
-                                : ""
-                            )}
-                            onClick={header.column.getToggleSortingHandler()}
-                          >
-                            {flexRender(
-                              header.column.columnDef.header,
-                              header.getContext()
-                            )}
-                            {header.column.getCanSort() && (
-                              <span className="ml-1">
-                                {{
-                                  asc: "↑",
-                                  desc: "↓",
-                                }[header.column.getIsSorted()] ?? "↕"}
-                              </span>
-                            )}
-                          </div>
-                        )}
-                      </TableHead>
-                    );
-                  })}
-                </TableRow>
-              ))}
-            </TableHeader>
-            <TableBody>
-              {table.getRowModel().rows?.length ? (
-                table.getRowModel().rows.map((row) => (
-                  <TableRow
-                    key={row.id}
-                    data-state={row.getIsSelected() && "selected"}
-                    className={cn(
-                      "group cursor-pointer transition-colors hover:bg-muted/30 border-border/50"
-                    )}
-                    onClick={() => onRowClick?.(row.original)}
+        // Desktop Table Layout with Fixed Column Widths
+        <div className="border rounded-lg overflow-hidden">
+          <table className="w-full table-fixed">
+            <thead className="border-b bg-muted/30">
+  <tr>
+    <th className="p-3 text-left text-sm font-medium text-muted-foreground" style={{width: '30%'}}>
+      Overview
+    </th>
+    <th className="p-3 text-left text-sm font-medium text-muted-foreground" style={{width: '20%'}}>
+      Status
+    </th>
+    <th className="p-3 text-left text-sm font-medium text-muted-foreground" style={{width: '20%'}}>
+      Date
+    </th>
+    <th className="p-3 text-center text-sm font-medium text-muted-foreground" style={{width: '20%'}}>
+      Responses
+    </th>
+    <th className="p-3 text-center text-sm font-medium text-muted-foreground" style={{width: '10%'}}>
+
+      View
+    </th>
+  </tr>
+</thead>
+            <tbody>
+              {filteredData.length ? (
+                filteredData.map((row) => (
+                  <tr 
+                    key={row.appointment_id}
+                    className="border-b hover:bg-muted/50 cursor-pointer transition-colors"
+                    onClick={() => onRowClick?.(row)}
                   >
-                    {row.getVisibleCells().map((cell) => (
-                      <TableCell key={cell.id} className="py-4">
-                        {flexRender(
-                          cell.column.columnDef.cell,
-                          cell.getContext()
-                        )}
-                      </TableCell>
-                    ))}
-                  </TableRow>
+                    {/* Overview Column */}
+                    <td className="p-3" style={{width: '35%'}}>
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-2">
+                          <div className="font-semibold text-sm text-primary truncate">
+                            {row.service?.name}
+                          </div>
+                          <div className="text-xs text-muted-foreground font-mono bg-muted/50 px-1.5 py-0.5 rounded flex-shrink-0">
+                            #{row.appointment_id.slice(0, 8)}
+                          </div>
+                        </div>
+                        <div className="font-medium text-sm text-foreground truncate">
+
+                        </div>
+                      </div>
+                    </td>
+
+                    {/* Status Column */}
+                    <td className="p-3" style={{width: '20%'}}>
+                      <Badge variant={getStatusVariant(row.status)} className="text-xs">
+                        {toProperCase(row.status)}
+                      </Badge>
+                    </td>
+
+                    {/* Date Column */}
+                    <td className="p-3" style={{width: '25%'}}>
+                      <div className="space-y-1 text-sm">
+                        <div>
+                          {new Date(row.created_at).toLocaleDateString('en-US', {
+                            year: 'numeric',
+                            month: 'short',
+                            day: 'numeric'
+                          })}
+                        </div>
+                        <div className="text-xs text-muted-foreground">
+                          {new Date(row.created_at).toLocaleTimeString('en-US', {
+                            hour: '2-digit',
+                            minute: '2-digit'
+                          })}
+                        </div>
+                      </div>
+                    </td>
+
+                    {/* Responses Column */}
+                    <td className="p-3 text-center" style={{width: '15%'}}>
+                      <div className="text-sm space-y-1">
+                        <div className="font-medium">
+                          {row.interest_summary?.total_interests || 0}
+                        </div>
+                        <div className="text-xs text-muted-foreground">
+                          {row.interest_summary?.active_interests || 0} active
+                        </div>
+                      </div>
+                    </td>
+
+                    {/* Actions Column */}
+                    <td className="p-3 text-center" style={{width: '5%'}}>
+                      <Button 
+                        size="sm"
+                        variant="ghost"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onRowClick?.(row);
+                        }}
+                        className="h-8 w-8 p-0"
+                      >
+                        <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                        </svg>
+                      </Button>
+                    </td>
+                  </tr>
                 ))
               ) : (
-                <TableRow>
-                  <TableCell
-                    colSpan={columns.length}
-                    className="h-24 text-center"
-                  >
-                    No results.
-                  </TableCell>
-                </TableRow>
+                <tr>
+                  <td colSpan={5} className="p-8 text-center text-muted-foreground">
+                    No appointments found.
+                  </td>
+                </tr>
               )}
-            </TableBody>
-          </Table>
+            </tbody>
+          </table>
         </div>
       )}
 
-      {/* Mobile-Optimized Pagination */}
-      <div className="flex flex-col sm:flex-row items-center justify-between space-y-3 sm:space-y-0 sm:space-x-2 py-4">
-        <div className="text-sm text-muted-foreground order-2 sm:order-1">
-          {table.getFilteredSelectedRowModel().rows.length} of{" "}
-          {table.getFilteredRowModel().rows.length} row(s) selected.
-        </div>
-        
-        <div className="flex flex-col sm:flex-row items-center space-y-3 sm:space-y-0 sm:space-x-6 lg:space-x-8 order-1 sm:order-2">
-          {/* Rows per page - simplified on mobile */}
-          <div className="flex items-center space-x-2">
-            <p className="text-sm font-medium">Rows</p>
-            <select
-              className="h-10 w-16 rounded border border-input bg-background px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-ring touch-target"
-              value={table.getState().pagination.pageSize}
-              onChange={(e) => {
-                table.setPageSize(Number(e.target.value));
-              }}
-            >
-              {(isMobile ? [5, 10, 20] : [10, 20, 30, 40, 50]).map((pageSize) => (
-                <option key={pageSize} value={pageSize}>
-                  {pageSize}
-                </option>
-              ))}
-            </select>
+      {/* Simple Summary */}
+      {filteredData.length > 0 && (
+        <div className="flex items-center justify-between text-sm text-muted-foreground border-t pt-4">
+          <div>
+            Showing {filteredData.length} appointment{filteredData.length !== 1 ? 's' : ''}
           </div>
-          
-          {/* Page indicator */}
-          <div className="text-sm font-medium">
-            Page {table.getState().pagination.pageIndex + 1} of{" "}
-            {table.getPageCount()}
-          </div>
-          
-          {/* Navigation buttons */}
-          <div className="flex items-center space-x-1">
-            <Button
-              variant="outline"
-              className="hidden sm:flex h-10 w-10 p-0 touch-target"
-              onClick={() => table.setPageIndex(0)}
-              disabled={!table.getCanPreviousPage()}
-            >
-              <span className="sr-only">Go to first page</span>
-              <ChevronsLeft className="h-4 w-4" />
-            </Button>
-            <Button
-              variant="outline"
-              className="h-10 w-10 p-0 touch-target"
-              onClick={() => table.previousPage()}
-              disabled={!table.getCanPreviousPage()}
-            >
-              <span className="sr-only">Go to previous page</span>
-              <ChevronLeft className="h-4 w-4" />
-            </Button>
-            <Button
-              variant="outline"
-              className="h-10 w-10 p-0 touch-target"
-              onClick={() => table.nextPage()}
-              disabled={!table.getCanNextPage()}
-            >
-              <span className="sr-only">Go to next page</span>
-              <ChevronRight className="h-4 w-4" />
-            </Button>
-            <Button
-              variant="outline"
-              className="hidden sm:flex h-10 w-10 p-0 touch-target"
-              onClick={() => table.setPageIndex(table.getPageCount() - 1)}
-              disabled={!table.getCanNextPage()}
-            >
-              <span className="sr-only">Go to last page</span>
-              <ChevronsRight className="h-4 w-4" />
-            </Button>
-          </div>
-        </div>
-      </div>
-
-      {/* Mobile-optimized Results Summary */}
-      <div className="border-t border-border bg-muted/20 px-4 sm:px-6 py-3 sm:py-4 mt-0 rounded-b-lg">
-        <div className="flex flex-col sm:flex-row items-center justify-between space-y-2 sm:space-y-0">
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <div className="w-1.5 h-1.5 bg-primary rounded-full"></div>
-            <span>
-              Showing {table.getRowModel().rows.length} of {data.length} appointment
-              {data.length !== 1 ? 's' : ''}
-              {table.getState().globalFilter && (
-                <span> (filtered)</span>
-              )}
-            </span>
-          </div>
-          
-          <div className="flex items-center gap-4 sm:gap-6">
-            <div className="flex items-center gap-3 sm:gap-6 text-xs">
-              <div className="flex items-center gap-1.5">
-                <div className="w-2 h-2 bg-yellow-500 rounded-full"></div>
-                <span className="text-muted-foreground">Pending</span>
-              </div>
-              <div className="flex items-center gap-1.5">
-                <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                <span className="text-muted-foreground">Active</span>
-              </div>
-              <div className="flex items-center gap-1.5">
-                <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                <span className="text-muted-foreground">Completed</span>
-              </div>
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-1">
+              <div className="w-2 h-2 bg-muted-foreground rounded-full"></div>
+              <span>{data.filter(a => a.status === 'pending').length} pending</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <div className="w-2 h-2 bg-primary rounded-full"></div>
+              <span>{data.filter(a => a.status === 'converted').length} completed</span>
             </div>
           </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }

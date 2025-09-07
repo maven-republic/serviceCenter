@@ -1,5 +1,5 @@
 // src/app/api/interests/route.js
-// Professional interests management API - FIXED with stored procedure approach
+// Professional interests management API - FIXED with stored procedure approach + debugging
 
 import { createClient } from '@/utils/supabase/server'
 import { NextResponse } from 'next/server'
@@ -212,7 +212,7 @@ export async function GET(request) {
   }
 }
 
-// POST /api/interests - Create new interest (UPDATED with stored procedure)
+// POST /api/interests - Create new interest (UPDATED with enhanced debugging)
 export async function POST(request) {
   try {
     console.log('🎯 POST /api/interests called')
@@ -301,9 +301,76 @@ export async function POST(request) {
       cleanMessage = 'Professional is interested in this appointment'
     }
 
-    console.log('💾 Creating interest with stored procedure to bypass PostgREST and RLS issues')
+    console.log('🔍 DEBUG: About to call stored procedure with parameters:', {
+      p_appointment_id: appointment_id,
+      p_professional_id: professional_id,
+      p_intent: intent,
+      p_message: cleanMessage?.substring(0, 100) + '...',
+      p_message_length: cleanMessage?.length,
+      p_assessment: assessment,
+      p_modality: modality || 'none',
+      p_fee: assessment && fee ? parseFloat(fee) : 0,
+      p_amount: amount ? parseFloat(amount) : null,
+      p_price_range_min: price_range_min ? parseFloat(price_range_min) : null,
+      p_price_range_max: price_range_max ? parseFloat(price_range_max) : null,
+      p_assessment_justification: assessment_justification?.substring(0, 50) + '...',
+      p_response: response
+    })
 
-    // ✅ ULTIMATE FIX: Use stored procedure to completely bypass PostgREST and RLS
+    // Test if the stored procedure exists and is accessible
+    console.log('🧪 Testing stored procedure accessibility...')
+    const { data: testResult, error: testError } = await supabase
+      .rpc('create_interest_safe', {
+        p_appointment_id: '00000000-0000-0000-0000-000000000000', // dummy UUID
+        p_professional_id: '00000000-0000-0000-0000-000000000000', // dummy UUID
+        p_message: 'test message'
+      })
+
+    if (testError) {
+      console.error('❌ Stored procedure test failed:', testError)
+      // Fall back to direct insert
+      console.log('🔄 Falling back to direct INSERT method...')
+      
+      const { data: newInterest, error: directInsertError } = await supabase
+        .from('interest')
+        .insert({
+          appointment_id,
+          professional_id,
+          intent,
+          message: cleanMessage,
+          assessment,
+          modality: modality || 'none',
+          fee: assessment && fee ? parseFloat(fee) : 0,
+          amount: amount ? parseFloat(amount) : null,
+          price_range_min: price_range_min ? parseFloat(price_range_min) : null,
+          price_range_max: price_range_max ? parseFloat(price_range_max) : null,
+          assessment_justification: assessment ? assessment_justification : null,
+          status: 'interested',
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        })
+        .select()
+        .single()
+
+      if (directInsertError) {
+        console.error('❌ Direct insert also failed:', directInsertError)
+        return NextResponse.json(
+          { error: 'Failed to create interest: ' + directInsertError.message, details: directInsertError },
+          { status: 500 }
+        )
+      }
+
+      console.log('✅ Interest created via direct insert:', newInterest)
+      return NextResponse.json({
+        success: true,
+        interest: newInterest,
+        message: 'Interest expressed successfully (direct method)'
+      }, { status: 201 })
+    } else {
+      console.log('✅ Stored procedure test passed, proceeding with actual call...')
+    }
+
+    // Now try the actual stored procedure call
     const { data: result, error: interestError } = await supabase
       .rpc('create_interest_safe', {
         p_appointment_id: appointment_id,
@@ -320,16 +387,66 @@ export async function POST(request) {
         p_response: response
       })
 
-    if (interestError || !result?.success) {
-      console.error('❌ Interest creation error:', interestError || result)
+    console.log('🔍 Raw stored procedure result:', result)
+    console.log('🔍 Raw stored procedure error:', interestError)
+
+    if (interestError) {
+      console.error('❌ Stored procedure error details:', {
+        message: interestError.message,
+        details: interestError.details,
+        hint: interestError.hint,
+        code: interestError.code
+      })
+      
+      // Try direct insert as fallback
+      console.log('🔄 Stored procedure failed, trying direct insert fallback...')
+      
+      const { data: newInterest, error: fallbackError } = await supabase
+        .from('interest')
+        .insert({
+          appointment_id,
+          professional_id,
+          intent,
+          message: cleanMessage,
+          assessment,
+          modality: modality || 'none',
+          fee: assessment && fee ? parseFloat(fee) : 0,
+          amount: amount ? parseFloat(amount) : null,
+          price_range_min: price_range_min ? parseFloat(price_range_min) : null,
+          price_range_max: price_range_max ? parseFloat(price_range_max) : null,
+          assessment_justification: assessment ? assessment_justification : null,
+          status: 'interested'
+        })
+        .select()
+        .single()
+
+      if (fallbackError) {
+        console.error('❌ Fallback insert also failed:', fallbackError)
+        return NextResponse.json(
+          { error: 'Failed to create interest (both methods failed)', 
+            stored_procedure_error: interestError.message,
+            direct_insert_error: fallbackError.message },
+          { status: 500 }
+        )
+      }
+
+      console.log('✅ Interest created via fallback method:', newInterest)
+      return NextResponse.json({
+        success: true,
+        interest: newInterest,
+        message: 'Interest expressed successfully (fallback method)'
+      }, { status: 201 })
+    }
+
+    if (!result?.success) {
+      console.error('❌ Stored procedure returned failure:', result)
       return NextResponse.json(
-        { error: 'Failed to create interest', details: interestError?.message || result?.error },
+        { error: 'Failed to create interest', details: result?.error || 'Unknown error from stored procedure' },
         { status: 500 }
       )
     }
 
     console.log('✅ Interest created successfully via stored procedure:', result)
-
     return NextResponse.json({
       success: true,
       interest: {
