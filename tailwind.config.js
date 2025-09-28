@@ -1,6 +1,6 @@
 /** @type {import('tailwindcss').Config} */
 module.exports = {
-  darkMode: "class",
+  darkMode: false,
   content: [
     // Scan ALL files - unified system
     './src/**/*.{js,ts,jsx,tsx,mdx}',
