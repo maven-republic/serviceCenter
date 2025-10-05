@@ -42,7 +42,7 @@ export const useUserStore = create((set, get) => ({
       const { data: accountData, error: accountError } = await supabase
         .from('account')
         .select('*')
-        .eq('email', sessionUser.email)
+        .ilike('email', sessionUser.email)
         .single()
       
       if (accountError || !accountData) {

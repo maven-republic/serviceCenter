@@ -82,10 +82,12 @@
 .auth-workspace .auth-button-primary {
   @apply bg-primary text-primary-foreground;
   @apply rounded-md px-4 py-2 font-medium;
-  @apply hover:bg-primary/90 transition-colors duration-200;
-  @apply focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2;
+  @apply transition-colors duration-200 shadow;
+  @apply hover:shadow-md hover:bg-primary/80 hover:text-white;
+  @apply focus:outline-none focus:ring-2 focus:ring-primary/40;
   @apply disabled:opacity-50 disabled:cursor-not-allowed;
 }
+
 
 .auth-workspace .auth-button-secondary {
   @apply bg-secondary text-secondary-foreground border border-border;

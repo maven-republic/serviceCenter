@@ -59,7 +59,7 @@ export default function CreateAccountSelection() {
                   </ul>
                   
                   {/* Button - Touch optimized */}
-                  <Button asChild className="auth-button-primary w-full h-11 sm:h-12 text-sm sm:text-base touch-manipulation">
+                  <Button asChild className="auth-button-primary px-4 py-2 w-full h-12">
                     <Link href="/register/customer">
                       Create Customer Account
                       <ArrowRight className="ml-2 h-3 sm:h-4 w-3 sm:w-4" />
@@ -104,7 +104,7 @@ export default function CreateAccountSelection() {
                   </ul>
                   
                   {/* Button - Touch optimized */}
-                  <Button asChild className="auth-button-primary w-full h-11 sm:h-12 text-sm sm:text-base touch-manipulation">
+                  <Button asChild className="auth-button-primary px-4 py-2 w-full h-12">
                     <Link href="/register/professional">
                       Create Professional Account
                       <ArrowRight className="ml-2 h-3 sm:h-4 w-3 sm:w-4" />
