@@ -1,4 +1,4 @@
-// src/components/ClientProviders.jsx
+// src/components/ClientProviders.jsx - FIXED
 'use client'
 
 import { useState } from 'react'
@@ -9,15 +9,22 @@ import { ThemeProvider } from '@/components/theme-provider'
 export default function ClientProviders({ children, initialSession }) {
   const [supabaseClient] = useState(() => createClientComponentClient())
 
+  // Debug logging
+  console.log('🔑 ClientProviders session:', { 
+    hasInitialSession: !!initialSession,
+    sessionEmail: initialSession?.user?.email,
+    sessionId: initialSession?.user?.id
+  })
+
   return (
     <SessionContextProvider
       supabaseClient={supabaseClient}
       initialSession={initialSession}
     >
       <ThemeProvider
-        defaultTheme="light" // Default theme
-        storageKey="ui-theme" // General storage key
-        professionalStorageKey="professional-ui-theme" // Professional workspace storage
+        defaultTheme="light"
+        storageKey="ui-theme"
+        professionalStorageKey="professional-ui-theme"
       >
         {children}
       </ThemeProvider>

@@ -1,12 +1,129 @@
 // src/app/api/appointments/[appointment-id]/route.js
-// Enhanced to support interest-based workflow
+// FIXED: Added availability validation before booking creation
 
 import { createClient } from '@/utils/supabase/server'
 import { NextResponse } from 'next/server'
 
 export const dynamic = 'force-dynamic'
 
-// GET /api/appointments/[appointment-id] - Get specific appointment details with interests
+// Helper function to calculate end time
+function calculateEndTime(startTime, durationMinutes) {
+  if (!startTime || !durationMinutes) return null;
+  const start = new Date(startTime);
+  const end = new Date(start.getTime() + (durationMinutes * 60000));
+  return end.toISOString();
+}
+
+// 🆕 FIX #3: Helper function to validate availability before booking
+async function validateAvailabilityForBooking(professionalId, startDateTime, durationMinutes) {
+  try {
+    const supabase = await createClient()
+    const requestedStart = new Date(startDateTime)
+    const requestedEnd = new Date(requestedStart.getTime() + (durationMinutes * 60 * 1000))
+
+    const dayOfWeek = requestedStart.getUTCDay()
+    const timeString = requestedStart.toISOString().split('T')[1].substring(0, 8)
+    const dateString = requestedStart.toISOString().split('T')[0]
+
+    console.log('🔍 Validating booking availability:', {
+      professionalId,
+      dateString,
+      dayOfWeek,
+      timeString
+    })
+
+    // Check for date-specific override
+    const { data: override } = await supabase
+      .from('availability_override')
+      .select('*')
+      .eq('professional_id', professionalId)
+      .eq('override_date', dateString)
+      .maybeSingle()
+
+    if (override) {
+      if (!override.is_available) {
+        return { available: false, reason: 'Professional unavailable on this date' }
+      }
+      if (timeString < override.start_time || timeString >= override.end_time) {
+        return { available: false, reason: 'Time outside available hours' }
+      }
+    } else {
+      // Check regular availability
+      const { data: regularAvailability } = await supabase
+        .from('availability')
+        .select('*')
+        .eq('professional_id', professionalId)
+        .eq('day_of_week', dayOfWeek)
+
+      if (!regularAvailability || regularAvailability.length === 0) {
+        return { available: false, reason: 'No availability on this day' }
+      }
+
+      const matchingSlot = regularAvailability.find(slot => 
+        timeString >= slot.start_time && timeString < slot.end_time
+      )
+
+      if (!matchingSlot) {
+        return { available: false, reason: 'Time outside available hours' }
+      }
+
+      const endTimeString = requestedEnd.toISOString().split('T')[1].substring(0, 8)
+      if (endTimeString > matchingSlot.end_time) {
+        return { available: false, reason: 'Duration exceeds available time block' }
+      }
+    }
+
+    // Check for conflicting appointments
+    const { data: existingAppointments } = await supabase
+      .from('appointment')
+      .select('session, duration')
+      .eq('professional_id', professionalId)
+      .in('status', ['approved', 'converting', 'converted'])
+      .gte('session', dateString)
+      .lte('session', `${dateString}T23:59:59`)
+
+    if (existingAppointments) {
+      for (const appt of existingAppointments) {
+        const apptStart = new Date(appt.session)
+        const apptEnd = new Date(apptStart.getTime() + ((appt.duration || 60) * 60 * 1000))
+        
+        if (requestedStart < apptEnd && requestedEnd > apptStart) {
+          return { available: false, reason: 'Conflicts with existing appointment' }
+        }
+      }
+    }
+
+    // Check for conflicting bookings
+    const { data: existingBookings } = await supabase
+      .from('booking')
+      .select('scheduled_start, scheduled_end, duration_minutes')
+      .eq('professional_id', professionalId)
+      .in('status', ['pending', 'accepted', 'confirmed', 'progressing'])
+      .gte('scheduled_start', dateString)
+      .lte('scheduled_start', `${dateString}T23:59:59`)
+
+    if (existingBookings) {
+      for (const booking of existingBookings) {
+        const bookingStart = new Date(booking.scheduled_start)
+        const bookingEnd = booking.scheduled_end 
+          ? new Date(booking.scheduled_end)
+          : new Date(bookingStart.getTime() + ((booking.duration_minutes || 60) * 60 * 1000))
+        
+        if (requestedStart < bookingEnd && requestedEnd > bookingStart) {
+          return { available: false, reason: 'Conflicts with existing booking' }
+        }
+      }
+    }
+
+    console.log('✅ Booking time slot is available')
+    return { available: true }
+  } catch (error) {
+    console.error('❌ Error validating booking availability:', error)
+    return { available: false, reason: 'Error checking availability' }
+  }
+}
+
+// GET /api/appointments/[appointment-id] - Get specific appointment details
 export async function GET(request, { params }) {
   const resolvedParams = await params
   const appointmentId = resolvedParams['appointment-id']
@@ -16,7 +133,6 @@ export async function GET(request, { params }) {
   try {
     const supabase = await createClient()
 
-    // Get the appointment first
     const { data: appointment, error: appointmentError } = await supabase
       .from('appointment')
       .select('*')
@@ -31,16 +147,14 @@ export async function GET(request, { params }) {
       )
     }
 
-    // Get related data including interests
+    // Get related data
     const [serviceData, customerData, professionalData, addressData, attachmentData, interestData] = await Promise.all([
-      // Service data
       supabase
         .from('service')
         .select('service_id, name, description, base_price, duration_minutes, pricing_model')
         .eq('service_id', appointment.service_id)
         .single(),
         
-      // Customer data with account and phone
       supabase
         .from('individual_customer')
         .select(`
@@ -57,7 +171,6 @@ export async function GET(request, { params }) {
         .eq('customer_id', appointment.customer_id)
         .single(),
         
-      // Professional data with account (if exists)
       appointment.professional_id ? supabase
         .from('individual_professional')
         .select(`
@@ -74,7 +187,6 @@ export async function GET(request, { params }) {
         .eq('professional_id', appointment.professional_id)
         .single() : { data: null },
         
-      // Address data (if exists)
       appointment.address_id ? supabase
         .from('address')
         .select(`
@@ -92,7 +204,6 @@ export async function GET(request, { params }) {
         .eq('address_id', appointment.address_id)
         .single() : { data: null },
 
-      // Attachment data with asset details
       supabase
         .from('attachment')
         .select(`
@@ -112,39 +223,14 @@ export async function GET(request, { params }) {
         .eq('appointment_id', appointment.appointment_id)
         .order('position'),
 
-      // NEW: Interest data with professional and assessment info
       supabase
         .from('interest')
-        .select(`
-          *,
-          professional:professional_id (
-            professional_id,
-            business_name,
-            verification_status,
-            rating_average,
-            rating_count,
-            account:account_id (
-              account_id,
-              first_name,
-              last_name,
-              email,
-              profile_picture_url
-            )
-          ),
-          assessment:assessment!left (
-            assessment_id,
-            status,
-            proposed_date,
-            proposed_fee,
-            final_quote_amount,
-            customer_approved_final_quote
-          )
-        `)
+        .select('*')
         .eq('appointment_id', appointment.appointment_id)
         .order('created_at', { ascending: false })
     ])
 
-    // Get customer phone numbers separately
+    // Get customer phone
     let customerPhone = null
     if (customerData.data) {
       const { data: phoneData } = await supabase
@@ -157,7 +243,6 @@ export async function GET(request, { params }) {
       customerPhone = phoneData
     }
 
-    // Combine the results
     const enrichedAppointment = {
       ...appointment,
       service: serviceData.data,
@@ -168,19 +253,18 @@ export async function GET(request, { params }) {
       professional: professionalData.data,
       address: addressData.data,
       attachments: attachmentData.data || [],
-      interests: interestData.data || [], // NEW: Include all professional interests
-      workflow_type: appointment.professional_id ? 'direct' : 'marketplace', // NEW: Workflow indicator
-      // NEW: Interest summary
+      interests: interestData.data || [],
+      workflow_type: appointment.professional_id ? 'direct' : 'marketplace',
       interest_summary: {
-        total_count: interestData.data?.length || 0,
-        active_count: interestData.data?.filter(i => !['withdrawn', 'rejected'].includes(i.status)).length || 0,
-        quoted_count: interestData.data?.filter(i => i.amount || i.status === 'quoted').length || 0,
-        selected_interest: interestData.data?.find(i => i.selected_by_customer) || null,
-        assessment_required_count: interestData.data?.filter(i => i.assessment).length || 0
+        total_count: (interestData.data || []).length,
+        active_count: (interestData.data || []).filter(i => !['withdrawn', 'rejected'].includes(i.status)).length,
+        quoted_count: (interestData.data || []).filter(i => i.amount || i.status === 'quoted').length,
+        selected_interest: (interestData.data || []).find(i => i.selected_by_customer) || null,
+        assessment_required_count: (interestData.data || []).filter(i => i.assessment).length
       }
     }
 
-    console.log('✅ Appointment found with', interestData.data?.length || 0, 'interests:', appointment.appointment_id)
+    console.log('✅ Appointment found with', (interestData.data || []).length, 'interests')
 
     return NextResponse.json({ 
       success: true,
@@ -196,7 +280,7 @@ export async function GET(request, { params }) {
   }
 }
 
-// PATCH /api/appointments/[appointment-id] - Update appointment status and details (enhanced for interests)
+// PATCH /api/appointments/[appointment-id] - Update appointment
 export async function PATCH(request, { params }) {
   const resolvedParams = await params
   const appointmentId = resolvedParams['appointment-id']
@@ -209,10 +293,10 @@ export async function PATCH(request, { params }) {
 
     console.log('🔥 Update request:', body)
 
-    // Get current appointment to validate ownership/permissions
+    // Get current appointment
     const { data: currentAppointment, error: fetchError } = await supabase
       .from('appointment')
-      .select('appointment_id, professional_id, customer_id, status, service_id, address_id, interest_count')
+      .select('appointment_id, professional_id, customer_id, status, service_id, address_id, interest_count, session, duration')
       .eq('appointment_id', appointmentId)
       .single()
 
@@ -225,17 +309,40 @@ export async function PATCH(request, { params }) {
 
     // Prepare update data
     const updateData = {}
-    
-    // Handle status changes with new interest-based states
+
+    const allowedFields = [
+      'session', 'preferred_end', 'urgency', 'customer_message',
+      'title', 'description', 'deadline', 'complexity', 'flexibility'
+    ]
+
+    allowedFields.forEach(field => {
+      if (body[field] !== undefined) {
+        updateData[field] = body[field]
+      }
+    })
+
+    updateData.updated_at = new Date().toISOString()
+
+    // Handle status changes
     if (body.status) {
-      updateData.status = body.status
+      let targetStatus = body.status
       
-      // Set timestamps for status changes
-      if (body.status === 'converted') {
+      // Handle approved → converting transition
+      if (body.status === 'approved' && currentAppointment.status === 'approved') {
+        console.log('📋 Appointment already approved, setting to converting')
+        targetStatus = 'converting'
+      } else if (body.status === 'approved') {
+        console.log('📋 Step 1: Setting appointment to converting status')
+        targetStatus = 'converting'
+      }
+      
+      updateData.status = targetStatus
+      
+      if (targetStatus === 'converted') {
         updateData.converted_to_booking_at = new Date().toISOString()
       }
 
-      // Enhanced status transitions for interest-based workflow
+      // Validate status transition
       const validTransitions = {
         'pending': ['interested', 'competing', 'abandoned', 'expired'],
         'interested': ['competing', 'evaluating', 'quoted', 'approved'],
@@ -247,35 +354,22 @@ export async function PATCH(request, { params }) {
         'assessed': ['quoted'],
         'quoted': ['comparing', 'approved', 'declined'],
         'comparing': ['approved', 'declined'],
-        'approved': ['converting', 'converted'],
+        'reviewing': ['approved', 'declined'],
+        'approved': ['converting', 'declined'],
         'converting': ['converted'],
-        'converted': [], // Final state
-        'declined': [], // Final state
-        'abandoned': [], // Final state
-        'expired': [] // Final state
+        'converted': [],
+        'declined': [],
+        'abandoned': [],
+        'expired': []
       }
 
-      if (!validTransitions[currentAppointment.status]?.includes(body.status)) {
+      if (!validTransitions[currentAppointment.status]?.includes(targetStatus)) {
         return NextResponse.json(
-          { error: `Invalid status transition from ${currentAppointment.status} to ${body.status}` },
+          { error: `Invalid status transition from ${currentAppointment.status} to ${targetStatus}` },
           { status: 400 }
         )
       }
     }
-
-    // Handle other field updates
-    const allowedFields = [
-      'session', 'preferred_end', 'urgency', 'customer_message',
-      'title', 'description', 'deadline', 'complexity', 'flexibility'
-    ]
-    
-    allowedFields.forEach(field => {
-      if (body[field] !== undefined) {
-        updateData[field] = body[field]
-      }
-    })
-
-    updateData.updated_at = new Date().toISOString()
 
     console.log('🔥 Updating appointment with:', updateData)
 
@@ -297,21 +391,52 @@ export async function PATCH(request, { params }) {
 
     console.log('✅ Appointment updated:', updatedAppointment.appointment_id)
 
-    // Handle special status changes in interest-based workflow
+    // 🆕 FIX #3: Validate availability before creating booking
     if (body.status === 'approved') {
-      console.log('📝 Creating booking from approved appointment with selected professional...')
+      console.log('📋 Step 2: Creating booking from converting appointment...')
       
       try {
-        // Get the selected professional from interests
-        const { data: selectedInterest } = await supabase
+        // Find selected professional
+        const { data: selectedInterest, error: interestError } = await supabase
           .from('interest')
-          .select('professional_id, amount')
+          .select('professional_id, amount, status')
           .eq('appointment_id', appointmentId)
-          .eq('selected_by_customer', true)
+          .or('selected_by_customer.eq.true,status.eq.approved')
+          .order('updated_at', { ascending: false })
+          .limit(1)
           .single()
 
-        if (selectedInterest) {
-          // Create booking record
+        console.log('📋 Step 2a: Selected interest:', { selectedInterest, interestError })
+
+        if (interestError || !selectedInterest) {
+          console.error('❌ No selected professional found:', interestError)
+          console.log('⚠️ Booking creation skipped - no selected professional')
+        } else {
+          console.log('📋 Step 2b: Found professional:', selectedInterest.professional_id)
+
+          // 🆕 FIX #3: VALIDATE AVAILABILITY BEFORE CREATING BOOKING
+          console.log('🔍 Checking if professional is still available...')
+          const availabilityCheck = await validateAvailabilityForBooking(
+            selectedInterest.professional_id,
+            updatedAppointment.session,
+            updatedAppointment.duration || 60
+          )
+
+          if (!availabilityCheck.available) {
+            console.error('❌ Professional no longer available:', availabilityCheck.reason)
+            return NextResponse.json(
+              { 
+                error: 'Cannot create booking: Professional is no longer available at this time',
+                reason: availabilityCheck.reason,
+                suggestion: 'Please select a different time slot or professional'
+              },
+              { status: 409 }
+            )
+          }
+
+          console.log('✅ Professional is available, creating booking...')
+
+          // Create booking
           const { data: booking, error: bookingError } = await supabase
             .from('booking')
             .insert([{
@@ -320,11 +445,11 @@ export async function PATCH(request, { params }) {
               professional_id: selectedInterest.professional_id,
               service_id: updatedAppointment.service_id,
               address_id: updatedAppointment.address_id,
-              scheduled_start: updatedAppointment.preferred_start,
-              scheduled_end: updatedAppointment.preferred_end,
-              duration_minutes: body.duration_minutes || 60,
+              scheduled_start: updatedAppointment.session,
+              scheduled_end: calculateEndTime(updatedAppointment.session, updatedAppointment.duration),
+              duration_minutes: updatedAppointment.duration || 60,
               urgency: updatedAppointment.urgency,
-              status: 'confirmed',
+              status: 'accepted',
               customer_notes: updatedAppointment.customer_message,
               sync_source: 'manual'
             }])
@@ -333,11 +458,16 @@ export async function PATCH(request, { params }) {
 
           if (bookingError) {
             console.error('❌ Error creating booking:', bookingError)
+            return NextResponse.json(
+              { error: 'Failed to create booking', details: bookingError.message },
+              { status: 500 }
+            )
           } else {
-            console.log('✅ Booking created:', booking.booking_id)
+            console.log('✅ Booking created successfully:', booking.booking_id)
             
-            // Update appointment to converted status
-            await supabase
+            // Step 3: Update appointment to 'converted'
+            console.log('📋 Step 3: Setting appointment to converted status')
+            const { error: finalUpdateError } = await supabase
               .from('appointment')
               .update({ 
                 status: 'converted',
@@ -345,14 +475,24 @@ export async function PATCH(request, { params }) {
                 converted_to_booking_at: new Date().toISOString()
               })
               .eq('appointment_id', appointmentId)
+
+            if (finalUpdateError) {
+              console.error('❌ Error setting final status:', finalUpdateError)
+            } else {
+              console.log('✅ Appointment conversion completed successfully')
+            }
           }
         }
       } catch (bookingError) {
         console.error('❌ Booking creation failed:', bookingError)
+        return NextResponse.json(
+          { error: 'Failed to create booking', details: bookingError.message },
+          { status: 500 }
+        )
       }
     }
 
-    // Get enriched appointment data to return (using same pattern as GET)
+    // Get enriched appointment data to return
     const [serviceData, customerData, professionalData, addressData, interestData] = await Promise.all([
       supabase
         .from('service')
@@ -396,24 +536,9 @@ export async function PATCH(request, { params }) {
         .eq('address_id', currentAppointment.address_id)
         .single() : { data: null },
 
-      // Get updated interests
       supabase
         .from('interest')
-        .select(`
-          interest_id,
-          professional_id,
-          status,
-          amount,
-          selected_by_customer,
-          professional:professional_id (
-            professional_id,
-            business_name,
-            account:account_id (
-              first_name,
-              last_name
-            )
-          )
-        `)
+        .select('*')
         .eq('appointment_id', appointmentId)
         .order('created_at', { ascending: false })
     ])
@@ -426,13 +551,6 @@ export async function PATCH(request, { params }) {
       address: addressData.data,
       interests: interestData.data || [],
       workflow_type: updatedAppointment.professional_id ? 'direct' : 'marketplace'
-    }
-
-    // TODO: Send notifications based on status changes
-    if (body.status === 'approved') {
-      console.log('📧 TODO: Send approval notification to selected professional')
-    } else if (body.status === 'declined') {
-      console.log('📧 TODO: Send decline notification to all interested professionals')
     }
 
     return NextResponse.json({
@@ -450,7 +568,7 @@ export async function PATCH(request, { params }) {
   }
 }
 
-// DELETE /api/appointments/[appointment-id] - Delete appointment (enhanced for interests)
+// DELETE /api/appointments/[appointment-id] - Delete appointment
 export async function DELETE(request, { params }) {
   const resolvedParams = await params
   const appointmentId = resolvedParams['appointment-id']
@@ -460,7 +578,6 @@ export async function DELETE(request, { params }) {
   try {
     const supabase = await createClient()
 
-    // Check if appointment exists and can be deleted
     const { data: appointment, error: fetchError } = await supabase
       .from('appointment')
       .select('appointment_id, status, customer_id, professional_id, interest_count')
@@ -474,7 +591,6 @@ export async function DELETE(request, { params }) {
       )
     }
 
-    // Enhanced deletion rules for interest-based workflow
     const deletableStatuses = ['pending', 'interested', 'competing', 'evaluating', 'quoted']
     if (!deletableStatuses.includes(appointment.status)) {
       return NextResponse.json(
@@ -483,7 +599,6 @@ export async function DELETE(request, { params }) {
       )
     }
 
-    // Check if there are active interests
     if (appointment.interest_count > 0) {
       const { data: activeInterests } = await supabase
         .from('interest')
@@ -499,7 +614,7 @@ export async function DELETE(request, { params }) {
       }
     }
 
-    // Mark all interests as withdrawn before deleting appointment
+    // Mark interests as withdrawn
     await supabase
       .from('interest')
       .update({ 
@@ -508,7 +623,6 @@ export async function DELETE(request, { params }) {
       })
       .eq('appointment_id', appointmentId)
 
-    // Delete the appointment (will cascade to attachments)
     const { error } = await supabase
       .from('appointment')
       .delete()
@@ -523,8 +637,6 @@ export async function DELETE(request, { params }) {
     }
 
     console.log('✅ Appointment deleted:', appointmentId)
-
-    // TODO: Send cancellation notifications to all interested professionals
 
     return NextResponse.json({
       success: true,

@@ -1,841 +1,423 @@
-// src/app/api/appointments/[appointment-id]/interests/route.js - FIXED VERSION
-
-import { createClient } from '@/utils/supabase/server'
+// src/app/api/appointments/[appointment-id]/interests/route.js
+import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
+import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
 
 export const dynamic = 'force-dynamic'
 
-// POST - Customer selects/rejects professionals
-export async function POST(request, { params }) {
-  console.log('🔵 POST /api/appointments/[appointment-id]/interests - Customer selecting professional')
-  
-  try {
-    const resolvedParams = await params
-    const appointmentId = resolvedParams['appointment-id']
-    
-    console.log('🔍 Appointment ID:', appointmentId)
-    
-    if (!appointmentId) {
-      console.error('❌ Missing appointment ID')
-      return NextResponse.json(
-        { success: false, error: 'Appointment ID is required' },
-        { status: 400 }
-      )
-    }
-
-    // Parse request body
-    let body
-    try {
-      body = await request.json()
-      console.log('🔍 Request body:', {
-        action: body.action,
-        interest_ids: body.interest_ids,
-        hasCustomerNotes: !!body.data?.customer_notes
-      })
-    } catch (parseError) {
-      console.error('❌ Failed to parse request body:', parseError)
-      return NextResponse.json(
-        { success: false, error: 'Invalid JSON in request body' },
-        { status: 400 }
-      )
-    }
-
-    const { action, interest_ids, data } = body
-
-    // Validate required fields
-    if (!action) {
-      return NextResponse.json(
-        { success: false, error: 'Action is required' },
-        { status: 400 }
-      )
-    }
-
-    if (!interest_ids || !Array.isArray(interest_ids) || interest_ids.length === 0) {
-      return NextResponse.json(
-        { success: false, error: 'At least one interest ID is required' },
-        { status: 400 }
-      )
-    }
-
-    // Initialize Supabase client
-    const supabase = await createClient()
-    console.log('✅ Supabase client created')
-
-    if (action === 'select_professional') {
-      console.log('🎯 Selecting professional(s):', interest_ids)
-
-      // First, get the current appointment to understand the context
-      const { data: appointment, error: appointmentFetchError } = await supabase
-        .from('appointment')
-        .select('interest_count, status')
-        .eq('appointment_id', appointmentId)
-        .single()
-
-      if (appointmentFetchError) {
-        console.error('❌ Failed to fetch appointment:', appointmentFetchError)
-        return NextResponse.json(
-          { success: false, error: 'Failed to fetch appointment details' },
-          { status: 500 }
-        )
-      }
-
-      // Update the selected interest(s)
-      const { data: updatedInterests, error: updateError } = await supabase
-        .from('interest')
-        .update({
-          selected_by_customer: true,
-          customer_selected_at: new Date().toISOString(),
-          customer_notes: data?.customer_notes || null,
-          status: 'selected',
-          updated_at: new Date().toISOString()
-        })
-        .in('interest_id', interest_ids)
-        .eq('appointment_id', appointmentId)
-        .select()
-
-      if (updateError) {
-        console.error('❌ Database error updating interests:', updateError)
-        return NextResponse.json(
-          { success: false, error: 'Failed to select professional', details: updateError.message },
-          { status: 500 }
-        )
-      }
-
-      console.log('✅ Professional(s) selected successfully:', updatedInterests?.length || 0)
-
-      // 🛠️ FIXED: Better appointment status progression logic
-      const appointmentUpdateData = {
-        professional_id: interest_ids[0], // Set the selected professional
-        updated_at: new Date().toISOString()
-      }
-
-      // Determine next appointment status based on current state
-      if (appointment.status === 'pending') {
-        appointmentUpdateData.status = 'evaluating'  // Customer is now evaluating their selection
-      } else if (['interested', 'competing'].includes(appointment.status)) {
-        appointmentUpdateData.status = 'evaluating'  // Customer moved from competition to evaluation
-      } else {
-        // Keep current status if already in advanced state
-        console.log('📋 Appointment already in advanced state:', appointment.status)
-      }
-
-      const { error: appointmentError } = await supabase
-        .from('appointment')
-        .update(appointmentUpdateData)
-        .eq('appointment_id', appointmentId)
-
-      if (appointmentError) {
-        console.warn('⚠️ Failed to update appointment status:', appointmentError)
-        // Don't fail the request for this
-      } else {
-        console.log('✅ Appointment status updated to:', appointmentUpdateData.status || 'unchanged')
-      }
-
-      return NextResponse.json({
-        success: true,
-        message: 'Professional selected successfully',
-        selected_interests: updatedInterests,
-        appointment_status: appointmentUpdateData.status || appointment.status,
-        action: 'select_professional'
-      })
-    }
-
-    if (action === 'reject_interests') {
-      console.log('❌ Rejecting interests:', interest_ids)
-
-      const { data: rejectedInterests, error: rejectError } = await supabase
-        .from('interest')
-        .update({
-          status: 'rejected',
-          customer_rejected_at: new Date().toISOString(),
-          rejection_reason: data?.rejection_reason || 'Not selected',
-          updated_at: new Date().toISOString()
-        })
-        .in('interest_id', interest_ids)
-        .eq('appointment_id', appointmentId)
-        .select()
-
-      if (rejectError) {
-        console.error('❌ Database error rejecting interests:', rejectError)
-        return NextResponse.json(
-          { success: false, error: 'Failed to reject interests', details: rejectError.message },
-          { status: 500 }
-        )
-      }
-
-      console.log('✅ Interests rejected successfully:', rejectedInterests?.length || 0)
-
-      // Update appointment timestamp but don't change status for rejections
-      const { error: appointmentError } = await supabase
-        .from('appointment')
-        .update({
-          updated_at: new Date().toISOString()
-        })
-        .eq('appointment_id', appointmentId)
-
-      if (appointmentError) {
-        console.warn('⚠️ Failed to update appointment timestamp:', appointmentError)
-      }
-
-      return NextResponse.json({
-        success: true,
-        message: 'Interests rejected successfully',
-        rejected_interests: rejectedInterests,
-        action: 'reject_interests'
-      })
-    }
-
-    // Unknown action
-    return NextResponse.json(
-      { success: false, error: `Unknown action: ${action}` },
-      { status: 400 }
-    )
-
-  } catch (error) {
-    console.error('❌ API Error in POST /api/appointments/[appointment-id]/interests:', error)
-    console.error('❌ Error stack:', error.stack)
-    return NextResponse.json(
-      { 
-        success: false, 
-        error: 'Internal server error',
-        details: error.message 
-      },
-      { status: 500 }
-    )
-  }
-}
-
-// PUT - Professional responds to customer selection
-export async function PUT(request, { params }) {
-  console.log('🔵 PUT /api/appointments/[appointment-id]/interests - Professional response')
-  
-  try {
-    const resolvedParams = await params
-    const appointmentId = resolvedParams['appointment-id']
-    
-    console.log('🔍 Resolved appointment ID:', appointmentId)
-    
-    if (!appointmentId) {
-      console.error('❌ Missing appointment ID')
-      return NextResponse.json(
-        { success: false, error: 'Appointment ID is required' },
-        { status: 400 }
-      )
-    }
-
-    // Parse request body with error handling
-    let body
-    try {
-      body = await request.json()
-      console.log('🔍 Request body parsed:', {
-        action: body.action,
-        professional_id: body.professional_id,
-        decline_reason: body.decline_reason,
-        hasMessage: !!body.decline_message,
-        hasReferrals: !!body.referral_suggestions,
-        hasUpdatedQuote: !!body.updated_quote,
-        hasQuoteUpdateReason: !!body.quote_update_reason
-      })
-    } catch (parseError) {
-      console.error('❌ Failed to parse request body:', parseError)
-      return NextResponse.json(
-        { success: false, error: 'Invalid JSON in request body' },
-        { status: 400 }
-      )
-    }
-
-    const { professional_id, action } = body
-
-    console.log('🔄 Processing professional response:', {
-      appointmentId,
-      professionalId: professional_id,
-      action,
-      bodyKeys: Object.keys(body)
-    })
-
-    if (!professional_id) {
-      console.error('❌ Missing professional_id')
-      return NextResponse.json(
-        { success: false, error: 'Professional ID is required' },
-        { status: 400 }
-      )
-    }
-
-    if (!action) {
-      console.error('❌ Missing action')
-      return NextResponse.json(
-        { success: false, error: 'Action is required' },
-        { status: 400 }
-      )
-    }
-
-    // Initialize Supabase client with error handling
-    const supabase = await createClient()
-    console.log('✅ Supabase client created')
-
-    // Find the interest record with enhanced error handling
-    console.log('🔍 Finding interest record...')
-    const { data: interest, error: findError } = await supabase
-      .from('interest')
-      .select('*')
-      .eq('appointment_id', appointmentId)
-      .eq('professional_id', professional_id)
-      .single()
-
-    if (findError) {
-      console.error('❌ Database error finding interest:', findError)
-      console.error('❌ Error details:', {
-        code: findError.code,
-        message: findError.message,
-        details: findError.details,
-        hint: findError.hint
-      })
-      
-      if (findError.code === 'PGRST116') {
-        return NextResponse.json(
-          { success: false, error: 'Interest record not found' },
-          { status: 404 }
-        )
-      }
-      
-      return NextResponse.json(
-        { 
-          success: false, 
-          error: 'Database error finding interest record',
-          details: findError.message 
-        },
-        { status: 500 }
-      )
-    }
-
-    if (!interest) {
-      console.error('❌ Interest not found')
-      return NextResponse.json(
-        { success: false, error: 'Interest record not found' },
-        { status: 404 }
-      )
-    }
-
-    console.log('✅ Interest found:', interest.interest_id)
-
-    // Handle different actions
-    switch (action) {
-      case 'decline_selection':
-        return await handleDeclineSelection(supabase, interest, body)
-      
-      case 'accept_selection':
-        return await handleAcceptSelection(supabase, interest, body)
-      
-      default:
-        return NextResponse.json(
-          { success: false, error: `Unknown action: ${action}` },
-          { status: 400 }
-        )
-    }
-
-  } catch (error) {
-    console.error('❌ API Error in PUT /api/appointments/[appointment-id]/interests:', error)
-    console.error('❌ Error stack:', error.stack)
-    return NextResponse.json(
-      { 
-        success: false, 
-        error: 'Internal server error',
-        details: error.message 
-      },
-      { status: 500 }
-    )
-  }
-}
-
 // GET - Fetch interests for an appointment
 export async function GET(request, { params }) {
   try {
-    console.log('🎯 GET /api/appointments/[appointment-id]/interests called')
+    const supabase = createRouteHandlerClient({ cookies })
     
-    const resolvedParams = await params
-    const appointmentId = resolvedParams['appointment-id']
+    // ✅ FIXED: Extract appointment-id using the exact folder name
+    const appointmentId = params['appointment-id']
+    
+    console.log('🔍 GET /api/appointments/[appointment-id]/interests called')
+    console.log('📦 Raw params:', params)
+    console.log('🎯 Extracted appointmentId:', appointmentId)
 
-    if (!appointmentId) {
+    // ✅ Validate appointmentId exists
+    if (!appointmentId || appointmentId === 'undefined' || appointmentId === 'null') {
+      console.error('❌ Invalid appointmentId:', appointmentId)
       return NextResponse.json(
-        { success: false, error: 'Appointment ID is required' },
+        { 
+          error: 'Invalid appointment ID', 
+          details: 'appointment_id is required and must be a valid UUID',
+          received: appointmentId
+        },
         { status: 400 }
       )
     }
 
-    const supabase = await createClient()
-    console.log('✅ Supabase client created successfully')
+    // ✅ Validate UUID format
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+    if (!uuidRegex.test(appointmentId)) {
+      console.error('❌ Invalid UUID format:', appointmentId)
+      return NextResponse.json(
+        { 
+          error: 'Invalid appointment ID format', 
+          details: 'appointment_id must be a valid UUID',
+          received: appointmentId,
+          expectedFormat: '123e4567-e89b-12d3-a456-426614174000'
+        },
+        { status: 400 }
+      )
+    }
 
-    // Fetch interests for the appointment
+    console.log('✅ Valid appointmentId:', appointmentId)
+
+    // Fetch interests with professional details
     const { data: interests, error } = await supabase
       .from('interest')
-      .select('*')
+      .select(`
+        *,
+        professional:professional_id (
+          professional_id,
+          bio,
+          experience,
+          hourly_rate,
+          verification_status,
+          account!individual_professional_account_id_fkey (
+            account_id,
+            first_name,
+            last_name,
+            email,
+            profile_picture_url
+          )
+        ),
+        assessment:assessment!assessment_interest_id_fkey (
+          assessment_id,
+          status,
+          proposed_date,
+          proposed_duration_minutes,
+          proposed_fee,
+          customer_response,
+          customer_response_at,
+          confirmed_date,
+          confirmed_duration_minutes,
+          final_quote_provided,
+          final_quote_amount
+        )
+      `)
       .eq('appointment_id', appointmentId)
       .order('created_at', { ascending: false })
 
     if (error) {
-      console.error('❌ Failed to fetch interests:', error)
+      console.error('❌ Error fetching interests:', error)
       return NextResponse.json(
-        { 
-          success: false, 
-          error: 'Failed to fetch interests',
-          details: error.message 
-        },
+        { error: 'Failed to fetch interests', details: error.message },
         { status: 500 }
       )
     }
 
     console.log(`✅ Found ${interests?.length || 0} interests for appointment ${appointmentId}`)
 
-    // Fetch professional data separately to avoid relationship conflicts
-    let enrichedInterests = interests || []
-
-    if (interests && interests.length > 0) {
-      // Get unique professional IDs
-      const professionalIds = [...new Set(interests.map(i => i.professional_id))]
-      
-      if (professionalIds.length > 0) {
-        // Get professionals separately
-        const { data: professionals } = await supabase
-          .from('individual_professional')
-          .select('professional_id, account_id, bio, verification_status, hourly_rate')
-          .in('professional_id', professionalIds)
-
-        // Get professional account data separately
-        const accountIds = professionals?.map(p => p.account_id) || []
-        let accounts = []
-        if (accountIds.length > 0) {
-          const { data: accountsData } = await supabase
-            .from('account')
-            .select('account_id, first_name, last_name, email, profile_picture_url')
-            .in('account_id', accountIds)
-          accounts = accountsData || []
-        }
-
-        // Enrich interests with professional data
-        enrichedInterests = interests.map(interest => {
-          const professional = professionals?.find(p => p.professional_id === interest.professional_id)
-          const account = accounts?.find(a => a.account_id === professional?.account_id)
-
-          return {
-            ...interest,
-            professional: professional ? {
-              ...professional,
-              account: account || null
-            } : null
-          }
-        })
-      }
-    }
-
-    console.log(`✅ Successfully enriched ${enrichedInterests.length} interests with professional data`)
-
-    return NextResponse.json({
+    return NextResponse.json({ 
       success: true,
-      interests: enrichedInterests
+      interests: interests || [],
+      count: interests?.length || 0
     })
-
   } catch (error) {
-    console.error('❌ API Error in GET /api/appointments/[appointment-id]/interests:', error)
-    console.error('❌ Error details:', {
-      message: error.message,
-      stack: error.stack,
-      name: error.name
-    })
+    console.error('❌ Error in GET appointment interests:', error)
     return NextResponse.json(
-      { 
-        success: false, 
-        error: 'Internal server error',
-        details: error.message 
-      },
+      { error: 'Internal server error', details: error.message },
       { status: 500 }
     )
   }
 }
 
-// Helper Functions
-
-async function handleDeclineSelection(supabase, interest, body) {
-  const { 
-    decline_reason, 
-    decline_message, 
-    referral_suggestions = [] 
-  } = body
-
-  console.log('🔍 Processing decline selection:', {
-    interestId: interest.interest_id,
-    reason: decline_reason,
-    messageLength: decline_message?.length || 0,
-    referralCount: referral_suggestions?.length || 0
-  })
-
+// POST - Customer selects professional(s)
+export async function POST(request, { params }) {
   try {
-    // Update interest to withdrawn status
-    const updateData = {
-      status: 'withdrawn',                          // Professional withdraws interest
-      response: 'declined',                         // Response status
-      rejection_reason: decline_reason,             // Decline reason
-      updated_at: new Date().toISOString()         // Updated timestamp
+    const supabase = createRouteHandlerClient({ cookies })
+    
+    // ✅ FIXED: Extract appointment-id using the exact folder name
+    const appointmentId = params['appointment-id']
+    
+    console.log('🔍 POST /api/appointments/[appointment-id]/interests called')
+    console.log('📦 Raw params:', params)
+    console.log('🎯 Extracted appointmentId:', appointmentId)
+
+    // ✅ Validate appointmentId
+    if (!appointmentId || appointmentId === 'undefined' || appointmentId === 'null') {
+      console.error('❌ Invalid appointmentId:', appointmentId)
+      return NextResponse.json(
+        { error: 'Invalid appointment ID' },
+        { status: 400 }
+      )
     }
 
-    // Add decline message to existing notes field
-    if (decline_message) {
-      updateData.notes = decline_message
+    // ✅ Validate UUID format
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+    if (!uuidRegex.test(appointmentId)) {
+      console.error('❌ Invalid UUID format:', appointmentId)
+      return NextResponse.json(
+        { error: 'Invalid appointment ID format' },
+        { status: 400 }
+      )
     }
 
-    // Store referral suggestions in customer_notes as JSON if provided
-    if (referral_suggestions && referral_suggestions.length > 0) {
-      const referralData = {
-        decline_reason,
-        decline_message,
-        referral_suggestions,
-        declined_at: new Date().toISOString()
-      }
-      updateData.customer_notes = JSON.stringify(referralData)
+    const body = await request.json()
+    console.log('📝 POST Selection - Body received:', body)
+
+    const { interest_ids, customer_notes } = body
+
+    if (!interest_ids || !Array.isArray(interest_ids) || interest_ids.length === 0) {
+      return NextResponse.json(
+        { error: 'interest_ids array is required' },
+        { status: 400 }
+      )
     }
 
-    console.log('🔍 Update data prepared:', updateData)
-
-    // Update the interest record with decline information
-    const { data: updatedInterest, error: updateError } = await supabase
-      .from('interest')
-      .update(updateData)
-      .eq('interest_id', interest.interest_id)
-      .select()
+    // Verify appointment exists
+    const { data: appointment, error: appointmentError } = await supabase
+      .from('appointment')
+      .select('*')
+      .eq('appointment_id', appointmentId)
       .single()
 
-    if (updateError) {
-      console.error('❌ Database error updating interest:', updateError)
+    if (appointmentError || !appointment) {
+      console.error('❌ Appointment not found:', appointmentId)
       return NextResponse.json(
-        { 
-          success: false, 
-          error: 'Failed to update interest record',
-          details: updateError.message 
-        },
+        { error: 'Appointment not found' },
+        { status: 404 }
+      )
+    }
+
+    // Fetch all interests to be selected
+    const { data: interestsToSelect, error: fetchError } = await supabase
+      .from('interest')
+      .select('*')
+      .in('interest_id', interest_ids)
+      .eq('appointment_id', appointmentId)
+
+    if (fetchError) {
+      console.error('❌ Error fetching interests:', fetchError)
+      return NextResponse.json(
+        { error: 'Failed to fetch interests', details: fetchError.message },
         { status: 500 }
       )
     }
 
-    console.log('✅ Interest updated successfully')
-
-    // 🛠️ FIXED: Update appointment status back to competing/interested
-    const { data: otherInterests } = await supabase
-      .from('interest')
-      .select('interest_id')
-      .eq('appointment_id', interest.appointment_id)
-      .not('status', 'in', '(withdrawn,rejected)')
-
-    const remainingInterestsCount = otherInterests?.length || 0
-    
-    let newAppointmentStatus = 'pending'
-    if (remainingInterestsCount > 1) {
-      newAppointmentStatus = 'competing'
-    } else if (remainingInterestsCount === 1) {
-      newAppointmentStatus = 'interested'
+    if (!interestsToSelect || interestsToSelect.length === 0) {
+      return NextResponse.json(
+        { error: 'No valid interests found' },
+        { status: 404 }
+      )
     }
 
-    const { error: appointmentError } = await supabase
+    // Update interests to 'selected' status
+    const { data: updatedInterests, error: updateError } = await supabase
+      .from('interest')
+      .update({
+        status: 'selected',
+        selected_by_customer: true,
+        customer_selected_at: new Date().toISOString(),
+        customer_notes: customer_notes || null
+      })
+      .in('interest_id', interest_ids)
+      .select()
+
+    if (updateError) {
+      console.error('❌ Error updating interests:', updateError)
+      return NextResponse.json(
+        { error: 'Failed to select professionals', details: updateError.message },
+        { status: 500 }
+      )
+    }
+
+    console.log('✅ Professional(s) selected successfully:', updatedInterests?.length || 0)
+
+    // ✅ AUTO-ACCEPT ASSESSMENTS
+    console.log('🔍 Checking for assessments to auto-accept...')
+
+    const interestsRequiringAssessment = interestsToSelect.filter(i => i.assessment === true)
+
+    if (interestsRequiringAssessment.length > 0) {
+      console.log(`🔄 Auto-accepting assessments for ${interestsRequiringAssessment.length} interest(s)...`)
+      
+      for (const interest of interestsRequiringAssessment) {
+        try {
+          // Wait briefly for database trigger to create assessment record
+          await new Promise(resolve => setTimeout(resolve, 500))
+          
+          // Fetch the assessment record
+          const { data: assessment, error: assessmentFetchError } = await supabase
+            .from('assessment')
+            .select('*')
+            .eq('interest_id', interest.interest_id)
+            .maybeSingle()
+          
+          if (assessmentFetchError) {
+            console.error(`❌ Error fetching assessment for interest ${interest.interest_id}:`, assessmentFetchError)
+            continue
+          }
+          
+          if (!assessment) {
+            console.warn(`⚠️ No assessment found for interest ${interest.interest_id}`)
+            continue
+          }
+
+          console.log(`📋 Found assessment:`, {
+            assessment_id: assessment.assessment_id,
+            status: assessment.status,
+            proposed_date: assessment.proposed_date,
+            proposed_fee: assessment.proposed_fee
+          })
+          
+          // ✅ AUTO-ACCEPT: Customer selecting professional = accepting their assessment proposal
+          const updateData = {
+            status: 'accepted',
+            customer_response: 'accepted',
+            customer_response_at: new Date().toISOString()
+          }
+
+          // Only set confirmed_date if proposed_date exists
+          if (assessment.proposed_date) {
+            updateData.confirmed_date = assessment.proposed_date
+            updateData.confirmed_duration_minutes = assessment.proposed_duration_minutes || 60
+            console.log(`📅 Setting confirmed_date to: ${assessment.proposed_date}`)
+          } else {
+            console.warn(`⚠️ Assessment ${assessment.assessment_id} has no proposed_date - skipping auto-accept`)
+            continue
+          }
+
+          const { error: autoAcceptError } = await supabase
+            .from('assessment')
+            .update(updateData)
+            .eq('assessment_id', assessment.assessment_id)
+          
+          if (autoAcceptError) {
+            console.error(`❌ Failed to auto-accept assessment ${assessment.assessment_id}:`, autoAcceptError)
+          } else {
+            console.log(`✅ Assessment auto-accepted: ${assessment.assessment_id}`)
+            console.log(`   Status: proposed → accepted`)
+            console.log(`   Customer response: pending → accepted`)
+            if (assessment.proposed_date) {
+              console.log(`   Confirmed date: ${assessment.proposed_date}`)
+            }
+          }
+        } catch (error) {
+          console.error(`❌ Error processing assessment for interest ${interest.interest_id}:`, error)
+        }
+      }
+      
+      console.log('✅ Assessment auto-accept process completed')
+    } else {
+      console.log('ℹ️ No assessments to auto-accept')
+    }
+
+    // Update appointment status
+    const { error: appointmentUpdateError } = await supabase
       .from('appointment')
       .update({
-        status: newAppointmentStatus,  // Revert to appropriate status
-        professional_id: null,        // Clear selected professional
+        status: 'evaluating',
         updated_at: new Date().toISOString()
       })
-      .eq('appointment_id', interest.appointment_id)
+      .eq('appointment_id', appointmentId)
 
-    if (appointmentError) {
-      console.warn('⚠️ Failed to update appointment status:', appointmentError)
-      // Don't fail the request for this
-    } else {
-      console.log('✅ Appointment status reverted to:', newAppointmentStatus)
+    if (appointmentUpdateError) {
+      console.warn('⚠️ Warning: Failed to update appointment status:', appointmentUpdateError)
     }
-
-    console.log('✅ Professional decline processed successfully')
 
     return NextResponse.json({
       success: true,
-      message: 'Selection declined successfully',
-      interest: updatedInterest,
-      appointment_status: newAppointmentStatus,
-      action: 'decline_selection'
+      message: `Successfully selected ${updatedInterests.length} professional(s)`,
+      selected_interests: updatedInterests
     })
 
   } catch (error) {
-    console.error('❌ Error in handleDeclineSelection:', error)
-    console.error('❌ Error stack:', error.stack)
+    console.error('❌ Error in POST selection:', error)
     return NextResponse.json(
-      { 
-        success: false, 
-        error: 'Failed to process decline',
-        details: error.message 
-      },
+      { error: 'Internal server error', details: error.message },
       { status: 500 }
     )
   }
 }
 
-// 🛠️ FIXED: Updated handleAcceptSelection with proper status transitions
-async function handleAcceptSelection(supabase, interest, body) {
-  const { 
-    response_message,
-    updated_quote,
-    schedule_assessment,
-    assessment_details,
-    quote_update_reason
-  } = body
-
-  console.log('✅ Processing accept selection:', {
-    interestId: interest.interest_id,
-    hasMessage: !!response_message,
-    hasUpdatedQuote: !!updated_quote,
-    needsAssessment: !!schedule_assessment
-  })
-
+// PUT - Update existing interest
+export async function PUT(request, { params }) {
   try {
-    // Detect if quote has meaningful changes
-    const hasQuoteChanges = updated_quote && (
-      (updated_quote.amount && Math.abs(updated_quote.amount - (interest.amount || 0)) > 0.01) ||
-      (updated_quote.duration_hours && updated_quote.duration_hours !== interest.estimated_duration_hours) ||
-      (updated_quote.price_min && updated_quote.price_min !== interest.price_range_min) ||
-      (updated_quote.price_max && updated_quote.price_max !== interest.price_range_max) ||
-      updated_quote.scope_changes ||
-      updated_quote.timeline_changes
-    )
-
-    console.log('🔍 Quote change detection:', {
-      hasQuoteChanges,
-      originalAmount: interest.amount,
-      newAmount: updated_quote?.amount,
-      originalDuration: interest.estimated_duration_hours,
-      newDuration: updated_quote?.duration_hours
-    })
-
-    // Calculate price change percentage
-    let priceChangePercent = 0
-    if (hasQuoteChanges && updated_quote.amount && interest.amount) {
-      priceChangePercent = ((updated_quote.amount - interest.amount) / interest.amount) * 100
-      console.log('💰 Price change percentage:', priceChangePercent.toFixed(2) + '%')
-    }
-
-    // Validate quote changes
-    if (hasQuoteChanges) {
-      if (priceChangePercent > 20 && !quote_update_reason) {
-        return NextResponse.json(
-          { 
-            success: false, 
-            error: 'Quote increases over 20% require detailed justification',
-            price_change_percent: priceChangePercent.toFixed(2)
-          },
-          { status: 400 }
-        )
-      }
-
-      if (priceChangePercent > 50) {
-        return NextResponse.json(
-          { 
-            success: false, 
-            error: 'Quote increases over 50% are not permitted. Please contact customer directly.',
-            price_change_percent: priceChangePercent.toFixed(2)
-          },
-          { status: 400 }
-        )
-      }
-    }
-
-    // 🛠️ FIXED: Status determination using database enum values
-    const interestStatus = hasQuoteChanges ? 'updated' : 'approved'  // Use 'approved' instead of 'confirmed'
+    const supabase = createRouteHandlerClient({ cookies })
     
-    console.log('📋 Status determination:', {
-      hasQuoteChanges,
-      interestStatus,
-      requiresCustomerApproval: hasQuoteChanges
-    })
+    // ✅ FIXED: Extract appointment-id using the exact folder name
+    const appointmentId = params['appointment-id']
+    
+    console.log('🔍 PUT /api/appointments/[appointment-id]/interests - Update interest')
+    console.log('📦 Raw params:', params)
+    console.log('🎯 Extracted appointmentId:', appointmentId)
 
-    // Prepare update data using single-word fields
+    // ✅ Validate appointmentId
+    if (!appointmentId || appointmentId === 'undefined' || appointmentId === 'null') {
+      console.error('❌ Invalid appointmentId:', appointmentId)
+      return NextResponse.json(
+        { error: 'Invalid appointment ID' },
+        { status: 400 }
+      )
+    }
+
+    // ✅ Validate UUID format
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+    if (!uuidRegex.test(appointmentId)) {
+      console.error('❌ Invalid UUID format:', appointmentId)
+      return NextResponse.json(
+        { error: 'Invalid appointment ID format' },
+        { status: 400 }
+      )
+    }
+
+    const body = await request.json()
+
+    const {
+      interest_id,
+      message,
+      amount,
+      fee,
+      assessment,
+      modality,
+      price_range_min,
+      price_range_max,
+      assessment_justification,
+      earliest_start,
+      latest_start,
+      estimated_duration_hours,
+      notes
+    } = body
+
+    if (!interest_id) {
+      return NextResponse.json(
+        { error: 'interest_id is required' },
+        { status: 400 }
+      )
+    }
+
+    // Build update object
     const updateData = {
-      response: 'confirmed',
-      status: interestStatus,
-      replied: new Date().toISOString(),
       updated_at: new Date().toISOString()
     }
 
-    if (response_message) {
-      updateData.message = response_message
-    }
+    if (message !== undefined) updateData.message = message
+    if (amount !== undefined) updateData.amount = amount
+    if (fee !== undefined) updateData.fee = fee
+    if (assessment !== undefined) updateData.assessment = assessment
+    if (modality !== undefined) updateData.modality = modality
+    if (price_range_min !== undefined) updateData.price_range_min = price_range_min
+    if (price_range_max !== undefined) updateData.price_range_max = price_range_max
+    if (assessment_justification !== undefined) updateData.assessment_justification = assessment_justification
+    if (earliest_start !== undefined) updateData.earliest_start = earliest_start
+    if (latest_start !== undefined) updateData.latest_start = latest_start
+    if (estimated_duration_hours !== undefined) updateData.estimated_duration_hours = estimated_duration_hours
+    if (notes !== undefined) updateData.notes = notes
 
-    // Store original values using single-word fields when quote changes
-    if (hasQuoteChanges) {
-      updateData.base = interest.amount                        // original amount
-      updateData.hours = interest.estimated_duration_hours     // original duration
-      updateData.minimum = interest.price_range_min            // original min price
-      updateData.maximum = interest.price_range_max            // original max price
-      updateData.percent = priceChangePercent                  // price change %
-      
-      if (quote_update_reason) {
-        updateData.reason = quote_update_reason                // update reason
-      }
-      
-      // Update with new values
-      if (updated_quote.amount) updateData.amount = updated_quote.amount
-      if (updated_quote.duration_hours) updateData.estimated_duration_hours = updated_quote.duration_hours
-      if (updated_quote.price_min) updateData.price_range_min = updated_quote.price_min
-      if (updated_quote.price_max) updateData.price_range_max = updated_quote.price_max
-      
-      console.log('✅ Quote comparison data prepared:', {
-        originalAmount: updateData.base,
-        newAmount: updateData.amount,
-        changePercent: priceChangePercent.toFixed(2) + '%'
-      })
-    } else {
-      // No changes - just update with any provided quote details
-      if (updated_quote?.amount) updateData.amount = updated_quote.amount
-      if (updated_quote?.duration_hours) updateData.estimated_duration_hours = updated_quote.duration_hours
-    }
-
-    // Update interest record
+    // Update the interest
     const { data: updatedInterest, error: updateError } = await supabase
       .from('interest')
       .update(updateData)
-      .eq('interest_id', interest.interest_id)
+      .eq('interest_id', interest_id)
+      .eq('appointment_id', appointmentId)
       .select()
       .single()
 
     if (updateError) {
-      console.error('❌ Failed to update interest:', updateError)
+      console.error('❌ Error updating interest:', updateError)
       return NextResponse.json(
-        { 
-          success: false, 
-          error: 'Failed to update interest record',
-          details: updateError.message 
-        },
+        { error: 'Failed to update interest', details: updateError.message },
         { status: 500 }
       )
     }
 
-    // Create quote history record if quote changed
-    if (hasQuoteChanges) {
-      const { error: historyError } = await supabase
-        .from('quote_update_history')
-        .insert({
-          interest_id: interest.interest_id,
-          appointment_id: interest.appointment_id,
-          professional_id: interest.professional_id,
-          original_amount: interest.amount,
-          original_duration_hours: interest.estimated_duration_hours,
-          original_price_range_min: interest.price_range_min,
-          original_price_range_max: interest.price_range_max,
-          updated_amount: updated_quote.amount,
-          updated_duration_hours: updated_quote.duration_hours,
-          updated_price_range_min: updated_quote.price_min,
-          updated_price_range_max: updated_quote.price_max,
-          price_change_percent: priceChangePercent,
-          update_reason: quote_update_reason,
-          scope_changes: updated_quote.scope_changes,
-          timeline_changes: updated_quote.timeline_changes,
-          professional_justification: response_message,
-          customer_response: 'pending'
-        })
-
-      if (historyError) {
-        console.error('❌ Failed to create quote history:', historyError)
-      } else {
-        console.log('✅ Quote update history created successfully')
-      }
-    }
-
-    // 🛠️ FIXED: Update appointment with proper status progression
-    const appointmentUpdateData = {
-      updated_at: new Date().toISOString()
-    }
-
-    if (!hasQuoteChanges) {
-      // No quote changes - direct approval
-      appointmentUpdateData.status = 'approved'  // Final approved status
-      console.log('✅ Immediate confirmation - no quote changes')
-    } else {
-      // Quote changes - customer needs to review
-      appointmentUpdateData.status = 'reviewing'  // Customer reviewing changes
-      console.log('⏳ Pending customer approval - quote changes detected')
-    }
-
-    const { error: appointmentError } = await supabase
-      .from('appointment')
-      .update(appointmentUpdateData)
-      .eq('appointment_id', interest.appointment_id)
-
-    if (appointmentError) {
-      console.error('❌ Failed to update appointment:', appointmentError)
-      return NextResponse.json(
-        { 
-          success: false, 
-          error: 'Failed to update appointment',
-          details: appointmentError.message 
-        },
-        { status: 500 }
-      )
-    }
-
-    // Create assessment if requested
-    if (schedule_assessment && assessment_details) {
-      console.log('📅 Creating assessment record')
-      
-      const { error: assessmentError } = await supabase
-        .from('assessment')
-        .insert({
-          interest_id: interest.interest_id,
-          appointment_id: interest.appointment_id,
-          professional_id: interest.professional_id,
-          service_delivery_address_id: assessment_details.address_id,
-          proposed_date: assessment_details.proposed_date,
-          proposed_duration_minutes: assessment_details.duration_minutes || 60,
-          proposed_fee: assessment_details.fee || 0,
-          assessment_type: assessment_details.type || 'local',
-          proposal_message: assessment_details.message,
-          status: 'proposed'
-        })
-
-      if (assessmentError) {
-        console.error('❌ Failed to create assessment:', assessmentError)
-      } else {
-        console.log('✅ Assessment created successfully')
-      }
-    }
-
-    console.log('✅ Professional acceptance processed successfully')
+    console.log('✅ Interest updated successfully:', interest_id)
 
     return NextResponse.json({
       success: true,
-      message: hasQuoteChanges 
-        ? 'Quote updated successfully. Customer approval required.'
-        : 'Selection accepted successfully',
-      interest: updatedInterest,
-      appointment_status: appointmentUpdateData.status,
-      action: 'accept_selection',
-      
-      quote_changes: hasQuoteChanges ? {
-        has_changes: true,
-        price_change_percent: priceChangePercent,
-        requires_customer_approval: true,
-        original_quote: {
-          amount: interest.amount,
-          duration_hours: interest.estimated_duration_hours,
-          price_range_min: interest.price_range_min,
-          price_range_max: interest.price_range_max
-        },
-        updated_quote: updated_quote
-      } : {
-        has_changes: false,
-        requires_customer_approval: false
-      }
+      interest: updatedInterest
     })
 
   } catch (error) {
-    console.error('❌ Error in handleAcceptSelection:', error)
+    console.error('❌ Error in PUT interest:', error)
     return NextResponse.json(
-      { 
-        success: false, 
-        error: 'Failed to process acceptance',
-        details: error.message 
-      },
+      { error: 'Internal server error', details: error.message },
       { status: 500 }
     )
   }

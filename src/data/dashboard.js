@@ -54,6 +54,13 @@ export const professionalNavigation = [
     path: "/professional/manage-appointments",
   },
 
+  {
+    id: 3,
+    name: "Assessments",
+    icon: "flaticon-clipboard-check", // or appropriate icon
+    path: "/professional/assessments",
+  },
+
   // {
     // id: 2,
     // name: "Projects",

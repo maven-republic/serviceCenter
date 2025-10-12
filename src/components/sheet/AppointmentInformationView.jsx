@@ -196,41 +196,81 @@ export default function AppointmentInformationView({
     }
   }, [actionLoading, onOpenChange])
 
-  // All the existing handlers from your original file
+  // FIXED: Professional accept/decline handler
   const handleFormSubmit = useCallback(async (formData) => {
     setActionLoading(true)
     
     try {
-      const response = await fetch(`/api/appointments/${formData.appointment_id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          status: formData.action === 'accept' ? 'accepted' : 
-                 formData.action === 'decline' ? 'declined' : 'quoted',
-          professional_notes: formData.professional_notes,
-          estimated_duration: formData.estimated_duration,
-          suggested_start: formData.suggested_start,
-          suggested_end: formData.suggested_end,
-          quoted_price: formData.quoted_price,
-          price_breakdown: formData.price_breakdown,
-          requirements: formData.requirements,
-          next_steps: formData.next_steps,
-          decline_reason: formData.decline_reason,
-          alternative_suggestions: formData.alternative_suggestions,
-          response_timestamp: new Date().toISOString(),
-          duration_minutes: formData.estimated_duration
+      if (formData.action === 'accept') {
+        // FIXED: Professional acceptance should trigger booking creation by setting status to 'approved'
+        const response = await fetch(`/api/appointments/${formData.appointment_id}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            status: 'approved', // FIXED: This triggers booking creation logic
+            professional_notes: formData.professional_notes,
+            estimated_duration: formData.estimated_duration,
+            suggested_start: formData.suggested_start,
+            suggested_end: formData.suggested_end,
+            requirements: formData.requirements,
+            next_steps: formData.next_steps,
+            response_timestamp: new Date().toISOString(),
+            duration_minutes: formData.estimated_duration
+          })
         })
-      })
 
-      const data = await response.json()
-      if (!response.ok) throw new Error(data.error || `Failed to ${formData.action} appointment`)
+        const data = await response.json()
+        if (!response.ok) throw new Error(data.error || `Failed to ${formData.action} appointment`)
 
-      if (formData.action === 'accept') onAccept?.()
-      else if (formData.action === 'decline') onDecline?.()
+        onAccept?.()
+        alert('Appointment accepted and booking created successfully!')
+        onRefresh?.()
+        handleClose()
 
-      alert(`Appointment ${formData.action}ed successfully!`)
-      onRefresh?.()
-      handleClose()
+      } else if (formData.action === 'decline') {
+        // Professional decline - update appointment status to declined
+        const response = await fetch(`/api/appointments/${formData.appointment_id}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            status: 'declined', // Set appointment to declined
+            professional_notes: formData.professional_notes,
+            decline_reason: formData.decline_reason,
+            alternative_suggestions: formData.alternative_suggestions,
+            response_timestamp: new Date().toISOString()
+          })
+        })
+
+        const data = await response.json()
+        if (!response.ok) throw new Error(data.error || `Failed to ${formData.action} appointment`)
+
+        onDecline?.()
+        alert('Appointment declined successfully!')
+        onRefresh?.()
+        handleClose()
+
+      } else if (formData.action === 'quote') {
+        // Quote logic - update appointment status to quoted
+        const response = await fetch(`/api/appointments/${formData.appointment_id}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            status: 'quoted',
+            professional_notes: formData.professional_notes,
+            estimated_duration: formData.estimated_duration,
+            quoted_price: formData.quoted_price,
+            price_breakdown: formData.price_breakdown,
+            response_timestamp: new Date().toISOString()
+          })
+        })
+
+        const data = await response.json()
+        if (!response.ok) throw new Error(data.error || `Failed to ${formData.action} appointment`)
+
+        alert('Quote sent successfully!')
+        onRefresh?.()
+        handleClose()
+      }
 
     } catch (error) {
       alert(`Error: ${error.message}`)
@@ -859,7 +899,7 @@ export default function AppointmentInformationView({
                       <div>
                         <p className="font-medium text-foreground text-sm">Preferred Date</p>
                         <p className="text-muted-foreground text-sm">
-                          {formatDateTime(displayData.preferred_date)}
+                          {formatDateTime(displayData.session)}
                         </p>
                       </div>
                     </div>
@@ -870,7 +910,7 @@ export default function AppointmentInformationView({
                         <div>
                           <p className="font-medium text-foreground text-sm">Location</p>
                           <p className="text-muted-foreground text-sm">
-                            {displayData.address.street}, {displayData.address.city}
+                            {displayData.address.street_address}, {displayData.address.city}
                           </p>
                         </div>
                       </div>

@@ -1,4 +1,5 @@
 // src/app/api/professionals/[id]/appointment-availability/route.js
+// FIXED: Simplified timezone handling, better day-of-week matching
 
 import { createClient } from '@/utils/supabase/server'
 import { NextResponse } from 'next/server'
@@ -6,43 +7,63 @@ import { NextResponse } from 'next/server'
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
 
+function getDateDaysFromNow(days) {
+  const date = new Date()
+  date.setDate(date.getDate() + days)
+  return date.toISOString().split('T')[0]
+}
+
+function generateTimeSlots(startTime, endTime, durationMinutes, bufferMinutes = 0) {
+  const slots = []
+  
+  // Parse start time (HH:MM:SS format)
+  const [startHour, startMinute] = startTime.split(':').map(Number)
+  const [endHour, endMinute] = endTime.split(':').map(Number)
+  
+  let currentMinutes = startHour * 60 + startMinute
+  const endMinutes = endHour * 60 + endMinute
+  
+  while (currentMinutes + durationMinutes <= endMinutes) {
+    const slotHour = Math.floor(currentMinutes / 60)
+    const slotMinute = currentMinutes % 60
+    
+    slots.push({
+      time: `${String(slotHour).padStart(2, '0')}:${String(slotMinute).padStart(2, '0')}:00`,
+      hour: slotHour,
+      minute: slotMinute
+    })
+    
+    currentMinutes += durationMinutes + bufferMinutes
+  }
+  
+  return slots
+}
+
 export async function GET(request, { params }) {
-  console.log('🔥 API Route called!')
+  console.log('🔥 Availability API called!')
   
   try {
-    // ✅ Fix: Await params for Next.js 15+
     const resolvedParams = await params
     const { id: professionalId } = resolvedParams
     
-    console.log('🔥 Params:', resolvedParams)
-    console.log('🔥 Request URL:', request.url)
-    console.log('🔥 Professional ID:', professionalId)
-    
-    console.log('🔥 Creating Supabase client...')
+    console.log('🎯 Professional ID:', professionalId)
     
     const supabase = await createClient()
-    console.log('🔥 Supabase client created successfully')
-    
     const { searchParams } = new URL(request.url)
-    console.log('🔥 Search params:', Object.fromEntries(searchParams))
     
     // Get query parameters
     const startDate = searchParams.get('start_date') || new Date().toISOString().split('T')[0]
     const endDate = searchParams.get('end_date') || getDateDaysFromNow(30)
     const slotDuration = parseInt(searchParams.get('slot_duration')) || 60
     
-    console.log('🔥 Parsed params:', { startDate, endDate, slotDuration })
+    console.log('📋 Parameters:', { startDate, endDate, slotDuration })
     
-    console.log('🔥 About to query professional...')
-    
-    // Validate professional exists
+    // Validate professional exists and get settings
     const { data: professional, error: professionalError } = await supabase
       .from('individual_professional')
       .select('professional_id, min_notice_hours, buffer_minutes, default_event_duration')
       .eq('professional_id', professionalId)
       .single()
-
-    console.log('🔥 Professional query result:', { professional, professionalError })
 
     if (professionalError || !professional) {
       console.error('❌ Professional not found:', professionalError)
@@ -52,9 +73,13 @@ export async function GET(request, { params }) {
       )
     }
 
-    console.log('🔥 Professional found, querying availability...')
+    console.log('✅ Professional found')
     
-    // Get professional's base availability (weekly schedule)
+    const minNoticeHours = professional.min_notice_hours || 1
+    const bufferMinutes = professional.buffer_minutes || 0
+    const effectiveDuration = slotDuration || professional.default_event_duration || 60
+    
+    // Get base weekly availability
     const { data: baseAvailability, error: availabilityError } = await supabase
       .from('availability')
       .select('day_of_week, start_time, end_time')
@@ -69,359 +94,184 @@ export async function GET(request, { params }) {
       )
     }
 
-    console.log('🔥 Base availability:', baseAvailability)
+    console.log('📅 Base availability count:', baseAvailability?.length || 0)
 
-    // Get availability overrides for the date range
-    const { data: overrides, error: overridesError } = await supabase
+    if (!baseAvailability || baseAvailability.length === 0) {
+      return NextResponse.json({
+        professional_id: professionalId,
+        available_slots: [],
+        message: 'No availability set'
+      })
+    }
+
+    // Get availability overrides for date range
+    const { data: overrides } = await supabase
       .from('availability_override')
       .select('override_date, start_time, end_time, is_available')
       .eq('professional_id', professionalId)
       .gte('override_date', startDate)
       .lte('override_date', endDate)
 
-    if (overridesError) {
-      console.error('❌ Error fetching overrides:', overridesError)
+    console.log('📅 Overrides count:', overrides?.length || 0)
+
+    // Create override map for quick lookup
+    const overrideMap = new Map()
+    if (overrides) {
+      overrides.forEach(override => {
+        overrideMap.set(override.override_date, override)
+      })
     }
 
-    console.log('🔥 Availability overrides:', overrides)
-
-    // Get existing appointments in the date range
-    const { data: existingAppointments, error: appointmentsError } = await supabase
+    // Get existing appointments
+    const { data: existingAppointments } = await supabase
       .from('appointment')
-      .select('session, preferred_end')
+      .select('session, duration')
       .eq('professional_id', professionalId)
       .gte('session', `${startDate}T00:00:00`)
       .lte('session', `${endDate}T23:59:59`)
-      .in('status', ['pending', 'quoted', 'converted'])
+      .in('status', ['pending', 'quoted', 'approved', 'converting', 'converted'])
 
-    if (appointmentsError) {
-      console.error('❌ Error fetching appointments:', appointmentsError)
-    }
+    console.log('📅 Existing appointments:', existingAppointments?.length || 0)
 
-    console.log('🔥 Existing appointments:', existingAppointments)
-
-    // Get existing bookings in the date range  
-    const { data: existingBookings, error: bookingsError } = await supabase
+    // Get existing bookings
+    const { data: existingBookings } = await supabase
       .from('booking')
-      .select('scheduled_start, scheduled_end')
+      .select('scheduled_start, scheduled_end, duration_minutes')
       .eq('professional_id', professionalId)
       .gte('scheduled_start', `${startDate}T00:00:00`)
       .lte('scheduled_start', `${endDate}T23:59:59`)
-      .in('status', ['pending', 'confirmed', 'in_progress'])
+      .in('status', ['pending', 'accepted', 'confirmed', 'progressing'])
 
-    if (bookingsError) {
-      console.error('❌ Error fetching bookings:', bookingsError)
+    console.log('📅 Existing bookings:', existingBookings?.length || 0)
+
+    // Combine all busy periods
+    const busyPeriods = []
+    
+    if (existingAppointments) {
+      existingAppointments.forEach(appt => {
+        const start = new Date(appt.session)
+        const end = new Date(start.getTime() + ((appt.duration || 60) * 60 * 1000))
+        busyPeriods.push({ start, end })
+      })
     }
 
-    console.log('🔥 Existing bookings:', existingBookings)
+    if (existingBookings) {
+      existingBookings.forEach(booking => {
+        const start = new Date(booking.scheduled_start)
+        const end = booking.scheduled_end 
+          ? new Date(booking.scheduled_end)
+          : new Date(start.getTime() + ((booking.duration_minutes || 60) * 60 * 1000))
+        busyPeriods.push({ start, end })
+      })
+    }
 
-    // ✅ FIXED: Use safe defaults for null values
-    const safeMinNoticeHours = professional.min_notice_hours ?? 1  // 1 hour default
-    const safeBufferMinutes = professional.buffer_minutes ?? 15    // 15 minutes default
+    // Calculate minimum booking time (respects min_notice_hours)
+    const now = new Date()
+    const minBookingTime = new Date(now.getTime() + (minNoticeHours * 60 * 60 * 1000))
 
-    console.log('🔥 Safe values:', { safeMinNoticeHours, safeBufferMinutes })
+    console.log('⏰ Min booking time:', minBookingTime.toISOString())
 
-    // Calculate available slots
-    const availableSlots = calculateAvailableSlots({
-      baseAvailability: baseAvailability || [],
-      overrides: overrides || [],
-      existingAppointments: existingAppointments || [],
-      existingBookings: existingBookings || [],
-      startDate,
-      endDate,
-      slotDuration,
-      minNoticeHours: safeMinNoticeHours,
-      bufferMinutes: safeBufferMinutes
-    })
+    // Generate available slots
+    const availableSlots = []
+    let currentDate = new Date(startDate + 'T00:00:00Z')
+    const finalDate = new Date(endDate + 'T23:59:59Z')
 
-    console.log('🔥 Available slots calculated:', availableSlots.length)
-    
+    while (currentDate <= finalDate) {
+      const dateString = currentDate.toISOString().split('T')[0]
+      const dayOfWeek = currentDate.getUTCDay()
+
+      console.log(`📅 Processing ${dateString} (day ${dayOfWeek})`)
+
+      // Check for override first
+      const override = overrideMap.get(dateString)
+      
+      let dayAvailability = null
+      
+      if (override) {
+        console.log('  📌 Override found')
+        // Override exists
+        if (override.is_available) {
+          dayAvailability = [{
+            start_time: override.start_time,
+            end_time: override.end_time
+          }]
+        }
+        // else: is_available = false, so no slots for this day
+      } else {
+        // Use regular weekly availability
+        dayAvailability = baseAvailability.filter(a => a.day_of_week === dayOfWeek)
+        console.log(`  📆 Using regular schedule: ${dayAvailability.length} time blocks`)
+      }
+
+      // Generate slots for this day
+      if (dayAvailability && dayAvailability.length > 0) {
+        dayAvailability.forEach(avail => {
+          const timeSlots = generateTimeSlots(
+            avail.start_time,
+            avail.end_time,
+            effectiveDuration,
+            bufferMinutes
+          )
+
+          console.log(`    ⏰ Generated ${timeSlots.length} potential slots for ${avail.start_time}-${avail.end_time}`)
+
+          timeSlots.forEach(slot => {
+            // Construct datetime for this slot
+            const slotDateTime = new Date(`${dateString}T${slot.time}Z`)
+            
+            // Check if slot is in the future with minimum notice
+            if (slotDateTime < minBookingTime) {
+              return // Skip this slot - too soon
+            }
+
+            // Check if slot conflicts with busy periods
+            const slotEnd = new Date(slotDateTime.getTime() + (effectiveDuration * 60 * 1000))
+            
+            const hasConflict = busyPeriods.some(busy => {
+              return slotDateTime < busy.end && slotEnd > busy.start
+            })
+
+            if (!hasConflict) {
+              availableSlots.push({
+                date: dateString,
+                time: slot.time.substring(0, 5), // HH:MM format
+                datetime: slotDateTime.toISOString(),
+                day_of_week: dayOfWeek,
+                duration_minutes: effectiveDuration,
+                is_override: !!override
+              })
+            }
+          })
+        })
+      } else {
+        console.log(`  ❌ No availability for this day`)
+      }
+
+      // Move to next day
+      currentDate.setUTCDate(currentDate.getUTCDate() + 1)
+    }
+
+    console.log(`✅ Generated ${availableSlots.length} available slots`)
+
     return NextResponse.json({
       professional_id: professionalId,
-      start_date: startDate,
-      end_date: endDate,
-      slot_duration: slotDuration,
       available_slots: availableSlots,
-      total_slots: availableSlots.length,
-      debug: {
-        baseAvailability: baseAvailability || [],
-        overrides: overrides || [],
-        existingAppointments: existingAppointments || [],
-        existingBookings: existingBookings || [],
-        safeMinNoticeHours,
-        safeBufferMinutes,
-        professionalSettings: professional
+      settings: {
+        min_notice_hours: minNoticeHours,
+        buffer_minutes: bufferMinutes,
+        slot_duration: effectiveDuration
+      },
+      date_range: {
+        start: startDate,
+        end: endDate
       }
     })
 
   } catch (error) {
-    console.error('🔥💥 API Route Error:', error)
-    console.error('🔥💥 Error stack:', error.stack)
+    console.error('💥 Error in availability API:', error)
     return NextResponse.json(
       { error: 'Internal server error', details: error.message },
       { status: 500 }
     )
   }
-}
-
-// ✅ TIMEZONE FIXED: Helper function to get Jamaica time
-function getJamaicaTime() {
-  // Get current time in Jamaica timezone (UTC-5)
-  return new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Jamaica' }))
-}
-
-// ✅ TIMEZONE FIXED: Helper function to create Jamaica timezone date
-function createJamaicaDate(dateString, timeString) {
-  // Create date in Jamaica timezone by adding the offset
-  const jamaicaOffset = -5 * 60 // Jamaica is UTC-5, convert to minutes
-  const localDate = new Date(`${dateString}T${timeString}`)
-  
-  // Adjust for Jamaica timezone
-  const jamaicaDate = new Date(localDate.getTime() - (jamaicaOffset * 60 * 1000))
-  return jamaicaDate
-}
-
-// FINAL FIX: Replace the calculateAvailableSlots function in route.js
-
-function calculateAvailableSlots({
-  baseAvailability,
-  overrides,
-  existingAppointments,
-  existingBookings,
-  startDate,
-  endDate,
-  slotDuration,
-  minNoticeHours,
-  bufferMinutes
-}) {
-  console.log('🔥🔥 calculateAvailableSlots called with:')
-  console.log('  - startDate:', startDate)
-  console.log('  - endDate:', endDate)
-  console.log('  - minNoticeHours:', minNoticeHours)
-  console.log('  - bufferMinutes:', bufferMinutes)
-  console.log('  - baseAvailability count:', baseAvailability.length)
-
-  const slots = []
-  const currentDate = new Date(startDate)
-  const endDateTime = new Date(endDate)
-  
-  // ✅ TIMEZONE FIXED: Use Jamaica time for all calculations
-  const jamaicaNow = getJamaicaTime()
-  const minBookingTime = new Date(jamaicaNow.getTime() + ((minNoticeHours || 1) * 60 * 60 * 1000))
-
-  console.log('🔥🔥 Calculated times (Jamaica timezone):')
-  console.log('  - jamaicaNow:', jamaicaNow.toISOString(), '(Jamaica time)')
-  console.log('  - minBookingTime:', minBookingTime.toISOString(), '(Jamaica time)')
-
-  let dayCount = 0
-  // Generate slots for each day in the range
-  while (currentDate <= endDateTime && dayCount < 50) {
-    const dateString = currentDate.toISOString().split('T')[0]
-    
-    // ✅ CRITICAL FIX: Use timezone-safe day calculation
-    const dayOfWeek = new Date(dateString + 'T12:00:00Z').getDay()
-    
-    console.log(`🔥🔥 Processing day ${dayCount + 1}: ${dateString} (dayOfWeek: ${dayOfWeek})`)
-    console.log(`🔥🔥 Date verification: ${new Date(dateString).toDateString()}`)
-    
-    // Check if there's an override for this specific date
-    const dayOverrides = overrides.filter(override => override.override_date === dateString)
-    
-    let dayAvailability = []
-    
-    if (dayOverrides.length > 0) {
-      console.log(`🔥🔥 Found ${dayOverrides.length} overrides for ${dateString}`)
-      dayAvailability = dayOverrides.map(override => ({
-        start_time: override.start_time,
-        end_time: override.end_time,
-        is_available: override.is_available
-      })).filter(slot => slot.is_available)
-    } else {
-      // Use base weekly availability for this day of week
-      console.log(`🔥🔥 Using base availability for dayOfWeek ${dayOfWeek}`)
-      dayAvailability = baseAvailability.filter(avail => {
-        const matches = avail.day_of_week === dayOfWeek
-        console.log(`    - Checking slot: day_of_week=${avail.day_of_week}, matches=${matches}`)
-        return matches
-      })
-    }
-
-    console.log(`🔥🔥 Day availability for ${dateString}:`, dayAvailability)
-
-    // ✅ FIX: Only generate slots if day has availability
-    if (dayAvailability.length > 0) {
-      // Generate time slots for this day
-      for (const availability of dayAvailability) {
-        console.log(`🔥🔥 Generating slots for: ${availability.start_time} - ${availability.end_time}`)
-        
-        const daySlots = generateTimeSlotsForDay(
-          dateString,
-          availability.start_time,
-          availability.end_time,
-          slotDuration,
-          minBookingTime,
-          bufferMinutes
-        )
-        
-        console.log(`🔥🔥 Generated ${daySlots.length} slots for time block`)
-        
-        // Filter out conflicting slots
-        const availableSlots = daySlots.filter(slot => {
-          const hasConflictResult = hasConflict(slot, existingAppointments, existingBookings, slotDuration, bufferMinutes)
-          if (hasConflictResult) {
-            console.log(`🔥🔥 Slot ${slot.time} has conflict, removing`)
-          }
-          return !hasConflictResult
-        })
-        
-        console.log(`🔥🔥 After conflict filtering: ${availableSlots.length} slots remain`)
-        slots.push(...availableSlots)
-      }
-    } else {
-      console.log(`🔥🔥 No availability for ${dateString} - day blocked`)
-    }
-    
-    // Move to next day
-    currentDate.setDate(currentDate.getDate() + 1)
-    dayCount++
-  }
-
-  console.log(`🔥🔥 FINAL RESULT: Generated ${slots.length} total available slots`)
-  return slots.sort((a, b) => new Date(a.datetime) - new Date(b.datetime))
-}
-
-// ✅ TIMEZONE FIXED: Generate time slots for a specific day with proper timezone handling
-function generateTimeSlotsForDay(dateString, startTime, endTime, slotDuration, minBookingTime, bufferMinutes) {
-  console.log(`🔥🔥🔥 generateTimeSlotsForDay called:`)
-  console.log(`    - dateString: ${dateString}`)
-  console.log(`    - startTime: ${startTime}`)
-  console.log(`    - endTime: ${endTime}`)
-  console.log(`    - minBookingTime: ${minBookingTime.toISOString()}`)
-
-  const slots = []
-  
-  // ✅ TIMEZONE FIXED: Create dates in Jamaica timezone
-  const dayStart = createJamaicaDate(dateString, startTime)
-  const dayEnd = createJamaicaDate(dateString, endTime)
-  
-  // ✅ FIX: Calculate day_of_week once from the requested date
-  const requestedDate = new Date(dateString)
-  const fixedDayOfWeek = requestedDate.getDay()  // Always use original day
-  
-  console.log(`🔥🔥🔥 Parsed times (Jamaica timezone):`)
-  console.log(`    - dayStart: ${dayStart.toISOString()}`)
-  console.log(`    - dayEnd: ${dayEnd.toISOString()}`)
-  console.log(`    - fixedDayOfWeek: ${fixedDayOfWeek}`)
-  
-  let currentSlot = new Date(dayStart)
-  let slotCount = 0
-  
-  while (currentSlot < dayEnd && slotCount < 50) { // Safety limit
-    const slotEnd = new Date(currentSlot.getTime() + (slotDuration * 60 * 1000))
-    
-    const isInFuture = currentSlot >= minBookingTime
-    const fitsInDay = slotEnd <= dayEnd
-    
-    console.log(`🔥🔥🔥 Slot ${slotCount + 1}:`)
-    console.log(`    - slotTime: ${currentSlot.toISOString()}`)
-    console.log(`    - slotEnd: ${slotEnd.toISOString()}`)
-    console.log(`    - isInFuture: ${isInFuture}`)
-    console.log(`    - fitsInDay: ${fitsInDay}`)
-    
-    // Only include slots that are:
-    // 1. In the future with minimum notice
-    // 2. Slot end time doesn't exceed day end time
-    if (isInFuture && fitsInDay) {
-      const slot = {
-        datetime: currentSlot.toISOString(),
-        date: dateString,
-        time: formatTimeInJamaica(currentSlot),
-        duration_minutes: slotDuration,
-        day_of_week: fixedDayOfWeek,  // ✅ FIX: Use fixed day_of_week
-        available: true
-      }
-      slots.push(slot)
-      console.log(`🔥🔥🔥 ✅ SLOT ADDED: ${slot.time}`)
-    } else {
-      console.log(`🔥🔥🔥 ❌ SLOT REJECTED`)
-      if (!isInFuture) {
-        console.log(`        Reason: Too soon (${currentSlot.toISOString()} < ${minBookingTime.toISOString()})`)
-      }
-      if (!fitsInDay) {
-        console.log(`        Reason: Exceeds day (${slotEnd.toISOString()} > ${dayEnd.toISOString()})`)
-      }
-    }
-    
-    // Move to next slot (30-minute intervals for flexibility)
-    currentSlot = new Date(currentSlot.getTime() + (30 * 60 * 1000))
-    slotCount++
-  }
-  
-  console.log(`🔥🔥🔥 Generated ${slots.length} slots for ${dateString}`)
-  return slots
-}
-
-// Check if a slot conflicts with existing appointments/bookings
-function hasConflict(slot, existingAppointments, existingBookings, slotDuration, bufferMinutes) {
-  const slotStart = new Date(slot.datetime)
-  const slotEnd = new Date(slotStart.getTime() + (slotDuration * 60 * 1000))
-  const bufferMs = (bufferMinutes || 0) * 60 * 1000
-  
-  // Check against existing appointments (assume 1 hour duration if no end time)
-  for (const appointment of existingAppointments) {
-    const apptStart = new Date(appointment.session)
-    const apptEnd = appointment.preferred_end 
-      ? new Date(appointment.preferred_end)
-      : new Date(apptStart.getTime() + (60 * 60 * 1000)) // Default 1 hour
-    
-    // Add buffer time around existing appointments
-    const bufferedApptStart = new Date(apptStart.getTime() - bufferMs)
-    const bufferedApptEnd = new Date(apptEnd.getTime() + bufferMs)
-    
-    // Check for overlap
-    if (slotStart < bufferedApptEnd && slotEnd > bufferedApptStart) {
-      return true
-    }
-  }
-  
-  // Check against existing bookings
-  for (const booking of existingBookings) {
-    const bookingStart = new Date(booking.scheduled_start)
-    const bookingEnd = booking.scheduled_end 
-      ? new Date(booking.scheduled_end)
-      : new Date(bookingStart.getTime() + (4 * 60 * 60 * 1000)) // Default 4 hours
-    
-    // Add buffer time around existing bookings
-    const bufferedBookingStart = new Date(bookingStart.getTime() - bufferMs)
-    const bufferedBookingEnd = new Date(bookingEnd.getTime() + bufferMs)
-    
-    // Check for overlap
-    if (slotStart < bufferedBookingEnd && slotEnd > bufferedBookingStart) {
-      return true
-    }
-  }
-  
-  return false
-}
-
-// Helper functions
-function getDateDaysFromNow(days) {
-  const jamaicaTime = getJamaicaTime()
-  jamaicaTime.setDate(jamaicaTime.getDate() + days)
-  return jamaicaTime.toISOString().split('T')[0]
-}
-
-// ✅ TIMEZONE FIXED: Format time in Jamaica timezone
-function formatTimeInJamaica(date) {
-  return date.toLocaleString('en-US', {
-    timeZone: 'America/Jamaica',
-    hour: 'numeric',
-    minute: '2-digit',
-    hour12: true
-  })
-}
-
-// Legacy function for backward compatibility
-function formatTime(date) {
-  return formatTimeInJamaica(date)
 }

@@ -1,14 +1,12 @@
 // src/components/professional-workspace/table/AppointmentInformationTable.jsx
 'use client'
 
-import { useCallback } from 'react'
+import { useCallback, useMemo } from 'react'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { Skeleton } from '@/components/ui/skeleton'
-import {
-  TooltipProvider,
-} from '@/components/ui/tooltip'
+import { Skeleton, SkeletonAvatar } from '@/components/ui/skeleton'
+import { TooltipProvider } from '@/components/ui/tooltip'
 import { cn } from '@/lib/utils'
 import {
   ArrowUpDown,
@@ -19,29 +17,27 @@ import {
   Trash2,
   Calendar,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  Filter
 } from 'lucide-react'
 
-// Import our primitive hooks
+// Import primitive hooks
 import { useTableSelection } from './primitives/useTableSelection'
 import { useTableSorting } from './primitives/useTableSorting'
 import { useTableData } from './primitives/useTableData'
 
-// Import our column definitions
+// Import column definitions
 import { getColumnsForMode } from './columns'
 
-// Minimal Table components with clean design
+// ===== TABLE COMPONENTS =====
 const Table = ({ className, ...props }) => (
   <div className="relative w-full overflow-auto">
-    <table
-      className={cn("w-full caption-bottom text-sm", className)}
-      {...props}
-    />
+    <table className={cn("w-full caption-bottom text-sm", className)} {...props} />
   </div>
 )
 
 const TableHeader = ({ className, ...props }) => (
-  <thead className={cn("border-b", className)} {...props} />
+  <thead className={cn("border-b border-border", className)} {...props} />
 )
 
 const TableBody = ({ className, ...props }) => (
@@ -51,7 +47,7 @@ const TableBody = ({ className, ...props }) => (
 const TableRow = ({ className, ...props }) => (
   <tr
     className={cn(
-      "border-b border-border/40 hover:bg-muted/30 transition-colors last:border-b-0",
+      "border-b border-border/40 transition-colors hover:bg-muted/30 last:border-b-0",
       className
     )}
     {...props}
@@ -69,16 +65,10 @@ const TableHead = ({ className, ...props }) => (
 )
 
 const TableCell = ({ className, ...props }) => (
-  <td
-    className={cn(
-      "px-3 py-2 align-middle",
-      className
-    )}
-    {...props}
-  />
+  <td className={cn("px-3 py-2 align-middle", className)} {...props} />
 )
 
-// Main component
+// ===== MAIN COMPONENT =====
 export default function AppointmentInformationTable({
   appointments = [],
   professionalId,
@@ -101,15 +91,12 @@ export default function AppointmentInformationTable({
   className,
   ...props
 }) {
-  // ===== PRIMITIVE HOOKS =====
-  
-  // Data management with search, filtering, and pagination
+  // ===== DATA MANAGEMENT =====
   const {
     processedData,
     filteredData,
     paginationInfo,
     handleSearch,
-    handleFilter,
     goToPage,
     dataStats,
     clearAllFilters
@@ -121,13 +108,12 @@ export default function AppointmentInformationTable({
     filterableFields: ['status', 'urgency', 'type']
   })
 
-  // Sorting management
+  // ===== SORTING =====
   const {
     sortedData,
     sortConfig,
     handleSort,
-    getSortIcon,
-    clearSort
+    getSortIcon
   } = useTableSorting({
     data: processedData,
     columns: getColumnsForMode(mode),
@@ -135,7 +121,7 @@ export default function AppointmentInformationTable({
     mode
   })
 
-  // Selection management
+  // ===== SELECTION =====
   const {
     selection,
     selectedItems,
@@ -148,27 +134,23 @@ export default function AppointmentInformationTable({
   } = useTableSelection({
     data: sortedData,
     mode,
-    getItemId: (item) => mode === 'interests' ? item.appointment?.appointment_id : item.appointment_id
+    getItemId: (item) => mode === 'interests' 
+      ? item.appointment?.appointment_id 
+      : item.appointment_id
   })
 
   // ===== COMPUTED VALUES =====
-  const columns = getColumnsForMode(mode)
+  const columns = useMemo(() => getColumnsForMode(mode), [mode])
   
-  // Get table title based on mode
-  const getTableTitle = () => {
-    switch (mode) {
-      case 'available':
-        return 'Available Appointments'
-      case 'interests':
-        return 'My Interests'
-      case 'assigned':
-        return 'Assigned Appointments'
-      default:
-        return 'Appointments Overview'
+  const tableTitle = useMemo(() => {
+    const titles = {
+      available: 'Available Appointments',
+      interests: 'My Interests',
+      assigned: 'Assigned Appointments'
     }
-  }
+    return titles[mode] || 'Appointments Overview'
+  }, [mode])
 
-  // Use external pagination if provided, otherwise use internal
   const activePagination = externalPagination || paginationInfo
   const activePageChange = externalPageChange || goToPage
 
@@ -177,17 +159,20 @@ export default function AppointmentInformationTable({
     try {
       switch (actionType) {
         case 'express_interest':
-          await onExpressInterest?.(item.appointment_id, { intent: item.is_invited ? 'high' : 'standard' })
+          await onExpressInterest?.(item.appointment_id, { 
+            intent: item.is_invited ? 'high' : 'standard' 
+          })
           break
         case 'respond_to_selection':
-          // Open professional response handler
           onView?.(item.appointment?.appointment_id)
           break
         case 'update_interest':
           await onUpdateInterest?.(item.interest_id)
           break
         case 'reapply':
-          await onExpressInterest?.(item.appointment?.appointment_id, { intent: 'standard' })
+          await onExpressInterest?.(item.appointment?.appointment_id, { 
+            intent: 'standard' 
+          })
           break
         case 'accept':
           await onAccept?.(item.appointment_id)
@@ -196,14 +181,11 @@ export default function AppointmentInformationTable({
           await onDecline?.(item.appointment_id)
           break
         case 'share':
-          // Handle share functionality
           console.log('Share:', item)
           break
         default:
           console.warn('Unknown action:', actionType)
       }
-      
-      // Refresh data after successful action
       onRefresh?.()
     } catch (error) {
       console.error('Action failed:', actionType, error)
@@ -211,15 +193,11 @@ export default function AppointmentInformationTable({
   }, [onExpressInterest, onView, onUpdateInterest, onAccept, onDecline, onRefresh])
 
   const handleRowClick = useCallback((item) => {
-    const appointmentId = mode === 'interests' ? item.appointment?.appointment_id : item.appointment_id
+    const appointmentId = mode === 'interests' 
+      ? item.appointment?.appointment_id 
+      : item.appointment_id
     
     if (mode === 'interests') {
-      console.log('🎯 Interests mode click - passing complete interest data:', {
-        appointmentId,
-        interestStatus: item.status,
-        interestId: item.interest_id
-      });
-      
       onView?.(appointmentId, {
         mode: 'interests',
         interestData: item,
@@ -233,64 +211,73 @@ export default function AppointmentInformationTable({
   const handleBulkMessage = useCallback(() => {
     const selectedIds = bulkOperations.getSelectedIds()
     console.log('Bulk message:', selectedIds)
-    // Implement bulk messaging
-    // You can access full selected items with: selectedItems
+    // Implement bulk messaging with selectedItems array
   }, [bulkOperations, selectedItems])
 
   const handleBulkArchive = useCallback(() => {
     const selectedIds = bulkOperations.getSelectedIds()
     console.log('Bulk archive:', selectedIds)
-    // Implement bulk archiving
-    // You can access full selected items with: selectedItems
+    // Implement bulk archiving with selectedItems array
   }, [bulkOperations, selectedItems])
 
   const handleCustomize = useCallback(() => {
     console.log('Customize table')
-    // Implement table customization
+    // Implement table customization UI
   }, [])
 
   // ===== RENDER HELPERS =====
-  const renderColumnHeader = (column) => {
+  const renderColumnHeader = useCallback((column) => {
     const isSortable = column.sortable !== false
     const sortIconData = getSortIcon(column.key)
     
     return (
-      <TableHead key={column.key} className={cn("", column.width, column.headerClassName)}>
+      <TableHead 
+        key={column.key} 
+        className={cn(column.width, column.headerClassName)}
+      >
         {column.key === 'selection' ? (
-          // Special handling for selection header
           column.headerCell?.({
             selectedCount: selectionState.selectedCount,
             totalCount: selectionState.totalCount,
             onSelectAll: toggleSelectAll
-          }) || null
+          })
         ) : (
           <div
             className={cn(
-              "flex items-center gap-1 text-left font-medium select-none cursor-default",
-              isSortable && "hover:text-foreground cursor-pointer"
+              "flex items-center gap-1 select-none",
+              isSortable && "cursor-pointer hover:text-foreground"
             )}
             onClick={isSortable ? () => handleSort(column.key) : undefined}
           >
             <span className="text-sm font-medium">{column.header}</span>
             {isSortable && (
-              sortIconData.icon === 'asc' ? <ArrowUp className="h-3 w-3" /> :
-              sortIconData.icon === 'desc' ? <ArrowDown className="h-3 w-3" /> :
-              <ArrowUpDown className="h-3 w-3 opacity-50" />
+              sortIconData.icon === 'asc' ? (
+                <ArrowUp className="h-3 w-3" />
+              ) : sortIconData.icon === 'desc' ? (
+                <ArrowDown className="h-3 w-3" />
+              ) : (
+                <ArrowUpDown className="h-3 w-3 opacity-50" />
+              )
             )}
           </div>
         )}
       </TableHead>
     )
-  }
+  }, [selectionState, toggleSelectAll, handleSort, getSortIcon])
 
-  const renderCell = (item, column) => {
-    const appointmentId = mode === 'interests' ? item.appointment?.appointment_id : item.appointment_id
+  const renderCell = useCallback((item, column) => {
+    const appointmentId = mode === 'interests' 
+      ? item.appointment?.appointment_id 
+      : item.appointment_id
     const itemIsSelected = isSelected(appointmentId)
     
-    // Special handling for selection cell
     if (column.key === 'selection') {
       return (
-        <TableCell key={column.key} className={cn("", column.cellClassName)} onClick={(e) => e.stopPropagation()}>
+        <TableCell 
+          key={column.key} 
+          className={column.cellClassName}
+          onClick={(e) => e.stopPropagation()}
+        >
           {column.cell({
             item,
             isSelected: itemIsSelected,
@@ -300,11 +287,15 @@ export default function AppointmentInformationTable({
       )
     }
 
-    // Handle other cells
-    const value = column.accessorFn ? column.accessorFn(item, mode) : item[column.accessorKey]
+    const value = column.accessorFn 
+      ? column.accessorFn(item, mode) 
+      : item[column.accessorKey]
     
     return (
-      <TableCell key={column.key} className={cn("", column.width, column.cellClassName)}>
+      <TableCell 
+        key={column.key} 
+        className={cn(column.width, column.cellClassName)}
+      >
         {column.cell({
           item,
           value,
@@ -314,35 +305,102 @@ export default function AppointmentInformationTable({
         })}
       </TableCell>
     )
-  }
+  }, [mode, isSelected, toggleSelection, handleAction, onViewAttachments])
 
   // ===== LOADING STATE =====
   if (loading) {
     return (
       <Card className={cn("w-full border-0 shadow-none", className)}>
+        {/* Header Skeleton */}
         <CardHeader className="pb-3">
           <div className="flex items-center justify-between">
-            <Skeleton className="h-5 w-32" />
-            <Skeleton className="h-4 w-16" />
+            <Skeleton className="h-5 w-40" />
+            <Skeleton className="h-7 w-20" />
           </div>
         </CardHeader>
+
+        {/* Table Skeleton */}
         <CardContent className="p-0">
-          <div className="space-y-2">
-            {[...Array(5)].map((_, i) => (
-              <div key={i} className="flex items-center space-x-3 py-2 px-3">
-                <Skeleton className="h-4 w-4" />
-                <Skeleton className="h-6 w-6 rounded-full" />
-                <div className="flex-1 space-y-1">
-                  <Skeleton className="h-4 w-32" />
-                </div>
-                <Skeleton className="h-4 w-24" />
-                <Skeleton className="h-5 w-16" />
-                <Skeleton className="h-4 w-16" />
-                <Skeleton className="h-4 w-4" />
-              </div>
-            ))}
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow className="hover:bg-transparent">
+                  {columns.map((column, i) => (
+                    <TableHead key={i} className={column.width}>
+                      {column.key === 'selection' ? (
+                        <Skeleton className="h-4 w-4" />
+                      ) : column.header ? (
+                        <Skeleton className="h-4 w-20" />
+                      ) : null}
+                    </TableHead>
+                  ))}
+                </TableRow>
+              </TableHeader>
+
+              <TableBody>
+                {Array.from({ length: 8 }, (_, rowIndex) => (
+                  <TableRow key={rowIndex} className="hover:bg-transparent">
+                    {columns.map((column, colIndex) => (
+                      <TableCell key={colIndex} className={column.width}>
+                        {column.key === 'selection' ? (
+                          <Skeleton className="h-4 w-4" />
+                        ) : column.key === 'customer' ? (
+                          <div className="flex items-center space-x-2">
+                            <SkeletonAvatar size="sm" />
+                            <div className="space-y-1">
+                              <Skeleton className="h-3 w-24" />
+                              <Skeleton className="h-2 w-20" />
+                            </div>
+                          </div>
+                        ) : column.key === 'type' ? (
+                          <Skeleton className="h-5 w-12 rounded-full" />
+                        ) : column.key === 'service' ? (
+                          <div className="space-y-1">
+                            <Skeleton className="h-3 w-32" />
+                            <Skeleton className="h-2 w-24" />
+                          </div>
+                        ) : column.key === 'time' ? (
+                          <div className="space-y-1">
+                            <Skeleton className="h-3 w-20" />
+                            <Skeleton className="h-2 w-16" />
+                          </div>
+                        ) : column.key === 'status' ? (
+                          <div className="flex items-center gap-2">
+                            <Skeleton className="h-2 w-2 rounded-full" />
+                            <Skeleton className="h-5 w-16 rounded-full" />
+                          </div>
+                        ) : column.key === 'attachments' ? (
+                          <div className="flex items-center space-x-2">
+                            <Skeleton className="h-4 w-4" />
+                            <Skeleton className="h-3 w-3" />
+                          </div>
+                        ) : column.key === 'date' ? (
+                          <Skeleton className="h-3 w-16" />
+                        ) : column.key === 'actions' ? (
+                          <Skeleton className="h-7 w-7 rounded" />
+                        ) : (
+                          <Skeleton className="h-3 w-20" />
+                        )}
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
           </div>
         </CardContent>
+
+        {/* Pagination Skeleton */}
+        <div className="flex items-center justify-between px-3 py-2 border-t border-border/40">
+          <Skeleton className="h-4 w-32" />
+          <div className="flex items-center space-x-2">
+            <Skeleton className="h-7 w-20" />
+            <Skeleton className="h-7 w-7 rounded" />
+            <Skeleton className="h-7 w-7 rounded" />
+            <Skeleton className="h-7 w-7 rounded" />
+            <Skeleton className="h-7 w-20" />
+          </div>
+        </div>
       </Card>
     )
   }
@@ -365,11 +423,11 @@ export default function AppointmentInformationTable({
     }
 
     const message = emptyMessages[mode] || emptyMessages.assigned
-
-    // Check if it's filtered empty vs truly empty
     const isFiltered = dataStats.hasActiveFilters
-    const actualTitle = isFiltered ? `No ${mode} appointments match your filters` : message.title
-    const actualDescription = isFiltered 
+    const title = isFiltered 
+      ? `No ${mode} appointments match your filters` 
+      : message.title
+    const description = isFiltered 
       ? `Found ${dataStats.total} total appointments, but none match your current search or filters. Try adjusting your criteria.`
       : message.description
 
@@ -377,9 +435,9 @@ export default function AppointmentInformationTable({
       <Card className={cn("border-0 shadow-none", className)}>
         <CardContent className="flex flex-col items-center justify-center py-12">
           <Calendar className="h-8 w-8 text-muted-foreground mb-3" />
-          <h3 className="font-medium mb-2">{actualTitle}</h3>
+          <h3 className="font-medium mb-2">{title}</h3>
           <p className="text-sm text-muted-foreground text-center max-w-md mb-4">
-            {actualDescription}
+            {description}
           </p>
           {isFiltered && (
             <Button 
@@ -387,6 +445,7 @@ export default function AppointmentInformationTable({
               onClick={clearAllFilters}
               size="sm"
             >
+              <Filter className="h-4 w-4 mr-2" />
               Clear all filters
             </Button>
           )}
@@ -395,7 +454,7 @@ export default function AppointmentInformationTable({
     )
   }
 
-  // Filter out invalid props before passing to Card component
+  // Clean props before passing to Card
   const {
     selectionState: _selectionState,
     onSelectionChange: _onSelectionChange,
@@ -407,20 +466,21 @@ export default function AppointmentInformationTable({
   return (
     <TooltipProvider>
       <Card className={cn("w-full border-0 shadow-none", className)} {...cardProps}>
-        {/* Minimal Header */}
+        
+        {/* Header */}
         <CardHeader className="pb-3">
           <div className="flex items-center justify-between">
+            
+            {/* Left: Title & Badges */}
             <div className="flex items-center space-x-3">
-              <h3 className="font-medium">{getTableTitle()}</h3>
+              <h3 className="font-medium">{tableTitle}</h3>
               
-              {/* Selection Badge */}
               {selectionState.hasSelection && (
                 <Badge variant="secondary" className="text-xs">
                   {selectionState.selectedCount} selected
                 </Badge>
               )}
               
-              {/* Filter Badge */}
               {dataStats.hasActiveFilters && (
                 <Badge variant="outline" className="text-xs">
                   {dataStats.filtered} of {dataStats.total}
@@ -428,8 +488,8 @@ export default function AppointmentInformationTable({
               )}
             </div>
             
+            {/* Right: Actions */}
             <div className="flex items-center space-x-2">
-              {/* Bulk Actions - Minimal */}
               {selectionState.hasSelection && (
                 <div className="flex items-center space-x-1">
                   <Button 
@@ -453,7 +513,6 @@ export default function AppointmentInformationTable({
                 </div>
               )}
               
-              {/* Settings */}
               <Button 
                 variant="ghost" 
                 size="sm" 
@@ -478,13 +537,16 @@ export default function AppointmentInformationTable({
 
               <TableBody>
                 {sortedData.map((item) => {
-                  const appointmentId = mode === 'interests' ? item.appointment?.appointment_id : item.appointment_id
-                  const itemIsSelected = isSelected(appointmentId)
+                  const appointmentId = mode === 'interests' 
+                    ? item.appointment?.appointment_id 
+                    : item.appointment_id
                   
                   if (!appointmentId) {
                     console.warn('⚠️ Skipping item without appointment_id:', item)
                     return null
                   }
+                  
+                  const itemIsSelected = isSelected(appointmentId)
                   
                   return (
                     <TableRow 
@@ -504,9 +566,11 @@ export default function AppointmentInformationTable({
           </div>
         </CardContent>
 
-        {/* Minimal Pagination */}
+        {/* Pagination */}
         {activePagination && activePagination.totalPages > 1 && (
           <div className="flex items-center justify-between px-3 py-2 border-t border-border/40">
+            
+            {/* Left: Info */}
             <div className="text-sm text-muted-foreground">
               {activePagination.startIndex}–{activePagination.endIndex} of {activePagination.totalItems}
               {selectionState.hasSelection && (
@@ -516,6 +580,7 @@ export default function AppointmentInformationTable({
               )}
             </div>
             
+            {/* Right: Controls */}
             <div className="flex items-center space-x-1">
               <Button
                 variant="ghost"

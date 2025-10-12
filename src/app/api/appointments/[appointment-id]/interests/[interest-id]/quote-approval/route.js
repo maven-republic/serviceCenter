@@ -1,5 +1,5 @@
 // src/app/api/appointments/[id]/interests/[interest_id]/quote-approval/route.js
-// FIXED: Updated appointment status from 'confirmed' to 'approved' to match enum
+// FIXED: Now creates booking when customer approves quote update
 
 import { createClient } from '@/utils/supabase/server'
 import { NextResponse } from 'next/server'
@@ -67,8 +67,7 @@ export async function POST(request, { params }) {
       )
     }
 
-    // 🔧 FIXED: Verify interest is in the correct state for approval
-    // Changed from 'updated_quote' to 'updated' to match frontend
+    // Verify interest is in the correct state for approval
     if (interest.status !== 'updated') {
       return NextResponse.json(
         { 
@@ -82,14 +81,14 @@ export async function POST(request, { params }) {
     console.log('✅ Interest found and ready for approval:', interest.interest_id)
 
     if (action === 'approve') {
-      // ✅ APPROVE QUOTE UPDATE
+      // ✅ APPROVE QUOTE UPDATE AND CREATE BOOKING
       console.log('✅ Customer approving quote update')
 
-      // Update interest to confirmed status
+      // Update interest to approved status
       const { data: updatedInterest, error: updateError } = await supabase
         .from('interest')
         .update({
-          status: 'confirmed',
+          status: 'approved',
           customer_approved_quote_update: true,
           customer_approved_quote_at: new Date().toISOString(),
           customer_notes: customer_notes || null,
@@ -107,22 +106,209 @@ export async function POST(request, { params }) {
         )
       }
 
-      // Assign professional to appointment (now that quote is approved)
-      const { error: appointmentError } = await supabase
+      // Get appointment details for booking creation
+      const { data: appointment, error: appointmentFetchError } = await supabase
+        .from('appointment')
+        .select('*')
+        .eq('appointment_id', appointmentId)
+        .single()
+
+      if (appointmentFetchError || !appointment) {
+        console.error('❌ Failed to fetch appointment:', appointmentFetchError)
+        return NextResponse.json(
+          { success: false, error: 'Failed to fetch appointment details' },
+          { status: 500 }
+        )
+      }
+
+      // 🆕 Step 1: Set appointment to converting
+      console.log('🔄 Step 1: Setting appointment to converting status')
+      const { error: convertingError } = await supabase
         .from('appointment')
         .update({
+          status: 'converting',
           professional_id: interest.professional_id,
-          status: 'approved', // 🔧 FIXED: Changed from 'confirmed' to 'approved'
           updated_at: new Date().toISOString()
         })
         .eq('appointment_id', appointmentId)
 
-      if (appointmentError) {
-        console.error('❌ Failed to update appointment:', appointmentError)
+      if (convertingError) {
+        console.error('❌ Failed to set converting status:', convertingError)
         return NextResponse.json(
-          { success: false, error: 'Failed to confirm appointment', details: appointmentError.message },
+          { success: false, error: 'Failed to update appointment status' },
           { status: 500 }
         )
+      }
+
+      // 🆕 Step 2: Validate availability
+      console.log('🔍 Checking if professional is available...')
+      const requestedStart = new Date(appointment.session)
+      const requestedEnd = new Date(requestedStart.getTime() + ((appointment.duration || 60) * 60 * 1000))
+      const dayOfWeek = requestedStart.getUTCDay()
+      const timeString = requestedStart.toISOString().split('T')[1].substring(0, 8)
+      const dateString = requestedStart.toISOString().split('T')[0]
+
+      // Check for date-specific override
+      const { data: override } = await supabase
+        .from('availability_override')
+        .select('*')
+        .eq('professional_id', interest.professional_id)
+        .eq('override_date', dateString)
+        .maybeSingle()
+
+      let availabilityCheck = { available: true }
+
+      if (override) {
+        if (!override.is_available) {
+          availabilityCheck = { available: false, reason: 'Professional unavailable on this date' }
+        } else if (timeString < override.start_time || timeString >= override.end_time) {
+          availabilityCheck = { available: false, reason: 'Time outside available hours' }
+        }
+      } else {
+        // Check regular availability
+        const { data: regularAvailability } = await supabase
+          .from('availability')
+          .select('*')
+          .eq('professional_id', interest.professional_id)
+          .eq('day_of_week', dayOfWeek)
+
+        if (!regularAvailability || regularAvailability.length === 0) {
+          availabilityCheck = { available: false, reason: 'No availability on this day' }
+        } else {
+          const matchingSlot = regularAvailability.find(slot => 
+            timeString >= slot.start_time && timeString < slot.end_time
+          )
+
+          if (!matchingSlot) {
+            availabilityCheck = { available: false, reason: 'Time outside available hours' }
+          } else {
+            const endTimeString = requestedEnd.toISOString().split('T')[1].substring(0, 8)
+            if (endTimeString > matchingSlot.end_time) {
+              availabilityCheck = { available: false, reason: 'Duration exceeds available time block' }
+            }
+          }
+        }
+      }
+
+      // Check for conflicting bookings
+      if (availabilityCheck.available) {
+        const { data: existingBookings } = await supabase
+          .from('booking')
+          .select('scheduled_start, scheduled_end, duration_minutes')
+          .eq('professional_id', interest.professional_id)
+          .in('status', ['pending', 'accepted', 'confirmed', 'progressing'])
+          .gte('scheduled_start', dateString)
+          .lte('scheduled_start', `${dateString}T23:59:59`)
+
+        if (existingBookings) {
+          for (const booking of existingBookings) {
+            const bookingStart = new Date(booking.scheduled_start)
+            const bookingEnd = booking.scheduled_end 
+              ? new Date(booking.scheduled_end)
+              : new Date(bookingStart.getTime() + ((booking.duration_minutes || 60) * 60 * 1000))
+            
+            if (requestedStart < bookingEnd && requestedEnd > bookingStart) {
+              availabilityCheck = { available: false, reason: 'Conflicts with existing booking' }
+              break
+            }
+          }
+        }
+      }
+
+      if (!availabilityCheck.available) {
+        console.error('❌ Professional no longer available:', availabilityCheck.reason)
+        
+        // Roll back appointment status
+        await supabase
+          .from('appointment')
+          .update({ status: 'approved' })
+          .eq('appointment_id', appointmentId)
+        
+        return NextResponse.json(
+          { 
+            error: 'Cannot create booking: Professional is no longer available',
+            reason: availabilityCheck.reason
+          },
+          { status: 409 }
+        )
+      }
+
+      console.log('✅ Professional is available, creating booking...')
+
+      // Calculate scheduled_end
+      const scheduledEnd = new Date(requestedStart.getTime() + ((appointment.duration || 60) * 60 * 1000))
+
+      // 🆕 Step 3: Create booking
+      console.log('📝 Creating booking with data:', {
+        appointment_id: appointment.appointment_id,
+        customer_id: appointment.customer_id,
+        professional_id: interest.professional_id,
+        service_id: appointment.service_id,
+        address_id: appointment.address_id,
+        scheduled_start: appointment.session,
+        scheduled_end: scheduledEnd.toISOString(),
+        duration_minutes: appointment.duration,
+        urgency: appointment.urgency,
+        status: 'accepted'
+      })
+
+      const { data: booking, error: bookingError } = await supabase
+        .from('booking')
+        .insert({
+          appointment_id: appointment.appointment_id,
+          customer_id: appointment.customer_id,
+          professional_id: interest.professional_id,
+          service_id: appointment.service_id,
+          address_id: appointment.address_id,
+          scheduled_start: appointment.session,
+          scheduled_end: scheduledEnd.toISOString(),
+          duration_minutes: appointment.duration || 60,
+          urgency: appointment.urgency,
+          status: 'accepted',
+          customer_notes: appointment.customer_message,
+          sync_source: 'manual'
+        })
+        .select()
+        .single()
+
+      if (bookingError) {
+        console.error('❌ BOOKING CREATION FAILED:', {
+          error: bookingError,
+          message: bookingError.message,
+          details: bookingError.details,
+          hint: bookingError.hint,
+          code: bookingError.code
+        })
+        
+        // Roll back appointment status
+        await supabase
+          .from('appointment')
+          .update({ status: 'approved' })
+          .eq('appointment_id', appointmentId)
+        
+        return NextResponse.json(
+          { error: `Failed to create booking: ${bookingError.message}` },
+          { status: 500 }
+        )
+      }
+
+      console.log('✅ Booking created successfully:', booking.booking_id)
+
+      // 🆕 Step 4: Update appointment to converted
+      console.log('📋 Step 4: Setting appointment to converted status')
+      const { error: finalUpdateError } = await supabase
+        .from('appointment')
+        .update({ 
+          status: 'converted',
+          professional_id: interest.professional_id,
+          converted_to_booking_at: new Date().toISOString()
+        })
+        .eq('appointment_id', appointmentId)
+
+      if (finalUpdateError) {
+        console.error('❌ Error setting final status:', finalUpdateError)
+      } else {
+        console.log('✅ Appointment conversion completed successfully')
       }
 
       // Update quote history record
@@ -140,15 +326,15 @@ export async function POST(request, { params }) {
 
       if (historyError) {
         console.warn('⚠️ Failed to update quote history:', historyError)
-        // Don't fail for history update
       }
 
-      console.log('✅ Quote update approved successfully')
+      console.log('✅ Quote update approved and booking created successfully')
 
       return NextResponse.json({
         success: true,
-        message: 'Quote update approved successfully',
+        message: 'Quote approved and booking created successfully',
         interest: updatedInterest,
+        booking_id: booking.booking_id,
         action: 'approve'
       })
 
@@ -223,7 +409,8 @@ export async function POST(request, { params }) {
 export async function GET(request, { params }) {
   try {
     const resolvedParams = await params
-    const { id: appointmentId, interest_id: interestId } = resolvedParams
+    const appointmentId = resolvedParams['appointment-id']
+    const interestId = resolvedParams['interest-id']
     
     if (!appointmentId || !interestId) {
       return NextResponse.json(

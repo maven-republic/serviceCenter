@@ -1,10 +1,5 @@
 'use client'
 
-import {
-  format, parse, startOfMonth, endOfMonth,
-  startOfWeek, endOfWeek, addDays,
-  isSameMonth, isSameDay, isValid
-} from 'date-fns'
 import { useState } from 'react'
 import {
   Card,
@@ -17,54 +12,114 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
 import { 
   Calendar, 
   ChevronLeft, 
   ChevronRight,
-  Edit,
-  Repeat,
   Clock,
-  AlertCircle,
   Info,
   Plus,
-  Eye
+  Circle,
+  Edit
 } from 'lucide-react'
-import EditAvailabilityMenu from './EditAvailabilityMenu'
-import SingleDateEditorModal from './SingleDateEditorModal'
-import RecurringDayEditorModal from './RecurringDayEditorModal'
 
-const weekdays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+const weekdayLabels = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+
+// Helper functions to replace date-fns
+const formatDate = (date, formatStr) => {
+  const months = ['January', 'February', 'March', 'April', 'May', 'June', 
+                  'July', 'August', 'September', 'October', 'November', 'December']
+  const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
+  
+  if (formatStr === 'MMMM yyyy') {
+    return `${months[date.getMonth()]} ${date.getFullYear()}`
+  } else if (formatStr === 'd') {
+    return date.getDate().toString()
+  } else if (formatStr === 'yyyy-MM-dd') {
+    const year = date.getFullYear()
+    const month = (date.getMonth() + 1).toString().padStart(2, '0')
+    const day = date.getDate().toString().padStart(2, '0')
+    return `${year}-${month}-${day}`
+  } else if (formatStr === 'EEEE, MMMM d, yyyy') {
+    return `${days[date.getDay()]}, ${months[date.getMonth()]} ${date.getDate()}, ${date.getFullYear()}`
+  } else if (formatStr === 'EEEE') {
+    return days[date.getDay()]
+  }
+  return date.toDateString()
+}
+
+const isSameDay = (date1, date2) => {
+  return date1.getDate() === date2.getDate() &&
+         date1.getMonth() === date2.getMonth() &&
+         date1.getFullYear() === date2.getFullYear()
+}
+
+const isSameMonth = (date1, date2) => {
+  return date1.getMonth() === date2.getMonth() &&
+         date1.getFullYear() === date2.getFullYear()
+}
+
+const startOfMonth = (date) => {
+  return new Date(date.getFullYear(), date.getMonth(), 1)
+}
+
+const endOfMonth = (date) => {
+  return new Date(date.getFullYear(), date.getMonth() + 1, 0)
+}
+
+const startOfWeek = (date) => {
+  const result = new Date(date)
+  const day = result.getDay()
+  const diff = day
+  return new Date(result.setDate(result.getDate() - diff))
+}
+
+const endOfWeek = (date) => {
+  const result = new Date(date)
+  const day = result.getDay()
+  const diff = 6 - day
+  return new Date(result.setDate(result.getDate() + diff))
+}
+
+const addDays = (date, days) => {
+  const result = new Date(date)
+  result.setDate(result.getDate() + days)
+  return result
+}
+
+const addMonths = (date, months) => {
+  const result = new Date(date)
+  result.setMonth(result.getMonth() + months)
+  return result
+}
+
+const subMonths = (date, months) => {
+  const result = new Date(date)
+  result.setMonth(result.getMonth() - months)
+  return result
+}
 
 function formatTime12(timeStr) {
-  if (!timeStr || typeof timeStr !== 'string') {
-    console.warn('Invalid time string:', timeStr)
-    return ''
-  }
+  if (!timeStr || typeof timeStr !== 'string') return ''
   
   try {
-    let timeOnly = timeStr
-    
-    if (timeStr.includes('T')) {
-      timeOnly = timeStr.split('T')[1]?.split('.')[0] || timeStr
-    }
+    let timeOnly = timeStr.includes('T') 
+      ? timeStr.split('T')[1]?.split('.')[0] || timeStr 
+      : timeStr
     
     timeOnly = timeOnly.split('+')[0].split('-')[0].split('Z')[0]
     
-    if (!timeOnly.includes(':')) {
-      console.warn('Time string missing colon:', timeStr)
-      return timeStr
-    }
+    if (!timeOnly.includes(':')) return timeStr
     
     const [hours, minutes] = timeOnly.split(':').map(num => parseInt(num, 10))
     
     if (isNaN(hours) || isNaN(minutes) || hours < 0 || hours > 23 || minutes < 0 || minutes > 59) {
-      console.warn('Invalid hours or minutes:', { hours, minutes, original: timeStr })
       return timeStr
     }
     
@@ -74,7 +129,6 @@ function formatTime12(timeStr) {
     
     return `${displayHours}:${displayMinutes} ${ampm}`
   } catch (error) {
-    console.error('Error formatting time:', { timeStr, error })
     return timeStr || ''
   }
 }
@@ -87,24 +141,11 @@ export default function AvailabilityCalendarView({
   onUpdateRecurring = () => {}
 }) {
   const [currentDate, setCurrentDate] = useState(new Date())
-  const [activeDate, setActiveDate] = useState(null)
-  const [showModal, setShowModal] = useState(false)
-  const [editTargetDate, setEditTargetDate] = useState(null)
-  const [editingWeekdayIndex, setEditingWeekdayIndex] = useState(null)
-  const [showRecurringModal, setShowRecurringModal] = useState(false)
-  const [viewMode, setViewMode] = useState('Month')
+  const [selectedDate, setSelectedDate] = useState(null)
+  const [showDetailsModal, setShowDetailsModal] = useState(false)
 
-  const start = viewMode === 'Month' 
-    ? startOfWeek(startOfMonth(currentDate)) 
-    : viewMode === 'Week'
-    ? startOfWeek(currentDate)
-    : currentDate
-    
-  const end = viewMode === 'Month' 
-    ? endOfWeek(endOfMonth(currentDate)) 
-    : viewMode === 'Week'
-    ? endOfWeek(currentDate)
-    : currentDate
+  const start = startOfWeek(startOfMonth(currentDate))
+  const end = endOfWeek(endOfMonth(currentDate))
 
   const dateRange = []
   let day = start
@@ -115,421 +156,303 @@ export default function AvailabilityCalendarView({
 
   const getDayContent = (date) => {
     const dow = date.getDay()
-    const iso = format(date, 'yyyy-MM-dd')
+    const iso = formatDate(date, 'yyyy-MM-dd')
     const recurring = availability.filter(a => a.day_of_week === dow)
     const override = overrides.filter(o => o.override_date === iso)
-    return { recurring, override }
+    return { recurring, override, hasContent: recurring.length > 0 || override.length > 0 }
   }
 
-  const goToPrevious = () => {
-    if (viewMode === 'Month') {
-      setCurrentDate(prev => addDays(startOfMonth(prev), -1))
-    } else if (viewMode === 'Week') {
-      setCurrentDate(prev => addDays(prev, -7))
-    } else {
-      setCurrentDate(prev => addDays(prev, -1))
-    }
-    setActiveDate(null)
-  }
-
-  const goToNext = () => {
-    if (viewMode === 'Month') {
-      setCurrentDate(prev => addDays(endOfMonth(prev), 1))
-    } else if (viewMode === 'Week') {
-      setCurrentDate(prev => addDays(prev, 7))
-    } else {
-      setCurrentDate(prev => addDays(prev, 1))
-    }
-    setActiveDate(null)
-  }
-
-  const goToToday = () => {
-    setCurrentDate(new Date())
-    setActiveDate(null)
-  }
+  const goToPrevious = () => setCurrentDate(prev => subMonths(prev, 1))
+  const goToNext = () => setCurrentDate(prev => addMonths(prev, 1))
+  const goToToday = () => setCurrentDate(new Date())
 
   const handleDayClick = (date) => {
-    setActiveDate(activeDate && format(activeDate, 'yyyy-MM-dd') === format(date, 'yyyy-MM-dd') ? null : date)
+    setSelectedDate(date)
+    setShowDetailsModal(true)
   }
 
-  const handleEditDate = (date) => {
-    setEditTargetDate(date)
-    setShowModal(true)
-  }
-
-  const handleUpdateOverride = (date, blocks) => {
-    const iso = format(date, 'yyyy-MM-dd')
-    const formatted = blocks.map(b => ({
-      override_date: iso,
-      start_time: b.start_time,
-      end_time: b.end_time,
-      is_available: true
-    }))
-    onUpdateOverride(iso, formatted)
-    setShowModal(false)
-  }
-
-  const handleResetOverride = (date) => {
-    const iso = format(date, 'yyyy-MM-dd')
-    onDeleteOverride(iso)
-    setShowModal(false)
-  }
-
-  const getViewTitle = () => {
-    if (viewMode === 'Day') {
-      return format(currentDate, 'EEE, MMM d')
-    } else if (viewMode === 'Week') {
-      return `${format(start, 'MMM d')} - ${format(end, 'MMM d')}`
-    } else {
-      return format(currentDate, 'MMMM yyyy')
+  const getDuration = (start, end) => {
+    try {
+      const startDate = new Date(`2000-01-01 ${start}`)
+      const endDate = new Date(`2000-01-01 ${end}`)
+      const diffMs = endDate - startDate
+      const hours = Math.floor(diffMs / (1000 * 60 * 60))
+      const minutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60))
+      return hours > 0 ? `${hours}h ${minutes}m` : `${minutes}m`
+    } catch {
+      return ''
     }
+  }
+
+  const CalendarDay = ({ date }) => {
+    const isToday = isSameDay(date, new Date())
+    const inCurrentMonth = isSameMonth(date, currentDate)
+    const isPast = date < new Date(new Date().setHours(0, 0, 0, 0))
+    const { recurring, override, hasContent } = getDayContent(date)
+    const displaySlots = override.length > 0 ? override : recurring
+    const isOverride = override.length > 0
+
+    return (
+      <button
+        onClick={() => handleDayClick(date)}
+        disabled={isPast}
+        className={`
+          relative min-h-[80px] p-2 border-b border-r text-left
+          transition-all duration-200 hover:bg-accent/50 focus:outline-none focus:ring-2 focus:ring-primary
+          ${!inCurrentMonth ? 'bg-muted/30 opacity-60' : 'bg-background'}
+          ${isToday ? 'bg-primary/5 border-l-2 border-l-primary' : ''}
+          ${hasContent && !isToday ? 'border-l-2 border-l-green-500' : ''}
+          ${isPast ? 'cursor-not-allowed' : 'cursor-pointer'}
+          ${isOverride ? 'bg-amber-50/30' : ''}
+        `}
+      >
+        {/* Date Number */}
+        <div className="flex items-start justify-between mb-1.5">
+          <span className={`
+            text-sm font-medium leading-none
+            ${isToday ? 'flex items-center justify-center w-6 h-6 rounded-full bg-primary text-primary-foreground' : ''}
+            ${!inCurrentMonth && !isToday ? 'text-muted-foreground' : 'text-foreground'}
+          `}>
+            {formatDate(date, 'd')}
+          </span>
+          
+          {/* Indicators */}
+          <div className="flex items-center gap-1">
+            {isOverride && (
+              <Circle className="h-2 w-2 fill-amber-500 text-amber-500" />
+            )}
+            {hasContent && !isOverride && (
+              <Circle className="h-2 w-2 fill-green-500 text-green-500" />
+            )}
+          </div>
+        </div>
+
+        {/* Time Slots Preview */}
+        <div className="space-y-0.5">
+          {displaySlots.slice(0, 2).map((slot, idx) => (
+            <div 
+              key={idx}
+              className={`
+                text-xs px-1.5 py-0.5 rounded truncate font-medium
+                ${isOverride 
+                  ? 'bg-amber-100 text-amber-800' 
+                  : 'bg-green-100 text-green-800'
+                }
+              `}
+            >
+              {formatTime12(slot.start_time)}
+            </div>
+          ))}
+          {displaySlots.length > 2 && (
+            <div className="text-xs text-muted-foreground text-center font-medium">
+              +{displaySlots.length - 2}
+            </div>
+          )}
+        </div>
+
+        {/* Hover Overlay */}
+        {!isPast && (
+          <div className="absolute inset-0 bg-primary/0 group-hover:bg-primary/5 transition-colors duration-200 pointer-events-none rounded-sm" />
+        )}
+      </button>
+    )
+  }
+
+  const DayDetailsModal = () => {
+    if (!selectedDate) return null
+    
+    const { recurring, override } = getDayContent(selectedDate)
+    const allSlots = override.length > 0 ? override : recurring
+    const isOverride = override.length > 0
+    const isPast = selectedDate < new Date(new Date().setHours(0, 0, 0, 0))
+
+    return (
+      <Dialog open={showDetailsModal} onOpenChange={setShowDetailsModal}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Calendar className="h-5 w-5" />
+              {formatDate(selectedDate, 'EEEE, MMMM d, yyyy')}
+            </DialogTitle>
+            <DialogDescription>
+              {isOverride 
+                ? 'This date has custom hours (override)'
+                : recurring.length > 0 
+                ? 'Regular weekly schedule'
+                : 'No availability set for this day'
+              }
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            {isSameDay(selectedDate, new Date()) && (
+              <Badge variant="default" className="w-fit">Today</Badge>
+            )}
+
+            {isOverride && (
+              <Alert className="bg-amber-50 border-amber-200">
+                <Info className="h-4 w-4 text-amber-600" />
+                <AlertDescription className="text-amber-700 text-sm">
+                  These custom hours override the regular weekly schedule
+                </AlertDescription>
+              </Alert>
+            )}
+
+            {allSlots.length > 0 ? (
+              <div className="space-y-3">
+                <h4 className="text-sm font-medium text-muted-foreground">Time Slots</h4>
+                {allSlots.map((slot, idx) => (
+                  <Card key={idx}>
+                    <CardContent className="p-3">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <Clock className="h-4 w-4 text-muted-foreground" />
+                          <span className="font-medium">
+                            {formatTime12(slot.start_time)} — {formatTime12(slot.end_time)}
+                          </span>
+                        </div>
+                        <Badge variant="secondary" className="text-xs">
+                          {getDuration(slot.start_time, slot.end_time)}
+                        </Badge>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-8">
+                <Calendar className="h-12 w-12 text-muted-foreground mx-auto mb-3 opacity-50" />
+                <p className="text-sm text-muted-foreground">
+                  {isPast ? 'No availability was set' : 'No availability for this day'}
+                </p>
+              </div>
+            )}
+
+            {!isPast && (
+              <div className="flex flex-col gap-2 pt-2">
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setShowDetailsModal(false)
+                    // Trigger your existing edit date modal
+                    // You'll need to wire this up to your existing SingleDateEditorModal
+                  }}
+                  className="w-full"
+                >
+                  <Edit className="h-4 w-4 mr-2" />
+                  Edit This Date
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setShowDetailsModal(false)
+                    // Trigger your existing recurring edit modal
+                    // You'll need to wire this up to your existing RecurringDayEditorModal
+                  }}
+                  className="w-full"
+                >
+                  <Calendar className="h-4 w-4 mr-2" />
+                  Edit All {formatDate(selectedDate, 'EEEE')}s
+                </Button>
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
+    )
   }
 
   return (
     <div className="space-y-4">
-      {/* Mobile Header Controls */}
-      <div className="space-y-3">
-        {/* Navigation Row */}
-        <div className="flex items-center justify-between">
+      {/* Header Controls */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
           <Button 
             variant="outline" 
             size="sm"
             onClick={goToPrevious}
-            className="h-10 px-3"
+            className="h-9"
           >
             <ChevronLeft className="h-4 w-4" />
           </Button>
           
-          <div className="flex-1 text-center">
-            <h2 className="text-lg font-bold text-foreground">
-              {getViewTitle()}
-            </h2>
-          </div>
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={goToToday}
+            className="h-9 px-4"
+          >
+            Today
+          </Button>
           
           <Button 
             variant="outline" 
             size="sm"
             onClick={goToNext}
-            className="h-10 px-3"
-          >
+            className="h-9"
+         >
             <ChevronRight className="h-4 w-4" />
           </Button>
         </div>
 
-        {/* Controls Row */}
-        <div className="flex gap-2">
-          <Button 
-            variant="outline" 
-            size="sm"
-            onClick={goToToday}
-            className="h-10 px-4"
-          >
-            Today
-          </Button>
-          
-          <Select value={viewMode} onValueChange={setViewMode}>
-            <SelectTrigger className="flex-1 h-10">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="Month">Month View</SelectItem>
-              <SelectItem value="Week">Week View</SelectItem>
-              <SelectItem value="Day">Day View</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
+        <h2 className="text-lg font-semibold">
+          {formatDate(currentDate, 'MMMM yyyy')}
+        </h2>
       </div>
 
-      {/* Calendar Content */}
-      {viewMode === 'Day' ? (
-        // MOBILE DAY VIEW
-        <Card>
-          <CardHeader className="pb-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className={`
-                  w-12 h-12 rounded-full flex items-center justify-center font-bold text-lg
-                  ${isSameDay(currentDate, new Date()) ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'}
-                `}>
-                  {format(currentDate, 'd')}
-                </div>
-                <div>
-                  <CardTitle className="text-lg">
-                    {format(currentDate, 'EEEE')}
-                  </CardTitle>
-                  <CardDescription>
-                    {format(currentDate, 'MMMM d, yyyy')}
-                    {isSameDay(currentDate, new Date()) && (
-                      <Badge variant="default" className="ml-2">Today</Badge>
-                    )}
-                  </CardDescription>
-                </div>
-              </div>
-              
-              {(() => {
-                const isPast = currentDate < new Date(new Date().setHours(0, 0, 0, 0))
-                return !isPast && (
-                  <Button 
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleEditDate(currentDate)}
-                  >
-                    <Edit className="h-4 w-4 mr-2" />
-                    Edit
-                  </Button>
-                )
-              })()}
-            </div>
-          </CardHeader>
-          
-          <CardContent>
-            {(() => {
-              const { recurring, override } = getDayContent(currentDate)
-              const allSlots = override.length > 0 ? override : recurring
-              const isPast = currentDate < new Date(new Date().setHours(0, 0, 0, 0))
-              
-              if (allSlots.length === 0) {
-                return (
-                  <div className="text-center py-8">
-                    <Calendar className="h-12 w-12 text-muted-foreground mx-auto mb-4 opacity-50" />
-                    <h3 className="text-lg font-medium text-muted-foreground mb-2">No availability</h3>
-                    <p className="text-muted-foreground text-sm mb-4">
-                      {isPast ? 'This day has passed' : 'Tap to add your available hours'}
-                    </p>
-                    {!isPast && (
-                      <Button onClick={() => handleEditDate(currentDate)} className="w-full">
-                        <Plus className="h-4 w-4 mr-2" />
-                        Add Hours
-                      </Button>
-                    )}
-                  </div>
-                )
-              }
-              
-              return (
-                <div className="space-y-3">
-                  {allSlots.map((slot, i) => (
-                    <Card key={i} className={`
-                      ${slot.is_available === false ? 'border-destructive bg-destructive/5' : 'border-border'}
-                    `}>
-                      <CardContent className="p-4">
-                        <div className="flex items-center gap-2 mb-3">
-                          {override.length > 0 ? (
-                            <Calendar className="h-4 w-4 text-amber-600" />
-                          ) : (
-                            <Repeat className="h-4 w-4 text-muted-foreground" />
-                          )}
-                          <Badge variant={override.length > 0 ? "secondary" : "outline"} className="text-xs">
-                            {override.length > 0 ? 'Override' : 'Regular'}
-                          </Badge>
-                          {slot.is_available === false && (
-                            <Badge variant="destructive">Blocked</Badge>
-                          )}
-                        </div>
-                        
-                        <div className={`
-                          text-xl font-bold mb-2
-                          ${slot.is_available === false ? 'text-destructive' : 'text-foreground'}
-                        `}>
-                          {formatTime12(slot.start_time)} — {formatTime12(slot.end_time)}
-                        </div>
-                        
-                        <p className="text-sm text-muted-foreground">
-                          Duration: {(() => {
-                            const start = new Date(`2000-01-01 ${slot.start_time}`)
-                            const end = new Date(`2000-01-01 ${slot.end_time}`)
-                            const diffMs = end - start
-                            const hours = Math.floor(diffMs / (1000 * 60 * 60))
-                            const minutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60))
-                            return hours > 0 ? `${hours}h ${minutes}m` : `${minutes}m`
-                          })()}
-                        </p>
-                      </CardContent>
-                    </Card>
-                  ))}
-                  
-                  {override.length > 0 && (
-                    <Alert>
-                      <AlertCircle className="h-4 w-4" />
-                      <AlertDescription className="text-sm">
-                        <strong>Date Override:</strong> These hours override your regular weekly schedule.
-                      </AlertDescription>
-                    </Alert>
-                  )}
-                </div>
-              )
-            })()}
-          </CardContent>
-        </Card>
-      ) : (
-        // MOBILE WEEK & MONTH VIEW - List Format
-        <div className="space-y-3">
-          {dateRange.filter(date => viewMode === 'Month' ? isSameMonth(date, currentDate) : true).map((date, idx) => {
-            const isToday = isSameDay(date, new Date())
-            const isPast = date < new Date(new Date().setHours(0, 0, 0, 0))
-            const { recurring, override } = getDayContent(date)
-            const hasAvailability = recurring.length > 0 || override.length > 0
-            const showMenu = !isPast && activeDate && format(activeDate, 'yyyy-MM-dd') === format(date, 'yyyy-MM-dd')
-
-            return (
-              <Card 
-                key={idx}
-                className={`
-                  ${isToday ? 'border-primary bg-primary/5' : ''}
-                  ${hasAvailability ? 'border-green-200 bg-green-50/30' : ''}
-                  ${isPast ? 'opacity-60' : 'cursor-pointer'}
-                  transition-all duration-200
-                `}
-                onClick={() => !isPast && handleDayClick(date)}
+      {/* Calendar Grid */}
+      <Card>
+        <CardContent className="p-0">
+          {/* Weekday Headers */}
+          <div className="grid grid-cols-7 border-b bg-muted/30">
+            {weekdayLabels.map((label, idx) => (
+              <div 
+                key={idx} 
+                className="p-2 text-center text-xs font-medium text-muted-foreground border-r last:border-r-0"
               >
-                <CardContent className="p-4">
-                  <div className="flex justify-between items-start mb-3">
-                    <div className="flex items-center gap-3">
-                      <div className={`
-                        w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold
-                        ${isToday ? 'bg-primary text-primary-foreground' : hasAvailability ? 'bg-green-100 text-green-700' : 'bg-muted text-muted-foreground'}
-                      `}>
-                        {format(date, 'd')}
-                      </div>
-                      <div>
-                        <h3 className={`font-semibold ${isToday ? 'text-primary' : 'text-foreground'}`}>
-                          {format(date, 'EEEE')}
-                        </h3>
-                        <p className="text-sm text-muted-foreground">
-                          {format(date, 'MMM d, yyyy')}
-                        </p>
-                        {isToday && <Badge variant="default" className="mt-1 text-xs">Today</Badge>}
-                      </div>
-                    </div>
-                    
-                    {hasAvailability && (
-                      <Badge variant={override.length > 0 ? "secondary" : "outline"} className="text-xs">
-                        {override.length > 0 ? 'Override' : 'Available'}
-                      </Badge>
-                    )}
-                  </div>
-                  
-                  {/* Time Slots */}
-                  <div className="space-y-2">
-                    {override.length > 0 ? (
-                      override.slice(0, 3).map((o, i) => (
-                        <div key={i} className={`flex items-center gap-2 text-sm ${o.is_available === false ? 'text-destructive' : 'text-primary'}`}>
-                          <Calendar className="h-3 w-3" />
-                          <span className="font-medium">
-                            {formatTime12(o.start_time)} — {formatTime12(o.end_time)}
-                          </span>
-                          {o.is_available === false && <span className="text-destructive">(Blocked)</span>}
-                        </div>
-                      ))
-                    ) : recurring.length > 0 ? (
-                      recurring.slice(0, 3).map((r, i) => (
-                        <div key={i} className="flex items-center gap-2 text-sm text-primary">
-                          <Repeat className="h-3 w-3" />
-                          <span className="font-medium">
-                            {formatTime12(r.start_time)} — {formatTime12(r.end_time)}
-                          </span>
-                        </div>
-                      ))
-                    ) : (
-                      <div className="text-sm text-muted-foreground">
-                        {isPast ? 'No availability' : 'Tap to add hours'}
-                      </div>
-                    )}
-                    
-                    {/* Show more indicator */}
-                    {((override.length > 3) || (recurring.length > 3 && override.length === 0)) && (
-                      <div className="text-xs text-muted-foreground">
-                        +{(override.length > 0 ? override.length : recurring.length) - 3} more
-                      </div>
-                    )}
-                  </div>
+                {label}
+              </div>
+            ))}
+          </div>
 
-                  {/* Edit Menu for Mobile */}
-                  {showMenu && (
-                    <div className="mt-3 pt-3 border-t space-y-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          setActiveDate(null)
-                          handleEditDate(date)
-                        }}
-                        className="w-full"
-                      >
-                        <Calendar className="h-4 w-4 mr-2" />
-                        Edit this date
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          setActiveDate(null)
-                          setEditingWeekdayIndex(date.getDay())
-                          setShowRecurringModal(true)
-                        }}
-                        className="w-full"
-                      >
-                        <Repeat className="h-4 w-4 mr-2" />
-                        Edit all {format(date, 'EEEE')}s
-                      </Button>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            )
-          })}
-        </div>
-      )}
+          {/* Calendar Days */}
+          <div className="grid grid-cols-7">
+            {dateRange.map((date, idx) => (
+              <CalendarDay key={idx} date={date} />
+            ))}
+          </div>
+        </CardContent>
+      </Card>
 
-      {/* Mobile Legend */}
-      <Card className="bg-muted/20">
-        <CardContent className="p-4">
-          <div className="grid grid-cols-2 gap-3 text-sm">
-            <div className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded-full bg-green-500" />
-              <span>Regular hours</span>
+      {/* Legend */}
+      <Card className="bg-muted/20 border-muted">
+        <CardContent className="p-3">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs">
+            <div className="flex items-center gap-4 flex-wrap">
+              <div className="flex items-center gap-1.5">
+                <Circle className="h-2 w-2 fill-green-500 text-green-500" />
+                <span>Regular hours</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <Circle className="h-2 w-2 fill-amber-500 text-amber-500" />
+                <span>Date override</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <div className="w-4 h-4 rounded-full border-2 border-primary" />
+                <span>Today</span>
+              </div>
             </div>
-            <div className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded-full bg-amber-500" />
-              <span>Date override</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded-full border-2 border-primary" />
-              <span>Today</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <Info className="h-3 w-3 text-muted-foreground" />
-              <span className="text-muted-foreground text-xs">Tap days to edit</span>
+            
+            <div className="flex items-center gap-1 text-muted-foreground">
+              <Info className="h-3 w-3" />
+              <span>Click days for details</span>
             </div>
           </div>
         </CardContent>
       </Card>
 
-      {/* Modals */}
-      {showModal && editTargetDate && (
-        <SingleDateEditorModal
-          date={editTargetDate}
-          existing={overrides.filter(o => o.override_date === format(editTargetDate, 'yyyy-MM-dd'))}
-          onSave={(blocks) => handleUpdateOverride(editTargetDate, blocks)}
-          onReset={() => handleResetOverride(editTargetDate)}
-          onClose={() => setShowModal(false)}
-        />
-      )}
-
-      {showRecurringModal && editingWeekdayIndex !== null && (
-        <RecurringDayEditorModal
-          dayIndex={editingWeekdayIndex}
-          dayLabel={weekdays[editingWeekdayIndex]}
-          availability={availability}
-          setAvailability={onUpdateRecurring}
-          onClose={() => {
-            setShowRecurringModal(false)
-            setEditingWeekdayIndex(null)
-          }}
-        />
-      )}
+      {/* Details Modal */}
+      <DayDetailsModal />
     </div>
   )
 }

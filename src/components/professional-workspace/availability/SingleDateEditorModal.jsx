@@ -24,16 +24,15 @@ import {
   Copy,
   Trash2,
   RotateCcw,
-  Info
+  Info,
+  Zap
 } from 'lucide-react'
 
-// Default rules - you might want to import these from your config
 const AVAILABILITY_RULES = {
   DEFAULT_BLOCK_START: '09:00',
   DEFAULT_BLOCK_END: '17:00'
 }
 
-// Helper function to format date
 const formatDate = (date) => {
   return date.toLocaleDateString('en-US', { 
     weekday: 'long',
@@ -63,6 +62,7 @@ function generateNextTimeBlock(existingBlocks, increment = 60) {
     const mins = m % 60
     return `${h.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}`
   }
+  
   if (!existingBlocks.length) {
     return {
       start_time: AVAILABILITY_RULES.DEFAULT_BLOCK_START,
@@ -74,6 +74,7 @@ function generateNextTimeBlock(existingBlocks, increment = 60) {
   const lastEnd = toMinutes(sorted[sorted.length - 1].end_time)
   const start = lastEnd
   const end = Math.min(start + increment, 1440)
+  
   if (end <= start || end > 1440) return null
 
   return { start_time: toTime(start), end_time: toTime(end) }
@@ -107,7 +108,14 @@ export default function SingleDateEditorModal({
   }
 
   const handleRemove = (index) => {
-    setBlocks(prev => prev.filter((_, i) => i !== index))
+    if (blocks.length === 1) {
+      setBlocks([{
+        start_time: AVAILABILITY_RULES.DEFAULT_BLOCK_START,
+        end_time: AVAILABILITY_RULES.DEFAULT_BLOCK_END
+      }])
+    } else {
+      setBlocks(prev => prev.filter((_, i) => i !== index))
+    }
   }
 
   const handleDuplicate = (index) => {
@@ -122,7 +130,6 @@ export default function SingleDateEditorModal({
   }
 
   const handleCancel = () => {
-    // Reset to original state
     setBlocks(
       existing.length > 0 ? existing.map(b => ({ ...b })) : [{
         start_time: AVAILABILITY_RULES.DEFAULT_BLOCK_START,
@@ -179,207 +186,203 @@ export default function SingleDateEditorModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-<DialogContent className="professional-workspace max-w-md max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
+          <DialogTitle className="flex items-center gap-2 text-xl">
             <Calendar className="h-5 w-5 text-primary" />
-            Edit Availability for {date && formatDate(date)}
+            {date && formatDate(date)}
           </DialogTitle>
-          <DialogDescription>
+          <DialogDescription className="text-base">
             {isOverride 
-              ? 'Modify the date-specific override for this day'
-              : 'Create a date-specific override that will replace your regular weekly hours'
+              ? 'Modify custom hours for this specific date'
+              : 'Set custom hours that override your regular schedule'
             }
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4">
-          {/* Override Notice */}
-          {isOverride ? (
-            <Alert>
-              <Info className="h-4 w-4" />
-              <AlertDescription>
-                This date has custom hours that override your regular weekly schedule.
-              </AlertDescription>
-            </Alert>
-          ) : (
-            <Alert>
-              <AlertTriangle className="h-4 w-4" />
-              <AlertDescription>
-                Setting hours for this date will override your regular weekly schedule for this day only.
+          {/* Status Badge */}
+          <div className="flex items-center gap-2">
+            {isOverride ? (
+              <Badge variant="secondary" className="text-sm px-3 py-1">
+                <Calendar className="h-3 w-3 mr-1" />
+                Override Active
+              </Badge>
+            ) : (
+              <Badge variant="outline" className="text-sm px-3 py-1">
+                <Plus className="h-3 w-3 mr-1" />
+                New Override
+              </Badge>
+            )}
+            <Badge variant="outline" className="text-sm px-3 py-1">
+              <Clock className="h-3 w-3 mr-1" />
+              {getTotalHours()}
+            </Badge>
+            <Badge variant="outline" className="text-sm px-3 py-1">
+              {blocks.length} block{blocks.length !== 1 ? 's' : ''}
+            </Badge>
+          </div>
+
+          {/* Info Alert */}
+          {!isOverride && (
+            <Alert className="border-blue-200 bg-blue-50">
+              <Info className="h-4 w-4 text-blue-600" />
+              <AlertDescription className="text-blue-700 text-sm">
+                This will override your regular weekly schedule for this date only
               </AlertDescription>
             </Alert>
           )}
 
-          {/* Summary Info */}
-          <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
-            <div className="flex items-center gap-2">
-              <Clock className="h-4 w-4 text-muted-foreground" />
-              <span className="text-sm font-medium">Total: {getTotalHours()}</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <Badge variant="outline">
-                {blocks.length} block{blocks.length !== 1 ? 's' : ''}
-              </Badge>
-              {isOverride && (
-                <Badge variant="secondary" className="bg-card text-card-foreground">
-                  Override
-                </Badge>
-              )}
-            </div>
-          </div>
+          <Separator />
 
           {/* Time Blocks */}
           <div className="space-y-3">
-            {blocks.length === 0 ? (
-              <div className="text-center py-8 text-muted-foreground">
-                <Calendar className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                <p className="text-sm">No hours set for this date</p>
-                <p className="text-xs">Click "Add Time Block" to get started</p>
-              </div>
-            ) : (
-              blocks.map((block, index) => (
-                <div key={index} className="p-4 border rounded-lg bg-background space-y-3">
-                  {/* Block Header */}
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium text-muted-foreground">
-                      Block {index + 1}
-                    </span>
-                    <div className="flex items-center gap-1">
-                      <Badge variant="secondary" className="text-xs">
-                        {getDuration(block.start_time, block.end_time)}
-                      </Badge>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-6 w-6 p-0"
-                        onClick={() => handleDuplicate(index)}
-                        title="Duplicate block"
-                      >
-                        <Copy className="h-3 w-3" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-6 w-6 p-0 text-red-500 hover:text-red-700"
-                        onClick={() => handleRemove(index)}
-                        title="Remove block"
-                      >
-                        <X className="h-3 w-3" />
-                      </Button>
-                    </div>
-                  </div>
+            <div className="flex items-center justify-between">
+              <Label className="text-base font-semibold">Time Blocks</Label>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleAdd}
+                disabled={showDuplicateWarning}
+                className="h-8"
+              >
+                <Plus className="h-3 w-3 mr-1" />
+                Add Block
+              </Button>
+            </div>
 
-                  {/* Time Inputs */}
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="space-y-2">
-                      <Label htmlFor={`start-${index}`} className="text-xs font-medium">
-                        Start Time
-                      </Label>
-                      <Input
-                        id={`start-${index}`}
-                        type="time"
-                        value={block.start_time}
-                        onChange={(e) => handleChange(index, 'start_time', e.target.value)}
-                        className="text-sm"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor={`end-${index}`} className="text-xs font-medium">
-                        End Time
-                      </Label>
-                      <Input
-                        id={`end-${index}`}
-                        type="time"
-                        value={block.end_time}
-                        onChange={(e) => handleChange(index, 'end_time', e.target.value)}
-                        className="text-sm"
-                      />
-                    </div>
+            {blocks.map((block, index) => (
+              <div 
+                key={index} 
+                className="p-4 border-2 rounded-lg bg-background hover:border-primary/50 transition-colors"
+              >
+                <div className="flex items-center justify-between mb-3">
+                  <span className="text-sm font-medium text-muted-foreground">
+                    Block {index + 1}
+                  </span>
+                  <div className="flex items-center gap-1">
+                    <Badge variant="secondary" className="text-xs">
+                      {getDuration(block.start_time, block.end_time)}
+                    </Badge>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleDuplicate(index)}
+                      className="h-7 w-7 p-0"
+                      title="Duplicate"
+                    >
+                      <Copy className="h-3 w-3" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleRemove(index)}
+                      className="h-7 w-7 p-0 text-destructive hover:text-destructive hover:bg-destructive/10"
+                      title="Remove"
+                    >
+                      <X className="h-3 w-3" />
+                    </Button>
                   </div>
                 </div>
-              ))
-            )}
-          </div>
 
-          {/* Add Block Button */}
-          <Button
-            variant="outline"
-            onClick={handleAdd}
-            className="w-full"
-            disabled={showDuplicateWarning}
-          >
-            <Plus className="h-4 w-4 mr-2" />
-            Add Time Block
-          </Button>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-2">
+                    <Label htmlFor={`start-${index}`} className="text-sm">
+                      Start Time
+                    </Label>
+                    <Input
+                      id={`start-${index}`}
+                      type="time"
+                      value={block.start_time}
+                      onChange={(e) => handleChange(index, 'start_time', e.target.value)}
+                      className="h-11 text-base"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor={`end-${index}`} className="text-sm">
+                      End Time
+                    </Label>
+                    <Input
+                      id={`end-${index}`}
+                      type="time"
+                      value={block.end_time}
+                      onChange={(e) => handleChange(index, 'end_time', e.target.value)}
+                      className="h-11 text-base"
+                    />
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
 
           {/* Duplicate Warning */}
           {showDuplicateWarning && (
             <Alert variant="destructive">
               <AlertTriangle className="h-4 w-4" />
               <AlertDescription>
-                Duplicate time blocks detected. Please adjust or remove conflicting times before saving.
+                Duplicate time blocks detected. Remove or adjust conflicting times.
               </AlertDescription>
             </Alert>
           )}
 
-          {/* Quick Actions */}
           <Separator />
+
+          {/* Quick Actions */}
           <div className="space-y-3">
-            <Label className="text-xs font-medium text-muted-foreground">Quick Actions</Label>
+            <Label className="text-sm font-medium">Quick Actions</Label>
             
             <div className="grid grid-cols-2 gap-2">
               <Button
                 variant="outline"
                 size="sm"
                 onClick={() => setBlocks([])}
-                className="flex items-center gap-1"
+                className="h-9"
               >
-                <Trash2 className="h-3 w-3" />
+                <Trash2 className="h-3 w-3 mr-2" />
                 Clear All
               </Button>
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => {
-                  const standard = {
-                    start_time: '09:00',
-                    end_time: '17:00'
-                  }
-                  setBlocks([standard])
-                }}
-                className="flex items-center gap-1"
+                onClick={() => setBlocks([{
+                  start_time: '09:00',
+                  end_time: '17:00'
+                }])}
+                className="h-9"
               >
-                <Clock className="h-3 w-3" />
+                <Zap className="h-3 w-3 mr-2" />
                 9-5 Standard
               </Button>
             </div>
 
-            {/* Reset to Weekly Hours */}
             {isOverride && (
               <Button
                 variant="outline"
                 size="sm"
                 onClick={handleResetToWeekly}
-                className="w-full flex items-center gap-2"
+                className="w-full h-9"
               >
-                <RotateCcw className="h-3 w-3" />
-                Reset to Weekly Hours
+                <RotateCcw className="h-3 w-3 mr-2" />
+                Reset to Weekly Schedule
               </Button>
             )}
           </div>
         </div>
 
-        <DialogFooter className="flex gap-2">
-          <Button variant="outline" onClick={handleCancel}>
+        <DialogFooter className="gap-2 sm:gap-0">
+          <Button 
+            variant="outline" 
+            onClick={handleCancel}
+            className="flex-1 sm:flex-none"
+          >
             Cancel
           </Button>
           <Button 
             onClick={handleSave} 
-            disabled={showDuplicateWarning}
-            className={hasChanges() ? '' : 'opacity-50'}
+            disabled={showDuplicateWarning || !hasChanges()}
+            className="flex-1 sm:flex-none"
           >
-            {hasChanges() ? (isOverride ? 'Update Override' : 'Create Override') : 'No Changes'}
+            {isOverride ? 'Update Override' : 'Create Override'}
           </Button>
         </DialogFooter>
       </DialogContent>

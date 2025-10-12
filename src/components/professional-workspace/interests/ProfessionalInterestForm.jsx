@@ -30,7 +30,8 @@ import {
   Crown,
   Target,
   Info,
-  CheckCircle
+  CheckCircle,
+  Calendar
 } from "lucide-react"
 
 export default function ProfessionalInterestForm({
@@ -47,10 +48,13 @@ export default function ProfessionalInterestForm({
     modality: 'none',
     fee: 0.00,
     amount: null,
-    // NEW: Price range fields
     price_range_min: '',
     price_range_max: '',
     assessment_justification: '',
+    // ✅ NEW: Assessment scheduling
+    assessment_proposed_date: '',
+    assessment_proposed_time: '',
+    assessment_duration_minutes: 60,
     earliest_start: '',
     latest_start: '',
     notes: '',
@@ -76,7 +80,7 @@ export default function ProfessionalInterestForm({
     }
   }, [errors])
 
-  // NEW: Get pricing strategy
+  // Get pricing strategy
   const getPricingStrategy = () => {
     if (!formData.assessment && formData.amount) return 'immediate'
     if (formData.assessment && formData.amount) return 'preliminary'
@@ -85,7 +89,7 @@ export default function ProfessionalInterestForm({
     return 'none'
   }
 
-  // UPDATED: Enhanced validation with price range
+  // ✅ UPDATED: Enhanced validation with assessment date/time
   const validateForm = useCallback(() => {
     const newErrors = {}
     
@@ -101,7 +105,29 @@ export default function ProfessionalInterestForm({
       newErrors.fee = 'Assessment fee cannot be negative'
     }
 
-    // NEW: Price range validation for assessment-only
+    // ✅ NEW: Validate assessment date/time for local assessments
+    if (formData.assessment && formData.modality === 'local') {
+      if (!formData.assessment_proposed_date) {
+        newErrors.assessment_proposed_date = 'Assessment date is required for site visits'
+      }
+      
+      if (!formData.assessment_proposed_time) {
+        newErrors.assessment_proposed_time = 'Assessment time is required for site visits'
+      }
+      
+      // Validate date is not in the past
+      if (formData.assessment_proposed_date) {
+        const proposedDate = new Date(formData.assessment_proposed_date)
+        const today = new Date()
+        today.setHours(0, 0, 0, 0)
+        
+        if (proposedDate < today) {
+          newErrors.assessment_proposed_date = 'Assessment date cannot be in the past'
+        }
+      }
+    }
+
+    // Price range validation for assessment-only
     if (formData.assessment && !formData.amount) {
       if (!formData.price_range_min && !formData.price_range_max) {
         newErrors.pricing = 'Please provide either a quote or price range when assessment is required'
@@ -136,35 +162,50 @@ export default function ProfessionalInterestForm({
     return Object.keys(newErrors).length === 0
   }, [formData])
 
-  // UPDATED: Handle form submission with price range
-  const handleSubmit = useCallback(async (e) => {
-    e.preventDefault()
-    
-    if (!validateForm()) return
-    
-    const submissionData = {
-      ...formData,
-      amount: formData.amount || null,
-      fee: formData.assessment && formData.modality === 'local' ? formData.fee : 0,
-      // NEW: Include price range fields
-      price_range_min: formData.price_range_min ? parseFloat(formData.price_range_min) : null,
-      price_range_max: formData.price_range_max ? parseFloat(formData.price_range_max) : null,
-      assessment_justification: formData.assessment_justification || null,
-      earliest_start: formData.earliest_start || null,
-      latest_start: formData.latest_start || null,
-      estimated_duration_hours: formData.estimated_duration_hours || null,
-      specification: Object.keys(formData.specification).length > 0 ? formData.specification : null
-    }
-    
-    await onSubmit(submissionData)
-  }, [formData, onSubmit, validateForm])
+  // ✅ UPDATED: Handle form submission with assessment scheduling
+const handleSubmit = useCallback(async (e) => {
+  e.preventDefault()
+  
+  if (!validateForm()) return
+  
+  // ✅ DEBUG: Log what we're sending
+  console.log('📤 Form submission data:', {
+    assessment: formData.assessment,
+    modality: formData.modality,
+    assessment_proposed_date: formData.assessment_proposed_date,
+    assessment_proposed_time: formData.assessment_proposed_time,
+    date_type: typeof formData.assessment_proposed_date,
+    time_type: typeof formData.assessment_proposed_time
+  })
+  
+  const submissionData = {
+    ...formData,
+    amount: formData.amount || null,
+    fee: formData.assessment && formData.modality === 'local' ? formData.fee : 0,
+    price_range_min: formData.price_range_min ? parseFloat(formData.price_range_min) : null,
+    price_range_max: formData.price_range_max ? parseFloat(formData.price_range_max) : null,
+    assessment_justification: formData.assessment_justification || null,
+    // Don't combine date/time here - send them as-is
+    assessment_proposed_date: formData.assessment_proposed_date || null,
+    assessment_proposed_time: formData.assessment_proposed_time || null,
+    assessment_duration_minutes: formData.assessment_duration_minutes || 60,
+    earliest_start: formData.earliest_start || null,
+    latest_start: formData.latest_start || null,
+    estimated_duration_hours: formData.estimated_duration_hours || null,
+    specification: Object.keys(formData.specification).length > 0 ? formData.specification : null
+  }
+  
+  console.log('📤 Submitting to API:', submissionData)
+  
+  await onSubmit(submissionData)
+}, [formData, onSubmit, validateForm])
 
   const minDateTime = new Date().toISOString().slice(0, 16)
   const strategy = getPricingStrategy()
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
-      {/* Invitation Alert - unchanged */}
+      {/* Invitation Alert */}
       {isInvited && (
         <Alert className="border-blue-200 bg-blue-50">
           <div className="flex items-center gap-3">
@@ -184,7 +225,7 @@ export default function ProfessionalInterestForm({
         </Alert>
       )}
 
-      {/* Competition Alert - unchanged */}
+      {/* Competition Alert */}
       {appointment?.interest_summary?.total_count > 0 && (
         <Alert>
           <Users className="h-4 w-4" />
@@ -195,7 +236,7 @@ export default function ProfessionalInterestForm({
         </Alert>
       )}
 
-      {/* Interest Level - unchanged */}
+      {/* Interest Level */}
       <Card>
         <CardHeader className="pb-3">
           <CardTitle className="text-base flex items-center gap-2">
@@ -260,7 +301,7 @@ export default function ProfessionalInterestForm({
         </CardContent>
       </Card>
 
-      {/* UPDATED: Assessment Requirements with fee policy */}
+      {/* ✅ UPDATED: Assessment Requirements with date/time scheduling */}
       <Card>
         <CardHeader className="pb-3">
           <CardTitle className="text-base flex items-center gap-2">
@@ -314,6 +355,83 @@ export default function ProfessionalInterestForm({
                 )}
               </div>
 
+              {/* ✅ NEW: Assessment Date/Time for local visits */}
+              {formData.modality === 'local' && (
+                <>
+                  <div className="space-y-2">
+                    <Label htmlFor="assessment_proposed_date">
+                      Proposed Assessment Date *
+                    </Label>
+                    <Input
+                      type="date"
+                      id="assessment_proposed_date"
+                      value={formData.assessment_proposed_date}
+                      onChange={(e) => handleChange('assessment_proposed_date', e.target.value)}
+                      min={new Date().toISOString().split('T')[0]}
+                      max={formData.latest_start ? 
+                        new Date(formData.latest_start).toISOString().split('T')[0] : 
+                        undefined
+                      }
+                      className={errors.assessment_proposed_date ? 'border-destructive' : ''}
+                    />
+                    {errors.assessment_proposed_date && (
+                      <p className="text-sm text-destructive">{errors.assessment_proposed_date}</p>
+                    )}
+                    <p className="text-xs text-muted-foreground">
+                      When can you visit the site for assessment?
+                    </p>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="assessment_proposed_time">
+                      Proposed Time *
+                    </Label>
+                    <Input
+                      type="time"
+                      id="assessment_proposed_time"
+                      value={formData.assessment_proposed_time}
+                      onChange={(e) => handleChange('assessment_proposed_time', e.target.value)}
+                      className={errors.assessment_proposed_time ? 'border-destructive' : ''}
+                    />
+                    {errors.assessment_proposed_time && (
+                      <p className="text-sm text-destructive">{errors.assessment_proposed_time}</p>
+                    )}
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="assessment_duration">
+                      Estimated Assessment Duration
+                    </Label>
+                    <Select 
+                      value={formData.assessment_duration_minutes.toString()} 
+                      onValueChange={(value) => handleChange('assessment_duration_minutes', parseInt(value))}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="30">30 minutes</SelectItem>
+                        <SelectItem value="60">1 hour</SelectItem>
+                        <SelectItem value="90">1.5 hours</SelectItem>
+                        <SelectItem value="120">2 hours</SelectItem>
+                        <SelectItem value="180">3 hours</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <p className="text-xs text-muted-foreground">
+                      How long will the on-site assessment take?
+                    </p>
+                  </div>
+
+                  <Alert className="bg-blue-50 border-blue-200">
+                    <Calendar className="h-4 w-4 text-blue-600" />
+                    <AlertDescription className="text-blue-700">
+                      <strong>Customer will see:</strong> Your proposed date/time when they select you. 
+                      They can accept or suggest alternatives.
+                    </AlertDescription>
+                  </Alert>
+                </>
+              )}
+
               {formData.modality === 'local' && (
                 <div className="space-y-2">
                   <Label htmlFor="fee">Site Visit Fee (JMD)</Label>
@@ -333,7 +451,6 @@ export default function ProfessionalInterestForm({
                   {errors.fee && (
                     <p className="text-sm text-destructive">{errors.fee}</p>
                   )}
-                  {/* NEW: Fee deduction policy */}
                   <Alert>
                     <CheckCircle className="h-4 w-4" />
                     <AlertDescription>
@@ -343,7 +460,6 @@ export default function ProfessionalInterestForm({
                 </div>
               )}
 
-              {/* NEW: Assessment justification for assessment-only */}
               {!formData.amount && (
                 <div className="space-y-2">
                   <Label htmlFor="assessment_justification">
@@ -370,7 +486,7 @@ export default function ProfessionalInterestForm({
         </CardContent>
       </Card>
 
-      {/* UPDATED: Pricing Strategy with price range */}
+      {/* Pricing Strategy */}
       <Card>
         <CardHeader className="pb-3">
           <CardTitle className="text-base flex items-center gap-2">
@@ -386,7 +502,6 @@ export default function ProfessionalInterestForm({
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          {/* Quote field */}
           <div className="space-y-2">
             <Label htmlFor="amount">
               {formData.assessment ? 'Preliminary Quote (JMD)' : 'Final Quote (JMD)'}
@@ -415,7 +530,6 @@ export default function ProfessionalInterestForm({
             </p>
           </div>
 
-          {/* NEW: Price Range (when assessment but no quote) */}
           {formData.assessment && !formData.amount && (
             <div className="space-y-4 p-4 border border-amber-200 bg-amber-50 rounded-md">
               <div className="flex items-center gap-2">
@@ -458,7 +572,6 @@ export default function ProfessionalInterestForm({
             </div>
           )}
 
-          {/* Estimated Duration - unchanged */}
           <div className="space-y-2">
             <Label htmlFor="estimated_duration_hours">Estimated Duration (Hours)</Label>
             <div className="relative">
@@ -492,7 +605,7 @@ export default function ProfessionalInterestForm({
         </CardContent>
       </Card>
 
-      {/* Availability Window - unchanged */}
+      {/* Availability Window */}
       <Card>
         <CardHeader className="pb-3">
           <CardTitle className="text-base flex items-center gap-2">
@@ -543,7 +656,7 @@ export default function ProfessionalInterestForm({
         </CardContent>
       </Card>
 
-      {/* Additional Notes - unchanged */}
+      {/* Additional Notes */}
       <Card>
         <CardHeader className="pb-3">
           <CardTitle className="text-base">Additional Information</CardTitle>
@@ -565,7 +678,7 @@ export default function ProfessionalInterestForm({
         </CardContent>
       </Card>
 
-      {/* Form Actions - unchanged */}
+      {/* Form Actions */}
       <div className="flex justify-between items-center pt-4">
         <Button
           type="button"
@@ -595,7 +708,7 @@ export default function ProfessionalInterestForm({
         </Button>
       </div>
 
-      {/* Invitation Summary Footer - unchanged */}
+      {/* Invitation Summary Footer */}
       {isInvited && (
         <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
           <div className="flex items-start gap-3">

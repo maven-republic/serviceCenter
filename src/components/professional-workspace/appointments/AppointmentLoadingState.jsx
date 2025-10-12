@@ -13,6 +13,7 @@ import { getColumnsForMode } from '@/components/professional-workspace/table/col
 import { Badge } from "@/components/ui/badge"
 import { cn } from '@/lib/utils'
 
+
 // Enhanced Table Components with proper theming
 const Table = ({ className, ...props }) => (
   <div className="relative w-full overflow-auto">

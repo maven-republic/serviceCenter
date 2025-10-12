@@ -186,7 +186,7 @@ export default function EndDate({
               <div className="space-y-2">
                 <div className="flex items-center gap-2">
                   <Target className="h-3 w-3 text-destructive" />
-                  <span className="text-xs font-medium text-destructive">
+                  <span className="text-[10px] font-medium text-destructive">
                     Date Conflict Detected
                   </span>
                 </div>

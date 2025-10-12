@@ -1,38 +1,33 @@
 'use client'
 
 import { useState } from 'react'
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card"
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Badge } from '@/components/ui/badge'
 import { Alert, AlertDescription } from '@/components/ui/alert'
+import { Card, CardContent } from '@/components/ui/card'
 import { 
   Plus, 
-  X, 
   Copy, 
   Clock,
-  Calendar,
   AlertTriangle,
-  Info,
-  Trash2
+  Trash2,
+  CopyPlus
 } from 'lucide-react'
-import { AVAILABILITY_RULES } from '@/config/availabilityRules'
+import TimeSlot from './TimeSlot'
+
+const AVAILABILITY_RULES = {
+  DEFAULT_BLOCK_START: '09:00',
+  DEFAULT_BLOCK_END: '17:00'
+}
 
 const daysOfWeek = [
-  { label: 'Sunday', value: 0, short: 'Sun' },
-  { label: 'Monday', value: 1, short: 'Mon' },
-  { label: 'Tuesday', value: 2, short: 'Tue' },
-  { label: 'Wednesday', value: 3, short: 'Wed' },
-  { label: 'Thursday', value: 4, short: 'Thu' },
-  { label: 'Friday', value: 5, short: 'Fri' },
-  { label: 'Saturday', value: 6, short: 'Sat' }
+  { label: 'Sunday', value: 0, short: 'Sun', color: 'bg-purple-100' },
+  { label: 'Monday', value: 1, short: 'Mon', color: 'bg-blue-100' },
+  { label: 'Tuesday', value: 2, short: 'Tue', color: 'bg-cyan-100' },
+  { label: 'Wednesday', value: 3, short: 'Wed', color: 'bg-green-100' },
+  { label: 'Thursday', value: 4, short: 'Thu', color: 'bg-yellow-100' },
+  { label: 'Friday', value: 5, short: 'Fri', color: 'bg-orange-100' },
+  { label: 'Saturday', value: 6, short: 'Sat', color: 'bg-red-100' }
 ]
 
 function hasDuplicateBlock(blocks) {
@@ -147,68 +142,16 @@ export default function AvailabilityFramework({ availability = [], setAvailabili
     updateAndSync(updated)
   }
 
-  const getTotalHours = () => {
-    let totalMinutes = 0
-    Object.values(weeklySlots).forEach(blocks => {
-      blocks.forEach(block => {
-        const start = new Date(`2000-01-01 ${block.start_time}`)
-        const end = new Date(`2000-01-01 ${block.end_time}`)
-        totalMinutes += (end - start) / (1000 * 60)
-      })
-    })
-    return Math.round(totalMinutes / 60 * 10) / 10
-  }
-
-  const getActiveDays = () => {
-    return Object.values(weeklySlots).filter(blocks => blocks.length > 0).length
-  }
-
   return (
-    <div className="space-y-4">
-      {/* Mobile Summary Cards */}
-      <div className="grid grid-cols-3 gap-3">
-        <Card>
-          <CardContent className="p-3">
-            <div className="text-center">
-              <div className="text-lg font-bold text-foreground">{getTotalHours()}h</div>
-              <div className="text-xs text-muted-foreground">Weekly</div>
-            </div>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardContent className="p-3">
-            <div className="text-center">
-              <div className="text-lg font-bold text-foreground">{getActiveDays()}/7</div>
-              <div className="text-xs text-muted-foreground">Days</div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-3">
-            <div className="text-center">
-              <div className="text-lg font-bold text-foreground">
-                {Object.values(weeklySlots).reduce((sum, blocks) => sum + blocks.length, 0)}
-              </div>
-              <div className="text-xs text-muted-foreground">Blocks</div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Mobile Quick Setup */}
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-base">Quick Setup</CardTitle>
-          <CardDescription className="text-sm">
-            Apply common schedule templates
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          <div className="grid grid-cols-1 gap-2">
+    <div className="space-y-3 sm:space-y-4">
+      {/* Quick Setup Presets - Mobile Optimized */}
+      <Card className="border-2 border-dashed">
+        <CardContent className="p-3 sm:p-4">
+          <Label className="text-xs sm:text-sm font-semibold mb-2 sm:mb-3 block">Quick Setup</Label>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
             <Button
               variant="outline"
+              size="sm"
               onClick={() => {
                 const businessHours = { start_time: '09:00', end_time: '17:00' }
                 const updated = { ...weeklySlots }
@@ -217,14 +160,15 @@ export default function AvailabilityFramework({ availability = [], setAvailabili
                 }
                 updateAndSync(updated)
               }}
-              className="h-12 flex flex-col items-center justify-center"
+              className="h-auto py-2.5 sm:py-3 flex flex-col items-start touch-manipulation"
             >
-              <div className="font-medium text-sm">Standard Business</div>
-              <div className="text-xs text-muted-foreground">Mon-Fri, 9 AM - 5 PM</div>
+              <div className="font-medium text-xs sm:text-sm">Mon-Fri</div>
+              <div className="text-[10px] sm:text-xs text-muted-foreground">9 AM - 5 PM</div>
             </Button>
             
             <Button
               variant="outline"
+              size="sm"
               onClick={() => {
                 const extendedHours = { start_time: '08:00', end_time: '18:00' }
                 const updated = { ...weeklySlots }
@@ -233,190 +177,125 @@ export default function AvailabilityFramework({ availability = [], setAvailabili
                 }
                 updateAndSync(updated)
               }}
-              className="h-12 flex flex-col items-center justify-center"
+              className="h-auto py-2.5 sm:py-3 flex flex-col items-start touch-manipulation"
             >
-              <div className="font-medium text-sm">Extended Hours</div>
-              <div className="text-xs text-muted-foreground">Mon-Sat, 8 AM - 6 PM</div>
+              <div className="font-medium text-xs sm:text-sm">Mon-Sat</div>
+              <div className="text-[10px] sm:text-xs text-muted-foreground">8 AM - 6 PM</div>
             </Button>
             
             <Button
               variant="outline"
+              size="sm"
               onClick={() => {
                 const updated = initialState()
                 updateAndSync(updated)
               }}
-              className="h-12 flex items-center justify-center gap-2 text-destructive hover:text-destructive"
+              className="h-8 sm:h-9 col-span-1 sm:col-span-2 text-destructive hover:text-destructive touch-manipulation"
             >
-              <Trash2 className="h-4 w-4" />
-              <span className="font-medium text-sm">Clear All</span>
+              <Trash2 className="h-3 w-3 mr-2" />
+              <span className="text-xs sm:text-sm">Clear All Days</span>
             </Button>
           </div>
         </CardContent>
       </Card>
 
-      {/* Mobile Weekly Schedule - Remove Card borders around each day */}
-      <div className="space-y-3">
-        {daysOfWeek.map(({ label, value, short }) => {
+      {/* Daily Schedule - Mobile Optimized */}
+      <div className="space-y-0 divide-y">
+        {daysOfWeek.map(({ label, value, short, color }) => {
           const blocks = weeklySlots[value] || []
           const showDuplicateWarning = hasDuplicateBlock(blocks)
           const hasBlocks = blocks.length > 0
 
           return (
-            <div key={value} className={`p-4 ${hasBlocks ? 'bg-muted/20 rounded-lg' : ''}`}>
-              <div className="pb-3">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className={`
-                      w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold
-                      ${hasBlocks ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'}
-                    `}>
-                      {short}
-                    </div>
-                    <div>
-                      <CardTitle className="text-base">{label}</CardTitle>
-                      <CardDescription className="text-xs">
-                        {blocks.length === 0 ? 'No hours set' : `${blocks.length} block${blocks.length !== 1 ? 's' : ''}`}
-                      </CardDescription>
-                    </div>
+            <div 
+              key={value} 
+              className={`p-3 sm:p-4 transition-colors ${hasBlocks ? 'bg-muted/20' : ''}`}
+            >
+              {/* Day Header - Mobile Optimized */}
+              <div className="flex items-center justify-between mb-2 sm:mb-3">
+                <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
+                  <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-full ${color} flex items-center justify-center shrink-0`}>
+                    <span className="text-xs sm:text-sm font-bold">{short}</span>
                   </div>
-                  
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleAddBlock(value)}
-                    className="h-8 px-3 text-xs"
-                  >
-                    <Plus className="h-3 w-3 mr-1" />
-                    Add
-                  </Button>
+                  <div className="min-w-0">
+                    <h4 className="text-sm sm:text-base font-semibold truncate">{label}</h4>
+                    <p className="text-[10px] sm:text-xs text-muted-foreground">
+                      {blocks.length === 0 ? 'Not set' : `${blocks.length} block${blocks.length !== 1 ? 's' : ''}`}
+                    </p>
+                  </div>
                 </div>
+                
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleAddBlock(value)}
+                  className="h-7 sm:h-8 px-2 sm:px-3 shrink-0 touch-manipulation"
+                >
+                  <Plus className="h-3 w-3 sm:mr-1" />
+                  <span className="hidden sm:inline text-xs">Add</span>
+                </Button>
+              </div>
 
-                {/* Mobile Action Buttons */}
-                {blocks.length > 0 && (
-                  <div className="space-y-2 mt-3">
+              {/* Copy Actions - Mobile Optimized */}
+              {blocks.length > 0 && (
+                <div className="flex flex-col sm:flex-row gap-1.5 sm:gap-2 mb-2 sm:mb-3">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleCopyToAll(value)}
+                    className="h-7 text-[10px] sm:text-xs justify-start sm:flex-1 touch-manipulation"
+                  >
+                    <CopyPlus className="h-3 w-3 mr-1.5 sm:mr-1 shrink-0" />
+                    <span className="truncate">Copy to All Days</span>
+                  </Button>
+                  {value !== 0 && (
                     <Button
-                      variant="outline"
+                      variant="ghost"
                       size="sm"
-                      onClick={() => handleCopyToAll(value)}
-                      className="w-full h-9 text-xs"
+                      onClick={() => handleCopyPrevious(value)}
+                      className="h-7 text-[10px] sm:text-xs justify-start sm:flex-1 touch-manipulation"
                     >
-                      <Copy className="h-3 w-3 mr-2" />
-                      Copy to all days
+                      <Copy className="h-3 w-3 mr-1.5 sm:mr-1 shrink-0" />
+                      <span className="truncate">Copy from {daysOfWeek[value - 1].short}</span>
                     </Button>
-                    
-                    {value !== 0 && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleCopyPrevious(value)}
-                        className="w-full h-9 text-xs"
-                      >
-                        <Copy className="h-3 w-3 mr-2" />
-                        Copy from {daysOfWeek[value - 1].label}
-                      </Button>
-                    )}
-                  </div>
-                )}
-              </div>
+                  )}
+                </div>
+              )}
 
-              <div className="space-y-3">
-                {/* Time Blocks */}
-                {blocks.length > 0 ? (
-                  <div className="space-y-3">
-                    {blocks.map((block, index) => (
-                      <div key={index} className="p-3 bg-card border rounded-lg space-y-3">
-                        {/* Mobile Time Inputs */}
-                        <div className="grid grid-cols-2 gap-3">
-                          <div className="space-y-1">
-                            <Label htmlFor={`${value}-${index}-start`} className="text-xs font-medium">
-                              Start
-                            </Label>
-                            <Input
-                              id={`${value}-${index}-start`}
-                              type="time"
-                              value={block.start_time}
-                              onChange={(e) => handleTimeChange(value, index, 'start_time', e.target.value)}
-                              className="h-10 text-sm"
-                            />
-                          </div>
-                          
-                          <div className="space-y-1">
-                            <Label htmlFor={`${value}-${index}-end`} className="text-xs font-medium">
-                              End
-                            </Label>
-                            <Input
-                              id={`${value}-${index}-end`}
-                              type="time"
-                              value={block.end_time}
-                              onChange={(e) => handleTimeChange(value, index, 'end_time', e.target.value)}
-                              className="h-10 text-sm"
-                            />
-                          </div>
-                        </div>
+              {/* Time Blocks */}
+              {blocks.length > 0 ? (
+                <div className="space-y-2">
+                  {blocks.map((block, index) => (
+                    <TimeSlot
+                      key={index}
+                      block={block}
+                      index={index}
+                      dayValue={value}
+                      onUpdate={handleTimeChange}
+                      onRemove={handleRemoveBlock}
+                    />
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-6 sm:py-4 text-muted-foreground">
+                  <Clock className="h-6 w-6 sm:h-8 sm:w-8 mx-auto mb-1.5 sm:mb-2 opacity-30" />
+                  <p className="text-[10px] sm:text-xs">No hours set</p>
+                </div>
+              )}
 
-                        {/* Duration and Remove */}
-                        <div className="flex items-center justify-between">
-                          <Badge variant="secondary" className="text-xs">
-                            {(() => {
-                              const start = new Date(`2000-01-01 ${block.start_time}`)
-                              const end = new Date(`2000-01-01 ${block.end_time}`)
-                              const diffMs = end - start
-                              const hours = Math.floor(diffMs / (1000 * 60 * 60))
-                              const minutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60))
-                              return hours > 0 ? `${hours}h ${minutes}m` : `${minutes}m`
-                            })()}
-                          </Badge>
-
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleRemoveBlock(value, index)}
-                            className="h-8 w-8 p-0 text-destructive hover:text-destructive"
-                          >
-                            <X className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="text-center py-6 text-muted-foreground">
-                    <Clock className="h-6 w-6 mx-auto mb-2 opacity-50" />
-                    <p className="text-sm">No hours set</p>
-                    <p className="text-xs">Tap "Add" to set hours</p>
-                  </div>
-                )}
-
-                {/* Duplicate Warning */}
-                {showDuplicateWarning && (
-                  <Alert variant="destructive">
-                    <AlertTriangle className="h-4 w-4" />
-                    <AlertDescription className="text-sm">
-                      Duplicate time blocks detected. Please adjust conflicting times.
-                    </AlertDescription>
-                  </Alert>
-                )}
-              </div>
+              {/* Duplicate Warning - Mobile Optimized */}
+              {showDuplicateWarning && (
+                <Alert variant="destructive" className="mt-2 sm:mt-3">
+                  <AlertTriangle className="h-3 w-3 sm:h-4 sm:w-4" />
+                  <AlertDescription className="text-[10px] sm:text-xs">
+                    Duplicate times detected
+                  </AlertDescription>
+                </Alert>
+              )}
             </div>
           )
         })}
       </div>
-
-      {/* Mobile Help Section */}
-      <Card className="border-blue-200 bg-blue-50/50">
-        <CardHeader className="pb-3">
-          <CardTitle className="text-base flex items-center gap-2 text-blue-700">
-            <Info className="h-4 w-4" />
-            Tips
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="text-sm text-blue-700 space-y-2">
-          <p>• Use Quick Setup for common schedules</p>
-          <p>• Copy buttons help set similar hours</p>
-          <p>• Each day can have multiple time blocks</p>
-          <p>• Times cannot overlap within a day</p>
-        </CardContent>
-      </Card>
     </div>
   )
 }

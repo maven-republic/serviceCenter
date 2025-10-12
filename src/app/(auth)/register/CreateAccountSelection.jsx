@@ -16,18 +16,16 @@ export default function CreateAccountSelection() {
             <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-foreground">
               Create your Account
             </h1>
-            <p className="text-sm sm:text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed">
-              Choose the account type that best describes your needs
-            </p>
+            
           </div>
 
           {/* Selection Cards - Mobile optimized */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
             
             {/* Customer Card - Mobile optimized */}
-            <Card className="auth-card hover:shadow-lg transition-all duration-300 border-2 hover:border-primary/20 group">
+            <Card className="auth-card">
               <CardHeader className="text-center pb-3 sm:pb-4 p-4 sm:p-6">
-                <div className="mx-auto w-12 sm:w-16 h-12 sm:h-16 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center mb-3 sm:mb-4 group-hover:scale-110 transition-transform duration-300">
+                <div className="mx-auto w-12 sm:w-16 h-12 sm:h-16 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center mb-3 sm:mb-4">
                   <Users className="h-6 sm:h-8 w-6 sm:w-8 text-blue-600 dark:text-blue-400" />
                 </div>
                 <CardTitle className="text-xl sm:text-2xl text-card-foreground">Customer</CardTitle>
@@ -70,9 +68,9 @@ export default function CreateAccountSelection() {
             </Card>
 
             {/* Professional Card - Mobile optimized */}
-            <Card className="auth-card hover:shadow-lg transition-all duration-300 border-2 hover:border-primary/20 group">
+            <Card className="auth-card">
               <CardHeader className="text-center pb-3 sm:pb-4 p-4 sm:p-6">
-                <div className="mx-auto w-12 sm:w-16 h-12 sm:h-16 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mb-3 sm:mb-4 group-hover:scale-110 transition-transform duration-300">
+                <div className="mx-auto w-12 sm:w-16 h-12 sm:h-16 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mb-3 sm:mb-4">
                   <Briefcase className="h-6 sm:h-8 w-6 sm:w-8 text-green-600 dark:text-green-400" />
                 </div>
                 <CardTitle className="text-xl sm:text-2xl text-card-foreground">Professional</CardTitle>

@@ -1,11 +1,160 @@
 // src/app/api/appointments/route.js
-// Enhanced to support targeted marketplace workflow - FIXED VERSION
+// FIXED: Now validates availability before creating appointments
 
 import { createClient } from '@/utils/supabase/server'
 import { NextResponse } from 'next/server'
 
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
+
+// Helper function to check if a time slot is available
+async function checkAvailability(professionalId, requestedDateTime, duration = 60) {
+  try {
+    const supabase = await createClient()
+    const requestedStart = new Date(requestedDateTime)
+    const requestedEnd = new Date(requestedStart.getTime() + (duration * 60 * 1000))
+
+    // Get the day of week and time for the requested slot
+    const dayOfWeek = requestedStart.getUTCDay()
+    const timeString = requestedStart.toISOString().split('T')[1].substring(0, 8) // HH:MM:SS
+    const dateString = requestedStart.toISOString().split('T')[0]
+
+    console.log('🔍 Checking availability:', {
+      professionalId,
+      dateString,
+      dayOfWeek,
+      timeString,
+      requestedStart: requestedStart.toISOString(),
+      requestedEnd: requestedEnd.toISOString()
+    })
+
+    // Check for date-specific override first
+    const { data: override } = await supabase
+      .from('availability_override')
+      .select('*')
+      .eq('professional_id', professionalId)
+      .eq('override_date', dateString)
+      .maybeSingle()
+
+    if (override) {
+      console.log('📅 Found override:', override)
+      
+      // If override says unavailable, reject immediately
+      if (!override.is_available) {
+        console.log('❌ Override blocks this date')
+        return { available: false, reason: 'Professional unavailable on this date' }
+      }
+      
+      // Check if requested time falls within override times
+      if (timeString < override.start_time || timeString >= override.end_time) {
+        console.log('❌ Time outside override hours')
+        return { available: false, reason: 'Requested time outside available hours' }
+      }
+    } else {
+      // No override - check regular weekly availability
+      const { data: regularAvailability } = await supabase
+        .from('availability')
+        .select('*')
+        .eq('professional_id', professionalId)
+        .eq('day_of_week', dayOfWeek)
+      
+      console.log('📆 Regular availability for day', dayOfWeek, ':', regularAvailability)
+      
+      if (!regularAvailability || regularAvailability.length === 0) {
+        console.log('❌ No availability set for this day of week')
+        return { available: false, reason: 'Professional not available on this day' }
+      }
+      
+      // Check if requested time falls within any availability slot
+      const matchingSlot = regularAvailability.find(slot => 
+        timeString >= slot.start_time && timeString < slot.end_time
+      )
+      
+      if (!matchingSlot) {
+        console.log('❌ Time outside regular hours')
+        return { available: false, reason: 'Requested time outside available hours' }
+      }
+      
+      // Verify end time also fits in the slot
+      const endTimeString = requestedEnd.toISOString().split('T')[1].substring(0, 8)
+      if (endTimeString > matchingSlot.end_time) {
+        console.log('❌ Appointment duration exceeds available time')
+        return { available: false, reason: 'Appointment duration exceeds available time block' }
+      }
+    }
+
+    // Check for minimum notice requirement
+    const { data: professional } = await supabase
+      .from('individual_professional')
+      .select('min_notice_hours')
+      .eq('professional_id', professionalId)
+      .single()
+
+    const minNoticeHours = professional?.min_notice_hours || 1
+    const now = new Date()
+    const minBookingTime = new Date(now.getTime() + (minNoticeHours * 60 * 60 * 1000))
+
+    if (requestedStart < minBookingTime) {
+      console.log('❌ Not enough notice time')
+      return { 
+        available: false, 
+        reason: `Requires at least ${minNoticeHours} hours notice` 
+      }
+    }
+
+    // Check for conflicting appointments
+    const { data: existingAppointments } = await supabase
+      .from('appointment')
+      .select('session, duration')
+      .eq('professional_id', professionalId)
+      .in('status', ['approved', 'converting', 'converted'])
+      .gte('session', dateString)
+      .lte('session', `${dateString}T23:59:59`)
+
+    if (existingAppointments) {
+      for (const appt of existingAppointments) {
+        const apptStart = new Date(appt.session)
+        const apptEnd = new Date(apptStart.getTime() + ((appt.duration || 60) * 60 * 1000))
+        
+        // Check for overlap
+        if (requestedStart < apptEnd && requestedEnd > apptStart) {
+          console.log('❌ Conflicts with existing appointment')
+          return { available: false, reason: 'Time slot conflicts with existing appointment' }
+        }
+      }
+    }
+
+    // Check for conflicting bookings
+    const { data: existingBookings } = await supabase
+      .from('booking')
+      .select('scheduled_start, scheduled_end, duration_minutes')
+      .eq('professional_id', professionalId)
+      .in('status', ['pending', 'accepted', 'confirmed', 'progressing'])
+      .gte('scheduled_start', dateString)
+      .lte('scheduled_start', `${dateString}T23:59:59`)
+
+    if (existingBookings) {
+      for (const booking of existingBookings) {
+        const bookingStart = new Date(booking.scheduled_start)
+        const bookingEnd = booking.scheduled_end 
+          ? new Date(booking.scheduled_end)
+          : new Date(bookingStart.getTime() + ((booking.duration_minutes || 60) * 60 * 1000))
+        
+        // Check for overlap
+        if (requestedStart < bookingEnd && requestedEnd > bookingStart) {
+          console.log('❌ Conflicts with existing booking')
+          return { available: false, reason: 'Time slot conflicts with existing booking' }
+        }
+      }
+    }
+
+    console.log('✅ Time slot is available!')
+    return { available: true }
+  } catch (error) {
+    console.error('❌ Error checking availability:', error)
+    return { available: false, reason: 'Error checking availability', error: error.message }
+  }
+}
 
 // GET /api/appointments - Fetch appointments
 export async function GET(request) {
@@ -17,12 +166,12 @@ export async function GET(request) {
     
     // Extract query parameters
     const professional_id = searchParams.get('professional_id')
-    const professional_filter = searchParams.get('professional_filter') // 'available', 'assigned'
+    const professional_filter = searchParams.get('professional_filter')
     const status = searchParams.get('status')
     const limit = parseInt(searchParams.get('limit')) || 10
     const offset = parseInt(searchParams.get('offset')) || 0
 
-    console.log('🔍 Query params:', { professional_id, professional_filter, status, limit, offset })
+    console.log('📋 Query params:', { professional_id, professional_filter, status, limit, offset })
 
     let query = supabase
       .from('appointment')
@@ -64,32 +213,24 @@ export async function GET(request) {
         )
       `, { count: 'exact' })
 
-    // ✅ ENHANCED: Handle different professional filters with invitation support
+    // Handle different professional filters
     if (professional_filter === 'available') {
       if (professional_id) {
-        // Show appointments that are either:
-        // 1. Open to all (no professional assigned, no recipients) 
-        // 2. Targeted to this specific professional (professional in recipients array)
-        console.log('🎯 Fetching available appointments including invitations for professional:', professional_id)
-        
         query = query
           .eq('status', 'pending')
           .is('professional_id', null)
           .or(`recipients.is.null,recipients.cs.{${professional_id}}`)
       } else {
-        // For general discovery without professional ID, just show open marketplace
-        console.log('🌐 Fetching general open marketplace appointments')
-        
         query = query
           .eq('status', 'pending')
           .is('professional_id', null)
           .is('recipients', null)
       }
     } else if (professional_filter === 'assigned' && professional_id) {
-      // Assigned to specific professional
-      query = query.eq('professional_id', professional_id)
+      query = query
+        .eq('professional_id', professional_id)
+        .in('status', ['approved', 'converting'])
     } else if (professional_id) {
-      // All appointments related to this professional
       query = query.eq('professional_id', professional_id)
     }
 
@@ -113,7 +254,7 @@ export async function GET(request) {
 
     console.log(`✅ Found ${appointments?.length || 0} appointments`)
 
-    // ✅ NEW: Add invitation metadata to appointments
+    // Add invitation metadata
     const enrichedAppointments = appointments?.map(appointment => {
       const isInvited = professional_id && appointment.recipients && 
         appointment.recipients.includes(professional_id)
@@ -133,7 +274,6 @@ export async function GET(request) {
       limit,
       offset
     })
-
   } catch (error) {
     console.error('💥 CRITICAL ERROR in appointments GET API:', error)
     return NextResponse.json(
@@ -151,9 +291,8 @@ export async function POST(request) {
     const supabase = await createClient()
     const body = await request.json()
     
-    console.log('📝 Received request body keys:', Object.keys(body));
+    console.log('📋 Received request body keys:', Object.keys(body));
 
-    // ✅ FIXED: Extract fields that match your database schema
     const {
       customer_id,
       professional_id,
@@ -162,7 +301,8 @@ export async function POST(request) {
       title,
       description,
       deadline,
-      session, // This will map to your 'session' column
+      session,
+      duration = 60,
       urgency,
       customer_message,
       complexity,
@@ -170,7 +310,7 @@ export async function POST(request) {
       service_location,
       attachment_ids,
       open_to_all_professionals = true,
-      recipients = [], // For targeted marketplace (renamed from selected_professional_ids)
+      recipients = [],
       max_interests = 10,
       auto_accept_verified = false
     } = body
@@ -182,6 +322,7 @@ export async function POST(request) {
       address_id,
       title,
       session,
+      duration,
       description_length: description?.length,
       attachment_count: attachment_ids?.length,
       recipients_count: recipients?.length,
@@ -236,6 +377,23 @@ export async function POST(request) {
         )
       }
       console.log('✅ Professional found:', professional.professional_id);
+      
+      // 🆕 FIX #1: CHECK AVAILABILITY BEFORE CREATING APPOINTMENT
+      console.log('🔍 Checking if professional is available at requested time...');
+      const availabilityCheck = await checkAvailability(professional_id, session, duration)
+      
+      if (!availabilityCheck.available) {
+        console.error('❌ Professional not available:', availabilityCheck.reason);
+        return NextResponse.json(
+          { 
+            error: 'Professional is not available at the requested time',
+            reason: availabilityCheck.reason,
+            details: availabilityCheck.error
+          },
+          { status: 409 }
+        )
+      }
+      console.log('✅ Professional is available at requested time');
     }
 
     // Validate selected professionals (for targeted marketplace)
@@ -283,7 +441,7 @@ export async function POST(request) {
 
     // Validate attachments if provided
     if (attachment_ids && attachment_ids.length > 0) {
-      console.log('📎 Validating', attachment_ids.length, 'attachments');
+      console.log('🔎 Validating', attachment_ids.length, 'attachments');
       
       const assetIds = attachment_ids.map(att => att.asset_id)
       const { data: assets, error: assetError } = await supabase
@@ -313,7 +471,7 @@ export async function POST(request) {
 
     // Handle service location - create new address if provided
     if (service_location && !address_id) {
-      console.log('📍 Creating new service address');
+      console.log('🔍 Creating new service address');
       
       const { data: newAddress, error: addressError } = await supabase
         .from('address')
@@ -348,10 +506,10 @@ export async function POST(request) {
       console.log('✅ Service address created:', finalAddressId);
     }
 
-    // ✅ FIXED: Validate dates properly
+    // Validate dates properly
     const now = new Date()
     const startDate = new Date(session)
-    
+
     if (startDate <= now) {
       return NextResponse.json(
         { error: 'Preferred start time must be in the future' },
@@ -381,7 +539,7 @@ export async function POST(request) {
       recipientsCount: recipients.length
     });
 
-    // ✅ FIXED: Create appointment with correct field mapping
+    // Create appointment
     console.log('🔥 Creating appointment record...');
     const appointmentInformation = {
       customer_id,
@@ -391,7 +549,7 @@ export async function POST(request) {
       title: title || service.name,
       description: description,
       deadline: deadline || null,
-      session: session, // ✅ This matches your database column
+      session: session,
       urgency: urgency || 'standard',
       customer_message: customer_message || null,
       complexity: complexity || null,
@@ -400,16 +558,8 @@ export async function POST(request) {
       interest_count: 0,
       last_interest_at: null,
       recipients: isTargetedMarketplace ? recipients : null,
-      duration: 60
+      duration: duration
     }
-
-    console.log('📝 Appointment data to insert (keys):', Object.keys(appointmentInformation));
-    console.log('📝 Critical fields:', {
-      customer_id: appointmentInformation.customer_id,
-      service_id: appointmentInformation.service_id,
-      session: appointmentInformation.session,
-      description_length: appointmentInformation.description?.length
-    });
 
     const { data: appointment, error: appointmentError } = await supabase
       .from('appointment') 
@@ -430,7 +580,7 @@ export async function POST(request) {
     // Handle file attachments
     let createdAttachments = []
     if (attachment_ids && attachment_ids.length > 0) {
-      console.log('📎 Creating attachment records...');
+      console.log('🔎 Creating attachment records...');
       
       const attachmentRecords = attachment_ids.map((attachment, index) => ({
         appointment_id: appointment.appointment_id,
@@ -454,11 +604,11 @@ export async function POST(request) {
       }
     }
 
-    // ✅ MAJOR FIX: Handle different workflow types - NO AUTO-INTERESTS FOR TARGETED
+    // Handle different workflow types - NO AUTO-INTERESTS FOR TARGETED
     let createdInterests = []
 
     if (isDirectBooking) {
-      // ✅ Direct booking - create selected interest (ONLY workflow that auto-creates)
+      // Direct booking - create selected interest
       console.log('🎯 Creating direct professional interest...');
       
       const { data: directInterest, error: interestError } = await supabase
@@ -495,16 +645,10 @@ export async function POST(request) {
       }
 
     } else if (isTargetedMarketplace) {
-      // ✅ FIXED: Targeted marketplace - NO automatic interests created
-      // Store recipients for professional discovery, but professionals must express interest themselves
       console.log('🎯 Targeted marketplace appointment created - selected professionals must discover and express interest');
       console.log('🎯 Recipients stored in appointment.recipients field:', recipients.length, 'professionals');
       
-      // Recipients are already stored in the appointment.recipients field
-      // Professionals will see this as an "invitation" but must actively respond
-      
     } else if (isOpenMarketplace) {
-      // ✅ Open marketplace - NO automatic interests created
       console.log('🎯 Open marketplace appointment created - professionals will discover and respond');
     }
 
@@ -512,14 +656,12 @@ export async function POST(request) {
 
     // Get enriched appointment data to return
     const [serviceData, customerData, professionalData, addressData, attachmentData] = await Promise.all([
-      // Service data
       supabase
         .from('service')
         .select('service_id, name, description, base_price, duration_minutes')
         .eq('service_id', service_id)
         .single(),
         
-      // Customer data with account
       supabase
         .from('individual_customer')
         .select(`
@@ -535,7 +677,6 @@ export async function POST(request) {
         .eq('customer_id', customer_id)
         .single(),
         
-      // Professional data with account (if exists)
       professional_id ? supabase
         .from('individual_professional')
         .select(`
@@ -551,14 +692,12 @@ export async function POST(request) {
         .eq('professional_id', professional_id)
         .single() : { data: null },
         
-      // Address data (if exists)
       finalAddressId ? supabase
         .from('address')
         .select('address_id, formatted_address, street_address, city, parish, latitude, longitude')
         .eq('address_id', finalAddressId)
         .single() : { data: null },
 
-      // Attachment data with asset details
       supabase
         .from('attachment')
         .select(`
@@ -579,7 +718,6 @@ export async function POST(request) {
         .order('position')
     ])
 
-    // Combine the results
     const enrichedAppointment = {
       ...appointment,
       service: serviceData.data,
@@ -591,7 +729,6 @@ export async function POST(request) {
       workflow_type: isDirectBooking ? 'direct' : isTargetedMarketplace ? 'targeted' : 'marketplace'
     }
 
-    // ✅ ENHANCED: Better success messages that reflect the new workflow
     const successMessage = isDirectBooking 
       ? 'Direct appointment request sent to professional'
       : isTargetedMarketplace 
@@ -603,7 +740,6 @@ export async function POST(request) {
       appointment: enrichedAppointment,
       message: successMessage
     }, { status: 201 })
-
   } catch (error) {
     console.error('💥 CRITICAL ERROR in appointments API:', {
       name: error.name,

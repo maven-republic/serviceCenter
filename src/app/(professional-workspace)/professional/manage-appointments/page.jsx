@@ -26,10 +26,9 @@ import AppointmentInformationTable from '@/components/professional-workspace/tab
 import AppointmentInformationView from '@/components/sheet/AppointmentInformationView'
 import AppointmentSearch from '@/components/professional-workspace/appointments/AppointmentSearch'
 import AppointmentEmptyState from '@/components/professional-workspace/appointments/AppointmentEmptyState'
-import AppointmentLoadingState from '@/components/professional-workspace/appointments/AppointmentLoadingState'
+// REMOVED: import AppointmentLoadingState from '@/components/professional-workspace/appointments/AppointmentLoadingState'
 import AppointmentPagination from '@/components/professional-workspace/appointments/AppointmentPagination'
 import AppointmentErrorState from '@/components/professional-workspace/appointments/AppointmentErrorState'
-import AppointmentProfileIncomplete from '@/components/professional-workspace/appointments/AppointmentProfileIncomplete'
 import AppointmentAttachmentViewer from '@/components/professional-workspace/appointments/AppointmentAttachmentViewer'
 import { useTableData } from '@/components/professional-workspace/table/primitives/useTableData'
 import { useTableSelection } from '@/components/professional-workspace/table/primitives/useTableSelection'
@@ -725,62 +724,74 @@ export default function ManageAppointments() {
     fetchProfessionalData()
   }, [activeTab, fetchData, fetchTabCounts, fetchProfessionalData])
 
-  // ✅ UPDATED: Express interest with enhanced feedback and auto-redirect
-  const handleExpressInterest = useCallback(async (appointmentId, interestData) => {
-    if (!appointmentId) return
+  // âœ… UPDATED: Express interest with better error handling and debugging
+const handleExpressInterest = useCallback(async (appointmentId, interestData) => {
+  if (!appointmentId) return
 
-    const appointment = appointments.find(apt => apt.appointment_id === appointmentId)
-    const isInvitation = appointment?.is_invited || false
+  const appointment = appointments.find(apt => apt.appointment_id === appointmentId)
+  const isInvitation = appointment?.is_invited || false
 
-    try {
-      const requestBody = {
-        appointment_id: appointmentId,
-        professional_id: user.profile.professional_id,
-        ...interestData,
-        invitation_response: isInvitation,
-        intent: isInvitation ? 'high' : (interestData.intent || 'standard')
-      }
-
-      const response = await fetch('/api/interests', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(requestBody)
-      })
-
-      const responseText = await response.text()
-      let data
-      try {
-        data = JSON.parse(responseText)
-      } catch (parseError) {
-        throw new Error(`Server returned invalid JSON. Status: ${response.status}`)
-      }
-
-      if (!response.ok) {
-        const errorMessage = data.error || data.message || `HTTP ${response.status}: ${response.statusText}`
-        throw new Error(errorMessage)
-      }
-
-      console.log('✅ Interest expressed successfully:', data)
-
-      handleRefresh()
-      clearSelection()
-
-      if (showSheet) {
-        setShowSheet(false)
-        setSelectedAppointment(null)
-      }
-
-      setTimeout(() => {
-        setActiveTab('interests')
-      }, 100)
-
-    } catch (err) {
-      console.error('❌ Error expressing interest:', err)
-      setError(`Failed to express interest: ${err.message}`)
+  try {
+    const requestBody = {
+      appointment_id: appointmentId,
+      professional_id: user.profile.professional_id,
+      ...interestData,
+      invitation_response: isInvitation,
+      intent: isInvitation ? 'high' : (interestData.intent || 'standard')
     }
-  }, [user?.profile?.professional_id, showSheet, appointments, handleRefresh, clearSelection])
+
+    console.log('ðŸ"¤ Sending interest request:', requestBody)
+
+    const response = await fetch('/api/interests', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(requestBody)
+    })
+
+    const responseText = await response.text()
+    console.log('ðŸ"¥ Raw response:', responseText)
+    console.log('ðŸ"Š Response status:', response.status)
+    console.log('ðŸ"‹ Response headers:', Object.fromEntries(response.headers.entries()))
+
+    let data
+    try {
+      data = JSON.parse(responseText)
+    } catch (parseError) {
+      console.error('âŒ JSON Parse Error:', parseError)
+      console.error('âŒ Response was:', responseText.substring(0, 500))
+      throw new Error(
+        `Server returned invalid JSON (Status ${response.status}). ` +
+        `Response starts with: "${responseText.substring(0, 100)}..."`
+      )
+    }
+
+    if (!response.ok) {
+      const errorMessage = data.error || data.message || `HTTP ${response.status}: ${response.statusText}`
+      throw new Error(errorMessage)
+    }
+
+    console.log('âœ… Interest expressed successfully:', data)
+
+    handleRefresh()
+    clearSelection()
+
+    if (showSheet) {
+      setShowSheet(false)
+      setSelectedAppointment(null)
+    }
+
+    setTimeout(() => {
+      setActiveTab('interests')
+    }, 100)
+
+  } catch (err) {
+    console.error('âŒ Error expressing interest:', err)
+    alert(`Failed to express interest: ${err.message}`)
+    setError(`Failed to express interest: ${err.message}`)
+  }
+}, [user?.profile?.professional_id, showSheet, appointments, handleRefresh, clearSelection])
 
   // Update existing interest
   const handleUpdateInterest = useCallback(async (interestId, updateData) => {
@@ -815,16 +826,23 @@ export default function ManageAppointments() {
     }
   }, [showSheet, handleRefresh, clearSelection])
 
-  // Handle appointment action (accept/decline)
-  const handleAppointmentAction = useCallback(async (appointmentId, action, additionalData = {}) => {
-    if (!appointmentId || !action) return
+// Handle appointment action (accept/decline) - FINAL FIX
+const handleAppointmentAction = useCallback(async (appointmentId, action, additionalData = {}) => {
+  if (!appointmentId || !action) return
 
-    try {
+  try {
+    // Get current appointment to check its status
+    const currentAppointment = appointments.find(apt => apt.appointment_id === appointmentId)
+    
+    console.log('Current appointment status:', currentAppointment?.status)
+    
+    if (action === 'decline') {
+      // Decline is straightforward
       const updateData = {
-        status: action === 'accept' ? 'accepted' : 'declined',
+        status: 'declined',
         ...additionalData
       }
-
+      
       const response = await fetch(`/api/appointments/${appointmentId}`, {
         method: 'PATCH',
         headers: {
@@ -836,7 +854,7 @@ export default function ManageAppointments() {
       const data = await response.json()
 
       if (!response.ok) {
-        throw new Error(data.error || `Failed to ${action} appointment`)
+        throw new Error(data.error || `Failed to decline appointment`)
       }
 
       setAppointments(prev => 
@@ -846,46 +864,179 @@ export default function ManageAppointments() {
             : apt
         )
       )
+    } else {
+      // For accept: Check status and handle accordingly
+      const status = currentAppointment?.status
+      
+      // If already converting or converted, don't update status - just close and refresh
+      if (['converting', 'converted'].includes(status)) {
+        console.log(`Appointment already ${status}, skipping status update`)
+        
+        // Close sheet
+        if (showSheet) {
+          setShowSheet(false)
+          setSelectedAppointment(null)
+        }
+        
+        // Refresh to get latest booking data
+        handleRefresh()
+        return
+      }
+      
+      // If approved, we need to trigger the conversion without sending status again
+      // The API auto-converts approved → converting, so we shouldn't send status update
+      if (status === 'approved') {
+        console.log('Appointment already approved, refreshing to get conversion status')
+        
+        // Close sheet
+        if (showSheet) {
+          setShowSheet(false)
+          setSelectedAppointment(null)
+        }
+        
+        // Refresh to get the booking
+        handleRefresh()
+        return
+      }
+      
+      // Only update to 'approved' if status is something else (pending, interested, etc.)
+      const updateData = {
+        status: 'approved',
+        ...additionalData
+      }
+      
+      const response = await fetch(`/api/appointments/${appointmentId}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(updateData)
+      })
 
-      if (showSheet) {
-        setShowSheet(false)
-        setSelectedAppointment(null)
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.error || `Failed to accept appointment`)
       }
 
-    } catch (err) {
-      console.error(`❌ Error ${action}ing appointment:`, err)
-      setError(err.message)
+      setAppointments(prev => 
+        prev.map(apt => 
+          apt.appointment_id === appointmentId 
+            ? { ...apt, ...data.appointment }
+            : apt
+        )
+      )
     }
-  }, [showSheet])
 
-  // Handle view appointment
+    // Close sheet and refresh
+    if (showSheet) {
+      setShowSheet(false)
+      setSelectedAppointment(null)
+    }
+    
+    handleRefresh()
+
+  } catch (err) {
+    console.error(`Error ${action}ing appointment:`, err)
+    setError(err.message)
+  }
+}, [showSheet, appointments, handleRefresh])
+
+// Handle view appointment - FIXED to fetch complete interest data
   const handleViewAppointment = useCallback(async (appointmentId, additionalData = null) => {
     console.log('👁️ Viewing appointment:', appointmentId, { additionalData, currentTab: activeTab })
 
-    // 🔥 CRITICAL FIX: Handle interests mode data directly
+    // 🔥 FIXED: For interests mode, always fetch complete interest data
     if (additionalData?.mode === 'interests' && additionalData?.interestData) {
-      const enhancedInterestData = {
-        ...additionalData.interestData,
-        professional_id: additionalData.interestData.professional_id || 
-                        additionalData.interestData.professionalId ||
-                        user?.profile?.professional_id
+      try {
+        // Fetch complete interest data to ensure we have all fields (including assessment)
+        const interestId = additionalData.interestData.interest_id
+        
+        console.log('🔍 Fetching complete interest data for:', interestId)
+        
+        const interestResponse = await fetch(`/api/interests/${interestId}`)
+        
+        if (interestResponse.ok) {
+          const interestData = await interestResponse.json()
+          
+          // Use the complete interest data from API
+          const completeInterest = interestData.interest || additionalData.interestData
+          
+          console.log('✅ Complete interest loaded:', {
+            id: completeInterest.interest_id,
+            assessment: completeInterest.assessment,
+            amount: completeInterest.amount,
+            status: completeInterest.status
+          })
+          
+          const enhancedInterestData = {
+            ...completeInterest,
+            professional_id: completeInterest.professional_id || 
+                            completeInterest.professionalId ||
+                            user?.profile?.professional_id
+          }
+          
+          setSelectedAppointment({
+            ...additionalData.appointmentData,
+            mode: 'interests',
+            interests: [enhancedInterestData],
+            viewMode: activeTab,
+            interest_id: enhancedInterestData.interest_id,
+            status: enhancedInterestData.status,
+            professional_id: enhancedInterestData.professional_id
+          })
+          
+          setShowSheet(true)
+          return
+        } else {
+          console.warn('⚠️ Failed to fetch complete interest, using cached data')
+          // Fall back to cached data
+          const enhancedInterestData = {
+            ...additionalData.interestData,
+            professional_id: additionalData.interestData.professional_id || 
+                            additionalData.interestData.professionalId ||
+                            user?.profile?.professional_id
+          }
+          
+          setSelectedAppointment({
+            ...additionalData.appointmentData,
+            mode: 'interests',
+            interests: [enhancedInterestData],
+            viewMode: activeTab,
+            interest_id: enhancedInterestData.interest_id,
+            status: enhancedInterestData.status,
+            professional_id: enhancedInterestData.professional_id
+          })
+          
+          setShowSheet(true)
+          return
+        }
+      } catch (error) {
+        console.error('❌ Error fetching complete interest:', error)
+        // Fall back to cached data
+        const enhancedInterestData = {
+          ...additionalData.interestData,
+          professional_id: additionalData.interestData.professional_id || 
+                          additionalData.interestData.professionalId ||
+                          user?.profile?.professional_id
+        }
+        
+        setSelectedAppointment({
+          ...additionalData.appointmentData,
+          mode: 'interests',
+          interests: [enhancedInterestData],
+          viewMode: activeTab,
+          interest_id: enhancedInterestData.interest_id,
+          status: enhancedInterestData.status,
+          professional_id: enhancedInterestData.professional_id
+        })
+        
+        setShowSheet(true)
+        return
       }
-      
-      setSelectedAppointment({
-        ...additionalData.appointmentData,
-        mode: 'interests',
-        interests: [enhancedInterestData],
-        viewMode: activeTab,
-        interest_id: enhancedInterestData.interest_id,
-        status: enhancedInterestData.status,
-        professional_id: enhancedInterestData.professional_id
-      })
-      
-      setShowSheet(true)
-      return
     }
 
-    // 🔧 NEW: Handle available appointments (including those with existing responses)
+    // 🔧 Handle available appointments (including those with existing responses)
     if (activeTab === 'available') {
       if (additionalData?.appointmentData) {
         setSelectedAppointment({
@@ -900,7 +1051,7 @@ export default function ManageAppointments() {
       }
     }
 
-    // 📄 Original API fetch logic for other cases
+    // 🔄 Original API fetch logic for other cases
     try {
       const response = await fetch(`/api/appointments/${appointmentId}`)
       const data = await response.json()
@@ -1021,16 +1172,13 @@ export default function ManageAppointments() {
       fetchData(newPage)
     }
   }, [fetchData, pagination.totalPages])
-
-  // Mobile Cards View Component
+// Mobile Cards View Component
   const MobileCardsView = ({ data }) => {
     if (loading) {
       return (
-        <AppointmentLoadingState 
-          mode={activeTab}
-          viewMode="cards"
-          rowCount={5}
-        />
+        <div className="flex items-center justify-center py-12">
+          <RefreshCw className="h-8 w-8 animate-spin text-muted-foreground" />
+        </div>
       )
     }
 
@@ -1068,10 +1216,6 @@ export default function ManageAppointments() {
     )
   }
 
-  // Early return for incomplete profile
-  if (!user?.profile?.professional_id) {
-    return <AppointmentProfileIncomplete />
-  }
 
   return (
     <div className={`space-y-3 ${isMobile ? 'p-4' : 'p-6'} bg-background min-h-screen`}>
@@ -1117,7 +1261,7 @@ export default function ManageAppointments() {
             value="interests" 
             className="flex items-center justify-center gap-2 py-2 px-2 sm:px-4 min-h-[48px] sm:min-h-[40px] data-[state=active]:bg-background data-[state=active]:text-foreground"
           >
-            <span className="text-xs sm:text-sm font-medium whitespace-nowrap">My Interests</span>
+            <span className="text-xs sm:text-sm font-medium whitespace-nowrap">Interests</span>
             {tabCounts.interests > 0 && (
               <Badge variant="secondary" className="text-xs h-4 px-1.5 min-w-[20px] flex items-center justify-center">
                 {tabCounts.interests}
@@ -1167,8 +1311,7 @@ export default function ManageAppointments() {
           )}
         </div>
 
-        {/* Tab Content */}
-        <TabsContent value="available" className="space-y-4">
+     <TabsContent value="available" className="space-y-4">
           {tabCounts.invitations > 0 && (
             <Card className="border-blue-200 bg-blue-50">
               <CardContent className="p-4">
@@ -1194,12 +1337,6 @@ export default function ManageAppointments() {
           <div className="space-y-1">
             {isMobile && viewMode === 'cards' ? (
               <MobileCardsView data={processedData} />
-            ) : loading ? (
-              <AppointmentLoadingState 
-                mode={activeTab}
-                viewMode="table"
-                rowCount={8}
-              />
             ) : (
               <>
                 <AppointmentInformationTable
@@ -1241,12 +1378,6 @@ export default function ManageAppointments() {
           <div className="space-y-1">
             {isMobile && viewMode === 'cards' ? (
               <MobileCardsView data={processedData} />
-            ) : loading ? (
-              <AppointmentLoadingState 
-                mode={activeTab}
-                viewMode="table"
-                rowCount={8}
-              />
             ) : (
               <>
                 <AppointmentInformationTable
@@ -1284,16 +1415,10 @@ export default function ManageAppointments() {
           </div>
         </TabsContent>
 
-        <TabsContent value="assigned" className="space-y-4">
+     <TabsContent value="assigned" className="space-y-4">
           <div className="space-y-1">
             {isMobile && viewMode === 'cards' ? (
               <MobileCardsView data={processedData} />
-            ) : loading ? (
-              <AppointmentLoadingState 
-                mode={activeTab}
-                viewMode="table"
-                rowCount={8}
-              />
             ) : (
               <>
                 <AppointmentInformationTable
