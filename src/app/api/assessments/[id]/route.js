@@ -80,7 +80,7 @@ export async function PATCH(request, { params }) {
     const supabase = await createClient()
     const body = await request.json()
 
-    console.log('🔥 Update data:', body)
+    console.log('📥 Update data:', body)
 
     // Get current assessment
     const { data: current, error: fetchError } = await supabase
@@ -180,26 +180,45 @@ export async function PATCH(request, { params }) {
       }
     })
 
-    // Validate status transitions
+    // ✅ UPDATED: Semantically correct status transitions for PATH B workflow
     if (body.status) {
       const validTransitions = {
-        'proposed': ['accepted', 'cancelled'],
-        'accepted': ['scheduled', 'cancelled'],
-        'scheduled': ['confirmed', 'active', 'cancelled'],
-        'confirmed': ['active', 'cancelled'],
-        'active': ['completed', 'cancelled'],
-        'completed': [],
-        'cancelled': [],
-        'absent': []
+        'proposed': ['accepted', 'cancelled', 'rejected'],
+        'accepted': ['active', 'cancelled'],      // Customer confirmed, can start or cancel
+        'active': ['completed', 'cancelled'],      // Assessment in progress, can complete or cancel
+        'completed': [],                           // Terminal state
+        'cancelled': [],                           // Terminal state
+        'rejected': [],                            // Terminal state
+        'absent': ['cancelled']                    // If marked absent, can only cancel
       }
 
       const allowed = validTransitions[current.status]
-      if (allowed && !allowed.includes(body.status)) {
-        return NextResponse.json(
-          { error: `Invalid status transition from ${current.status} to ${body.status}` },
-          { status: 400 }
-        )
+      
+      // Only validate if we have defined transitions
+      if (allowed !== undefined) {
+        if (!allowed.includes(body.status)) {
+          return NextResponse.json(
+            { 
+              error: `Invalid status transition from ${current.status} to ${body.status}`,
+              allowed_transitions: allowed,
+              current_status: current.status,
+              requested_status: body.status
+            },
+            { status: 400 }
+          )
+        }
       }
+    }
+
+    // ✅ NEW: Automatically set timestamps based on status transitions
+    if (body.status === 'active' && !body.started_at) {
+      updateData.started_at = new Date().toISOString()
+      console.log('🕐 Auto-setting started_at timestamp')
+    }
+    
+    if (body.status === 'completed' && !body.completed_at) {
+      updateData.completed_at = new Date().toISOString()
+      console.log('🕐 Auto-setting completed_at timestamp')
     }
 
     // Update assessment

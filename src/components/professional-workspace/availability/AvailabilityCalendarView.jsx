@@ -28,6 +28,9 @@ import {
   Circle,
   Edit
 } from 'lucide-react'
+// ✅ NEW IMPORTS - Step 1
+import SingleDateEditorModal from './SingleDateEditorModal'
+import RecurringDayEditorModal from './RecurringDayEditorModal'
 
 const weekdayLabels = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 
@@ -143,6 +146,11 @@ export default function AvailabilityCalendarView({
   const [currentDate, setCurrentDate] = useState(new Date())
   const [selectedDate, setSelectedDate] = useState(null)
   const [showDetailsModal, setShowDetailsModal] = useState(false)
+  
+  // ✅ NEW STATE - Step 1: Modal management
+  const [editMode, setEditMode] = useState(null) // 'single-date' | 'recurring-day' | null
+  const [editingDate, setEditingDate] = useState(null) // Date object for single date editor
+  const [editingDayIndex, setEditingDayIndex] = useState(null) // 0-6 for recurring day editor
 
   const start = startOfWeek(startOfMonth(currentDate))
   const end = endOfWeek(endOfMonth(currentDate))
@@ -169,6 +177,29 @@ export default function AvailabilityCalendarView({
   const handleDayClick = (date) => {
     setSelectedDate(date)
     setShowDetailsModal(true)
+  }
+
+  // ✅ NEW FUNCTIONS - Step 1: Modal openers
+  const handleOpenSingleDateEditor = (date) => {
+    setEditingDate(date)
+    setEditMode('single-date')
+    setShowDetailsModal(false) // Close details modal when opening editor
+  }
+
+  const handleOpenRecurringDayEditor = (dayIndex) => {
+    setEditingDayIndex(dayIndex)
+    setEditMode('recurring-day')
+    setShowDetailsModal(false) // Close details modal when opening editor
+  }
+
+  const handleCloseSingleDateEditor = () => {
+    setEditMode(null)
+    setEditingDate(null)
+  }
+
+  const handleCloseRecurringDayEditor = () => {
+    setEditMode(null)
+    setEditingDayIndex(null)
   }
 
   const getDuration = (start, end) => {
@@ -252,7 +283,7 @@ export default function AvailabilityCalendarView({
 
         {/* Hover Overlay */}
         {!isPast && (
-          <div className="absolute inset-0 bg-primary/0 group-hover:bg-primary/5 transition-colors duration-200 pointer-events-none rounded-sm" />
+          <div className="absolute inset-0 bg-primary/0 group-hover:bg-primary/5 transition-colors duration-200 rounded-sm pointer-events-none" />
         )}
       </button>
     )
@@ -308,7 +339,7 @@ export default function AvailabilityCalendarView({
                         <div className="flex items-center gap-2">
                           <Clock className="h-4 w-4 text-muted-foreground" />
                           <span className="font-medium">
-                            {formatTime12(slot.start_time)} — {formatTime12(slot.end_time)}
+                            {formatTime12(slot.start_time)} – {formatTime12(slot.end_time)}
                           </span>
                         </div>
                         <Badge variant="secondary" className="text-xs">
@@ -330,13 +361,10 @@ export default function AvailabilityCalendarView({
 
             {!isPast && (
               <div className="flex flex-col gap-2 pt-2">
+                {/* ✅ UPDATED - Step 1: Wire up the buttons */}
                 <Button
                   variant="outline"
-                  onClick={() => {
-                    setShowDetailsModal(false)
-                    // Trigger your existing edit date modal
-                    // You'll need to wire this up to your existing SingleDateEditorModal
-                  }}
+                  onClick={() => handleOpenSingleDateEditor(selectedDate)}
                   className="w-full"
                 >
                   <Edit className="h-4 w-4 mr-2" />
@@ -344,11 +372,7 @@ export default function AvailabilityCalendarView({
                 </Button>
                 <Button
                   variant="outline"
-                  onClick={() => {
-                    setShowDetailsModal(false)
-                    // Trigger your existing recurring edit modal
-                    // You'll need to wire this up to your existing RecurringDayEditorModal
-                  }}
+                  onClick={() => handleOpenRecurringDayEditor(selectedDate.getDay())}
                   className="w-full"
                 >
                   <Calendar className="h-4 w-4 mr-2" />
@@ -445,7 +469,7 @@ export default function AvailabilityCalendarView({
             
             <div className="flex items-center gap-1 text-muted-foreground">
               <Info className="h-3 w-3" />
-              <span>Click days for details</span>
+              <span>Click days to edit</span>
             </div>
           </div>
         </CardContent>
@@ -453,6 +477,64 @@ export default function AvailabilityCalendarView({
 
       {/* Details Modal */}
       <DayDetailsModal />
+
+      {/* ✅ NEW MODALS - Step 1 & 2: Render the editor modals with save logic */}
+      {/* Single Date Editor Modal */}
+      {editMode === 'single-date' && editingDate && (
+        <SingleDateEditorModal
+          isOpen={true}
+          date={editingDate}
+          existing={overrides
+            .filter(o => o.override_date === formatDate(editingDate, 'yyyy-MM-dd'))
+            .map(o => ({ start_time: o.start_time, end_time: o.end_time }))
+          }
+          onSave={(blocks) => {
+            // ✅ STEP 2: Save single date override
+            const dateKey = formatDate(editingDate, 'yyyy-MM-dd')
+            
+            // Create override blocks with the date key
+            const overrideBlocks = blocks.map(block => ({
+              override_date: dateKey,
+              start_time: block.start_time,
+              end_time: block.end_time,
+              is_available: true
+            }))
+            
+            // Call parent callback to update overrides
+            onUpdateOverride(dateKey, overrideBlocks)
+            
+            // Close the modal
+            handleCloseSingleDateEditor()
+          }}
+          onReset={() => {
+            // ✅ STEP 2: Reset (delete) single date override
+            const dateKey = formatDate(editingDate, 'yyyy-MM-dd')
+            
+            // Call parent callback to delete this override
+            onDeleteOverride(dateKey)
+            
+            // Close the modal
+            handleCloseSingleDateEditor()
+          }}
+          onClose={handleCloseSingleDateEditor}
+        />
+      )}
+
+      {/* Recurring Day Editor Modal */}
+      {editMode === 'recurring-day' && editingDayIndex !== null && (
+        <RecurringDayEditorModal
+          isOpen={true}
+          dayIndex={editingDayIndex}
+          dayLabel={['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'][editingDayIndex]}
+          availability={availability}
+          setAvailability={(newAvailability) => {
+            // TODO: Step 2 - Implement save logic
+            console.log('Save recurring day:', editingDayIndex, newAvailability)
+            handleCloseRecurringDayEditor()
+          }}
+          onClose={handleCloseRecurringDayEditor}
+        />
+      )}
     </div>
   )
 }

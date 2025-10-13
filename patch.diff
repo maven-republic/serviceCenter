@@ -1,0 +1,36 @@
+*** Begin Patch
+*** Update File: src/app/api/assessments/route.js
+@@
+-            customer:customer_id(
+-              customer_id,
+-              account:individual_customer_account_id_fkey(
+-                account_id,
+-                first_name,
+-                last_name,
+-                email,
+-                profile_picture_url
+-              ),
+-              phone:phone_id(
+-                phone_id,
+-                phone_number
+-              )
+-            )
++            customer:customer_id(
++              customer_id,
++              account:individual_customer_account_id_fkey(
++                account_id,
++                first_name,
++                last_name,
++                email,
++                profile_picture_url,
++                phones:phone_account_id_fkey(
++                  phone_id,
++                  phone_number,
++                  phone_type,
++                  is_primary
++                )
++              )
++            )
+           )
+         )
+*** End Patch

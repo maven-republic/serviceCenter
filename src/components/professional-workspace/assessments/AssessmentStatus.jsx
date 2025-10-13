@@ -9,7 +9,8 @@ import {
   AlertCircle,
   Calendar,
   Play,
-  XCircle
+  XCircle,
+  CheckCheck
 } from 'lucide-react'
 
 export default function AssessmentStatus({ status, size = "default", className }) {
@@ -20,7 +21,7 @@ export default function AssessmentStatus({ status, size = "default", className }
       icon: Clock
     },
     accepted: {
-      label: 'Accepted',
+      label: 'Accept',
       className: 'bg-green-100 text-green-800 border-green-200',
       icon: CheckCircle
     },
@@ -32,16 +33,16 @@ export default function AssessmentStatus({ status, size = "default", className }
     confirmed: {
       label: 'Confirmed',
       className: 'bg-emerald-100 text-emerald-800 border-emerald-200',
-      icon: CheckCircle
+      icon: CheckCheck
     },
     active: {
       label: 'In Progress',
-      className: 'bg-amber-100 text-amber-800 border-amber-200',
+      className: 'bg-amber-100 text-amber-800 border-amber-200 animate-pulse',
       icon: Play
     },
     completed: {
       label: 'Completed',
-      className: 'bg-green-100 text-green-800 border-green-200',
+      className: 'bg-green-600 text-white border-green-700',
       icon: CheckCircle
     },
     cancelled: {
@@ -70,7 +71,7 @@ export default function AssessmentStatus({ status, size = "default", className }
       className={cn(
         config.className,
         sizeClasses[size],
-        'flex items-center gap-1.5',
+        'flex items-center gap-1.5 font-medium',
         className
       )}
     >
