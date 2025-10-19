@@ -33,8 +33,7 @@ export default async function page() {
 
   return (
     <>
-    
-    <MobileNavigation2 />
+      <MobileNavigation2 />
       <DashboardLayout> 
         <ChatProvider user={user} otherUserData={otherUser}/>
       </DashboardLayout>
