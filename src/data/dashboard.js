@@ -13,6 +13,12 @@ export const customerNavigation = {
       name: 'Appointments', // 🆕 NEW
       icon: 'flaticon-calendar',
       path: "/customer/appointments",
+    },
+    {
+      id: 3,
+      name: 'Messenger', // 🆕 NEW
+      icon: 'flaticon-calendar',
+      path: "/customer/chat",
     }
   ],
   account: [
