@@ -10,11 +10,15 @@ export const useProfessionalResponseState = (interest) => {
   // Form state for different response types
   const [responseMessage, setResponseMessage] = useState('')
   const [declineReason, setDeclineReason] = useState('')
-  const [referralSuggestion, setReferralSuggestion] = useState('') // NEW
-  const [assessmentDate, setAssessmentDate] = useState('')
-  const [assessmentTime, setAssessmentTime] = useState('')
-  const [assessmentDuration, setAssessmentDuration] = useState('60')
-  const [assessmentNotes, setAssessmentNotes] = useState('')
+  const [referralSuggestion, setReferralSuggestion] = useState('')
+  
+  // ❌ REMOVED: Assessment fields are now managed in parent components
+  // - assessmentDate, setAssessmentDate
+  // - assessmentTime, setAssessmentTime
+  // - assessmentDuration, setAssessmentDuration
+  // - assessmentNotes, setAssessmentNotes
+  // These are replaced by assessmentSchedule object in ProfessionalResponseHandler
+  
   const [quoteUpdates, setQuoteUpdates] = useState({
     amount: interest?.amount || '',
     scope: '',
@@ -63,15 +67,12 @@ export const useProfessionalResponseState = (interest) => {
     }
   }, [interest?.customer_selected_at])
 
-  // Reset form data when view changes
+  // ✅ UPDATED: Reset form data (assessment fields removed)
   const resetFormData = () => {
     setResponseMessage('')
     setDeclineReason('')
-    setReferralSuggestion('') // NEW
-    setAssessmentDate('')
-    setAssessmentTime('')
-    setAssessmentDuration('60')
-    setAssessmentNotes('')
+    setReferralSuggestion('')
+    // ❌ REMOVED: Assessment field resets (now in parent component)
   }
 
   return {
@@ -86,16 +87,15 @@ export const useProfessionalResponseState = (interest) => {
     setResponseMessage,
     declineReason,
     setDeclineReason,
-    referralSuggestion,      // NEW
-    setReferralSuggestion,   // NEW
-    assessmentDate,
-    setAssessmentDate,
-    assessmentTime,
-    setAssessmentTime,
-    assessmentDuration,
-    setAssessmentDuration,
-    assessmentNotes,
-    setAssessmentNotes,
+    referralSuggestion,
+    setReferralSuggestion,
+    
+    // ❌ REMOVED: Assessment fields (now managed in ProfessionalResponseHandler)
+    // - assessmentDate, setAssessmentDate
+    // - assessmentTime, setAssessmentTime
+    // - assessmentDuration, setAssessmentDuration
+    // - assessmentNotes, setAssessmentNotes
+    
     quoteUpdates,
     setQuoteUpdates,
     

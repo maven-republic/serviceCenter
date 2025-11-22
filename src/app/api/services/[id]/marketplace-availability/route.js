@@ -2,6 +2,7 @@
 
 import { createClient } from '@/utils/supabase/server'
 import { NextResponse } from 'next/server'
+import { hasConflict, RELEVANT_STATUSES } from '@/utils/services/conflictDetection'
 
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
@@ -52,20 +53,24 @@ export async function GET(request, { params }) {
 
     console.log('🔥 Service found, finding professionals who offer this service...')
     
-    // Step 2: Find all professionals who offer this service
+    // Step 2: Find all professionals who offer this service WITH FULL DETAILS
     const { data: professionalServices, error: profServiceError } = await supabase
       .from('professional_service')
       .select(`
         professional_id,
         is_active,
+        custom_price,
+        service_level_id,
         individual_professional (
           professional_id,
           min_notice_hours,
           buffer_minutes,
           default_event_duration,
+          verification_status,
           account (
             first_name,
-            last_name
+            last_name,
+            profile_picture_url
           )
         )
       `)
@@ -102,6 +107,38 @@ export async function GET(request, { params }) {
     const professionalIds = professionalServices.map(ps => ps.professional_id)
     console.log('🔥 Professional IDs:', professionalIds)
 
+    // Step 2.5: 🆕 Get average ratings for all professionals
+    const { data: ratings, error: ratingsError } = await supabase
+      .from('review')
+      .select('professional_id, rating')
+      .in('professional_id', professionalIds)
+
+    if (ratingsError) {
+      console.error('⚠️ Error fetching ratings:', ratingsError)
+    }
+
+    // Calculate average ratings
+    const ratingMap = new Map()
+    if (ratings && ratings.length > 0) {
+      const grouped = ratings.reduce((acc, review) => {
+        if (!acc[review.professional_id]) {
+          acc[review.professional_id] = []
+        }
+        acc[review.professional_id].push(review.rating)
+        return acc
+      }, {})
+      
+      Object.entries(grouped).forEach(([profId, profRatings]) => {
+        const avg = profRatings.reduce((sum, r) => sum + r, 0) / profRatings.length
+        ratingMap.set(profId, {
+          average: Number(avg.toFixed(1)),
+          count: profRatings.length
+        })
+      })
+    }
+
+    console.log(`🔥 Ratings calculated for ${ratingMap.size} professionals`)
+
     // Step 3: Get base availability for all professionals
     const { data: baseAvailability, error: availabilityError } = await supabase
       .from('availability')
@@ -136,11 +173,11 @@ export async function GET(request, { params }) {
     // Step 5: Get existing appointments for all professionals
     const { data: existingAppointments, error: appointmentsError } = await supabase
       .from('appointment')
-      .select('professional_id, session, preferred_end')
+      .select('professional_id, appointment_id, session, duration, status')
       .in('professional_id', professionalIds)
       .gte('session', `${startDate}T00:00:00`)
       .lte('session', `${endDate}T23:59:59`)
-      .in('status', ['pending', 'quoted', 'converted'])
+      .in('status', RELEVANT_STATUSES.appointments)
 
     if (appointmentsError) {
       console.error('❌ Error fetching appointments:', appointmentsError)
@@ -148,14 +185,37 @@ export async function GET(request, { params }) {
 
     console.log(`🔥 Existing appointments: ${existingAppointments?.length || 0}`)
 
+    // Step 5.5: 🆕 Get existing assessments for all professionals
+    const { data: existingAssessments, error: assessmentsError } = await supabase
+      .from('assessment')
+      .select(`
+        professional_id,
+        assessment_id,
+        proposed_date,
+        confirmed_date,
+        proposed_duration_minutes,
+        confirmed_duration_minutes,
+        status
+      `)
+      .in('professional_id', professionalIds)
+      .in('status', RELEVANT_STATUSES.assessments)
+      .or(`confirmed_date.gte.${startDate},proposed_date.gte.${startDate}`)
+      .or(`confirmed_date.lte.${endDate},proposed_date.lte.${endDate}`)
+
+    if (assessmentsError) {
+      console.error('❌ Error fetching assessments:', assessmentsError)
+    }
+
+    console.log(`🔥 Existing assessments: ${existingAssessments?.length || 0}`)
+
     // Step 6: Get existing bookings for all professionals
     const { data: existingBookings, error: bookingsError } = await supabase
       .from('booking')
-      .select('professional_id, scheduled_start, scheduled_end')
+      .select('professional_id, booking_id, scheduled_start, scheduled_end, duration_minutes, status')
       .in('professional_id', professionalIds)
       .gte('scheduled_start', `${startDate}T00:00:00`)
       .lte('scheduled_start', `${endDate}T23:59:59`)
-      .in('status', ['pending', 'confirmed', 'in_progress'])
+      .in('status', RELEVANT_STATUSES.bookings)
 
     if (bookingsError) {
       console.error('❌ Error fetching bookings:', bookingsError)
@@ -166,9 +226,11 @@ export async function GET(request, { params }) {
     // Step 7: Calculate marketplace availability by aggregating all professionals
     const marketplaceSlots = calculateMarketplaceAvailability({
       professionalServices,
+      ratingMap,
       baseAvailability: baseAvailability || [],
       overrides: overrides || [],
       existingAppointments: existingAppointments || [],
+      existingAssessments: existingAssessments || [],
       existingBookings: existingBookings || [],
       startDate,
       endDate,
@@ -191,7 +253,9 @@ export async function GET(request, { params }) {
         baseAvailabilityCount: baseAvailability?.length || 0,
         overridesCount: overrides?.length || 0,
         appointmentsCount: existingAppointments?.length || 0,
-        bookingsCount: existingBookings?.length || 0
+        assessmentsCount: existingAssessments?.length || 0,
+        bookingsCount: existingBookings?.length || 0,
+        ratingsCount: ratingMap.size
       }
     })
 
@@ -207,27 +271,26 @@ export async function GET(request, { params }) {
 
 // ✅ TIMEZONE FIXED: Helper function to get Jamaica time
 function getJamaicaTime() {
-  // Get current time in Jamaica timezone (UTC-5)
   return new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Jamaica' }))
 }
 
 // ✅ TIMEZONE FIXED: Helper function to create Jamaica timezone date
 function createJamaicaDate(dateString, timeString) {
-  // Create date in Jamaica timezone by adding the offset
   const jamaicaOffset = -5 * 60 // Jamaica is UTC-5, convert to minutes
   const localDate = new Date(`${dateString}T${timeString}`)
   
-  // Adjust for Jamaica timezone
   const jamaicaDate = new Date(localDate.getTime() - (jamaicaOffset * 60 * 1000))
   return jamaicaDate
 }
 
-// 🌟 NEW: Calculate marketplace availability by aggregating all professionals
+// 🌟 UPDATED: Calculate marketplace availability with FULL PROFESSIONAL DATA
 function calculateMarketplaceAvailability({
   professionalServices,
+  ratingMap,
   baseAvailability,
   overrides,
   existingAppointments,
+  existingAssessments,
   existingBookings,
   startDate,
   endDate,
@@ -235,9 +298,7 @@ function calculateMarketplaceAvailability({
 }) {
   console.log('🔥🔥 calculateMarketplaceAvailability called')
   
-  const aggregatedSlots = new Map() // Map<datetime, {slot, availableProfessionals[]}>
-  
-  // ✅ TIMEZONE FIXED: Use Jamaica time for all calculations
+  const aggregatedSlots = new Map()
   const jamaicaNow = getJamaicaTime()
   
   // Process each professional's availability
@@ -253,17 +314,21 @@ function calculateMarketplaceAvailability({
     
     const minBookingTime = new Date(jamaicaNow.getTime() + (minNoticeHours * 60 * 60 * 1000))
     
+    // Get this professional's existing entities
+    const profAppointments = existingAppointments.filter(a => a.professional_id === professionalId)
+    const profAssessments = existingAssessments.filter(a => a.professional_id === professionalId)
+    const profBookings = existingBookings.filter(b => b.professional_id === professionalId)
+    
     // Get this professional's availability
     const profBaseAvailability = baseAvailability.filter(a => a.professional_id === professionalId)
     const profOverrides = overrides.filter(o => o.professional_id === professionalId)
-    const profAppointments = existingAppointments.filter(a => a.professional_id === professionalId)
-    const profBookings = existingBookings.filter(b => b.professional_id === professionalId)
     
     // Calculate this professional's available slots
     const professionalSlots = calculateAvailableSlots({
       baseAvailability: profBaseAvailability,
       overrides: profOverrides,
       existingAppointments: profAppointments,
+      existingAssessments: profAssessments,
       existingBookings: profBookings,
       startDate,
       endDate,
@@ -274,6 +339,9 @@ function calculateMarketplaceAvailability({
     })
     
     console.log(`🔥🔥 Professional ${professionalId} has ${professionalSlots.length} available slots`)
+    
+    // Get rating data
+    const ratingData = ratingMap.get(professionalId) || { average: 4.8, count: 0 }
     
     // Add this professional's slots to the aggregated map
     professionalSlots.forEach(slot => {
@@ -292,14 +360,36 @@ function calculateMarketplaceAvailability({
         })
       }
       
-      // Add this professional to the available list for this slot
+      // Add this professional with FULL DATA to the available list for this slot
       const aggregatedSlot = aggregatedSlots.get(slotKey)
+      
       aggregatedSlot.professionals_available.push({
         professional_id: professionalId,
+        
+        // Name fields (multiple formats for compatibility)
+        first_name: professional?.account?.first_name || 'Professional',
+        last_name: professional?.account?.last_name || '',
         name: `${professional?.account?.first_name || ''} ${professional?.account?.last_name || ''}`.trim() || 'Professional',
+        
+        // Profile info
+        profile_picture_url: professional?.account?.profile_picture_url || null,
+        verification_status: professional?.verification_status || 'pending',
+        
+        // Pricing - custom_price takes priority
+        hourly_rate: profService.custom_price || null,
+        custom_price: profService.custom_price || null,
+        service_level: profService.service_level || null,
+        
+        // Rating data
+        rating: ratingData.average,
+        average_rating: ratingData.average,
+        total_reviews: ratingData.count,
+        
+        // Availability settings
         min_notice_hours: minNoticeHours,
         buffer_minutes: bufferMinutes
       })
+      
       aggregatedSlot.professionals_count = aggregatedSlot.professionals_available.length
     })
   })
@@ -313,11 +403,12 @@ function calculateMarketplaceAvailability({
   return marketplaceSlots
 }
 
-// ✅ Reuse the same calculateAvailableSlots function from the professional endpoint
+// ✅ UPDATED: Calculate available slots with comprehensive conflict detection
 function calculateAvailableSlots({
   baseAvailability,
   overrides,
   existingAppointments,
+  existingAssessments,
   existingBookings,
   startDate,
   endDate,
@@ -330,19 +421,14 @@ function calculateAvailableSlots({
   const currentDate = new Date(startDate)
   const endDateTime = new Date(endDate)
   
-  // ✅ TIMEZONE FIXED: Use Jamaica time for all calculations
   const jamaicaNow = getJamaicaTime()
   const minBookingTime = new Date(jamaicaNow.getTime() + ((minNoticeHours || 1) * 60 * 60 * 1000))
 
   let dayCount = 0
-  // Generate slots for each day in the range
   while (currentDate <= endDateTime && dayCount < 50) {
     const dateString = currentDate.toISOString().split('T')[0]
-    
-    // ✅ CRITICAL FIX: Use timezone-safe day calculation
     const dayOfWeek = new Date(dateString + 'T12:00:00Z').getDay()
     
-    // Check if there's an override for this specific date
     const dayOverrides = overrides.filter(override => override.override_date === dateString)
     
     let dayAvailability = []
@@ -354,13 +440,10 @@ function calculateAvailableSlots({
         is_available: override.is_available
       })).filter(slot => slot.is_available)
     } else {
-      // Use base weekly availability for this day of week
       dayAvailability = baseAvailability.filter(avail => avail.day_of_week === dayOfWeek)
     }
 
-    // ✅ FIX: Only generate slots if day has availability
     if (dayAvailability.length > 0) {
-      // Generate time slots for this day
       for (const availability of dayAvailability) {
         const daySlots = generateTimeSlotsForDay(
           dateString,
@@ -371,17 +454,29 @@ function calculateAvailableSlots({
           bufferMinutes
         )
         
-        // Filter out conflicting slots
         const availableSlots = daySlots.filter(slot => {
-          const hasConflictResult = hasConflict(slot, existingAppointments, existingBookings, slotDuration, bufferMinutes)
-          return !hasConflictResult
+          const conflictResult = hasConflict({
+            slotStart: slot.datetime,
+            slotDuration: slotDuration,
+            existingEntities: {
+              appointments: existingAppointments,
+              assessments: existingAssessments,
+              bookings: existingBookings
+            },
+            bufferMinutes: bufferMinutes
+          })
+          
+          if (conflictResult.hasConflict) {
+            console.log(`🔥 Slot ${slot.datetime} conflicts with ${conflictResult.conflictingEntity.type}`)
+          }
+          
+          return !conflictResult.hasConflict
         })
         
         slots.push(...availableSlots)
       }
     }
     
-    // Move to next day
     currentDate.setDate(currentDate.getDate() + 1)
     dayCount++
   }
@@ -389,91 +484,42 @@ function calculateAvailableSlots({
   return slots.sort((a, b) => new Date(a.datetime) - new Date(b.datetime))
 }
 
-// ✅ TIMEZONE FIXED: Generate time slots for a specific day with proper timezone handling
+// ✅ TIMEZONE FIXED: Generate time slots for a specific day
 function generateTimeSlotsForDay(dateString, startTime, endTime, slotDuration, minBookingTime, bufferMinutes) {
   const slots = []
   
-  // ✅ TIMEZONE FIXED: Create dates in Jamaica timezone
   const dayStart = createJamaicaDate(dateString, startTime)
   const dayEnd = createJamaicaDate(dateString, endTime)
   
-  // ✅ FIX: Calculate day_of_week once from the requested date
   const requestedDate = new Date(dateString)
-  const fixedDayOfWeek = requestedDate.getDay()  // Always use original day
+  const fixedDayOfWeek = requestedDate.getDay()
   
   let currentSlot = new Date(dayStart)
   let slotCount = 0
   
-  while (currentSlot < dayEnd && slotCount < 50) { // Safety limit
+  while (currentSlot < dayEnd && slotCount < 50) {
     const slotEnd = new Date(currentSlot.getTime() + (slotDuration * 60 * 1000))
     
     const isInFuture = currentSlot >= minBookingTime
     const fitsInDay = slotEnd <= dayEnd
     
-    // Only include slots that are:
-    // 1. In the future with minimum notice
-    // 2. Slot end time doesn't exceed day end time
     if (isInFuture && fitsInDay) {
       const slot = {
         datetime: currentSlot.toISOString(),
         date: dateString,
         time: formatTimeInJamaica(currentSlot),
         duration_minutes: slotDuration,
-        day_of_week: fixedDayOfWeek,  // ✅ FIX: Use fixed day_of_week
+        day_of_week: fixedDayOfWeek,
         available: true
       }
       slots.push(slot)
     }
     
-    // Move to next slot (30-minute intervals for flexibility)
     currentSlot = new Date(currentSlot.getTime() + (30 * 60 * 1000))
     slotCount++
   }
   
   return slots
-}
-
-// Check if a slot conflicts with existing appointments/bookings
-function hasConflict(slot, existingAppointments, existingBookings, slotDuration, bufferMinutes) {
-  const slotStart = new Date(slot.datetime)
-  const slotEnd = new Date(slotStart.getTime() + (slotDuration * 60 * 1000))
-  const bufferMs = (bufferMinutes || 0) * 60 * 1000
-  
-  // Check against existing appointments (assume 1 hour duration if no end time)
-  for (const appointment of existingAppointments) {
-    const apptStart = new Date(appointment.session)
-    const apptEnd = appointment.preferred_end 
-      ? new Date(appointment.preferred_end)
-      : new Date(apptStart.getTime() + (60 * 60 * 1000)) // Default 1 hour
-    
-    // Add buffer time around existing appointments
-    const bufferedApptStart = new Date(apptStart.getTime() - bufferMs)
-    const bufferedApptEnd = new Date(apptEnd.getTime() + bufferMs)
-    
-    // Check for overlap
-    if (slotStart < bufferedApptEnd && slotEnd > bufferedApptStart) {
-      return true
-    }
-  }
-  
-  // Check against existing bookings
-  for (const booking of existingBookings) {
-    const bookingStart = new Date(booking.scheduled_start)
-    const bookingEnd = booking.scheduled_end 
-      ? new Date(booking.scheduled_end)
-      : new Date(bookingStart.getTime() + (4 * 60 * 60 * 1000)) // Default 4 hours
-    
-    // Add buffer time around existing bookings
-    const bufferedBookingStart = new Date(bookingStart.getTime() - bufferMs)
-    const bufferedBookingEnd = new Date(bookingEnd.getTime() + bufferMs)
-    
-    // Check for overlap
-    if (slotStart < bufferedBookingEnd && slotEnd > bufferedBookingStart) {
-      return true
-    }
-  }
-  
-  return false
 }
 
 // Helper functions
@@ -483,7 +529,6 @@ function getDateDaysFromNow(days) {
   return jamaicaTime.toISOString().split('T')[0]
 }
 
-// ✅ TIMEZONE FIXED: Format time in Jamaica timezone
 function formatTimeInJamaica(date) {
   return date.toLocaleString('en-US', {
     timeZone: 'America/Jamaica',

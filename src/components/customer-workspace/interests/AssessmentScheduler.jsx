@@ -16,7 +16,9 @@ import {
   AlertCircle,
   Phone,
   Mail,
-  Shield
+  Shield,
+  Loader2,
+  RefreshCw
 } from 'lucide-react';
 
 const AssessmentScheduler = ({ 
@@ -31,42 +33,107 @@ const AssessmentScheduler = ({
   const [selectedTimeSlot, setSelectedTimeSlot] = useState('');
   const [specialInstructions, setSpecialInstructions] = useState('');
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  
+  // ✅ NEW: Real availability state
   const [availableTimeSlots, setAvailableTimeSlots] = useState([]);
+  const [loadingSlots, setLoadingSlots] = useState(false);
+  const [slotsError, setSlotsError] = useState(null);
+  const [availabilityData, setAvailabilityData] = useState(null);
 
   const professional = interest?.professional;
   const account = professional?.account;
+  const professionalId = professional?.professional_id;
 
+  // ✅ REPLACED: Fetch real availability instead of generating hardcoded slots
   useEffect(() => {
-    if (selectedDate) {
-      generateTimeSlots(selectedDate);
+    if (selectedDate && professionalId) {
+      fetchAvailableSlots(selectedDate);
+    } else {
+      setAvailableTimeSlots([]);
+      setSelectedTimeSlot('');
     }
-  }, [selectedDate]);
+  }, [selectedDate, professionalId]);
 
-  const generateTimeSlots = (date) => {
-    const slots = [];
-    const startHour = 8;
-    const endHour = 18;
-    
-    for (let hour = startHour; hour < endHour; hour++) {
-      slots.push(`${hour.toString().padStart(2, '0')}:00`);
-      slots.push(`${hour.toString().padStart(2, '0')}:30`);
+  const fetchAvailableSlots = async (date) => {
+    try {
+      setLoadingSlots(true);
+      setSlotsError(null);
+      
+      const dateStr = date.toISOString().split('T')[0];
+      const duration = interest.duration || 90; // Default 90 mins for assessment
+      
+      console.log('🔍 Fetching availability for:', {
+        professionalId,
+        date: dateStr,
+        duration,
+        type: 'assessment'
+      });
+      
+      const response = await fetch(
+        `/api/professionals/${professionalId}/appointment-availability` +
+        `?type=assessment` +
+        `&start_date=${dateStr}` +
+        `&end_date=${dateStr}` +
+        `&duration=${duration}`
+      );
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      
+      console.log('✅ Availability data received:', {
+        slotsCount: data.available_slots?.length || 0,
+        conflicts: data.conflict_summary
+      });
+
+      setAvailabilityData(data);
+      
+      // Extract time slots for the selected date
+      const slotsForDate = (data.available_slots || [])
+        .filter(slot => slot.date === dateStr)
+        .map(slot => ({
+          time: slot.time,
+          datetime: slot.datetime,
+          duration: slot.duration_minutes
+        }));
+      
+      setAvailableTimeSlots(slotsForDate);
+      
+      if (slotsForDate.length === 0) {
+        setSlotsError('No availability for this date. Please select another day.');
+      }
+      
+    } catch (error) {
+      console.error('❌ Error fetching availability:', error);
+      setSlotsError(`Failed to load availability: ${error.message}`);
+      setAvailableTimeSlots([]);
+    } finally {
+      setLoadingSlots(false);
     }
-    
-    setAvailableTimeSlots(slots);
   };
 
   const handleScheduleAssessment = async () => {
     if (!selectedDate || !selectedTimeSlot) return;
 
-    const assessmentDateTime = new Date(selectedDate);
-    const [hours, minutes] = selectedTimeSlot.split(':');
-    assessmentDateTime.setHours(parseInt(hours), parseInt(minutes));
+    const selectedSlot = availableTimeSlots.find(s => s.time === selectedTimeSlot);
+    
+    // Use the actual datetime from the slot
+    const assessmentDateTime = selectedSlot 
+      ? new Date(selectedSlot.datetime)
+      : (() => {
+          const dt = new Date(selectedDate);
+          const [hours, minutes] = selectedTimeSlot.split(':');
+          dt.setHours(parseInt(hours), parseInt(minutes), 0, 0);
+          return dt;
+        })();
 
     const result = await onScheduleAssessment({
       interest_id: interest.interest_id,
       proposed_date: assessmentDateTime.toISOString(),
       customer_special_instructions: specialInstructions,
-      duration_minutes: interest.duration || 60
+      duration_minutes: interest.duration || 90
     });
 
     if (result?.success) {
@@ -74,6 +141,7 @@ const AssessmentScheduler = ({
       setSelectedDate(undefined);
       setSelectedTimeSlot('');
       setSpecialInstructions('');
+      setAvailableTimeSlots([]);
     }
   };
 
@@ -170,7 +238,7 @@ const AssessmentScheduler = ({
             <h4 className="font-medium text-gray-600">Duration</h4>
             <div className="flex items-center space-x-1">
               <Clock className="h-4 w-4" />
-              <span>{interest.duration || 60} minutes</span>
+              <span>{interest.duration || 90} minutes</span>
             </div>
           </div>
           
@@ -283,184 +351,263 @@ const AssessmentScheduler = ({
                 mode="single"
                 selected={selectedDate}
                 onSelect={setSelectedDate}
-                disabled={(date) => date < new Date() || date.getDay() === 0}
+                disabled={(date) => {
+                  // Disable past dates
+                  const today = new Date();
+                  today.setHours(0, 0, 0, 0);
+                  return date < today;
+                }}
                 className="rounded-xl border border-gray-200 p-3"
               />
+              
+              {/* ✅ NEW: Show availability info */}
+              {availabilityData?.conflict_summary && selectedDate && (
+                <div className="text-xs text-gray-500 p-2 bg-gray-50 rounded">
+                  <p className="font-medium mb-1">Professional's Schedule:</p>
+                  <ul className="space-y-0.5">
+                    <li>• {availabilityData.conflict_summary.appointments} appointment(s)</li>
+                    <li>• {availabilityData.conflict_summary.assessments} assessment(s)</li>
+                    <li>• {availabilityData.conflict_summary.bookings} booking(s)</li>
+                    <li>• {availabilityData.conflict_summary.projects} active project(s)</li>
+                  </ul>
+                </div>
+              )}
             </div>
 
             {/* Time Slots */}
             <div className="space-y-4">
-              <h4 className="font-medium text-gray-700">Select Time</h4>
-              {selectedDate ? (
-                <div className="grid grid-cols-3 gap-2 max-h-64 overflow-y-auto">
-                 {availableTimeSlots.map((slot) => (
-                   <Button
-                     key={slot}
-                     variant={selectedTimeSlot === slot ? "default" : "outline"}
-                     size="sm"
-                     onClick={() => setSelectedTimeSlot(slot)}
-                     className="text-xs"
-                   >
-                     {slot}
-                   </Button>
-                 ))}
-               </div>
-             ) : (
-               <p className="text-gray-500 text-sm">
-                 Please select a date first
-               </p>
-             )}
-           </div>
-         </div>
+              <div className="flex items-center justify-between">
+                <h4 className="font-medium text-gray-700">Select Time</h4>
+                {loadingSlots && (
+                  <Loader2 className="h-4 w-4 animate-spin text-blue-600" />
+                )}
+              </div>
+              
+              {!selectedDate ? (
+                <div className="bg-blue-50 rounded-xl p-4 text-center">
+                  <Clock className="h-8 w-8 text-blue-600 mx-auto mb-2 opacity-50" />
+                  <p className="text-gray-600 text-sm">
+                    Please select a date first
+                  </p>
+                </div>
+              ) : loadingSlots ? (
+                <div className="bg-gray-50 rounded-xl p-8 text-center">
+                  <Loader2 className="h-8 w-8 animate-spin text-blue-600 mx-auto mb-2" />
+                  <p className="text-gray-600 text-sm">
+                    Loading available times...
+                  </p>
+                </div>
+              ) : slotsError ? (
+                <div className="bg-red-50 rounded-xl p-4">
+                  <div className="flex items-start space-x-2">
+                    <AlertCircle className="h-4 w-4 text-red-600 mt-0.5 flex-shrink-0" />
+                    <div className="text-red-800 text-sm">
+                      {slotsError}
+                    </div>
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => fetchAvailableSlots(selectedDate)}
+                    className="mt-3 w-full"
+                  >
+                    <RefreshCw className="h-3 w-3 mr-2" />
+                    Retry
+                  </Button>
+                </div>
+              ) : availableTimeSlots.length > 0 ? (
+                <>
+                  <div className="bg-green-50 rounded-xl p-3 mb-3">
+                    <div className="flex items-center space-x-2">
+                      <CheckCircle className="h-4 w-4 text-green-600" />
+                      <p className="text-green-800 text-sm font-medium">
+                        {availableTimeSlots.length} time slot{availableTimeSlots.length !== 1 ? 's' : ''} available
+                      </p>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-3 gap-2 max-h-64 overflow-y-auto">
+                    {availableTimeSlots.map((slot) => (
+                      <Button
+                        key={slot.time}
+                        variant={selectedTimeSlot === slot.time ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => setSelectedTimeSlot(slot.time)}
+                        className="text-xs"
+                      >
+                        {slot.time}
+                      </Button>
+                    ))}
+                  </div>
+                </>
+              ) : (
+                <div className="bg-yellow-50 rounded-xl p-4 text-center">
+                  <AlertCircle className="h-8 w-8 text-yellow-600 mx-auto mb-2" />
+                  <p className="text-gray-700 text-sm font-medium mb-1">
+                    No availability for this date
+                  </p>
+                  <p className="text-gray-600 text-xs">
+                    Please select another day or contact the professional directly
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
 
-         {/* Special Instructions */}
-         <div className="space-y-2 mb-6">
-           <h4 className="font-medium text-gray-700">Special Instructions (Optional)</h4>
-           <Textarea
-             placeholder="e.g., Use side entrance, dogs on property, parking instructions..."
-             value={specialInstructions}
-             onChange={(e) => setSpecialInstructions(e.target.value)}
-             className="min-h-[80px]"
-           />
-         </div>
+          {/* Special Instructions */}
+          <div className="space-y-2 mb-6">
+            <h4 className="font-medium text-gray-700">Special Instructions (Optional)</h4>
+            <Textarea
+              placeholder="e.g., Use side entrance, dogs on property, parking instructions..."
+              value={specialInstructions}
+              onChange={(e) => setSpecialInstructions(e.target.value)}
+              className="min-h-[80px]"
+            />
+          </div>
 
-         {/* Schedule Button */}
-         <Button
-           onClick={() => setShowConfirmDialog(true)}
-           disabled={!selectedDate || !selectedTimeSlot || isLoading}
-           className="w-full"
-         >
-           <CalendarIcon className="h-4 w-4 mr-2" />
-           Schedule Assessment
-         </Button>
-       </div>
-     )}
+          {/* Schedule Button */}
+          <Button
+            onClick={() => setShowConfirmDialog(true)}
+            disabled={!selectedDate || !selectedTimeSlot || isLoading || loadingSlots}
+            className="w-full"
+          >
+            <CalendarIcon className="h-4 w-4 mr-2" />
+            {loadingSlots ? 'Loading availability...' : 'Schedule Assessment'}
+          </Button>
+        </div>
+      )}
 
-     {/* Assessment Information */}
-     <div className="bg-white rounded-xl p-6">
-       <h3 className="text-lg font-semibold text-gray-900 mb-4">What to Expect</h3>
-       
-       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-         <div className="space-y-3">
-           <h4 className="font-medium text-gray-700">During the Assessment:</h4>
-           <ul className="space-y-2 text-sm text-gray-600">
-             <li className="flex items-start space-x-2">
-               <span className="flex-shrink-0 w-1.5 h-1.5 bg-blue-600 rounded-full mt-2"></span>
-               <span>Professional will examine the work area</span>
-             </li>
-             <li className="flex items-start space-x-2">
-               <span className="flex-shrink-0 w-1.5 h-1.5 bg-blue-600 rounded-full mt-2"></span>
-               <span>Take measurements and photos</span>
-             </li>
-             <li className="flex items-start space-x-2">
-               <span className="flex-shrink-0 w-1.5 h-1.5 bg-blue-600 rounded-full mt-2"></span>
-               <span>Discuss your requirements and preferences</span>
-             </li>
-             <li className="flex items-start space-x-2">
-               <span className="flex-shrink-0 w-1.5 h-1.5 bg-blue-600 rounded-full mt-2"></span>
-               <span>Identify any potential challenges</span>
-             </li>
-           </ul>
-         </div>
+      {/* Assessment Information */}
+      <div className="bg-white rounded-xl p-6">
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">What to Expect</h3>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="space-y-3">
+            <h4 className="font-medium text-gray-700">During the Assessment:</h4>
+            <ul className="space-y-2 text-sm text-gray-600">
+              <li className="flex items-start space-x-2">
+                <span className="flex-shrink-0 w-1.5 h-1.5 bg-blue-600 rounded-full mt-2"></span>
+                <span>Professional will examine the work area</span>
+              </li>
+              <li className="flex items-start space-x-2">
+                <span className="flex-shrink-0 w-1.5 h-1.5 bg-blue-600 rounded-full mt-2"></span>
+                <span>Take measurements and photos</span>
+              </li>
+              <li className="flex items-start space-x-2">
+                <span className="flex-shrink-0 w-1.5 h-1.5 bg-blue-600 rounded-full mt-2"></span>
+                <span>Discuss your requirements and preferences</span>
+              </li>
+              <li className="flex items-start space-x-2">
+                <span className="flex-shrink-0 w-1.5 h-1.5 bg-blue-600 rounded-full mt-2"></span>
+                <span>Identify any potential challenges</span>
+              </li>
+            </ul>
+          </div>
 
-         <div className="space-y-3">
-           <h4 className="font-medium text-gray-700">After the Assessment:</h4>
-           <ul className="space-y-2 text-sm text-gray-600">
-             <li className="flex items-start space-x-2">
-               <span className="flex-shrink-0 w-1.5 h-1.5 bg-green-600 rounded-full mt-2"></span>
-               <span>Receive detailed, accurate quote</span>
-             </li>
-             <li className="flex items-start space-x-2">
-               <span className="flex-shrink-0 w-1.5 h-1.5 bg-green-600 rounded-full mt-2"></span>
-               <span>Timeline and materials breakdown</span>
-             </li>
-             <li className="flex items-start space-x-2">
-               <span className="flex-shrink-0 w-1.5 h-1.5 bg-green-600 rounded-full mt-2"></span>
-               <span>Clear scope of work document</span>
-             </li>
-             <li className="flex items-start space-x-2">
-               <span className="flex-shrink-0 w-1.5 h-1.5 bg-green-600 rounded-full mt-2"></span>
-               <span>Option to proceed with the project</span>
-             </li>
-           </ul>
-         </div>
-       </div>
-     </div>
+          <div className="space-y-3">
+            <h4 className="font-medium text-gray-700">After the Assessment:</h4>
+            <ul className="space-y-2 text-sm text-gray-600">
+              <li className="flex items-start space-x-2">
+                <span className="flex-shrink-0 w-1.5 h-1.5 bg-green-600 rounded-full mt-2"></span>
+                <span>Receive detailed, accurate quote</span>
+              </li>
+              <li className="flex items-start space-x-2">
+                <span className="flex-shrink-0 w-1.5 h-1.5 bg-green-600 rounded-full mt-2"></span>
+                <span>Timeline and materials breakdown</span>
+              </li>
+              <li className="flex items-start space-x-2">
+                <span className="flex-shrink-0 w-1.5 h-1.5 bg-green-600 rounded-full mt-2"></span>
+                <span>Clear scope of work document</span>
+              </li>
+              <li className="flex items-start space-x-2">
+                <span className="flex-shrink-0 w-1.5 h-1.5 bg-green-600 rounded-full mt-2"></span>
+                <span>Option to proceed with the project</span>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
 
-     {/* Confirmation Dialog */}
-     <Dialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
-       <DialogContent className="max-w-md">
-         <DialogHeader>
-           <DialogTitle>Confirm Assessment Schedule</DialogTitle>
-           <DialogDescription>
-             Please review your assessment details before confirming.
-           </DialogDescription>
-         </DialogHeader>
-         
-         <div className="space-y-4">
-           <div className="grid grid-cols-2 gap-4 text-sm">
-             <div>
-               <span className="font-medium text-gray-600">Professional:</span>
-               <p>{account?.first_name} {account?.last_name}</p>
-             </div>
-             <div>
-               <span className="font-medium text-gray-600">Date & Time:</span>
-               <p>
-                 {selectedDate?.toLocaleDateString('en-US', {
-                   weekday: 'long',
-                   month: 'long',
-                   day: 'numeric'
-                 })} at {selectedTimeSlot}
-               </p>
-             </div>
-             <div>
-               <span className="font-medium text-gray-600">Duration:</span>
-               <p>{interest.duration || 60} minutes</p>
-             </div>
-             <div>
-               <span className="font-medium text-gray-600">Fee:</span>
-               <p>{interest.fee > 0 ? formatCurrency(interest.fee) : 'Free'}</p>
-             </div>
-           </div>
+      {/* Confirmation Dialog */}
+      <Dialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Confirm Assessment Schedule</DialogTitle>
+            <DialogDescription>
+              Please review your assessment details before confirming.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-4 text-sm">
+              <div>
+                <span className="font-medium text-gray-600">Professional:</span>
+                <p>{account?.first_name} {account?.last_name}</p>
+              </div>
+              <div>
+                <span className="font-medium text-gray-600">Date & Time:</span>
+                <p>
+                  {selectedDate?.toLocaleDateString('en-US', {
+                    weekday: 'short',
+                    month: 'short',
+                    day: 'numeric'
+                  })} at {selectedTimeSlot}
+                </p>
+              </div>
+              <div>
+                <span className="font-medium text-gray-600">Duration:</span>
+                <p>{interest.duration || 90} minutes</p>
+              </div>
+              <div>
+                <span className="font-medium text-gray-600">Fee:</span>
+                <p>{interest.fee > 0 ? formatCurrency(interest.fee) : 'Free'}</p>
+              </div>
+            </div>
 
-           {specialInstructions && (
-             <div>
-               <span className="font-medium text-gray-600 text-sm">Special Instructions:</span>
-               <p className="text-sm mt-1 p-2 bg-gray-50 rounded">{specialInstructions}</p>
-             </div>
-           )}
+            {specialInstructions && (
+              <div>
+                <span className="font-medium text-gray-600 text-sm">Special Instructions:</span>
+                <p className="text-sm mt-1 p-2 bg-gray-50 rounded">{specialInstructions}</p>
+              </div>
+            )}
 
-           {interest.fee > 0 && (
-             <div className="bg-blue-50 rounded-xl p-3">
-               <div className="flex items-start space-x-2">
-                 <AlertCircle className="h-4 w-4 text-blue-600 mt-0.5" />
-                 <div className="text-blue-800 text-sm">
-                   The assessment fee of {formatCurrency(interest.fee)} will be charged and applied to your final project cost if you proceed.
-                 </div>
-               </div>
-             </div>
-           )}
-         </div>
+            {interest.fee > 0 && (
+              <div className="bg-blue-50 rounded-xl p-3">
+                <div className="flex items-start space-x-2">
+                  <AlertCircle className="h-4 w-4 text-blue-600 mt-0.5" />
+                  <div className="text-blue-800 text-sm">
+                    The assessment fee of {formatCurrency(interest.fee)} will be charged and applied to your final project cost if you proceed.
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
 
-         <DialogFooter>
-           <Button 
-             variant="outline" 
-             onClick={() => setShowConfirmDialog(false)}
-             disabled={isLoading}
-           >
-             Cancel
-           </Button>
-           <Button 
-             onClick={handleScheduleAssessment}
-             disabled={isLoading}
-           >
-             {isLoading ? 'Scheduling...' : 'Confirm Assessment'}
-           </Button>
-         </DialogFooter>
-       </DialogContent>
-     </Dialog>
-   </div>
- );
+          <DialogFooter>
+            <Button 
+              variant="outline" 
+              onClick={() => setShowConfirmDialog(false)}
+              disabled={isLoading}
+            >
+              Cancel
+            </Button>
+            <Button 
+              onClick={handleScheduleAssessment}
+              disabled={isLoading}
+            >
+              {isLoading ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Scheduling...
+                </>
+              ) : (
+                'Confirm Assessment'
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
 };
 
 export default AssessmentScheduler;

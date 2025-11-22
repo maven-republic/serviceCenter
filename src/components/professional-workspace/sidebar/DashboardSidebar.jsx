@@ -10,11 +10,13 @@ import {
   LogOut,
   Home,
   Calendar,
+  CalendarCheck,  // ✅ NEW - for Bookings
   Users,
   Settings,
   BarChart3,
   Briefcase,
   Activity,
+  ClipboardCheck, // ✅ NEW - for Assessments
   Moon,
   Sun
 } from "lucide-react"
@@ -22,14 +24,15 @@ import {
 const iconMap = {
   'flaticon-home': Home,
   'flaticon-dashboard': BarChart3,
-  'flaticon-appointment': Calendar,
-  'flaticon-calendar': Calendar,
+  'flaticon-appointment': Calendar,        // Appointments (requests)
+  'flaticon-calendar': CalendarCheck,      // ✅ CHANGED - Bookings (confirmed)
   'flaticon-user': Users,
   'flaticon-photo': Users,
   'flaticon-setting': Settings,
   'flaticon-analytics': BarChart3,
   'flaticon-briefcase': Briefcase,
   'flaticon-logout': LogOut,
+  'flaticon-clipboard-check': ClipboardCheck, // ✅ NEW - Assessments
 }
 
 export default function DashboardSidebar({ items = [], isMobile, isOpen, onOpenChange }) {
@@ -38,7 +41,7 @@ export default function DashboardSidebar({ items = [], isMobile, isOpen, onOpenC
   const NavItem = ({ item, isActive, onClick }) => {
     const Icon = iconMap[item.icon] || Activity
     
-    if (item.name === "LOGOUT") {
+    if (item.name === "Logout" || item.name === "LOGOUT") {
       return (
         <Button
           variant="ghost"
@@ -71,12 +74,12 @@ export default function DashboardSidebar({ items = [], isMobile, isOpen, onOpenC
         onClick={onClick}
         className={cn(
           "flex flex-col items-center justify-center h-20 w-full rounded-lg cursor-pointer",
-          "hover:bg-accent/50",
+          "hover:bg-accent/50 transition-colors",
           isActive && "bg-primary/10"
         )}
       >
         <div className={cn(
-          "h-10 w-10 rounded-xl flex items-center justify-center mb-1.5",
+          "h-10 w-10 rounded-xl flex items-center justify-center mb-1.5 transition-colors",
           isActive 
             ? "bg-primary text-primary-foreground shadow-sm" 
             : "bg-muted text-muted-foreground"
@@ -84,7 +87,7 @@ export default function DashboardSidebar({ items = [], isMobile, isOpen, onOpenC
           <Icon className="h-5 w-5" />
         </div>
         <span className={cn(
-          "text-[10px] font-medium",
+          "text-[10px] font-medium text-center leading-tight",
           isActive ? "text-primary" : "text-muted-foreground"
         )}>
           {item.name}
@@ -96,7 +99,7 @@ export default function DashboardSidebar({ items = [], isMobile, isOpen, onOpenC
   const MobileNavItem = ({ item, isActive, onClick }) => {
     const Icon = iconMap[item.icon] || Activity
     
-    if (item.name === "LOGOUT") {
+    if (item.name === "Logout" || item.name === "LOGOUT") {
       return (
         <Button
           variant="ghost"
@@ -120,7 +123,7 @@ export default function DashboardSidebar({ items = [], isMobile, isOpen, onOpenC
         href={item.path}
         onClick={onClick}
         className={cn(
-          "flex items-center gap-4 px-4 py-3 rounded-lg cursor-pointer",
+          "flex items-center gap-4 px-4 py-3 rounded-lg cursor-pointer transition-colors",
           "hover:bg-accent",
           isActive && "bg-primary text-primary-foreground"
         )}
@@ -137,8 +140,8 @@ export default function DashboardSidebar({ items = [], isMobile, isOpen, onOpenC
   // Desktop sidebar
   if (!isMobile) {
     return (
-      <div className="flex flex-col h-full bg-background w-32">
-        <div className="flex-1 py-4 px-2 space-y-1">
+      <div className="flex flex-col h-full bg-background w-32 border-r">
+        <div className="flex-1 py-4 px-2 space-y-1 overflow-y-auto">
           {items.map((item) => (
             <NavItem 
               key={item.id}
@@ -150,8 +153,9 @@ export default function DashboardSidebar({ items = [], isMobile, isOpen, onOpenC
 
         <div className="p-4 border-t">
           <button 
-            className="flex items-center justify-center h-12 w-full rounded-lg hover:bg-accent/50 cursor-pointer"
+            className="flex items-center justify-center h-12 w-full rounded-lg hover:bg-accent/50 cursor-pointer transition-colors"
             onClick={() => document.documentElement.classList.toggle('dark')}
+            aria-label="Toggle theme"
           >
             <Moon className="h-5 w-5 text-muted-foreground dark:hidden" />
             <Sun className="h-5 w-5 text-muted-foreground hidden dark:block" />
@@ -191,12 +195,13 @@ export default function DashboardSidebar({ items = [], isMobile, isOpen, onOpenC
 
         <div className="border-t bg-muted/30 p-4">
           <button 
-            className="flex items-center gap-3 w-full px-4 py-3 rounded-lg hover:bg-accent cursor-pointer"
+            className="flex items-center gap-3 w-full px-4 py-3 rounded-lg hover:bg-accent cursor-pointer transition-colors"
             onClick={() => document.documentElement.classList.toggle('dark')}
+            aria-label="Toggle theme"
           >
             <Moon className="h-5 w-5 dark:hidden" />
             <Sun className="h-5 w-5 hidden dark:block" />
-            {/* <span className="text-sm font-medium">Toggle Theme</span> */}
+            <span className="text-sm font-medium">Toggle Theme</span>
           </button>
         </div>
       </SheetContent>

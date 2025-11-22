@@ -172,6 +172,7 @@ export async function GET(request) {
     )
   }
 }
+
 // POST /api/interests - Create new interest with assessment scheduling
 export async function POST(request) {
   try {
@@ -205,7 +206,7 @@ export async function POST(request) {
       invitation_response
     } = body
 
-    console.log('📝 Interest request:', { 
+    console.log('🔍 Interest request:', { 
       appointment_id, 
       professional_id, 
       intent, 
@@ -267,6 +268,22 @@ export async function POST(request) {
           { status: 400 }
         )
       }
+    }
+
+    // ✅ Check for duplicate interest
+    const { data: existingInterest } = await supabase
+      .from('interest')
+      .select('interest_id')
+      .eq('appointment_id', appointment_id)
+      .eq('professional_id', professional_id)
+      .neq('status', 'withdrawn')
+      .single()
+
+    if (existingInterest) {
+      return NextResponse.json(
+        { error: 'You have already expressed interest in this appointment' },
+        { status: 409 }
+      )
     }
 
     let cleanMessage = message || 'Professional is interested in this appointment'
@@ -411,16 +428,62 @@ export async function POST(request) {
 
     console.log('✅ Interest expressed successfully')
 
-    return NextResponse.json({
+    // ✅ FIXED: Properly serialize all data to avoid 500 errors
+    const responsePayload = {
       success: true,
       interest: {
-        ...newInterest,
-        assessment_record: assessmentRecord
+        interest_id: newInterest.interest_id,
+        appointment_id: newInterest.appointment_id,
+        professional_id: newInterest.professional_id,
+        status: newInterest.status || 'interested',
+        // ✅ Convert numeric values properly
+        amount: newInterest.amount ? parseFloat(newInterest.amount) : null,
+        price_range_min: newInterest.price_range_min ? parseFloat(newInterest.price_range_min) : null,
+        price_range_max: newInterest.price_range_max ? parseFloat(newInterest.price_range_max) : null,
+        fee: newInterest.fee ? parseFloat(newInterest.fee) : 0,
+        // ✅ Handle strings
+        message: newInterest.message || null,
+        assessment_justification: newInterest.assessment_justification || null,
+        modality: newInterest.modality || 'none',
+        intent: newInterest.intent || 'standard',
+        // ✅ Convert booleans
+        assessment: Boolean(newInterest.assessment),
+        // ✅ Convert dates to ISO strings
+        created_at: newInterest.created_at ? new Date(newInterest.created_at).toISOString() : new Date().toISOString(),
+        updated_at: newInterest.updated_at ? new Date(newInterest.updated_at).toISOString() : new Date().toISOString(),
+        assessment_proposed_date: newInterest.assessment_proposed_date ? 
+          new Date(newInterest.assessment_proposed_date).toISOString() : null,
+        earliest_start: newInterest.earliest_start ? 
+          new Date(newInterest.earliest_start).toISOString() : null,
+        latest_start: newInterest.latest_start ? 
+          new Date(newInterest.latest_start).toISOString() : null,
+        estimated_duration_hours: newInterest.estimated_duration_hours ? 
+          parseFloat(newInterest.estimated_duration_hours) : null,
+        duration: newInterest.duration ? parseInt(newInterest.duration) : 60
       },
       message: invitation_response 
         ? 'Successfully responded to invitation!' 
         : 'Interest expressed successfully!'
-    }, { status: 201 })
+    }
+
+    // ✅ Add assessment record if it exists (properly serialized)
+    if (assessmentRecord) {
+      responsePayload.interest.assessment_record = {
+        assessment_id: assessmentRecord.assessment_id,
+        status: assessmentRecord.status || 'proposed',
+        proposed_date: assessmentRecord.proposed_date ? 
+          new Date(assessmentRecord.proposed_date).toISOString() : null,
+        proposed_duration_minutes: assessmentRecord.proposed_duration_minutes ? 
+          parseInt(assessmentRecord.proposed_duration_minutes) : 60,
+        proposed_fee: assessmentRecord.proposed_fee ? 
+          parseFloat(assessmentRecord.proposed_fee) : 0,
+        assessment_type: assessmentRecord.assessment_type || null
+      }
+    }
+
+    console.log('📤 Sending response payload')
+
+    return NextResponse.json(responsePayload, { status: 201 })
 
   } catch (error) {
     console.error('💥 CRITICAL ERROR in interests POST API:', error)

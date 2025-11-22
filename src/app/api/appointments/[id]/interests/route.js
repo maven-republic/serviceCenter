@@ -1,4 +1,4 @@
-// src/app/api/appointments/[appointment-id]/interests/route.js
+// src/app/api/appointments/[id]/interests/route.js
 import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
 import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
@@ -10,10 +10,10 @@ export async function GET(request, { params }) {
   try {
     const supabase = createRouteHandlerClient({ cookies })
     
-    // ✅ FIXED: Extract appointment-id using the exact folder name
-    const appointmentId = params['appointment-id']
+    // ✅ FIX: Use 'id' to match the folder name [id]
+    const appointmentId = params.id
     
-    console.log('🔍 GET /api/appointments/[appointment-id]/interests called')
+    console.log('🔍 GET /api/appointments/[id]/interests called')
     console.log('📦 Raw params:', params)
     console.log('🎯 Extracted appointmentId:', appointmentId)
 
@@ -112,10 +112,10 @@ export async function POST(request, { params }) {
   try {
     const supabase = createRouteHandlerClient({ cookies })
     
-    // ✅ FIXED: Extract appointment-id using the exact folder name
-    const appointmentId = params['appointment-id']
+    // ✅ FIX: Use 'id' to match the folder name [id]
+    const appointmentId = params.id
     
-    console.log('🔍 POST /api/appointments/[appointment-id]/interests called')
+    console.log('🔍 POST /api/appointments/[id]/interests called')
     console.log('📦 Raw params:', params)
     console.log('🎯 Extracted appointmentId:', appointmentId)
 
@@ -139,7 +139,7 @@ export async function POST(request, { params }) {
     }
 
     const body = await request.json()
-    console.log('📝 POST Selection - Body received:', body)
+    console.log('🔍 POST Selection - Body received:', body)
 
     const { interest_ids, customer_notes } = body
 
@@ -219,10 +219,8 @@ export async function POST(request, { params }) {
       
       for (const interest of interestsRequiringAssessment) {
         try {
-          // Wait briefly for database trigger to create assessment record
           await new Promise(resolve => setTimeout(resolve, 500))
           
-          // Fetch the assessment record
           const { data: assessment, error: assessmentFetchError } = await supabase
             .from('assessment')
             .select('*')
@@ -246,14 +244,12 @@ export async function POST(request, { params }) {
             proposed_fee: assessment.proposed_fee
           })
           
-          // ✅ AUTO-ACCEPT: Customer selecting professional = accepting their assessment proposal
           const updateData = {
             status: 'accepted',
             customer_response: 'accepted',
             customer_response_at: new Date().toISOString()
           }
 
-          // Only set confirmed_date if proposed_date exists
           if (assessment.proposed_date) {
             updateData.confirmed_date = assessment.proposed_date
             updateData.confirmed_duration_minutes = assessment.proposed_duration_minutes || 60
@@ -321,10 +317,10 @@ export async function PUT(request, { params }) {
   try {
     const supabase = createRouteHandlerClient({ cookies })
     
-    // ✅ FIXED: Extract appointment-id using the exact folder name
-    const appointmentId = params['appointment-id']
+    // ✅ FIX: Use 'id' to match the folder name [id]
+    const appointmentId = params.id
     
-    console.log('🔍 PUT /api/appointments/[appointment-id]/interests - Update interest')
+    console.log('🔍 PUT /api/appointments/[id]/interests - Update interest')
     console.log('📦 Raw params:', params)
     console.log('🎯 Extracted appointmentId:', appointmentId)
 

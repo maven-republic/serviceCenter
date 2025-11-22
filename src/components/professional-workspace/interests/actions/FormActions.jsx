@@ -22,28 +22,43 @@ export default function FormActions({
         return {
           text: loading ? 'Confirming...' : 'Confirm Acceptance',
           className: 'bg-green-600 hover:bg-green-700 text-white',
-          disabled: loading || !responseMessage.trim()
+          disabled: loading || !responseMessage?.trim()
         }
       
       case 'decline':
         return {
           text: loading ? 'Declining...' : 'Decline Selection',
           className: 'bg-red-600 hover:bg-red-700 text-white',
-          disabled: loading || !responseMessage.trim()
+          disabled: loading || !responseMessage?.trim()
         }
       
       case 'accept_assessment':
         return {
-          text: loading ? 'Scheduling...' : 'Propose Assessment Time',
+          text: loading ? 'Scheduling...' : 'Schedule Assessment',
           className: 'bg-indigo-600 hover:bg-indigo-700 text-white',
-          disabled: loading || !responseMessage.trim() || !assessmentSchedule?.proposed_date || !assessmentSchedule?.proposed_time
+          // ✅ UPDATED: Check for proposed_datetime (single field from calendar)
+          disabled: loading || 
+                   !responseMessage?.trim() || 
+                   !assessmentSchedule?.proposed_datetime
         }
       
       case 'update_quote':
         return {
           text: loading ? 'Updating Quote...' : 'Send Updated Quote',
           className: 'bg-blue-600 hover:bg-blue-700 text-white',
-          disabled: loading || !responseMessage.trim() || !updatedQuote?.amount || !updatedQuote?.reason_for_update
+          disabled: loading || 
+                   !responseMessage?.trim() || 
+                   !updatedQuote?.amount || 
+                   !updatedQuote?.reason_for_update
+        }
+      
+      case 'provide_final_quote':
+        return {
+          text: loading ? 'Submitting Quote...' : 'Submit Final Quote',
+          className: 'bg-emerald-600 hover:bg-emerald-700 text-white',
+          disabled: loading || 
+                   !responseMessage?.trim() || 
+                   !updatedQuote?.amount
         }
       
       default:

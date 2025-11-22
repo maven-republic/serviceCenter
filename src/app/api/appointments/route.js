@@ -283,7 +283,6 @@ export async function GET(request) {
   }
 }
 
-// POST /api/appointments - Create new appointment
 export async function POST(request) {
   try {
     console.log('🔥 POST /api/appointments called');
@@ -335,156 +334,44 @@ export async function POST(request) {
         customer_id: !!customer_id, 
         service_id: !!service_id, 
         session: !!session, 
-        description: !!description 
+        description: !!description
       });
+      
       return NextResponse.json(
-        { error: 'Missing required fields: customer_id, service_id, session, and description are required' },
+        { error: 'Missing required fields' },
         { status: 400 }
       )
     }
 
-    // Validate customer exists
-    console.log('🔍 Validating customer:', customer_id);
-    const { data: customer, error: customerError } = await supabase
-      .from('individual_customer')
-      .select('customer_id, account_id')
-      .eq('customer_id', customer_id)
-      .single()
-
-    if (customerError) {
-      console.error('❌ Customer validation error:', customerError);
-      return NextResponse.json(
-        { error: 'Customer not found', details: customerError.message },
-        { status: 404 }
-      )
-    }
-    console.log('✅ Customer found:', customer.customer_id);
-
-    // Validate professional exists (if specified for direct booking)
-    if (professional_id) {
-      console.log('🔍 Validating professional:', professional_id);
-      const { data: professional, error: professionalError } = await supabase
-        .from('individual_professional')
-        .select('professional_id, account_id, verification_status')
-        .eq('professional_id', professional_id)
-        .single()
-
-      if (professionalError) {
-        console.error('❌ Professional validation error:', professionalError);
-        return NextResponse.json(
-          { error: 'Professional not found', details: professionalError.message },
-          { status: 404 }
-        )
-      }
-      console.log('✅ Professional found:', professional.professional_id);
-      
-      // 🆕 FIX #1: CHECK AVAILABILITY BEFORE CREATING APPOINTMENT
-      console.log('🔍 Checking if professional is available at requested time...');
-      const availabilityCheck = await checkAvailability(professional_id, session, duration)
-      
-      if (!availabilityCheck.available) {
-        console.error('❌ Professional not available:', availabilityCheck.reason);
-        return NextResponse.json(
-          { 
-            error: 'Professional is not available at the requested time',
-            reason: availabilityCheck.reason,
-            details: availabilityCheck.error
-          },
-          { status: 409 }
-        )
-      }
-      console.log('✅ Professional is available at requested time');
-    }
-
-    // Validate selected professionals (for targeted marketplace)
-    if (recipients && recipients.length > 0) {
-      console.log('🔍 Validating selected professionals:', recipients);
-      const { data: selectedProfessionals, error: selectedProError } = await supabase
-        .from('individual_professional')
-        .select('professional_id, account_id, verification_status')
-        .in('professional_id', recipients)
-
-      if (selectedProError) {
-        console.error('❌ Selected professionals validation error:', selectedProError);
-        return NextResponse.json(
-          { error: 'Error validating selected professionals', details: selectedProError.message },
-          { status: 500 }
-        )
-      }
-
-      if (selectedProfessionals.length !== recipients.length) {
-        console.error('❌ Some selected professionals not found');
-        return NextResponse.json(
-          { error: 'Some selected professionals not found' },
-          { status: 400 }
-        )
-      }
-      console.log('✅ All selected professionals validated:', selectedProfessionals.length);
-    }
-
     // Validate service exists
-    console.log('🔍 Validating service:', service_id);
     const { data: service, error: serviceError } = await supabase
       .from('service')
       .select('service_id, name, base_price')
       .eq('service_id', service_id)
       .single()
 
-    if (serviceError) {
-      console.error('❌ Service validation error:', serviceError);
+    if (serviceError || !service) {
+      console.error('❌ Service not found:', service_id);
       return NextResponse.json(
-        { error: 'Service not found', details: serviceError.message },
+        { error: 'Service not found' },
         { status: 404 }
       )
     }
-    console.log('✅ Service found:', service.name);
 
-    // Validate attachments if provided
-    if (attachment_ids && attachment_ids.length > 0) {
-      console.log('🔎 Validating', attachment_ids.length, 'attachments');
-      
-      const assetIds = attachment_ids.map(att => att.asset_id)
-      const { data: assets, error: assetError } = await supabase
-        .from('asset')
-        .select('id, uploader, filename')
-        .in('id', assetIds)
-
-      if (assetError) {
-        console.error('❌ Asset validation error:', assetError);
-        return NextResponse.json(
-          { error: 'Failed to validate attachments', details: assetError.message },
-          { status: 500 }
-        )
-      }
-
-      if (assets.length !== assetIds.length) {
-        console.error('❌ Some assets not found');
-        return NextResponse.json(
-          { error: 'Some attachments not found' },
-          { status: 400 }
-        )
-      }
-      console.log('✅ All attachments validated');
-    }
-
+    // Handle service location if provided
     let finalAddressId = address_id
 
-    // Handle service location - create new address if provided
     if (service_location && !address_id) {
-      console.log('🔍 Creating new service address');
+      console.log('📍 Creating service address...');
       
       const { data: newAddress, error: addressError } = await supabase
         .from('address')
         .insert([{
-          account_id: customer.account_id,
-          address_type: 'service',
+          account_id: customer_id,
           is_primary: false,
-          street_address: service_location.street_address || '',
-          city: service_location.city || '',
-          parish: service_location.parish || '',
-          community: service_location.community || null,
-          landmark: service_location.landmark || null,
-          is_rural: service_location.is_rural || false,
+          street_address: service_location.street_address,
+          city: service_location.city,
+          parish: service_location.parish,
           latitude: service_location.latitude,
           longitude: service_location.longitude,
           place_id: service_location.place_id || null,
@@ -506,7 +393,7 @@ export async function POST(request) {
       console.log('✅ Service address created:', finalAddressId);
     }
 
-    // Validate dates properly
+    // Validate dates
     const now = new Date()
     const startDate = new Date(session)
 
@@ -554,7 +441,7 @@ export async function POST(request) {
       customer_message: customer_message || null,
       complexity: complexity || null,
       flexibility: flexibility || null,
-      status: isDirectBooking ? 'quoted' : 'pending',
+      status: isDirectBooking ? 'pending' : 'pending',  // ✅ FIXED: PATH A starts as 'pending'
       interest_count: 0,
       last_interest_at: null,
       recipients: isTargetedMarketplace ? recipients : null,
@@ -580,7 +467,7 @@ export async function POST(request) {
     // Handle file attachments
     let createdAttachments = []
     if (attachment_ids && attachment_ids.length > 0) {
-      console.log('🔎 Creating attachment records...');
+      console.log('📎 Creating attachment records...');
       
       const attachmentRecords = attachment_ids.map((attachment, index) => ({
         appointment_id: appointment.appointment_id,
@@ -604,46 +491,17 @@ export async function POST(request) {
       }
     }
 
-    // Handle different workflow types - NO AUTO-INTERESTS FOR TARGETED
+    // Handle different workflow types
     let createdInterests = []
 
     if (isDirectBooking) {
-      // Direct booking - create selected interest
-      console.log('🎯 Creating direct professional interest...');
+      // ✅ PATH A: Direct booking - NO INTEREST, just pending acceptance
+      console.log('✅ PATH A: Direct booking created, awaiting professional acceptance');
+      console.log('📧 Professional will be notified to accept/decline within 24 hours');
       
-      const { data: directInterest, error: interestError } = await supabase
-        .from('interest')
-        .insert([{
-          appointment_id: appointment.appointment_id,
-          professional_id: professional_id,
-          intent: 'high',
-          message: 'Direct booking request',
-          assessment: false,
-          status: 'selected',
-          selected_by_customer: true,
-          customer_viewed_at: new Date().toISOString()
-        }])
-        .select('*')
-        .single()
-
-      if (interestError) {
-        console.error('❌ Direct interest creation error:', interestError);
-        console.warn('⚠️ Appointment created but direct interest creation failed');
-      } else {
-        console.log('✅ Direct professional interest created');
-        createdInterests = [directInterest]
-        
-        await supabase
-          .from('appointment')
-          .update({
-            professional_id: professional_id,
-            status: 'quoted',
-            interest_count: 1,
-            last_interest_at: new Date().toISOString()
-          })
-          .eq('appointment_id', appointment.appointment_id)
-      }
-
+      // Keep appointment in pending state with no interests
+      // No additional updates needed - appointment is already in correct state
+      
     } else if (isTargetedMarketplace) {
       console.log('🎯 Targeted marketplace appointment created - selected professionals must discover and express interest');
       console.log('🎯 Recipients stored in appointment.recipients field:', recipients.length, 'professionals');
@@ -730,7 +588,7 @@ export async function POST(request) {
     }
 
     const successMessage = isDirectBooking 
-      ? 'Direct appointment request sent to professional'
+      ? `Direct booking request sent to professional. They have 24 hours to respond.`
       : isTargetedMarketplace 
         ? `Appointment request created. Your ${recipients.length} selected professional${recipients.length !== 1 ? 's' : ''} will be invited to respond.`
         : 'Appointment request posted to marketplace. Professionals will discover and respond with quotes.'

@@ -57,10 +57,20 @@ export default function ProfessionalResponseHandler({
   const [finalQuoteAmount, setFinalQuoteAmount] = useState('')
   const [loadingAssessment, setLoadingAssessment] = useState(false)
 
+  // ✅ NEW: Assessment schedule state for calendar integration
+  const [assessmentSchedule, setAssessmentSchedule] = useState({
+    proposed_datetime: null,
+    proposed_date: '',
+    proposed_time: '',
+    duration_minutes: 60,
+    next_steps: ''
+  })
+
   console.log('🟢 ProfessionalResponseHandler DEBUG:', {
     componentName: 'ProfessionalResponseHandler',
     timestamp: new Date().toISOString(),
     open: open,
+    professionalId: professional?.id,
     interest: interest ? {
       id: interest.interest_id,
       status: interest.status,
@@ -75,10 +85,7 @@ export default function ProfessionalResponseHandler({
 
   // ✅ Fetch assessment when interest requires it OR when interest.assessment is undefined
   useEffect(() => {
-    // DEFENSIVE: Always try to fetch assessment if status is 'selected'
-    // because interest.assessment might be undefined even when assessment is required
     if (interest?.interest_id && open && interest?.status === 'selected') {
-      // Always check for assessment when selected, regardless of assessment flag
       fetchAssessment()
     }
   }, [interest?.interest_id, interest?.status, open])
@@ -128,7 +135,7 @@ export default function ProfessionalResponseHandler({
     }
   }, [interest?.interest_id])
   
-  // 🔧 State management
+  // 🔧 State management (REMOVED old assessment date/time/duration/notes states)
   const {
     currentView,
     setCurrentView,
@@ -140,14 +147,7 @@ export default function ProfessionalResponseHandler({
     setDeclineReason,
     referralSuggestion,
     setReferralSuggestion,
-    assessmentDate,
-    setAssessmentDate,
-    assessmentTime,
-    setAssessmentTime,
-    assessmentDuration,
-    setAssessmentDuration,
-    assessmentNotes,
-    setAssessmentNotes,
+    // ❌ REMOVED: assessmentDate, setAssessmentDate, assessmentTime, setAssessmentTime, assessmentDuration, setAssessmentDuration, assessmentNotes, setAssessmentNotes
     quoteUpdates,
     setQuoteUpdates,
     deadlineInfo,
@@ -171,10 +171,9 @@ export default function ProfessionalResponseHandler({
     responseMessage,
     declineReason,
     referralSuggestion,
-    assessmentDate,
-    assessmentTime,
-    assessmentDuration,
-    assessmentNotes,
+    // ✅ NEW: Pass assessment schedule instead of individual fields
+    assessmentSchedule,
+    // ❌ REMOVED: assessmentDate, assessmentTime, assessmentDuration, assessmentNotes
     quoteUpdates,
     resetFormData
   })
@@ -237,6 +236,13 @@ export default function ProfessionalResponseHandler({
       // Reset form and close
       resetFormData()
       setFinalQuoteAmount('')
+      setAssessmentSchedule({
+        proposed_datetime: null,
+        proposed_date: '',
+        proposed_time: '',
+        duration_minutes: 60,
+        next_steps: ''
+      })
       onSuccess?.(result)
       onClose()
       
@@ -256,6 +262,13 @@ export default function ProfessionalResponseHandler({
     setCurrentView('overview')
     resetFormData()
     setFinalQuoteAmount('')
+    setAssessmentSchedule({
+      proposed_datetime: null,
+      proposed_date: '',
+      proposed_time: '',
+      duration_minutes: 60,
+      next_steps: ''
+    })
   }
 
   // Check if user can respond
@@ -282,7 +295,7 @@ export default function ProfessionalResponseHandler({
       },
       accept_assessment: {
         title: '📅 Schedule Assessment',
-        description: 'Propose a time for the on-site assessment you mentioned in your quote.'
+        description: 'Select an available time from your calendar for the on-site assessment.'
       },
       provide_final_quote: {
         title: '💰 Provide Final Quote',
@@ -345,6 +358,12 @@ export default function ProfessionalResponseHandler({
   // Early return if missing required data
   if (!interest || !appointment) {
     console.log('❌ Missing required data:', { interest: !!interest, appointment: !!appointment })
+    return null
+  }
+
+  // Early return if missing professional data
+  if (!professional?.id) {
+    console.log('❌ Missing professional ID')
     return null
   }
 
@@ -483,20 +502,15 @@ export default function ProfessionalResponseHandler({
             />
           )}
 
-          {/* Assessment Form */}
+          {/* ✅ UPDATED: Assessment Form with Calendar Integration */}
           {currentView === 'accept_assessment' && (
             <AssessmentForm
               interest={interest}
+              professionalId={professional.id}
               responseMessage={responseMessage}
               setResponseMessage={setResponseMessage}
-              assessmentDate={assessmentDate}
-              setAssessmentDate={setAssessmentDate}
-              assessmentTime={assessmentTime}
-              setAssessmentTime={setAssessmentTime}
-              assessmentDuration={assessmentDuration}
-              setAssessmentDuration={setAssessmentDuration}
-              assessmentNotes={assessmentNotes}
-              setAssessmentNotes={setAssessmentNotes}
+              assessmentSchedule={assessmentSchedule}
+              setAssessmentSchedule={setAssessmentSchedule}
               loading={loading}
             />
           )}
@@ -549,10 +563,7 @@ export default function ProfessionalResponseHandler({
                 onCancel={handleBackToOverview}
                 onSubmit={getSubmitHandler()}
                 responseMessage={responseMessage}
-                assessmentSchedule={{
-                  proposed_date: assessmentDate,
-                  proposed_time: assessmentTime
-                }}
+                assessmentSchedule={assessmentSchedule}
                 updatedQuote={{
                   amount: finalQuoteAmount || quoteUpdates?.amount,
                   reason_for_update: quoteUpdates?.reason_for_update

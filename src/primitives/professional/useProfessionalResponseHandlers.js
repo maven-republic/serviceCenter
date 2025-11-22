@@ -13,10 +13,7 @@ export const useProfessionalResponseHandlers = ({
   responseMessage,
   declineReason,
   referralSuggestion,
-  assessmentDate,
-  assessmentTime,
-  assessmentDuration,
-  assessmentNotes,
+  assessmentSchedule, // ✅ NEW: Single object instead of 4 separate fields
   quoteUpdates,
   resetFormData
 }) => {
@@ -147,10 +144,11 @@ export const useProfessionalResponseHandlers = ({
     }
   }
 
-  // ✅ Assessment - Update interest and create assessment
+  // ✅ UPDATED: Assessment - Uses calendar-selected datetime from assessmentSchedule object
   const handleAcceptAssessment = async () => {
-    if (!assessmentDate || !assessmentTime) {
-      toast.error('Please select assessment date and time')
+    // ✅ NEW: Validate assessmentSchedule object with proposed_datetime
+    if (!assessmentSchedule?.proposed_datetime) {
+      toast.error('Please select an assessment time from the calendar')
       return
     }
 
@@ -163,7 +161,12 @@ export const useProfessionalResponseHandlers = ({
     
     try {
       const { interestId } = validateRequiredData()
-      const proposedDateTime = new Date(`${assessmentDate}T${assessmentTime}`)
+
+      console.log('📅 Scheduling assessment with calendar data:', {
+        proposed_datetime: assessmentSchedule.proposed_datetime,
+        duration_minutes: assessmentSchedule.duration_minutes,
+        next_steps: assessmentSchedule.next_steps
+      })
 
       // First, update interest to confirmed
       const interestUrl = `/api/interests/${interestId}`
@@ -186,20 +189,23 @@ export const useProfessionalResponseHandlers = ({
         throw new Error(interestResult.error || 'Failed to confirm interest')
       }
 
-      // Then create/update assessment
+      // Then create/update assessment with calendar-selected datetime
       const assessmentUrl = `/api/assessments`
       
       const assessmentBody = {
         interest_id: interestId,
         appointment_id: appointment.appointment_id || appointment.id,
         professional_id: professional.professional_id || professional.id,
-        proposed_date: proposedDateTime.toISOString(),
-        proposed_duration_minutes: parseInt(assessmentDuration) || 60,
+        // ✅ NEW: Use ISO datetime from calendar
+        proposed_date: assessmentSchedule.proposed_datetime,
+        proposed_duration_minutes: assessmentSchedule.duration_minutes || 60,
         proposed_fee: 0,
         assessment_type: 'local',
-        proposal_message: assessmentNotes?.trim() || null,
+        proposal_message: assessmentSchedule.next_steps?.trim() || null,
         status: 'proposed'
       }
+
+      console.log('📤 Sending assessment data to API:', assessmentBody)
 
       const assessmentResponse = await fetch(assessmentUrl, {
         method: 'POST',
@@ -211,12 +217,16 @@ export const useProfessionalResponseHandlers = ({
 
       if (!assessmentResponse.ok || !assessmentResult.success) {
         // Assessment creation failed, but interest was confirmed
-        console.warn('Assessment creation failed:', assessmentResult.error)
+        console.warn('⚠️ Assessment creation failed:', assessmentResult.error)
+        toast.warning('Interest confirmed, but assessment scheduling had issues', {
+          description: 'Please contact support if this persists.'
+        })
+      } else {
+        console.log('✅ Assessment created successfully:', assessmentResult)
+        toast.success('Assessment scheduled successfully! 🎉', {
+          description: 'The customer will be notified of your proposed time.'
+        })
       }
-      
-      toast.success('Assessment scheduled successfully!', {
-        description: 'The customer will be notified of your proposed time.'
-      })
       
       resetFormData()
       onSuccess?.(interestResult)

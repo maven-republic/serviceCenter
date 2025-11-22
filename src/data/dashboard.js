@@ -61,6 +61,13 @@ export const professionalNavigation = [
     path: "/professional/assessments",
   },
 
+  {
+    id: 4,
+    name: "Bookings",        // ✅ NEW - My Bookings
+    icon: "flaticon-calendar",
+    path: "/professional/bookings",
+  },
+
   // {
     // id: 2,
     // name: "Projects",
