@@ -20,9 +20,10 @@ export async function GET(request) {
     .limit(3);
     
   // Text search for services (more powerful with weighting and ranking)
+  // ✅ UPDATED: Added display and alias fields
   const { data: services } = await supabase
     .from('service')
-    .select('service_id, name')
+    .select('service_id, name, display, alias')
     .textSearch('name', query, {
       type: 'websearch',
       config: 'english'  // or other language as needed
@@ -30,9 +31,10 @@ export async function GET(request) {
     .limit(4);
     
   // Text search in service_search_term table for keywords
+  // ✅ UPDATED: Added display and alias to service selection
   const { data: searchTerms } = await supabase
     .from('service_search_term')
-    .select('service_id, search_term, service:service_id(name)')
+    .select('service_id, search_term, service:service_id(name, display, alias)')
     .textSearch('search_term', query)
     .limit(4);
   
@@ -47,6 +49,7 @@ export async function GET(request) {
     .limit(3);
 
   // Format all suggestions
+  // ✅ UPDATED: Use display field for service names
   const suggestions = [
     ...(categories || []).map(cat => ({ 
       type: 'category', 
@@ -56,12 +59,13 @@ export async function GET(request) {
     ...(services || []).map(svc => ({ 
       type: 'service', 
       id: svc.service_id, 
-      name: svc.name 
+      name: svc.display || svc.name,  // ✅ Use display first
+      technical_name: svc.name
     })),
     ...(searchTerms || []).map(term => ({ 
       type: 'service', 
       id: term.service_id, 
-      name: term.service.name,
+      name: term.service.display || term.service.name,  // ✅ Use display first
       term: term.search_term
     })),
     ...(professionals || []).map(pro => ({ 
@@ -73,4 +77,3 @@ export async function GET(request) {
   
   return NextResponse.json({ suggestions });
 }
-

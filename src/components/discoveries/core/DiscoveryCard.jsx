@@ -112,7 +112,7 @@ export default function DiscoveryCard({ result, layout = 'grid', index = 0 }) {
                   <div className="flex items-start justify-between">
                     <div className="flex-1 pr-4">
                       <h3 className="font-semibold text-lg text-gray-900 mb-2">
-                        {result.service_name || result.title}
+                        {result.display || result.service_name || result.title}
                       </h3>
                       <p className="text-sm text-gray-600 mb-3 line-clamp-2">
                         {result.description || result.subtitle}
@@ -208,7 +208,7 @@ export default function DiscoveryCard({ result, layout = 'grid', index = 0 }) {
 
             {/* Service Title */}
             <h3 className="font-semibold text-base leading-tight mb-2 text-gray-900 line-clamp-2 group-hover:text-primary transition-colors">
-              {result.service_name || result.title}
+              {result.display || result.service_name || result.title}
             </h3>
 
             {/* Category Badge */}

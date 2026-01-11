@@ -1,4 +1,4 @@
-// src/app/api/services/route.js - COMPLETE REWRITE
+// src/app/api/services/route.js - COMPLETE REWRITE WITH DISPLAY FIELD
 import { createClient } from '@/utils/supabase/server';
 import { NextResponse } from 'next/server';
 
@@ -18,12 +18,14 @@ export async function GET(request) {
     const startTime = performance.now();
     const supabase = await createClient();
 
-    // Build the query
+    // Build the query - ✅ ADDED display and alias fields
     let query = supabase
       .from('service')
       .select(`
         service_id,
         name,
+        display,
+        alias,
         description,
         base_price,
         duration_minutes,
@@ -103,11 +105,14 @@ export async function GET(request) {
       throw error;
     }
 
-    // Transform the data
+    // Transform the data - ✅ UPDATED to use display field
     const transformedServices = services?.map(service => ({
       service_id: service.service_id,
-      service_name: service.name,
-      name: service.name, // Keep both for compatibility
+      service_name: service.display || service.name,  // ✅ Use display for service_name
+      name: service.name, // Keep technical name
+      display: service.display,  // ✅ Add display field
+      alias: service.alias,  // ✅ Add alias field
+      title: service.display || service.name,  // ✅ Use display for title
       description: service.description,
       base_price: service.base_price,
       duration_minutes: service.duration_minutes,

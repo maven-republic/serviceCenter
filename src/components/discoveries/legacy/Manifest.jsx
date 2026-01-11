@@ -17,7 +17,7 @@ export default function Manifest({ data }) {
   // Safely extract data with fallbacks
   const serviceInformation = {
     id: data?.id || data?.service_id || 'unknown',
-    title: data?.title || data?.name || data?.service_name || 'Service',
+    title: data?.display || data?.title || data?.name || data?.service_name || 'Service',
     description: data?.description || '',
     price: data?.price || data?.base_price || 0,
     category: data?.category || data?.vertical_name || data?.industry_name || 'General',
@@ -87,7 +87,7 @@ export default function Manifest({ data }) {
                        !imageError;
 
   const formatPrice = (price) => {
-    if (!price || price === 0) return "Quote Available";
+    if (!price || price === 0) return "Quote";
     if (price < 100) return `${price}`;
     return `${(price / 1).toLocaleString()}`;
   };

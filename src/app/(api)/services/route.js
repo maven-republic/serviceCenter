@@ -35,7 +35,7 @@ export async function GET(request) {
     
     console.log("Fetching services from Supabase", { category });
     
-    // Build the query
+    // ✅ UPDATED: Build the query with display and alias fields
     let query = supabase
       .from('service')
       .select(`
@@ -68,7 +68,7 @@ export async function GET(request) {
     
     console.log(`Retrieved ${data?.length || 0} services from database`);
     
-    // Transform the data to match the expected format in the frontend
+    // ✅ UPDATED: Transform the data to use display field
     const transformedData = data.map(item => ({
       id: item.service_id,
       img: item.service_image && item.service_image.length > 0 
@@ -78,7 +78,11 @@ export async function GET(request) {
         ? item.service_image[0].image_url 
         : "/images/listings/default.jpg",
       category: item.service_subcategory?.service_category?.name || "General",
-      title: item.name,
+      title: item.display || item.name,  // ✅ Use display field first
+      service_name: item.display || item.name,  // ✅ Add service_name for compatibility
+      name: item.name,  // ✅ Keep technical name
+      display: item.display,  // ✅ Add display field
+      alias: item.alias,  // ✅ Add alias field
       rating: getAttributeValue(item.service_attribute, 'skill_level') || 4.7,
       review: Math.floor(Math.random() * 100) + 20, // Random reviews count for demo
       author: {
@@ -124,4 +128,3 @@ function getAttributeValue(attributes, attributeName) {
   const attribute = attributes.find(attr => attr.attribute_name === attributeName);
   return attribute ? attribute.attribute_value : null;
 }
-
