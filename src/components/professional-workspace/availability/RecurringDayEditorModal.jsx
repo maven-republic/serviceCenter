@@ -22,10 +22,11 @@ import {
   Repeat,
   AlertTriangle,
   Copy,
-  Trash2
+  Trash2,
+  Zap,
+  Info
 } from 'lucide-react'
 
-// Default rules - you might want to import these from your config
 const AVAILABILITY_RULES = {
   DEFAULT_BLOCK_START: '09:00',
   DEFAULT_BLOCK_END: '17:00'
@@ -118,7 +119,6 @@ export default function RecurringDayEditorModal({
   }
 
   const handleCancel = () => {
-    // Reset to original state
     setBlocks(availability.filter(a => a.day_of_week === dayIndex))
     onClose()
   }
@@ -166,42 +166,84 @@ export default function RecurringDayEditorModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-<DialogContent className="professional-workspace max-w-md max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
+          <DialogTitle className="flex items-center gap-2 text-xl">
             <Repeat className="h-5 w-5 text-primary" />
-            Edit Weekly Hours for {dayLabel}
+            Every {dayLabel}
           </DialogTitle>
-          <DialogDescription>
-            Set your regular availability for every {dayLabel} of the week
+          <DialogDescription className="text-base">
+            Set your regular weekly hours for all {dayLabel}s. These hours repeat every week.
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4">
-          {/* Summary Info */}
-          <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
-            <div className="flex items-center gap-2">
-              <Clock className="h-4 w-4 text-muted-foreground" />
-              <span className="text-sm font-medium">Total: {getTotalHours()}</span>
-            </div>
-            <Badge variant="outline">
+          {/* Status Badges */}
+          <div className="flex items-center gap-2 flex-wrap">
+            <Badge variant="outline" className="text-sm px-3 py-1">
+              <Repeat className="h-3 w-3 mr-1" />
+              Weekly Pattern
+            </Badge>
+            <Badge variant="outline" className="text-sm px-3 py-1">
+              <Clock className="h-3 w-3 mr-1" />
+              {getTotalHours()}
+            </Badge>
+            <Badge variant="outline" className="text-sm px-3 py-1">
               {blocks.length} block{blocks.length !== 1 ? 's' : ''}
             </Badge>
           </div>
 
+          {/* Info Alert */}
+          <Alert className="border-blue-200 bg-blue-50">
+            <Info className="h-4 w-4 text-blue-600" />
+            <AlertDescription className="text-blue-700 text-sm">
+              Changes apply to every {dayLabel} going forward. Past dates are not affected.
+            </AlertDescription>
+          </Alert>
+
+          <Separator />
+
           {/* Time Blocks */}
           <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <Label className="text-base font-semibold">Time Blocks</Label>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleAdd}
+                disabled={showDuplicateWarning}
+                className="h-8"
+              >
+                <Plus className="h-3 w-3 mr-1" />
+                Add Block
+              </Button>
+            </div>
+
             {blocks.length === 0 ? (
-              <div className="text-center py-8 text-muted-foreground">
-                <Clock className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                <p className="text-sm">No hours set for {dayLabel}</p>
-                <p className="text-xs">Click "Add Time Block" to get started</p>
+              <div className="text-center py-12 border-2 border-dashed rounded-lg bg-muted/20">
+                <Clock className="h-12 w-12 mx-auto mb-3 text-muted-foreground opacity-50" />
+                <p className="text-sm font-medium text-muted-foreground mb-1">
+                  No hours set for {dayLabel}
+                </p>
+                <p className="text-xs text-muted-foreground mb-4">
+                  Click "Add Block" above to set your availability
+                </p>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleAdd}
+                >
+                  <Plus className="h-3 w-3 mr-2" />
+                  Add First Block
+                </Button>
               </div>
             ) : (
               blocks.map((block, index) => (
-                <div key={index} className="p-4 border rounded-lg bg-background space-y-3">
-                  {/* Block Header */}
-                  <div className="flex items-center justify-between">
+                <div 
+                  key={index} 
+                  className="p-4 border-2 rounded-lg bg-background hover:border-primary/50 transition-colors"
+                >
+                  <div className="flex items-center justify-between mb-3">
                     <span className="text-sm font-medium text-muted-foreground">
                       Block {index + 1}
                     </span>
@@ -212,28 +254,27 @@ export default function RecurringDayEditorModal({
                       <Button
                         variant="ghost"
                         size="sm"
-                        className="h-6 w-6 p-0"
                         onClick={() => handleDuplicate(index)}
-                        title="Duplicate block"
+                        className="h-7 w-7 p-0"
+                        title="Duplicate"
                       >
                         <Copy className="h-3 w-3" />
                       </Button>
                       <Button
                         variant="ghost"
                         size="sm"
-                        className="h-6 w-6 p-0 text-red-500 hover:text-red-700"
                         onClick={() => handleRemove(index)}
-                        title="Remove block"
+                        className="h-7 w-7 p-0 text-destructive hover:text-destructive hover:bg-destructive/10"
+                        title="Remove"
                       >
                         <X className="h-3 w-3" />
                       </Button>
                     </div>
                   </div>
 
-                  {/* Time Inputs */}
                   <div className="grid grid-cols-2 gap-3">
                     <div className="space-y-2">
-                      <Label htmlFor={`start-${index}`} className="text-xs font-medium">
+                      <Label htmlFor={`start-${index}`} className="text-sm">
                         Start Time
                       </Label>
                       <Input
@@ -241,11 +282,11 @@ export default function RecurringDayEditorModal({
                         type="time"
                         value={block.start_time}
                         onChange={(e) => handleChange(index, 'start_time', e.target.value)}
-                        className="text-sm"
+                        className="h-11 text-base"
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor={`end-${index}`} className="text-xs font-medium">
+                      <Label htmlFor={`end-${index}`} className="text-sm">
                         End Time
                       </Label>
                       <Input
@@ -253,7 +294,7 @@ export default function RecurringDayEditorModal({
                         type="time"
                         value={block.end_time}
                         onChange={(e) => handleChange(index, 'end_time', e.target.value)}
-                        className="text-sm"
+                        className="h-11 text-base"
                       />
                     </div>
                   </div>
@@ -262,72 +303,72 @@ export default function RecurringDayEditorModal({
             )}
           </div>
 
-          {/* Add Block Button */}
-          <Button
-            variant="outline"
-            onClick={handleAdd}
-            className="w-full"
-            disabled={showDuplicateWarning}
-          >
-            <Plus className="h-4 w-4 mr-2" />
-            Add Time Block
-          </Button>
-
           {/* Duplicate Warning */}
           {showDuplicateWarning && (
             <Alert variant="destructive">
               <AlertTriangle className="h-4 w-4" />
               <AlertDescription>
-                Duplicate time blocks detected. Please adjust or remove conflicting times before saving.
+                Duplicate time blocks detected. Remove or adjust conflicting times.
               </AlertDescription>
             </Alert>
           )}
 
+          <Separator />
+
           {/* Quick Actions */}
-          {blocks.length > 0 && (
-            <>
-              <Separator />
-              <div className="space-y-2">
-                <Label className="text-xs font-medium text-muted-foreground">Quick Actions</Label>
-                <div className="flex gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setBlocks([])}
-                    className="flex-1"
-                  >
-                    <Trash2 className="h-3 w-3 mr-1" />
-                    Clear All
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => {
-                      const standard = {
-                        start_time: '09:00',
-                        end_time: '17:00'
-                      }
-                      setBlocks([standard])
-                    }}
-                    className="flex-1"
-                  >
-                    <Clock className="h-3 w-3 mr-1" />
-                    9-5 Standard
-                  </Button>
-                </div>
-              </div>
-            </>
-          )}
+          <div className="space-y-3">
+            <Label className="text-sm font-medium">Quick Actions</Label>
+            
+            <div className="grid grid-cols-2 gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setBlocks([])}
+                className="h-9"
+              >
+                <Trash2 className="h-3 w-3 mr-2" />
+                Clear All
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setBlocks([{
+                  start_time: '09:00',
+                  end_time: '17:00'
+                }])}
+                className="h-9"
+              >
+                <Zap className="h-3 w-3 mr-2" />
+                9-5 Standard
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setBlocks([
+                  { start_time: '09:00', end_time: '12:00' },
+                  { start_time: '13:00', end_time: '17:00' }
+                ])}
+                className="h-9 col-span-2"
+              >
+                <Clock className="h-3 w-3 mr-2" />
+                Split Shift (9-12, 1-5)
+              </Button>
+            </div>
+          </div>
         </div>
 
-        <DialogFooter className="flex gap-2">
-          <Button variant="outline" onClick={handleCancel}>
+        <DialogFooter className="gap-2 sm:gap-0">
+          <Button 
+            variant="outline" 
+            onClick={handleCancel}
+            className="flex-1 sm:flex-none"
+          >
             Cancel
           </Button>
           <Button 
             onClick={handleApply} 
             disabled={showDuplicateWarning}
-            className={hasChanges() ? '' : 'opacity-50'}
+            className="flex-1 sm:flex-none"
           >
             {hasChanges() ? 'Apply Changes' : 'No Changes'}
           </Button>

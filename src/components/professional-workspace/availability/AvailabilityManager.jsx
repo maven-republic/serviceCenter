@@ -5,9 +5,6 @@ import { useSupabaseClient } from '@supabase/auth-helpers-react'
 import {
   Card,
   CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
 } from "@/components/ui/card"
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -46,13 +43,7 @@ export default function AvailabilityManager({
     setSaveStatus(null)
 
     try {
-      console.log('💾 Saving availability:', {
-        professionalId,
-        availabilityCount: newAvailability.length,
-        overridesCount: newOverrides.length
-      })
-
-      // 1. Delete existing availability
+      // Delete existing availability
       const { error: deleteError } = await supabase
         .from('availability')
         .delete()
@@ -60,7 +51,7 @@ export default function AvailabilityManager({
 
       if (deleteError) throw deleteError
 
-      // 2. Insert new availability
+      // Insert new availability
       if (newAvailability.length > 0) {
         const availabilityToInsert = newAvailability.map(slot => ({
           professional_id: professionalId,
@@ -76,7 +67,7 @@ export default function AvailabilityManager({
         if (insertError) throw insertError
       }
 
-      // 3. Delete existing overrides
+      // Delete existing overrides
       const { error: deleteOverridesError } = await supabase
         .from('availability_override')
         .delete()
@@ -84,7 +75,7 @@ export default function AvailabilityManager({
 
       if (deleteOverridesError) throw deleteOverridesError
 
-      // 4. Insert new overrides
+      // Insert new overrides
       if (newOverrides.length > 0) {
         const overridesToInsert = newOverrides.map(override => ({
           professional_id: professionalId,
@@ -106,10 +97,8 @@ export default function AvailabilityManager({
       setSaveStatus('success')
       setHasUnsavedChanges(false)
 
-      console.log('✅ Availability saved successfully')
-
     } catch (error) {
-      console.error('❌ Error saving availability:', error)
+      console.error('Error saving availability:', error)
       setSaveStatus('error')
     } finally {
       setIsSaving(false)
@@ -148,10 +137,8 @@ export default function AvailabilityManager({
       setSaveStatus('success')
       setHasUnsavedChanges(false)
 
-      console.log('✅ Protocol rules saved successfully')
-
     } catch (error) {
-      console.error('❌ Error saving protocol rules:', error)
+      console.error('Error saving protocol rules:', error)
       setSaveStatus('error')
     } finally {
       setIsSaving(false)
@@ -185,211 +172,122 @@ export default function AvailabilityManager({
   const tabCounts = getTabCounts()
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Mobile Header */}
-      <div className="sticky top-0 z-40 bg-background/95 backdrop-blur border-b p-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Clock className="h-6 w-6 text-primary" />
-            <div>
-              <h1 className="text-xl font-bold text-foreground">Availability</h1>
-              <p className="text-xs text-muted-foreground">Manage your schedule</p>
+    <div className="min-h-screen bg-background pb-20">
+      {/* Header - CHANGED z-40 to z-20 */}
+      <div className="sticky top-0 z-20 bg-background/95 backdrop-blur border-b">
+        <div className="p-4">
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-primary/10">
+                <Clock className="h-5 w-5 text-primary" />
+              </div>
+              <div>
+                <h1 className="text-xl font-bold">Availability</h1>
+                <p className="text-xs text-muted-foreground">Manage your schedule</p>
+              </div>
             </div>
+            
+            {hasUnsavedChanges && (
+              <Badge variant="secondary" className="animate-pulse">
+                Unsaved
+              </Badge>
+            )}
           </div>
-          
-          {hasUnsavedChanges && (
-            <Badge variant="secondary" className="animate-pulse px-2 py-1 text-xs">
-              Unsaved
-            </Badge>
+
+          {/* Status Alert */}
+          {saveStatus && (
+            <Alert 
+              variant={saveStatus === 'success' ? 'default' : 'destructive'}
+              className="mb-0"
+            >
+              {saveStatus === 'success' ? (
+                <CheckCircle2 className="h-4 w-4" />
+              ) : (
+                <AlertCircle className="h-4 w-4" />
+              )}
+              <AlertDescription className="text-sm">
+                {saveStatus === 'success' 
+                  ? 'Changes saved successfully!' 
+                  : 'Failed to save. Please try again.'
+                }
+              </AlertDescription>
+            </Alert>
           )}
         </div>
       </div>
 
-      {/* Status Alerts */}
-      {saveStatus && (
-        <div className="p-4">
-          <Alert variant={saveStatus === 'success' ? 'default' : 'destructive'}>
-            {saveStatus === 'success' ? (
-              <CheckCircle2 className="h-4 w-4" />
-            ) : (
-              <AlertCircle className="h-4 w-4" />
-            )}
-            <AlertDescription className="flex items-center justify-between">
-              <span className="text-sm">
-                {saveStatus === 'success' 
-                  ? 'Changes saved successfully!' 
-                  : 'Failed to save changes. Please try again.'
-                }
-              </span>
-              <Button 
-                variant="ghost" 
-                size="sm"
-                onClick={() => setSaveStatus(null)}
-                className="h-auto p-1"
-              >
-                ✕
-              </Button>
-            </AlertDescription>
-          </Alert>
-        </div>
-      )}
-
       {/* Loading Overlay */}
       {isSaving && (
         <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center">
-          <Card className="p-6 mx-4 w-full max-w-sm">
+          <Card className="p-6 mx-4 max-w-sm">
             <CardContent className="flex items-center gap-4 p-0">
               <Loader2 className="h-8 w-8 animate-spin text-primary" />
               <div>
                 <p className="font-medium">Saving changes...</p>
-                <p className="text-sm text-muted-foreground">This may take a moment</p>
+                <p className="text-sm text-muted-foreground">Please wait</p>
               </div>
             </CardContent>
           </Card>
         </div>
       )}
 
-      {/* Mobile Stats Cards */}
+      {/* Tabs */}
       <div className="p-4">
-        <div className="grid grid-cols-2 gap-3">
-          <Card>
-            <CardContent className="p-3">
-              <div className="flex items-center gap-2">
-                <div className="p-1.5 rounded bg-blue-100 text-primary">
-                  <Calendar className="h-4 w-4" />
-                </div>
-                <div>
-                  <p className="text-xs text-muted-foreground">Regular Hours</p>
-                  <p className="text-lg font-bold">{availability.length}</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardContent className="p-3">
-              <div className="flex items-center gap-2">
-                <div className="p-1.5 rounded bg-amber-100 text-amber-600">
-                  <Clock className="h-4 w-4" />
-                </div>
-                <div>
-                  <p className="text-xs text-muted-foreground">Overrides</p>
-                  <p className="text-lg font-bold">{overrides.length}</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
-
-      {/* Mobile Tabs */}
-      <div className="px-4">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
           <TabsList className="grid w-full grid-cols-2 h-12">
-            <TabsTrigger value="schedule" className="flex items-center gap-2 text-sm">
+            <TabsTrigger value="schedule" className="flex items-center gap-2">
               <Calendar className="h-4 w-4" />
-              Schedule
+              <span>Schedule</span>
               {tabCounts.schedule > 0 && (
-                <Badge variant="secondary" className="ml-1 h-5 min-w-5 text-xs px-1.5">
+                <Badge variant="secondary" className="ml-1 h-5 px-1.5 text-xs">
                   {tabCounts.schedule}
                 </Badge>
               )}
             </TabsTrigger>
-            <TabsTrigger value="protocol" className="flex items-center gap-2 text-sm">
+            <TabsTrigger value="protocol" className="flex items-center gap-2">
               <Settings className="h-4 w-4" />
-              Settings
+              <span>Settings</span>
               {tabCounts.protocol > 0 && (
-                <Badge variant="secondary" className="ml-1 h-5 min-w-5 text-xs px-1.5">
+                <Badge variant="secondary" className="ml-1 h-5 px-1.5 text-xs">
                   {tabCounts.protocol}
                 </Badge>
               )}
             </TabsTrigger>
           </TabsList>
 
-          {/* Schedule Tab - Remove Card wrapper */}
-          <TabsContent value="schedule" className="space-y-4">
-            <div>
-              <div className="flex items-center gap-2 pb-4">
-                <Calendar className="h-5 w-5" />
-                <CardTitle className="text-lg">Working Hours</CardTitle>
-              </div>
-              <CardDescription className="text-sm pb-4">
-                Set your regular availability and manage date-specific overrides.
-                {overrides.length > 0 && (
-                  <span className="block mt-1 text-amber-600 font-medium">
-                    {overrides.length} override{overrides.length !== 1 ? 's' : ''} configured.
-                  </span>
-                )}
-              </CardDescription>
-              <div>
-                <AvailabilityInterface
-                  availability={availability}
-                  overrides={overrides}
-                  onUpdateAvailability={(newAvailability) => {
-                    setAvailability(newAvailability)
-                    handleDataChange()
-                  }}
-                  onUpdateOverrides={(newOverrides) => {
-                    setOverrides(newOverrides)
-                    handleDataChange()
-                  }}
-                  onSave={handleSaveAvailability}
-                />
-              </div>
-            </div>
+          <TabsContent value="schedule" className="space-y-4 mt-0">
+            <AvailabilityInterface
+              availability={availability}
+              overrides={overrides}
+              onUpdateAvailability={(newAvailability) => {
+                setAvailability(newAvailability)
+                handleDataChange()
+              }}
+              onUpdateOverrides={(newOverrides) => {
+                setOverrides(newOverrides)
+                handleDataChange()
+              }}
+              onSave={handleSaveAvailability}
+            />
           </TabsContent>
 
-          {/* Protocol Tab - Remove Card wrapper */}
-          <TabsContent value="protocol" className="space-y-4">
-            <div>
-              <div className="flex items-center gap-2 pb-4">
-                <Settings className="h-5 w-5" />
-                <CardTitle className="text-lg">Booking Rules</CardTitle>
-              </div>
-              <CardDescription className="text-sm pb-4">
-                Configure advance notice requirements, buffer times, and booking limits.
-              </CardDescription>
-              <div>
-                <AvailabilityProtocol
-                  rules={protocolRules}
-                  setRules={(newRules) => {
-                    setProtocolRules(newRules)
-                    handleDataChange()
-                  }}
-                  onSave={handleSaveProtocol}
-                  isSaving={isSaving}
-                />
-              </div>
-            </div>
+          <TabsContent value="protocol" className="space-y-4 mt-0">
+            <AvailabilityProtocol
+              rules={protocolRules}
+              setRules={(newRules) => {
+                setProtocolRules(newRules)
+                handleDataChange()
+              }}
+              onSave={handleSaveProtocol}
+              isSaving={isSaving}
+            />
           </TabsContent>
         </Tabs>
       </div>
 
-      {/* Mobile Help Card */}
-      <div className="p-4 pb-20">
-        <Card className="border-blue-200 ">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base flex items-center gap-2 text-blue-700">
-              <AlertCircle className="h-4 w-4" />
-              Quick Tips
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="text-sm text-blue-700 space-y-3">
-            <div>
-              <h4 className="font-medium mb-1">📅 Schedule</h4>
-              <p className="text-xs">Set regular weekly hours and add date-specific changes</p>
-            </div>
-            <div>
-              <h4 className="font-medium mb-1">⚙️ Settings</h4>
-              <p className="text-xs">Configure minimum notice time and buffer between appointments</p>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Mobile Save Bar - Fixed Bottom */}
+      {/* Fixed Save Bar */}
       {hasUnsavedChanges && (
-        <div className="fixed bottom-0 left-0 right-0 z-40 p-4 bg-background border-t">
+        <div className="fixed bottom-0 left-0 right-0 z-40 p-4 bg-background border-t shadow-lg">
           <div className="flex gap-3">
             <Button
               variant="outline"

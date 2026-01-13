@@ -4,9 +4,6 @@ import { useState } from 'react'
 import {
   Card,
   CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
 } from "@/components/ui/card"
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -19,18 +16,14 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { Badge } from '@/components/ui/badge'
-import { Separator } from '@/components/ui/separator'
+import { Alert, AlertDescription } from '@/components/ui/alert'
 import { 
   Clock, 
   Calendar, 
   Users, 
   AlertCircle, 
-  CheckCircle2,
-  Loader2,
-  Settings,
   Info,
-  Eye,
-  EyeOff 
+  CheckCircle2
 } from 'lucide-react'
 
 export default function AvailabilityProtocol({ rules, setRules, onSave, isSaving }) {
@@ -47,22 +40,19 @@ export default function AvailabilityProtocol({ rules, setRules, onSave, isSaving
     setHasChanges(false)
   }
 
-  const handleReset = () => {
-    setHasChanges(false)
-  }
-
-  // Mobile-optimized settings configuration
   const settingsConfig = [
     {
       key: 'default_event_duration',
-      title: 'Event Duration',
-      description: 'Default session length',
+      title: 'Session Duration',
+      description: 'Default appointment length',
       icon: Clock,
+      iconColor: 'text-blue-600',
+      iconBg: 'bg-blue-100',
       type: 'select',
       options: [
-        { value: 15, label: '15 minutes' },
-        { value: 30, label: '30 minutes' },
-        { value: 45, label: '45 minutes' },
+        { value: 15, label: '15 min' },
+        { value: 30, label: '30 min' },
+        { value: 45, label: '45 min' },
         { value: 60, label: '1 hour' },
         { value: 90, label: '1.5 hours' },
         { value: 120, label: '2 hours' },
@@ -70,9 +60,11 @@ export default function AvailabilityProtocol({ rules, setRules, onSave, isSaving
     },
     {
       key: 'min_notice_hours',
-      title: 'Minimum Notice',
-      description: 'Required advance booking time',
+      title: 'Advance Notice',
+      description: 'Minimum booking time ahead',
       icon: AlertCircle,
+      iconColor: 'text-amber-600',
+      iconBg: 'bg-amber-100',
       type: 'input',
       suffix: 'hours',
       placeholder: '12',
@@ -84,8 +76,10 @@ export default function AvailabilityProtocol({ rules, setRules, onSave, isSaving
       title: 'Buffer Time',
       description: 'Break between appointments',
       icon: Calendar,
+      iconColor: 'text-green-600',
+      iconBg: 'bg-green-100',
       type: 'input',
-      suffix: 'minutes',
+      suffix: 'min',
       placeholder: '15',
       min: 0,
       max: 120
@@ -95,101 +89,76 @@ export default function AvailabilityProtocol({ rules, setRules, onSave, isSaving
       title: 'Daily Limit',
       description: 'Max appointments per day',
       icon: Users,
+      iconColor: 'text-purple-600',
+      iconBg: 'bg-purple-100',
       type: 'input',
       suffix: 'bookings',
-      placeholder: '3',
+      placeholder: '5',
       min: 1,
       max: 20
     }
   ]
 
-  const getCurrentSettingsDisplay = () => {
-    return {
-      duration: rules.default_event_duration ? `${rules.default_event_duration} min` : 'Not set',
-      notice: rules.min_notice_hours ? `${rules.min_notice_hours}h` : 'Not set',
-      buffer: rules.buffer_minutes ? `${rules.buffer_minutes} min` : 'Not set',
-      daily_limit: rules.max_bookings_per_day || 'Unlimited'
+  const getCurrentValue = (key) => {
+    const value = rules[key]
+    if (!value) return 'Not set'
+    
+    const config = settingsConfig.find(s => s.key === key)
+    if (config.type === 'select') {
+      return config.options.find(o => o.value === value)?.label || value
     }
+    return `${value} ${config.suffix}`
   }
-
-  const currentSettings = getCurrentSettingsDisplay()
 
   return (
     <div className="space-y-4">
-      {/* Mobile Current Settings Summary */}
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-base flex items-center gap-2">
-            <Eye className="h-4 w-4" />
-            Current Settings
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-2 gap-3 text-sm">
-            <div className="space-y-2">
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Duration:</span>
-                <Badge variant="outline" className="text-xs">
-                  {currentSettings.duration}
-                </Badge>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Notice:</span>
-                <Badge variant="outline" className="text-xs">
-                  {currentSettings.notice}
-                </Badge>
-              </div>
-            </div>
-            <div className="space-y-2">
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Buffer:</span>
-                <Badge variant="outline" className="text-xs">
-                  {currentSettings.buffer}
-                </Badge>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Daily limit:</span>
-                <Badge variant="outline" className="text-xs">
-                  {currentSettings.daily_limit}
-                </Badge>
-              </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+      {/* Header */}
+      <div>
+        <h2 className="text-xl font-semibold mb-1">Booking Rules</h2>
+        <p className="text-sm text-muted-foreground">
+          Control how and when clients can book with you
+        </p>
+      </div>
 
-      {/* Mobile Settings Cards */}
-      <div className="space-y-4">
+      {/* Two-Column Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {settingsConfig.map((setting) => {
           const IconComponent = setting.icon
+          const currentValue = getCurrentValue(setting.key)
+          
           return (
-            <Card key={setting.key}>
+            <Card key={setting.key} className="hover:border-primary/50 transition-colors">
               <CardContent className="p-4">
                 <div className="space-y-3">
-                  {/* Setting Header */}
-                  <div className="flex items-start gap-3">
-                    <div className="p-2 rounded-lg bg-muted/50 mt-1">
-                      <IconComponent className="h-4 w-4 text-muted-foreground" />
+                  {/* Header with Icon and Badge */}
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex items-center gap-2">
+                      <div className={`p-1.5 rounded-lg ${setting.iconBg} shrink-0`}>
+                        <IconComponent className={`h-4 w-4 ${setting.iconColor}`} />
+                      </div>
+                      <div className="min-w-0">
+                        <Label htmlFor={setting.key} className="text-sm font-semibold leading-tight">
+                          {setting.title}
+                        </Label>
+                        <p className="text-xs text-muted-foreground mt-0.5">
+                          {setting.description}
+                        </p>
+                      </div>
                     </div>
-                    <div className="flex-1">
-                      <Label htmlFor={setting.key} className="text-sm font-medium">
-                        {setting.title}
-                      </Label>
-                      <p className="text-xs text-muted-foreground mt-1">
-                        {setting.description}
-                      </p>
-                    </div>
+                    <Badge variant="outline" className="text-xs shrink-0">
+                      {currentValue}
+                    </Badge>
                   </div>
                   
-                  {/* Setting Input */}
-                  <div className="pl-11">
+                  {/* Input */}
+                  <div>
                     {setting.type === 'select' ? (
                       <Select
-                        value={rules[setting.key]?.toString() || undefined}
+                        value={rules[setting.key]?.toString() || ''}
                         onValueChange={(value) => updateRule(setting.key, value)}
                       >
-                        <SelectTrigger className="w-full h-12">
-                          <SelectValue placeholder="Select duration" />
+                        <SelectTrigger className="w-full h-10">
+                          <SelectValue placeholder="Select..." />
                         </SelectTrigger>
                         <SelectContent>
                           {setting.options.map((option) => (
@@ -209,9 +178,9 @@ export default function AvailabilityProtocol({ rules, setRules, onSave, isSaving
                           value={rules[setting.key] || ''}
                           onChange={(e) => updateRule(setting.key, e.target.value)}
                           placeholder={setting.placeholder}
-                          className="flex-1 h-12"
+                          className="flex-1 h-10"
                         />
-                        <span className="text-sm text-muted-foreground min-w-fit">
+                        <span className="text-xs text-muted-foreground min-w-[50px] text-right">
                           {setting.suffix}
                         </span>
                       </div>
@@ -224,107 +193,67 @@ export default function AvailabilityProtocol({ rules, setRules, onSave, isSaving
         })}
       </div>
 
-      {/* Mobile How It Works */}
-      <Card className="border-blue-200 ">
-        <CardHeader className="pb-3">
-          <CardTitle className="text-base flex items-center gap-2 text-blue-700">
-            <Info className="h-4 w-4" />
-            How It Works
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3 text-blue-700">
-          <div className="space-y-3 text-sm">
-            <div>
-              <h4 className="font-medium text-sm">Event Duration</h4>
-              <p className="text-xs text-blue-600">
-                Sets default length for new bookings that clients will see when scheduling.
-              </p>
+      {/* Tips Section */}
+      <Card className="border-blue-200 bg-blue-50/50">
+        <CardContent className="p-4">
+          <div className="flex items-start gap-3">
+            <div className="p-2 rounded-lg bg-blue-100 shrink-0">
+              <Info className="h-4 w-4 text-blue-700" />
             </div>
-            
-            <div>
-              <h4 className="font-medium text-sm">Minimum Notice</h4>
-              <p className="text-xs text-blue-600">
-                Prevents last-minute bookings. 12 hours = no same-day bookings allowed.
-              </p>
-            </div>
-            
-            <div>
-              <h4 className="font-medium text-sm">Buffer Time</h4>
-              <p className="text-xs text-blue-600">
-                Automatically blocks time before/after bookings for travel or preparation.
-              </p>
-            </div>
-            
-            <div>
-              <h4 className="font-medium text-sm">Daily Limit</h4>
-              <p className="text-xs text-blue-600">
-                Caps daily bookings to maintain service quality and prevent burnout.
-              </p>
+            <div className="space-y-2 text-sm text-blue-800 min-w-0">
+              <h4 className="font-semibold">Quick Tips</h4>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1.5 text-xs">
+                <div className="flex items-start gap-1.5">
+                  <span className="text-blue-600 shrink-0">•</span>
+                  <span>30-60 min sessions work well for most services</span>
+                </div>
+                <div className="flex items-start gap-1.5">
+                  <span className="text-blue-600 shrink-0">•</span>
+                  <span>12-24 hours notice prevents rushed work</span>
+                </div>
+                <div className="flex items-start gap-1.5">
+                  <span className="text-blue-600 shrink-0">•</span>
+                  <span>15-30 min buffer allows for travel</span>
+                </div>
+                <div className="flex items-start gap-1.5">
+                  <span className="text-blue-600 shrink-0">•</span>
+                  <span>3-5 daily bookings maintain quality</span>
+                </div>
+              </div>
             </div>
           </div>
         </CardContent>
       </Card>
 
-      {/* Mobile Pro Tips */}
-      <Card className="border-green-200 ">
-        <CardHeader className="pb-3">
-          <CardTitle className="text-base flex items-center gap-2 text-green-700">
-            <CheckCircle2 className="h-4 w-4" />
-            Pro Tips
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="text-green-700">
-          <div className="space-y-2 text-sm">
-            <p>• Set buffer time if you travel between locations</p>
-            <p>• Use minimum notice to avoid rushed preparations</p>
-            <p>• Daily limits help maintain work-life balance</p>
-            <p>• Longer sessions work better for complex services</p>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Mobile Action Buttons */}
-      <div className="space-y-3 pt-4">
-        {hasChanges && (
-          <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg">
-            <div className="flex items-center gap-2 text-amber-700">
-              <AlertCircle className="h-4 w-4" />
-              <span className="text-sm font-medium">You have unsaved changes</span>
+      {/* Save Button */}
+      {hasChanges && (
+        <Alert className="border-amber-200 bg-amber-50">
+          <AlertCircle className="h-4 w-4 text-amber-600" />
+          <AlertDescription>
+            <div className="flex items-center justify-between gap-3">
+              <span className="text-sm text-amber-700">You have unsaved changes</span>
+              <Button 
+                onClick={handleSave}
+                disabled={isSaving}
+                size="sm"
+                className="h-8 shrink-0"
+              >
+                {isSaving ? (
+                  <>
+                    <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-white mr-2" />
+                    Saving...
+                  </>
+                ) : (
+                  <>
+                    <CheckCircle2 className="h-3 w-3 mr-2" />
+                    Save Settings
+                  </>
+                )}
+              </Button>
             </div>
-          </div>
-        )}
-        
-        <div className="flex gap-3">
-          {hasChanges && (
-            <Button 
-              variant="outline" 
-              onClick={handleReset}
-              disabled={isSaving}
-              className="flex-1"
-            >
-              Reset
-            </Button>
-          )}
-          
-          <Button 
-            onClick={handleSave}
-            disabled={isSaving || !hasChanges}
-            className={hasChanges ? "flex-1" : "w-full"}
-          >
-            {isSaving ? (
-              <>
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                Saving...
-              </>
-            ) : (
-              <>
-                <CheckCircle2 className="h-4 w-4 mr-2" />
-                Save Settings
-              </>
-            )}
-          </Button>
-        </div>
-      </div>
+          </AlertDescription>
+        </Alert>
+      )}
     </div>
   )
 }

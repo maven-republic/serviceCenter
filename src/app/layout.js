@@ -4,16 +4,18 @@ import './globals.css'
 import { createClient } from '@/utils/supabase/server'
 import ClientProviders from '@/components/ClientProviders'
 
-// CRITICAL: Add metadata for mobile viewport
+// Regular metadata export (no viewport or themeColor)
 export const metadata = {
   title: 'Service Center',
   description: 'Professional services marketplace',
-  viewport: {
-    width: 'device-width',
-    initialScale: 1,
-    maximumScale: 5,
-    userScalable: true,
-  },
+}
+
+// Separate viewport export (viewport and themeColor go here)
+export const viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 5,
+  userScalable: true,
   themeColor: [
     { media: '(prefers-color-scheme: light)', color: '#ffffff' },
     { media: '(prefers-color-scheme: dark)', color: '#0a0a0a' },

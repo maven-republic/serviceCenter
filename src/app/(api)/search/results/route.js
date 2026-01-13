@@ -57,6 +57,8 @@ export async function GET(request) {
         serviceQuery = serviceQuery.select(`
           service_id, 
           name, 
+          display,
+          alias,
           description, 
           base_price,
           service_image(*),
@@ -72,6 +74,8 @@ export async function GET(request) {
         serviceQuery = serviceQuery.select(`
           service_id, 
           name, 
+          display,
+          alias,
           description, 
           base_price,
           service_image(image_url, is_primary).filter(is_primary.eq.true),
@@ -102,6 +106,8 @@ export async function GET(request) {
       // Search term filter
       serviceQuery = serviceQuery.or(`
         name.ilike.%${query}%,
+        display.ilike.%${query}%,
+        alias.ilike.%${query}%,
         description.ilike.%${query}%
       `);
       
@@ -139,6 +145,8 @@ export async function GET(request) {
           service:service_id(
             service_id,
             name, 
+            display,
+            alias,
             description, 
             base_price,
             service_image(*),
@@ -155,6 +163,8 @@ export async function GET(request) {
           service:service_id(
             service_id,
             name, 
+            display,
+            alias,
             description, 
             base_price,
             service_image(image_url, is_primary).filter(is_primary.eq.true),

@@ -1,5 +1,8 @@
+// Force dynamic rendering for all customer workspace pages
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 
-// ===== 2. CUSTOMER WORKSPACE LAYOUT FIX (src/app/(customer-workspace)/customer/layout.jsx) =====
+// ===== CUSTOMER WORKSPACE LAYOUT =====
 'use client';
 
 import { useEffect } from 'react';
@@ -27,4 +30,3 @@ export default function CustomerWorkspaceLayout({ children }) {
     </div>
   );
 }
-

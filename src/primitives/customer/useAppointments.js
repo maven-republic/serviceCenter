@@ -1,4 +1,4 @@
-// src/primitives/customer/useAppointments.js - DEBUG VERSION
+// src/primitives/customer/useAppointments.js
 import { useState, useEffect } from 'react';
 
 export const useAppointments = (customerId) => {
@@ -21,9 +21,8 @@ export const useAppointments = (customerId) => {
       const url = `/api/customers/${customerIdToFetch}/appointments`;
       console.log('📡 Fetching URL:', url);
       
-      // Add timeout to catch hanging requests
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
+      const timeoutId = setTimeout(() => controller.abort(), 30000);
       
       const response = await fetch(url, {
         signal: controller.signal,
@@ -35,9 +34,7 @@ export const useAppointments = (customerId) => {
       clearTimeout(timeoutId);
       
       console.log('📡 Response status:', response.status, response.statusText);
-      console.log('📡 Response headers:', Object.fromEntries(response.headers.entries()));
       
-      // Check if response is ok
       if (!response.ok) {
         console.error('❌ HTTP Error Response:', {
           status: response.status,
@@ -45,7 +42,6 @@ export const useAppointments = (customerId) => {
           url: response.url
         });
         
-        // Try to get error details from response
         let errorData;
         try {
           errorData = await response.json();
@@ -59,7 +55,6 @@ export const useAppointments = (customerId) => {
         throw new Error(errorMessage);
       }
       
-      // Try to parse the successful response
       let data;
       try {
         data = await response.json();
@@ -67,7 +62,6 @@ export const useAppointments = (customerId) => {
           success: data.success,
           appointmentsCount: data.appointments?.length,
           hasError: !!data.error,
-          hasDetails: !!data.details,
           keys: Object.keys(data)
         });
       } catch (parseError) {
@@ -75,18 +69,33 @@ export const useAppointments = (customerId) => {
         throw new Error('Invalid JSON response from server');
       }
       
-      // Check the success flag
       if (data.success) {
         const appointmentsArray = data.appointments || [];
-        setAppointments(appointmentsArray);
-        console.log(`✅ Successfully loaded ${appointmentsArray.length} appointments`);
+        
+        // ✅ FIX: Validate each appointment has required fields
+        const validatedAppointments = appointmentsArray.map((apt, index) => {
+          if (!apt.appointment_id) {
+            console.error(`❌ Appointment at index ${index} missing appointment_id:`, apt);
+          }
+          return {
+            ...apt,
+            // Ensure appointment_id is present
+            appointment_id: apt.appointment_id || `missing-id-${index}`,
+          };
+        });
+        
+        setAppointments(validatedAppointments);
+        console.log(`✅ Successfully loaded ${validatedAppointments.length} appointments`);
         
         // Log first appointment structure for debugging
-        if (appointmentsArray.length > 0) {
-          console.log('📋 First appointment structure:', appointmentsArray[0]);
+        if (validatedAppointments.length > 0) {
+          console.log('📋 First appointment structure:', {
+            appointment_id: validatedAppointments[0].appointment_id,
+            hasAppointmentId: !!validatedAppointments[0].appointment_id,
+            keys: Object.keys(validatedAppointments[0])
+          });
         }
       } else {
-        // This handles cases where HTTP 200 but success: false
         const errorMessage = data.error || data.details || 'Unknown error from API';
         console.error('❌ API returned success: false:', {
           error: data.error,
@@ -100,11 +109,9 @@ export const useAppointments = (customerId) => {
       console.error('💥 Fetch error details:', {
         name: error.name,
         message: error.message,
-        stack: error.stack,
-        cause: error.cause
+        stack: error.stack
       });
       
-      // Provide more specific error messages
       let errorMessage;
       if (error.name === 'AbortError') {
         errorMessage = 'Request timed out after 30 seconds';

@@ -1,7 +1,7 @@
 // src/components/professional-workspace/interests/ProfessionalResponseHandler.jsx
 'use client'
 
-import { useEffect } from 'react' // ✅ ADDED: Import useEffect
+import { useEffect, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import {
   Sheet,
@@ -15,6 +15,7 @@ import { ArrowLeft, Clock, AlertTriangle } from 'lucide-react'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
+import { toast } from 'sonner'
 
 // Import custom hooks
 import { 
@@ -24,6 +25,7 @@ import {
 
 // Import form components  
 import QuoteUpdate from './forms/QuoteUpdate'
+import ProvideFinalQuote from './forms/ProvideFinalQuote'
 import {
   AcceptForm,
   AssessmentForm,
@@ -50,36 +52,72 @@ export default function ProfessionalResponseHandler({
   onClose,
   open = true
 }) {
-   // 🔧 ENHANCED DEBUG LOGGING for ProfessionalResponseHandler
-  console.log('🢠 ProfessionalResponseHandler DEBUG:', {
+  // ✅ Assessment state
+  const [assessment, setAssessment] = useState(null)
+  const [finalQuoteAmount, setFinalQuoteAmount] = useState('')
+  const [loadingAssessment, setLoadingAssessment] = useState(false)
+
+  // ✅ NEW: Assessment schedule state for calendar integration
+  const [assessmentSchedule, setAssessmentSchedule] = useState({
+    proposed_datetime: null,
+    proposed_date: '',
+    proposed_time: '',
+    duration_minutes: 60,
+    next_steps: ''
+  })
+
+  console.log('🟢 ProfessionalResponseHandler DEBUG:', {
     componentName: 'ProfessionalResponseHandler',
     timestamp: new Date().toISOString(),
     open: open,
+    professionalId: professional?.id,
     interest: interest ? {
       id: interest.interest_id,
       status: interest.status,
-      statusType: typeof interest.status,
-      statusLength: interest.status?.length,
-      statusTrimmed: interest.status?.trim?.(),
-      exactMatch: interest.status === 'selected',
-      trimmedMatch: interest.status?.trim?.() === 'selected',
-      amount: interest.amount,
-      fullRecord: interest
+      assessment: interest.assessment
     } : null,
-    appointment: appointment ? {
-      id: appointment.appointment_id || appointment.id,
-      status: appointment.status
-    } : null,
-    professional: professional ? {
-      id: professional.professional_id || professional.id
-    } : null,
-    hasCallbacks: {
-      onSuccess: typeof onSuccess === 'function',
-      onClose: typeof onClose === 'function'
-    }
+    assessment: assessment ? {
+      id: assessment.assessment_id,
+      status: assessment.status,
+      final_quote_provided: assessment.final_quote_provided
+    } : null
   })
 
-  // 🔍 Database verification for ProfessionalResponseHandler
+  // ✅ Fetch assessment when interest requires it OR when interest.assessment is undefined
+  useEffect(() => {
+    if (interest?.interest_id && open && interest?.status === 'selected') {
+      fetchAssessment()
+    }
+  }, [interest?.interest_id, interest?.status, open])
+
+  // ✅ Fetch assessment function
+  const fetchAssessment = async () => {
+    try {
+      setLoadingAssessment(true)
+      console.log('🔍 Fetching assessment for interest:', interest.interest_id)
+      
+      const response = await fetch(`/api/assessments?interest_id=${interest.interest_id}`)
+      
+      if (response.ok) {
+        const data = await response.json()
+        if (data.assessments && data.assessments.length > 0) {
+          setAssessment(data.assessments[0])
+          console.log('✅ Assessment loaded:', data.assessments[0])
+        } else {
+          console.log('ℹ️ No assessment found')
+          setAssessment(null)
+        }
+      } else {
+        console.error('❌ Failed to fetch assessment:', response.status)
+      }
+    } catch (error) {
+      console.error('❌ Error fetching assessment:', error)
+    } finally {
+      setLoadingAssessment(false)
+    }
+  }
+
+  // 🔍 Database verification
   useEffect(() => {
     if (interest?.interest_id) {
       console.log('🔍 [ProfessionalResponseHandler] Verifying database status...')
@@ -97,7 +135,7 @@ export default function ProfessionalResponseHandler({
     }
   }, [interest?.interest_id])
   
-  // 🔧 FIXED: Proper state management
+  // 🔧 State management (REMOVED old assessment date/time/duration/notes states)
   const {
     currentView,
     setCurrentView,
@@ -109,21 +147,14 @@ export default function ProfessionalResponseHandler({
     setDeclineReason,
     referralSuggestion,
     setReferralSuggestion,
-    assessmentDate,
-    setAssessmentDate,
-    assessmentTime,
-    setAssessmentTime,
-    assessmentDuration,
-    setAssessmentDuration,
-    assessmentNotes,
-    setAssessmentNotes,
+    // ❌ REMOVED: assessmentDate, setAssessmentDate, assessmentTime, setAssessmentTime, assessmentDuration, setAssessmentDuration, assessmentNotes, setAssessmentNotes
     quoteUpdates,
     setQuoteUpdates,
     deadlineInfo,
     resetFormData
   } = useProfessionalResponseState(interest)
 
-  // 🔧 FIXED: Proper handlers with all required props
+  // 🔧 Response handlers
   const {
     handleAccept,
     handleDecline,
@@ -140,25 +171,110 @@ export default function ProfessionalResponseHandler({
     responseMessage,
     declineReason,
     referralSuggestion,
-    assessmentDate,
-    assessmentTime,
-    assessmentDuration,
-    assessmentNotes,
+    // ✅ NEW: Pass assessment schedule instead of individual fields
+    assessmentSchedule,
+    // ❌ REMOVED: assessmentDate, assessmentTime, assessmentDuration, assessmentNotes
     quoteUpdates,
     resetFormData
   })
 
-  // Helper function to go back to overview
-  const handleBackToOverview = () => {
-    console.log('🔙 Returning to overview from:', currentView);
-    setCurrentView('overview')
-    resetFormData()
+  // ✅ Handle final quote submission
+  const handleSubmitFinalQuote = async () => {
+    console.log('💰 handleSubmitFinalQuote called')
+    
+    // Validation
+    if (!finalQuoteAmount || parseFloat(finalQuoteAmount) <= 0) {
+      toast.error('Please provide a valid quote amount')
+      return
+    }
+    
+    if (!responseMessage || responseMessage.trim().length < 50) {
+      toast.error('Please provide detailed quote explanation (minimum 50 characters)')
+      return
+    }
+
+    if (!assessment) {
+      toast.error('Assessment not found')
+      return
+    }
+
+    setLoading(true)
+    
+    try {
+      console.log('📤 Submitting final quote:', {
+        assessment_id: assessment.assessment_id,
+        amount: finalQuoteAmount,
+        messageLength: responseMessage.length
+      })
+      
+      // Update assessment with final quote
+      const response = await fetch(`/api/assessments/${assessment.assessment_id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          final_quote_provided: true,
+          final_quote_amount: parseFloat(finalQuoteAmount),
+          notes: responseMessage.trim()
+        })
+      })
+      
+      const result = await response.json()
+      
+      if (!response.ok || !result.success) {
+        throw new Error(result.error || 'Failed to submit final quote')
+      }
+      
+      console.log('✅ Final quote submitted successfully')
+      
+      toast.success('Final quote submitted! 🎉', {
+        description: 'The customer will review your quote and respond.'
+      })
+      
+      // Refresh assessment data
+      await fetchAssessment()
+      
+      // Reset form and close
+      resetFormData()
+      setFinalQuoteAmount('')
+      setAssessmentSchedule({
+        proposed_datetime: null,
+        proposed_date: '',
+        proposed_time: '',
+        duration_minutes: 60,
+        next_steps: ''
+      })
+      onSuccess?.(result)
+      onClose()
+      
+    } catch (error) {
+      console.error('❌ Error submitting final quote:', error)
+      toast.error('Failed to submit final quote', {
+        description: error.message
+      })
+    } finally {
+      setLoading(false)
+    }
   }
 
-  // Check if user can respond (not expired and correct status)
+  // Helper to go back
+  const handleBackToOverview = () => {
+    console.log('🔙 Returning to overview from:', currentView)
+    setCurrentView('overview')
+    resetFormData()
+    setFinalQuoteAmount('')
+    setAssessmentSchedule({
+      proposed_datetime: null,
+      proposed_date: '',
+      proposed_time: '',
+      duration_minutes: 60,
+      next_steps: ''
+    })
+  }
+
+  // Check if user can respond
   const canRespond = !deadlineInfo.isExpired && ['selected'].includes(interest?.status)
 
-  // 🔧 FIXED: Better view configuration with proper status checking
+  // View configuration
   const getViewConfig = () => {
     const baseConfigs = {
       overview: {
@@ -179,13 +295,16 @@ export default function ProfessionalResponseHandler({
       },
       accept_assessment: {
         title: '📅 Schedule Assessment',
-        description: 'Propose a time for the on-site assessment you mentioned in your quote.'
+        description: 'Select an available time from your calendar for the on-site assessment.'
+      },
+      provide_final_quote: {
+        title: '💰 Provide Final Quote',
+        description: 'Based on your assessment, provide the final project quote.'
       }
     }
     return baseConfigs[currentView] || baseConfigs.overview
   }
 
-  // 🔧 FIXED: Dynamic overview title based on status
   const getOverviewTitle = () => {
     switch (interest?.status) {
       case 'selected':
@@ -201,7 +320,6 @@ export default function ProfessionalResponseHandler({
     }
   }
 
-  // 🔧 FIXED: Dynamic overview description
   const getOverviewDescription = () => {
     switch (interest?.status) {
       case 'selected':
@@ -217,7 +335,7 @@ export default function ProfessionalResponseHandler({
     }
   }
 
-  // 🔧 FIXED: Proper submit handler based on view
+  // Submit handler
   const getSubmitHandler = () => {
     switch (currentView) {
       case 'accept': 
@@ -228,6 +346,8 @@ export default function ProfessionalResponseHandler({
         return handleAcceptAssessment
       case 'update_quote': 
         return handleUpdateQuote
+      case 'provide_final_quote':
+        return handleSubmitFinalQuote
       default: 
         return () => console.log('⚠️ No handler for view:', currentView)
     }
@@ -237,15 +357,20 @@ export default function ProfessionalResponseHandler({
 
   // Early return if missing required data
   if (!interest || !appointment) {
-    console.log('❌ Missing required data:', { interest: !!interest, appointment: !!appointment });
+    console.log('❌ Missing required data:', { interest: !!interest, appointment: !!appointment })
     return null
   }
 
-  // 🔧 FIXED: Enhanced deadline display
+  // Early return if missing professional data
+  if (!professional?.id) {
+    console.log('❌ Missing professional ID')
+    return null
+  }
+
+  // Deadline alert component
   const DeadlineAlert = () => {
     if (!deadlineInfo.deadline || interest?.status !== 'selected') return null
 
-    const alertVariant = deadlineInfo.urgencyLevel === 'urgent' ? 'destructive' : 'default'
     const alertClass = deadlineInfo.urgencyLevel === 'urgent' ? 'border-red-200 bg-red-50' : 
                      deadlineInfo.urgencyLevel === 'warning' ? 'border-orange-200 bg-orange-50' : 
                      'border-blue-200 bg-blue-50'
@@ -262,9 +387,6 @@ export default function ProfessionalResponseHandler({
               {deadlineInfo.urgencyLevel === 'urgent' ? 'URGENT' : 'Pending'}
             </Badge>
           </div>
-          {deadlineInfo.isExpired && (
-            <p className="text-sm mt-1">Deadline passed. Contact customer directly if still interested.</p>
-          )}
         </AlertDescription>
       </Alert>
     )
@@ -281,11 +403,10 @@ export default function ProfessionalResponseHandler({
           }
         }}
       >
-        {/* 🔧 FIXED: Enhanced Header */}
+        {/* Header */}
         <SheetHeader className="pb-6 border-b">
           <div className="flex items-center justify-between">
             <div className="flex-1">
-              {/* Back Button */}
               {currentView !== 'overview' && (
                 <Button
                   variant="ghost"
@@ -298,7 +419,6 @@ export default function ProfessionalResponseHandler({
                 </Button>
               )}
               
-              {/* Title with Status Badge */}
               <div className="flex items-center gap-3 mb-2">
                 <SheetTitle className="text-xl font-bold text-left">
                   {viewConfig.title}
@@ -327,26 +447,23 @@ export default function ProfessionalResponseHandler({
             </div>
           </div>
 
-          {/* Deadline Warning */}
           <DeadlineAlert />
         </SheetHeader>
 
-        {/* 🔧 FIXED: Enhanced Content Section */}
+        {/* Content Section */}
         <div className="flex-1 overflow-y-auto py-6">
           
           {/* Overview View */}
           {currentView === 'overview' && (
             <div className="space-y-6">
-              {/* Project Details */}
               <ProjectDetails appointment={appointment} interest={interest} />
               
-              {/* Status-specific messages */}
               {interest?.status === 'updated' && (
                 <Alert className="border-orange-200 bg-orange-50">
                   <AlertTriangle className="h-4 w-4 text-orange-600" />
                   <AlertDescription className="text-orange-800">
                     <strong>Quote Update Sent:</strong> Your updated quote has been sent to the customer. 
-                    They will review and either approve or request changes. You'll be notified of their decision.
+                    They will review and either approve or request changes.
                   </AlertDescription>
                 </Alert>
               )}
@@ -356,7 +473,7 @@ export default function ProfessionalResponseHandler({
                   <AlertTriangle className="h-4 w-4 text-green-600" />
                   <AlertDescription className="text-green-800">
                     <strong>Project Confirmed:</strong> The customer has approved your quote. 
-                    You can now coordinate project scheduling and next steps directly with them.
+                    You can now coordinate project scheduling and next steps.
                   </AlertDescription>
                 </Alert>
               )}
@@ -385,25 +502,20 @@ export default function ProfessionalResponseHandler({
             />
           )}
 
-          {/* Assessment Form */}
+          {/* ✅ UPDATED: Assessment Form with Calendar Integration */}
           {currentView === 'accept_assessment' && (
             <AssessmentForm
               interest={interest}
+              professionalId={professional.id}
               responseMessage={responseMessage}
               setResponseMessage={setResponseMessage}
-              assessmentDate={assessmentDate}
-              setAssessmentDate={setAssessmentDate}
-              assessmentTime={assessmentTime}
-              setAssessmentTime={setAssessmentTime}
-              assessmentDuration={assessmentDuration}
-              setAssessmentDuration={setAssessmentDuration}
-              assessmentNotes={assessmentNotes}
-              setAssessmentNotes={setAssessmentNotes}
+              assessmentSchedule={assessmentSchedule}
+              setAssessmentSchedule={setAssessmentSchedule}
               loading={loading}
             />
           )}
 
-          {/* 🔧 FIXED: Quote Update Form with proper handler connection */}
+          {/* Quote Update Form */}
           {currentView === 'update_quote' && (
             <QuoteUpdate
               interest={interest}
@@ -413,22 +525,37 @@ export default function ProfessionalResponseHandler({
               loading={loading}
             />
           )}
+
+          {/* ✅ Provide Final Quote Form */}
+          {currentView === 'provide_final_quote' && (
+            <ProvideFinalQuote
+              assessment={assessment}
+              interest={interest}
+              finalQuoteAmount={finalQuoteAmount}
+              setFinalQuoteAmount={setFinalQuoteAmount}
+              responseMessage={responseMessage}
+              setResponseMessage={setResponseMessage}
+              loading={loading}
+            />
+          )}
         </div>
 
-        {/* 🔧 FIXED: Enhanced Footer Actions */}
+        {/* Footer Actions */}
         <SheetFooter className="border-t pt-6">
           <div className="flex flex-col sm:flex-row items-center justify-between w-full gap-4">
             
-            {/* Overview Actions - only show for selected status */}
+            {/* ✅ FIXED: Pass assessment AND loadingAssessment separately to OverviewActions */}
             {currentView === 'overview' && interest?.status === 'selected' && canRespond && (
               <OverviewActions
                 interest={interest}
+                assessment={assessment}
+                loadingAssessment={loadingAssessment}
                 setCurrentView={setCurrentView}
                 loading={loading}
               />
             )}
 
-            {/* Form Actions for all form views */}
+            {/* Form Actions */}
             {currentView !== 'overview' && (
               <FormActions
                 currentView={currentView}
@@ -436,18 +563,20 @@ export default function ProfessionalResponseHandler({
                 onCancel={handleBackToOverview}
                 onSubmit={getSubmitHandler()}
                 responseMessage={responseMessage}
-                declineReason={declineReason}
-                assessmentDate={assessmentDate}
-                assessmentTime={assessmentTime}
+                assessmentSchedule={assessmentSchedule}
+                updatedQuote={{
+                  amount: finalQuoteAmount || quoteUpdates?.amount,
+                  reason_for_update: quoteUpdates?.reason_for_update
+                }}
               />
             )}
 
-            {/* Status-specific footer messages */}
+            {/* Status messages */}
             {currentView === 'overview' && interest?.status !== 'selected' && (
               <div className="text-center w-full">
                 {interest?.status === 'updated' && (
                   <p className="text-sm text-muted-foreground">
-                    💬 Your quote update is under customer review. You'll be notified of their decision.
+                    💬 Your quote update is under customer review.
                   </p>
                 )}
                 {interest?.status === 'confirmed' && (
@@ -459,11 +588,6 @@ export default function ProfessionalResponseHandler({
                       Contact Customer
                     </Button>
                   </div>
-                )}
-                {deadlineInfo.isExpired && interest?.status === 'selected' && (
-                  <p className="text-sm text-muted-foreground italic text-red-600">
-                    ⏰ Response deadline has passed. Contact customer directly if still interested.
-                  </p>
                 )}
               </div>
             )}

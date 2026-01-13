@@ -1,10 +1,11 @@
-// src/components/customer-workspace/interests/CustomerAppointmentDashboard.jsx (Fixed Status Alignment)
+// src/components/customer-workspace/interests/CustomerAppointmentDashboard.jsx
 "use client";
 
 import { useState, useEffect, useCallback } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
+import { Card, CardContent } from '@/components/ui/card';
 import { 
   AlertCircle,
   Users,
@@ -13,7 +14,8 @@ import {
   Clock,
   AlertTriangle,
   CheckCircle,
-  RefreshCw
+  RefreshCw,
+  Loader2
 } from 'lucide-react';
 
 import InterestSelectionCard from './InterestSelectionCard';
@@ -26,8 +28,15 @@ import AppointmentInterestStatus from './AppointmentInterestStatus';
 import { useQuoteApproval } from '@/primitives/customer/useQuoteApproval';
 
 const CustomerAppointmentDashboard = ({ appointmentId }) => {
+  // ✅ Validate appointmentId immediately
+  const isValidUUID = (uuid) => {
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    return uuid && typeof uuid === 'string' && uuidRegex.test(uuid);
+  };
+
+  // State
   const [appointmentInformation, setAppointmentData] = useState(null);
-  const [interests, setInterests] = useState([]); // ✅ Initialize as empty array
+  const [interests, setInterests] = useState([]);
   const [summary, setSummary] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -36,7 +45,9 @@ const CustomerAppointmentDashboard = ({ appointmentId }) => {
   const [successMessage, setSuccessMessage] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
 
-  // Use the quote approval hook
+  // ✅ ADD: Debug state to show what we fetched
+  const [fetchDebug, setFetchDebug] = useState(null);
+
   const { 
     handleQuoteApproval, 
     loading: quoteApprovalLoading, 
@@ -45,22 +56,11 @@ const CustomerAppointmentDashboard = ({ appointmentId }) => {
   } = useQuoteApproval();
 
   useEffect(() => {
-    if (appointmentId) {
+    if (appointmentId && isValidUUID(appointmentId)) {
       fetchAppointmentInterests();
     }
   }, [appointmentId]);
 
-  useEffect(() => {
-    if (interests && interests.length > 0) {
-      console.log('🔍 DEBUG: Interests data structure:', interests[0]);
-      console.log('🔍 DEBUG: First interest fields:', Object.keys(interests[0]));
-      if (interests[0].professional) {
-        console.log('🔍 DEBUG: Professional fields:', Object.keys(interests[0].professional));
-      }
-    }
-  }, [interests]);
-
-  // Clear success/error messages after delay
   useEffect(() => {
     if (successMessage) {
       const timer = setTimeout(() => setSuccessMessage(''), 5000);
@@ -106,10 +106,6 @@ const CustomerAppointmentDashboard = ({ appointmentId }) => {
       if (!responseText.trim()) {
         console.error('❌ Empty response received');
         setError('Empty response from server');
-        setDebugInfo({
-          status: response.status,
-          responseText: 'EMPTY'
-        });
         return;
       }
       
@@ -117,56 +113,46 @@ const CustomerAppointmentDashboard = ({ appointmentId }) => {
       try {
         data = JSON.parse(responseText);
         console.log('✅ JSON parsed successfully:', data);
+        console.log('🔍 Interests array:', data.interests);
+        console.log('🔍 Interests count:', data.interests?.length);
       } catch (parseError) {
         console.error('❌ JSON Parse Error:', parseError);
-        console.error('❌ Response text that failed to parse:', responseText);
         setError('Invalid JSON response from server');
-        setDebugInfo({
-          status: response.status,
-          parseError: parseError.message,
-          responseText: responseText.substring(0, 1000)
-        });
-        return;
-      }
-      
-      if (!data) {
-        console.error('❌ No data in response');
-        setError('No data received from server');
         return;
       }
       
       if (data.success) {
-        console.log('✅ Data loaded successfully:', {
-          interestsCount: data.interests?.length || 0,
-          summary: !!data.summary
+        const interestsArray = data.interests || [];
+        
+        // ✅ ADD: Set debug info to display on screen
+        setFetchDebug({
+          appointmentId,
+          interestsCount: interestsArray.length,
+          interestsData: interestsArray,
+          timestamp: new Date().toISOString()
         });
         
-        // Create a minimal appointment object if not provided
+        console.log('✅ Data loaded successfully:', {
+          interestsCount: interestsArray.length,
+          summary: !!data.summary,
+          firstInterest: interestsArray[0]
+        });
+        
         const appointmentData = data.appointment || { 
           appointment_id: appointmentId,
           status: 'pending'
         };
         
         setAppointmentData(appointmentData);
-        setInterests(data.interests || []); // ✅ Ensure array fallback
+        setInterests(interestsArray);
         setSummary(data.summary);
       } else {
         console.error('❌ API returned error:', data.error);
         setError(data.error || 'Failed to load appointment interests');
-        setDebugInfo({
-          apiError: data.error,
-          details: data.details
-        });
       }
     } catch (error) {
       console.error('💥 Fetch error:', error);
-      console.error('💥 Error stack:', error.stack);
       setError(`Network error: ${error.message}`);
-      setDebugInfo({
-        errorType: error.name,
-        errorMessage: error.message,
-        errorStack: error.stack
-      });
     } finally {
       setLoading(false);
     }
@@ -187,38 +173,23 @@ const CustomerAppointmentDashboard = ({ appointmentId }) => {
         })
       });
 
-      console.log('📡 Selection response status:', response.status);
-
       if (!response.ok) {
         const errorText = await response.text();
-        console.error('❌ Selection HTTP Error:', errorText);
         setErrorMessage(`Failed to select professional: ${errorText}`);
-        return { success: false, error: `HTTP ${response.status}: ${errorText}` };
+        return { success: false, error: errorText };
       }
 
-      const responseText = await response.text();
-      let result;
+      const result = await response.json();
       
-      try {
-        result = JSON.parse(responseText);
-      } catch (parseError) {
-        console.error('❌ Selection JSON Parse Error:', parseError);
-        setErrorMessage('Invalid response format');
-        return { success: false, error: 'Invalid response format' };
-      }
-
       if (result.success) {
-        console.log('✅ Professional selected successfully');
         setSuccessMessage('Professional selected successfully!');
-        await fetchAppointmentInterests(); // Refresh data
+        await fetchAppointmentInterests();
         return { success: true };
       } else {
-        console.error('❌ Selection failed:', result.error);
         setErrorMessage(result.error || 'Failed to select professional');
         return { success: false, error: result.error };
       }
     } catch (error) {
-      console.error('💥 Selection error:', error);
       const errorMsg = 'Selection failed: ' + error.message;
       setErrorMessage(errorMsg);
       return { success: false, error: errorMsg };
@@ -243,22 +214,20 @@ const CustomerAppointmentDashboard = ({ appointmentId }) => {
       if (!response.ok) {
         const errorText = await response.text();
         setErrorMessage(`Failed to reject professional: ${errorText}`);
-        return { success: false, error: `HTTP ${response.status}: ${errorText}` };
+        return { success: false, error: errorText };
       }
 
-      const responseText = await response.text();
-      const result = JSON.parse(responseText);
+      const result = await response.json();
       
       if (result.success) {
         setSuccessMessage('Professional rejected successfully');
-        await fetchAppointmentInterests(); // Refresh data
+        await fetchAppointmentInterests();
         return { success: true };
       } else {
         setErrorMessage(result.error || 'Failed to reject professional');
         return { success: false, error: result.error };
       }
     } catch (error) {
-      console.error('Error rejecting professional:', error);
       const errorMsg = 'Rejection failed: ' + error.message;
       setErrorMessage(errorMsg);
       return { success: false, error: errorMsg };
@@ -267,9 +236,8 @@ const CustomerAppointmentDashboard = ({ appointmentId }) => {
     }
   };
 
-  // Quote approval handler using the hook
   const handleQuoteApprovalAction = useCallback(async (interestId, action, notes = '') => {
-    clearQuoteError(); // Clear any previous errors
+    clearQuoteError();
     
     const result = await handleQuoteApproval(
       appointmentId, 
@@ -278,19 +246,18 @@ const CustomerAppointmentDashboard = ({ appointmentId }) => {
       notes,
       {
         onSuccess: async (result) => {
-          // Refresh data and show success message
           await fetchAppointmentInterests();
           if (action === 'approve') {
-            setSuccessMessage('Quote update approved! The professional has been notified and the project is ready to proceed.');
+            setSuccessMessage('Quote update approved!');
           } else {
-            setSuccessMessage('Quote update declined. The professional will need to provide a new response.');
+            setSuccessMessage('Quote update declined.');
           }
         },
         onError: (error) => {
           setErrorMessage(error.message || `Failed to ${action} quote update`);
         },
-        showSuccessMessage: false, // We handle success messages manually
-        showErrorMessage: false    // We handle error messages manually
+        showSuccessMessage: false,
+        showErrorMessage: false
       }
     );
 
@@ -301,11 +268,25 @@ const CustomerAppointmentDashboard = ({ appointmentId }) => {
     console.log('Message professional:', interest.professional_id);
   };
 
+  // ✅ Early validation error
+  if (!appointmentId || !isValidUUID(appointmentId)) {
+    return (
+      <div className="bg-red-50 rounded-xl p-4">
+        <div className="flex items-start space-x-2">
+          <AlertCircle className="h-4 w-4 text-red-600 mt-0.5" />
+          <div className="text-red-800 text-sm">
+            <strong>Error:</strong> Invalid appointment ID: {appointmentId}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   if (loading) {
     return (
       <div className="space-y-6">
         <div className="text-center py-12">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+          <Loader2 className="h-8 w-8 border-b-2 border-blue-600 mx-auto animate-spin" />
           <p className="mt-4 text-gray-600">Loading professional responses...</p>
         </div>
       </div>
@@ -318,23 +299,18 @@ const CustomerAppointmentDashboard = ({ appointmentId }) => {
         <div className="bg-red-50 rounded-xl p-4">
           <div className="flex items-start space-x-2">
             <AlertCircle className="h-4 w-4 text-red-600 mt-0.5" />
-            <div className="text-red-800 text-sm">
-              {error}
-            </div>
+            <div className="text-red-800 text-sm">{error}</div>
           </div>
         </div>
         
         {debugInfo && (
           <div className="bg-blue-50 rounded-xl p-4">
-            <div className="flex items-start space-x-2">
-              <AlertCircle className="h-4 w-4 text-blue-600 mt-0.5" />
-              <details className="text-blue-800 text-sm">
-                <summary className="cursor-pointer font-medium">Debug Information</summary>
-                <pre className="mt-2 text-xs bg-white p-2 rounded overflow-auto max-h-40">
-                  {JSON.stringify(debugInfo, null, 2)}
-                </pre>
-              </details>
-            </div>
+            <details className="text-blue-800 text-sm">
+              <summary className="cursor-pointer font-medium">Debug Information</summary>
+              <pre className="mt-2 text-xs bg-white p-2 rounded overflow-auto max-h-40">
+                {JSON.stringify(debugInfo, null, 2)}
+              </pre>
+            </details>
           </div>
         )}
         
@@ -345,39 +321,51 @@ const CustomerAppointmentDashboard = ({ appointmentId }) => {
           >
             Retry
           </button>
-          <button 
-            onClick={() => window.open(`/api/appointments/${appointmentId}/interests`, '_blank')}
-            className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700"
-          >
-            Debug API
-          </button>
         </div>
       </div>
     );
   }
 
-  // ✅ Safe filtering with null checks
+  // ✅ ADD: Debug Display Panel (TEMPORARY - for troubleshooting)
+  const showDebugPanel = true; // Set to false once we identify the issue
+
   const activeInterests = interests ? interests.filter(i => !['withdrawn', 'rejected'].includes(i.status)) : [];
   const selectedInterest = interests ? interests.find(i => i.selected_by_customer) : null;
   const needsAssessment = selectedInterest?.assessment;
   
-  // Use 'updated' status instead of 'updated_quote'
   const quoteUpdatesCount = interests ? interests.filter(i => i.status === 'updated').length : 0;
   const hasQuoteUpdates = quoteUpdatesCount > 0;
 
-  // Determine appointment status for AppointmentInterestStatus
   const appointmentStatus = appointmentInformation?.status || (hasQuoteUpdates ? 'reviewing' : 'pending');
 
   return (
     <div className="space-y-6">
+      {/* ✅ DEBUG PANEL - REMOVE AFTER FIXING */}
+      {showDebugPanel && fetchDebug && (
+        <Card className="border-2 border-yellow-500 bg-yellow-50">
+          <CardContent className="p-4">
+            <h4 className="font-bold text-yellow-900 mb-2">🔍 DEBUG INFO (Remove this after fixing)</h4>
+            <div className="text-xs space-y-1 text-yellow-900">
+              <p><strong>Appointment ID:</strong> {fetchDebug.appointmentId}</p>
+              <p><strong>Interests Count:</strong> {fetchDebug.interestsCount}</p>
+              <p><strong>Fetched At:</strong> {new Date(fetchDebug.timestamp).toLocaleString()}</p>
+              <details className="mt-2">
+                <summary className="cursor-pointer font-medium">View Raw Interests Data</summary>
+                <pre className="mt-2 text-xs bg-white p-2 rounded overflow-auto max-h-60">
+                  {JSON.stringify(fetchDebug.interestsData, null, 2)}
+                </pre>
+              </details>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Success Message */}
       {successMessage && (
         <div className="bg-green-50 rounded-xl p-4">
           <div className="flex items-start space-x-2">
             <CheckCircle className="h-4 w-4 text-green-600 mt-0.5" />
-            <div className="text-green-800 text-sm">
-              {successMessage}
-            </div>
+            <div className="text-green-800 text-sm">{successMessage}</div>
           </div>
         </div>
       )}
@@ -387,9 +375,7 @@ const CustomerAppointmentDashboard = ({ appointmentId }) => {
         <div className="bg-red-50 rounded-xl p-4">
           <div className="flex items-start space-x-2">
             <AlertCircle className="h-4 w-4 text-red-600 mt-0.5" />
-            <div className="text-red-800 text-sm">
-              {errorMessage || quoteApprovalError}
-            </div>
+            <div className="text-red-800 text-sm">{errorMessage || quoteApprovalError}</div>
           </div>
         </div>
       )}
@@ -401,26 +387,6 @@ const CustomerAppointmentDashboard = ({ appointmentId }) => {
         selectedInterest={selectedInterest}
         hasQuoteUpdates={hasQuoteUpdates}
       />
-
-      {/* Debug Panel */}
-      {/* {process.env.NODE_ENV === 'development' && (
-        <div className="bg-gray-50 rounded-xl p-4">
-          <details className="text-gray-600 text-sm">
-            <summary className="cursor-pointer font-medium">Debug Info</summary>
-            <div className="mt-2 text-xs">
-              <p>Appointment ID: {appointmentId}</p>
-              <p>Appointment Status: {appointmentStatus}</p>
-              <p>Interests Count: {interests ? interests.length : 0}</p>
-              <p>Active Interests: {activeInterests.length}</p>
-              <p>Quote Updates Pending: {quoteUpdatesCount}</p>
-              <p>Selected Interest: {selectedInterest ? 'Yes' : 'No'}</p>
-              <p>Selected Interest Status: {selectedInterest?.status || 'N/A'}</p>
-              <p>Has Appointment Data: {appointmentInformation ? 'Yes' : 'No'}</p>
-              <p>Quote Approval Loading: {quoteApprovalLoading ? 'Yes' : 'No'}</p>
-            </div>
-          </details>
-        </div>
-      )} */}
 
       {/* Main Content Tabs */}
       <Tabs defaultValue={selectedInterest ? "selected" : "responses"} className="space-y-6">
@@ -454,65 +420,11 @@ const CustomerAppointmentDashboard = ({ appointmentId }) => {
           >
             <Clock className="h-4 w-4" />
             <span>Assessment</span>
-            {appointmentStatus === 'reviewing' && (
-              <Badge variant="outline" className="text-xs">Blocked</Badge>
-            )}
           </TabsTrigger>
         </TabsList>
 
         {/* Professional Responses Tab */}
         <TabsContent value="responses" className="space-y-4">
-          {/* Quote Updates Section */}
-          {interests && interests.some(i => i.status === 'updated') && (
-            <div className="space-y-4">
-              <div className="bg-orange-50 rounded-xl p-4">
-                <div className="flex items-center space-x-2 mb-3">
-                  <div className="p-2 rounded-full bg-orange-100">
-                    <AlertTriangle className="h-5 w-5 text-orange-600 animate-pulse" />
-                  </div>
-                  <div>
-                    <h3 className="font-semibold text-orange-800 flex items-center space-x-2">
-                      <RefreshCw className="h-4 w-4" />
-                      <span>Quote Updates Pending Your Approval</span>
-                    </h3>
-                    <p className="text-sm text-orange-600">
-                      {quoteUpdatesCount} professional(s) have updated their quotes and need your approval
-                    </p>
-                  </div>
-                </div>
-                
-                <div className="bg-orange-100 rounded-xl p-3">
-                  <div className="flex items-start space-x-2">
-                    <AlertTriangle className="h-4 w-4 text-orange-600 mt-0.5" />
-                    <div className="text-orange-800 text-sm">
-                      <strong>Important:</strong> Assessment scheduling is blocked until you approve or decline these quote changes.
-                    </div>
-                  </div>
-                </div>
-              </div>
-              
-              {interests
-                .filter(i => i.status === 'updated')
-                .map((interest) => (
-                  <CustomerQuoteComparison
-                    key={interest.interest_id}
-                    interest={interest}
-                    onApprove={(interestId, notes) => 
-                      handleQuoteApprovalAction(interestId, 'approve', notes)
-                    }
-                    onDecline={(interestId, notes) => 
-                      handleQuoteApprovalAction(interestId, 'decline', notes)
-                    }
-                    isLoading={actionLoading || quoteApprovalLoading}
-                  />
-                ))
-              }
-              
-              <hr className="border-gray-200 my-6" />
-            </div>
-          )}
-
-          {/* Regular Interests Section */}
           {activeInterests.length === 0 ? (
             <div className="bg-blue-50 rounded-xl p-4">
               <div className="flex items-start space-x-2">
@@ -524,104 +436,51 @@ const CustomerAppointmentDashboard = ({ appointmentId }) => {
             </div>
           ) : (
             <div className="space-y-4">
-              {activeInterests
-                .filter(i => i.status !== 'updated') // Exclude quote updates from regular list
-                .map((interest) => (
-                  <InterestSelectionCard 
-                    key={interest.interest_id}
-                    interest={interest}
-                    onSelect={handleSelectProfessional}
-                    onReject={handleRejectProfessional}
-                    onMessage={handleMessageProfessional}
-                    isLoading={actionLoading}
-                    // Disable actions during quote review
-                    showActions={appointmentStatus !== 'reviewing'}
-                  />
-                ))
-              }
+              {activeInterests.map((interest) => (
+                <InterestSelectionCard 
+                  key={interest.interest_id}
+                  interest={interest}
+                  onSelect={handleSelectProfessional}
+                  onReject={handleRejectProfessional}
+                  onMessage={handleMessageProfessional}
+                  isLoading={actionLoading}
+                  showActions={appointmentStatus !== 'reviewing'}
+                />
+              ))}
             </div>
           )}
         </TabsContent>
 
-        {/* Comparison Tab */}
+        {/* Other tabs remain the same... */}
         <TabsContent value="compare">
           <InterestComparisonView 
-            interests={activeInterests.filter(i => i.status !== 'updated')}
+            interests={activeInterests}
             onSelectProfessional={handleSelectProfessional}
             onRejectProfessional={handleRejectProfessional}
             isLoading={actionLoading}
           />
         </TabsContent>
 
-        {/* Selected Professional Tab */}
         <TabsContent value="selected">
           {selectedInterest ? (
-            <div className="space-y-6">
-              {/* ✅ FIXED: Show different alerts based on status - now using 'approved' instead of 'confirmed' */}
-              {appointmentStatus === 'reviewing' ? (
-                <div className="bg-orange-50 rounded-xl p-4">
-                  <div className="flex items-start space-x-2">
-                    <AlertTriangle className="h-4 w-4 text-orange-600 mt-0.5" />
-                    <div className="text-orange-800 text-sm">
-                      <strong>Quote Update In Review:</strong> Your selected professional has updated their quote. 
-                      Please review the changes in the "Responses" tab before proceeding.
-                    </div>
-                  </div>
-                </div>
-              ) : selectedInterest.status === 'approved' ? ( // ✅ FIXED: Changed from 'confirmed' to 'approved'
-                <div className="bg-green-50 rounded-xl p-4">
-                  <div className="flex items-start space-x-2">
-                    <CheckCircle className="h-4 w-4 text-green-600 mt-0.5" />
-                    <div className="text-green-800 text-sm">
-                      <strong>Project Approved!</strong> Your quote has been approved and the professional is ready to begin.
-                    </div>
-                  </div>
-                </div>
-              ) : (
-                <div className="bg-green-50 rounded-xl p-4">
-                  <div className="flex items-start space-x-2">
-                    <CheckCircle className="h-4 w-4 text-green-600 mt-0.5" />
-                    <div className="text-green-800 text-sm">
-                      <strong>Professional Selected!</strong> You've chosen this professional for your project.
-                    </div>
-                  </div>
-                </div>
-              )}
-              
-              <InterestSelectionCard 
-                interest={selectedInterest}
-                onSelect={() => {}}
-                onReject={() => {}}
-                onMessage={handleMessageProfessional}
-                showActions={false}
-                className="ring-2 ring-green-200"
-              />
-            </div>
+            <InterestSelectionCard 
+              interest={selectedInterest}
+              onSelect={() => {}}
+              onReject={() => {}}
+              onMessage={handleMessageProfessional}
+              showActions={false}
+              className="ring-2 ring-green-200"
+            />
           ) : (
             <div className="bg-blue-50 rounded-xl p-4">
-              <div className="flex items-start space-x-2">
-                <AlertCircle className="h-4 w-4 text-blue-600 mt-0.5" />
-                <div className="text-blue-800 text-sm">
-                  No professional selected yet. Choose from the available responses.
-                </div>
-              </div>
+              <AlertCircle className="h-4 w-4 text-blue-600" />
+              <div className="text-blue-800 text-sm">No professional selected yet.</div>
             </div>
           )}
         </TabsContent>
 
-        {/* Assessment Tab */}
         <TabsContent value="assessment">
-          {appointmentStatus === 'reviewing' ? (
-            <div className="bg-orange-50 rounded-xl p-4">
-              <div className="flex items-start space-x-2">
-                <AlertTriangle className="h-4 w-4 text-orange-600 mt-0.5" />
-                <div className="text-orange-800 text-sm">
-                  <strong>Assessment Scheduling Blocked:</strong> Please approve or decline the pending quote updates 
-                  before scheduling an assessment.
-                </div>
-              </div>
-            </div>
-          ) : needsAssessment && selectedInterest ? (
+          {needsAssessment && selectedInterest ? (
             <AssessmentScheduler 
               interest={selectedInterest}
               assessment={selectedInterest.assessment}
@@ -641,12 +500,8 @@ const CustomerAppointmentDashboard = ({ appointmentId }) => {
             />
           ) : (
             <div className="bg-blue-50 rounded-xl p-4">
-              <div className="flex items-start space-x-2">
-                <AlertCircle className="h-4 w-4 text-blue-600 mt-0.5" />
-                <div className="text-blue-800 text-sm">
-                  No assessment required or no professional selected yet.
-                </div>
-              </div>
+              <AlertCircle className="h-4 w-4 text-blue-600" />
+              <div className="text-blue-800 text-sm">No assessment required.</div>
             </div>
           )}
         </TabsContent>

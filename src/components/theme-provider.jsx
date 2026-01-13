@@ -1,7 +1,7 @@
-// src/components/theme-provider.jsx
+// src/components/theme-provider.jsx - FIXED
 'use client'
 
-import { createContext, useContext, useEffect, useState } from 'react'
+import { createContext, useContext, useEffect, useState, useRef } from 'react'
 
 const ThemeProviderContext = createContext({
   theme: "system",
@@ -32,6 +32,9 @@ export function ThemeProvider({
   const [isProfessionalWorkspace, setIsProfessionalWorkspace] = useState(false)
   const [isCustomerWorkspace, setIsCustomerWorkspace] = useState(false)
   const [isInitialized, setIsInitialized] = useState(false)
+  
+  // Track last pathname to prevent unnecessary updates
+  const lastPathname = useRef('')
 
   // Load saved theme from localStorage on mount
   useEffect(() => {
@@ -40,10 +43,17 @@ export function ThemeProvider({
     setIsInitialized(true)
   }, [storageKey, defaultTheme])
 
-  // WORKSPACE DETECTION - Enhanced to include browse pages
+  // WORKSPACE DETECTION - FIXED: Only check on mount and pathname change
   useEffect(() => {
     const checkWorkspaceType = () => {
       const pathname = window.location.pathname
+      
+      // Skip if pathname hasn't changed
+      if (pathname === lastPathname.current) {
+        return
+      }
+      
+      lastPathname.current = pathname
       
       const isProfessional = pathname.includes('/professional')
       const isCustomer = pathname.includes('/customer')
@@ -56,7 +66,6 @@ export function ThemeProvider({
         const professionalTheme = localStorage.getItem(professionalStorageKey) || "dark"
         setTheme(professionalTheme)
       } else if (!isCustomer) {
-        // Restore general theme when leaving professional workspace (but not entering customer)
         const generalTheme = localStorage.getItem(storageKey) || defaultTheme
         setTheme(generalTheme)
       }
@@ -67,37 +76,24 @@ export function ThemeProvider({
         isCustomer,
         currentTheme: isProfessional ? localStorage.getItem(professionalStorageKey) : localStorage.getItem(storageKey)
       })
-      
-      return { isProfessional, isCustomer }
     }
 
     // Initial check
     checkWorkspaceType()
 
-    // Listen for navigation changes
+    // FIXED: Only listen for popstate (browser back/forward)
     const handleRouteChange = () => {
       checkWorkspaceType()
     }
 
     window.addEventListener('popstate', handleRouteChange)
 
-    // Observe URL changes for SPA routing
-    const observer = new MutationObserver(() => {
-      checkWorkspaceType()
-    })
-
-    observer.observe(document.body, {
-      childList: true,
-      subtree: true
-    })
-
     return () => {
       window.removeEventListener('popstate', handleRouteChange)
-      observer.disconnect()
     }
   }, [professionalStorageKey, storageKey, defaultTheme])
 
-  // 🔧 FIXED: Enhanced theme application logic with browse-services detection
+  // Theme application logic
   useEffect(() => {
     if (!isInitialized) return
 
@@ -109,45 +105,35 @@ export function ThemeProvider({
 
     let appliedTheme
 
-    // 🔍 NEW: Check for browse pages first (highest priority)
+    // Check for browse pages first
     if (pathname === '/browse-services' || pathname.startsWith('/browse')) {
-      // 🔒 FORCE LIGHT THEME for browse pages (like customer workspace)
       appliedTheme = "light"
       root.classList.add("light")
-      console.log('🔍 Applied forced light theme for browse pages')
       
     } else if (isProfessionalWorkspace) {
-      // 🎨 ALLOW THEME SWITCHING for professional workspace
       if (theme === "system") {
         const systemTheme = window.matchMedia("(prefers-color-scheme: dark)").matches
           ? "dark" : "light"
         appliedTheme = systemTheme
         root.classList.add(systemTheme, "professional-workspace")
-        console.log('🏢 Applied professional workspace system theme:', systemTheme)
       } else {
         appliedTheme = theme
         root.classList.add(theme, "professional-workspace")
-        console.log('🏢 Applied professional workspace theme:', theme)
       }
       
     } else if (isCustomerWorkspace) {
-      // 🔒 FORCE LIGHT THEME for customer workspace
       appliedTheme = "light"
       root.classList.add("light", "customer-workspace")
-      console.log('👤 Applied customer workspace theme (white)')
       
     } else {
-      // 🎨 APPLY USER PREFERENCE for other areas (homepage, etc.)
       if (theme === "system") {
         const systemTheme = window.matchMedia("(prefers-color-scheme: dark)").matches
           ? "dark" : "light"
         appliedTheme = systemTheme
         root.classList.add(systemTheme)
-        console.log('🌍 Applied system theme:', systemTheme)
       } else {
         appliedTheme = theme
         root.classList.add(theme)
-        console.log('🎨 Applied user theme:', theme)
       }
     }
 
@@ -158,7 +144,6 @@ export function ThemeProvider({
   useEffect(() => {
     const pathname = window.location.pathname
     
-    // Don't listen to system changes for forced light theme pages
     if (theme !== "system" || isCustomerWorkspace || pathname === '/browse-services' || pathname.startsWith('/browse')) {
       return
     }
@@ -173,7 +158,6 @@ export function ThemeProvider({
       root.classList.remove("light", "dark")
       root.classList.add(newSystemTheme)
       
-      // Maintain workspace classes
       if (isProfessionalWorkspace) {
         root.classList.add("professional-workspace")
       }
@@ -191,24 +175,20 @@ export function ThemeProvider({
     setTheme: (newTheme) => {
       const pathname = window.location.pathname
       
-      // 🚫 Prevent theme change in customer workspace OR browse pages
       if (isCustomerWorkspace) {
-        console.warn("Theme switching is disabled in customer workspace (always white)")
+        console.warn("Theme switching is disabled in customer workspace")
         return
       }
       
       if (pathname === '/browse-services' || pathname.startsWith('/browse')) {
-        console.warn("Theme switching is disabled on browse pages (always light)")
+        console.warn("Theme switching is disabled on browse pages")
         return
       }
       
-      // Save theme to appropriate storage
       if (isProfessionalWorkspace) {
         localStorage.setItem(professionalStorageKey, newTheme)
-        console.log('💾 Saved professional workspace theme:', newTheme)
       } else {
         localStorage.setItem(storageKey, newTheme)
-        console.log('💾 Saved general theme:', newTheme)
       }
       
       setTheme(newTheme)
@@ -218,7 +198,6 @@ export function ThemeProvider({
     isCustomerWorkspace,
   }
 
-  // Prevent flash of unstyled content
   if (!isInitialized) {
     return (
       <div style={{ visibility: 'hidden', position: 'absolute' }}>

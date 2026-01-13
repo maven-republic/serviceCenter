@@ -1,4 +1,4 @@
-// src/app/api/search/keywords/route.js - COMPLETE REWRITE
+// src/app/api/search/keywords/route.js - FIXED VERSION
 import { NextResponse } from 'next/server';
 import { createClient } from '@/utils/supabase/server';
 
@@ -115,7 +115,8 @@ export async function GET(request) {
         sample_services: k.sample_services,
         industries: Array.from(k.industries),
         verticals: Array.from(k.verticals),
-        category: categorizeKeyword(k.keyword, k.verticals, k.industries)
+        // FIX: Convert Sets to Arrays before passing to categorizeKeyword
+        category: categorizeKeyword(k.keyword, Array.from(k.verticals), Array.from(k.industries))
       }));
 
     const searchTime = Date.now() - startTime;
@@ -190,14 +191,29 @@ export async function GET(request) {
 function categorizeKeyword(keyword, verticals, industries) {
   const term = keyword.toLowerCase();
   
+  // FIX: Add safety check to ensure verticals is an array
+  const verticalsArray = Array.isArray(verticals) ? verticals : [];
+  const industriesArray = Array.isArray(industries) ? industries : [];
+  
   // Check verticals first
-  if (verticals.some(v => v?.toLowerCase().includes('plumb'))) {
+  if (verticalsArray.some(v => v?.toLowerCase().includes('plumb'))) {
     return 'plumbing';
   }
-  if (verticals.some(v => v?.toLowerCase().includes('weld'))) {
+  if (verticalsArray.some(v => v?.toLowerCase().includes('weld'))) {
     return 'welding';
   }
-  if (verticals.some(v => v?.toLowerCase().includes('electric'))) {
+  if (verticalsArray.some(v => v?.toLowerCase().includes('electric'))) {
+    return 'electrical';
+  }
+  
+  // Check industries too
+  if (industriesArray.some(i => i?.toLowerCase().includes('plumb'))) {
+    return 'plumbing';
+  }
+  if (industriesArray.some(i => i?.toLowerCase().includes('weld'))) {
+    return 'welding';
+  }
+  if (industriesArray.some(i => i?.toLowerCase().includes('electric'))) {
     return 'electrical';
   }
   

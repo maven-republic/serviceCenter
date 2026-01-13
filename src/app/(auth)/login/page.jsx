@@ -37,7 +37,7 @@ function LoginInner() {
   const errorMessage = searchParams.get('error')
 
   return (
-    <section className="our-login ">
+    <section className="our-login min-h-screen">
       <LoginForm errorMessage={errorMessage} />
     </section>
   )

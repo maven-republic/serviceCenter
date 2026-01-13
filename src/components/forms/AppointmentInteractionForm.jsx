@@ -453,16 +453,16 @@ export default function AppointmentInteractionForm({
                 <div className="space-y-2">
                   <Label htmlFor="estimated_duration">Estimated Duration (minutes) *</Label>
                   <Input
-                    type="number"
-                    id="estimated_duration"
-                    value={formData.estimated_duration}
-                    onChange={(e) => handleChange('estimated_duration', parseInt(e.target.value))}
-                    min="15"
-                    max="480"
-                    step="15"
-                    required
-                    className={`${errors.estimated_duration ? 'border-destructive' : ''} ${isMobile ? 'h-12' : ''}`}
-                  />
+  type="number"
+  id="estimated_duration"
+  value={formData.estimated_duration || ''}
+  onChange={(e) => handleChange('estimated_duration', parseInt(e.target.value) || 0)}
+  min="15"
+  max="480"
+  step="15"
+  required
+  className={`${errors.estimated_duration ? 'border-destructive' : ''} ${isMobile ? 'h-12' : ''}`}
+/>
                   {errors.estimated_duration && (
                     <p className="text-sm text-destructive">{errors.estimated_duration}</p>
                   )}
@@ -535,15 +535,15 @@ export default function AppointmentInteractionForm({
                   <div className="relative">
                     <Clock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                     <Input
-                      type="number"
-                      id="estimated_duration"
-                      value={formData.estimated_duration}
-                      onChange={(e) => handleChange('estimated_duration', parseInt(e.target.value))}
-                      min="15"
-                      max="480"
-                      step="15"
-                      className={`pl-10 ${isMobile ? 'h-12' : ''}`}
-                    />
+  type="number"
+  id="estimated_duration"
+  value={formData.estimated_duration || ''}
+  onChange={(e) => handleChange('estimated_duration', parseInt(e.target.value) || 0)}
+  min="15"
+  max="480"
+  step="15"
+  className={`pl-10 ${isMobile ? 'h-12' : ''}`}
+/>
                   </div>
                 </div>
               </div>
@@ -739,15 +739,15 @@ export default function AppointmentInteractionForm({
                           <div className="relative">
                             <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                             <Input
-                              type="number"
-                              id="fee"
-                              value={formData.fee}
-                              onChange={(e) => handleChange('fee', parseFloat(e.target.value) || 0)}
-                              min="0"
-                              step="0.01"
-                              placeholder="0.00"
-                              className={`pl-10 ${errors.fee ? 'border-destructive' : ''} ${isMobile ? 'h-12' : ''}`}
-                            />
+  type="number"
+  id="fee"
+  value={formData.fee || ''}
+  onChange={(e) => handleChange('fee', parseFloat(e.target.value) || 0)}
+  min="0"
+  step="0.01"
+  placeholder="0.00"
+  className={`pl-10 ${errors.fee ? 'border-destructive' : ''} ${isMobile ? 'h-12' : ''}`}
+/>
                           </div>
                           {errors.fee && (
                             <p className="text-sm text-destructive">{errors.fee}</p>
@@ -924,15 +924,15 @@ export default function AppointmentInteractionForm({
                           <div className="relative">
                             <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                             <Input
-                              type="number"
-                              id="fee"
-                              value={formData.fee}
-                              onChange={(e) => handleChange('fee', parseFloat(e.target.value) || 0)}
-                              min="0"
-                              step="0.01"
-                              placeholder="0.00"
-                              className={`pl-10 ${errors.fee ? 'border-destructive' : ''} ${isMobile ? 'h-12' : ''}`}
-                            />
+  type="number"
+  id="fee"
+  value={formData.fee || ''}
+  onChange={(e) => handleChange('fee', parseFloat(e.target.value) || 0)}
+  min="0"
+  step="0.01"
+  placeholder="0.00"
+  className={`pl-10 ${errors.fee ? 'border-destructive' : ''} ${isMobile ? 'h-12' : ''}`}
+/>
                           </div>
                           {errors.fee && (
                             <p className="text-sm text-destructive">{errors.fee}</p>

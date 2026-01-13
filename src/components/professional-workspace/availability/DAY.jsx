@@ -4,15 +4,8 @@ import { Badge } from '@/components/ui/badge'
 import { 
   Clock, 
   Circle,
-  CheckCircle
+  CheckCircle2
 } from 'lucide-react'
-
-// Helper functions to replace date-fns
-const formatDayAndDate = (date) => {
-  const dayName = date.toLocaleDateString('en-US', { weekday: 'short' })
-  const dayNumber = date.getDate()
-  return `${dayName} ${dayNumber}`
-}
 
 const formatTime12 = (timeStr) => {
   if (!timeStr) return ''
@@ -35,149 +28,196 @@ export default function Day({
   onClick,
   className = '',
   showTimes = false,
-  size = 'default' // 'sm', 'default', 'lg'
+  variant = 'default' // 'default', 'compact', 'detailed'
 }) {
   const hasSlots = slots && slots.length > 0
   const dayName = date.toLocaleDateString('en-US', { weekday: 'short' })
   const dayNumber = date.getDate()
+  const isPast = date < new Date(new Date().setHours(0, 0, 0, 0))
 
-  // Size configurations
-  const sizeClasses = {
-    sm: 'h-16 text-xs',
-    default: 'h-20 text-sm', 
-    lg: 'h-24 text-base'
+  // Variant configurations
+  const variants = {
+    compact: {
+      container: 'h-14 p-1.5',
+      dateSize: 'text-xs',
+      slotSize: 'text-[10px]',
+      maxSlots: 1
+    },
+    default: {
+      container: 'h-20 p-2',
+      dateSize: 'text-sm',
+      slotSize: 'text-xs',
+      maxSlots: 2
+    },
+    detailed: {
+      container: 'h-28 p-3',
+      dateSize: 'text-base',
+      slotSize: 'text-xs',
+      maxSlots: 3
+    }
   }
+
+  const config = variants[variant] || variants.default
 
   const handleClick = (e) => {
     e.stopPropagation()
-    onClick?.(date)
+    if (!isPast) {
+      onClick?.(date)
+    }
   }
 
   return (
-    <div
+    <button
       className={`
-        ${sizeClasses[size]}
-        relative flex flex-col justify-between p-2 border rounded-lg transition-all duration-200
-        ${onClick ? 'cursor-pointer hover:shadow-sm hover:border-primary/50' : ''}
-        ${isToday ? 'bg-primary/5 border-primary ring-1 ring-primary/20' : 'bg-background border-border'}
-        ${isSelected ? 'ring-2 ring-primary bg-primary/10' : ''}
-        ${hasSlots ? 'border-green-200 bg-green-50/30' : ''}
+        ${config.container}
+        relative flex flex-col justify-between border rounded-lg
+        transition-all duration-200 ease-out
+        ${onClick && !isPast ? 'cursor-pointer hover:shadow-md hover:border-primary/50 hover:-translate-y-0.5 active:translate-y-0' : ''}
+        ${isPast ? 'cursor-not-allowed opacity-50' : ''}
+        ${isToday ? 'bg-primary/5 border-primary ring-2 ring-primary/20' : 'bg-background border-border'}
+        ${isSelected ? 'ring-2 ring-primary bg-primary/10 border-primary' : ''}
+        ${hasSlots && !isToday && !isSelected ? 'border-green-200 bg-green-50/30' : ''}
         ${className}
       `}
       onClick={handleClick}
+      disabled={isPast}
     >
       {/* Date Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-start justify-between gap-1">
         <div className={`
-          flex flex-col items-center justify-center
+          flex flex-col leading-tight
           ${isToday ? 'text-primary font-bold' : 'text-foreground font-medium'}
         `}>
-          <div className="text-xs text-muted-foreground">{dayName}</div>
-          <div className={`
-            ${size === 'lg' ? 'text-lg' : size === 'sm' ? 'text-sm' : 'text-base'}
-            leading-none
-          `}>
+          <div className={`text-[10px] text-muted-foreground uppercase tracking-wide ${variant === 'compact' ? 'hidden' : ''}`}>
+            {dayName}
+          </div>
+          <div className={`${config.dateSize} font-semibold leading-none mt-0.5`}>
             {dayNumber}
           </div>
         </div>
 
-        {/* Status Indicator */}
-        <div className="flex flex-col items-center gap-1">
-          {isToday && (
-            <Badge variant="default" className="text-xs px-1 py-0 h-4">
+        {/* Status Indicators */}
+        <div className="flex flex-col items-end gap-1">
+          {isToday && variant !== 'compact' && (
+            <Badge variant="default" className="text-[10px] px-1 py-0 h-4 leading-none">
               Today
             </Badge>
           )}
           
           {hasSlots ? (
             <div className="flex items-center gap-1">
-              <Circle className="h-2 w-2 fill-green-500 text-green-500" />
-              {size !== 'sm' && (
-                <span className="text-xs text-primary font-medium">
+              <Circle className="h-1.5 w-1.5 fill-green-500 text-green-500" />
+              {variant === 'detailed' && (
+                <span className="text-[10px] text-green-700 font-medium">
                   {slots.length}
                 </span>
               )}
             </div>
           ) : (
-            <div className="h-2 w-2 rounded-full bg-muted" />
+            <Circle className="h-1.5 w-1.5 fill-muted text-muted" />
           )}
         </div>
       </div>
 
-      {/* Slots Content */}
-      <div className="flex-1 flex flex-col justify-center min-h-0">
+      {/* Content Area */}
+      <div className="flex-1 flex flex-col justify-center min-h-0 gap-1">
         {hasSlots ? (
-          <div className="space-y-1">
-            {showTimes && size !== 'sm' ? (
-              // Show actual times
-              <>
-                {slots.slice(0, size === 'lg' ? 3 : 2).map((slot, i) => (
+          <>
+            {showTimes && variant !== 'compact' ? (
+              // Show actual time slots
+              <div className="space-y-0.5">
+                {slots.slice(0, config.maxSlots).map((slot, i) => (
                   <div 
                     key={i}
-                    className="text-xs text-green-700 bg-green-100 px-1 py-0.5 rounded truncate"
+                    className={`
+                      ${config.slotSize} 
+                      text-green-800 bg-green-100 
+                      px-1.5 py-0.5 rounded 
+                      truncate font-medium
+                      transition-colors duration-150
+                    `}
                   >
                     {formatTime12(slot.start_time)}
                   </div>
                 ))}
-                {slots.length > (size === 'lg' ? 3 : 2) && (
-                  <div className="text-xs text-muted-foreground text-center">
-                    +{slots.length - (size === 'lg' ? 3 : 2)} more
-                  </div>
-                )}
-              </>
-            ) : (
-              // Show availability indicator
-              <div className="text-center">
-                <CheckCircle className="h-4 w-4 text-primary mx-auto mb-1" />
-                <div className="text-xs text-primary font-medium">
-                  Available
-                </div>
-                {size === 'lg' && (
-                  <div className="text-xs text-muted-foreground">
-                    {slots.length} slot{slots.length !== 1 ? 's' : ''}
+                {slots.length > config.maxSlots && (
+                  <div className="text-[10px] text-muted-foreground text-center font-medium">
+                    +{slots.length - config.maxSlots}
                   </div>
                 )}
               </div>
+            ) : (
+              // Show availability indicator
+              <div className="text-center space-y-0.5">
+                <CheckCircle2 className={`
+                  ${variant === 'compact' ? 'h-3 w-3' : 'h-4 w-4'} 
+                  text-green-600 mx-auto
+                `} />
+                {variant !== 'compact' && (
+                  <>
+                    <div className="text-[10px] text-green-700 font-medium">
+                      Available
+                    </div>
+                    {variant === 'detailed' && (
+                      <div className="text-[10px] text-muted-foreground">
+                        {slots.length} slot{slots.length !== 1 ? 's' : ''}
+                      </div>
+                    )}
+                  </>
+                )}
+              </div>
             )}
-          </div>
+          </>
         ) : (
           // No availability
           <div className="text-center">
-            <div className="text-xs text-muted-foreground">
-              {size === 'sm' ? '–' : 'No availability'}
+            <div className={`${config.slotSize} text-muted-foreground`}>
+              {variant === 'compact' ? '—' : 'Unavailable'}
             </div>
           </div>
         )}
       </div>
 
-      {/* Hover Overlay */}
-      {onClick && (
-        <div className="absolute inset-0 bg-primary/5 opacity-0 hover:opacity-100 transition-opacity duration-200 rounded-lg pointer-events-none" />
+      {/* Hover Effect Overlay */}
+      {onClick && !isPast && (
+        <div className="absolute inset-0 bg-primary/0 hover:bg-primary/5 transition-colors duration-200 rounded-lg pointer-events-none" />
       )}
 
       {/* Selection Ring */}
       {isSelected && (
-        <div className="absolute inset-0 border-2 border-primary rounded-lg pointer-events-none" />
+        <div className="absolute inset-0 border-2 border-primary rounded-lg pointer-events-none animate-pulse" />
       )}
-    </div>
+
+      {/* Past Date Overlay */}
+      {isPast && (
+        <div className="absolute inset-0 bg-background/50 rounded-lg pointer-events-none" />
+      )}
+    </button>
   )
 }
 
-// Preset variants for common use cases - FIXED with proper display names
-const DaySmall = (props) => <Day {...props} size="sm" />
-DaySmall.displayName = 'Day.Small'
+// Preset variants with proper display names
+Day.Compact = function DayCompact(props) {
+  return <Day {...props} variant="compact" />
+}
+Day.Compact.displayName = 'Day.Compact'
 
-const DayLarge = (props) => <Day {...props} size="lg" showTimes />
-DayLarge.displayName = 'Day.Large'
+Day.Default = function DayDefault(props) {
+  return <Day {...props} variant="default" />
+}
+Day.Default.displayName = 'Day.Default'
 
-const DayInteractive = (props) => <Day {...props} onClick={props.onClick || (() => {})} />
-DayInteractive.displayName = 'Day.Interactive'
+Day.Detailed = function DayDetailed(props) {
+  return <Day {...props} variant="detailed" showTimes />
+}
+Day.Detailed.displayName = 'Day.Detailed'
 
-const DayReadOnly = (props) => <Day {...props} onClick={undefined} />
-DayReadOnly.displayName = 'Day.ReadOnly'
+Day.Interactive = function DayInteractive(props) {
+  return <Day {...props} onClick={props.onClick || (() => {})} />
+}
+Day.Interactive.displayName = 'Day.Interactive'
 
-// Attach the variants to the main component
-Day.Small = DaySmall
-Day.Large = DayLarge
-Day.Interactive = DayInteractive
-Day.ReadOnly = DayReadOnly
+Day.ReadOnly = function DayReadOnly(props) {
+  return <Day {...props} onClick={undefined} />
+}
+Day.ReadOnly.displayName = 'Day.ReadOnly'

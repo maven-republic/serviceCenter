@@ -1,56 +1,30 @@
-// src/app/(professional-workspace)/professional/layout.jsx
-'use client'
+// Force dynamic rendering for all professional workspace pages
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 
-import { useEffect } from 'react'
-import { useUserStore } from '@/store/userStore'
-import { useTheme } from '@/components/theme-provider'
-import { cn } from '@/lib/utils'
-import ProfessionalWorkspace from "@/components/professional-workspace/ProfessionalWorkspace"
+// ===== PROFESSIONAL WORKSPACE LAYOUT =====
+'use client';
+
+import { useEffect } from 'react';
+import { useTheme } from '@/components/theme-provider';
+import ProfessionalWorkspace from '@/components/professional-workspace/ProfessionalWorkspace';
 
 export default function ProfessionalWorkspaceLayout({ children }) {
-  const { user } = useUserStore()
-  const { isProfessionalWorkspace } = useTheme()
+  const { setTheme, actualTheme } = useTheme();
 
-  // Mobile-first workspace setup
+  // Professional workspace theme management
   useEffect(() => {
-    // Add professional workspace class for styling
-    document.body.classList.add('professional-workspace')
-    
-    // Add mobile-specific classes
-    document.body.classList.add('professional-workspace-mobile')
-    
-    // Prevent zoom on iOS double-tap
-    const viewport = document.querySelector('meta[name="viewport"]')
-    if (viewport) {
-      viewport.setAttribute('content', 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no')
-    }
-    
-    // Add touch-friendly classes
-    document.documentElement.style.setProperty('--touch-target-min', '44px')
-    document.documentElement.style.setProperty('--touch-target-comfortable', '48px')
-    
-    console.log('🢠Professional workspace layout mounted (mobile-optimized)')
-    
-    return () => {
-      document.body.classList.remove('professional-workspace', 'professional-workspace-mobile')
-      console.log('🢠Professional workspace layout unmounted')
-    }
-  }, [])
+    document.documentElement.classList.add('professional-workspace');
+    console.log('Professional workspace: theme management active');
+  }, []);
 
   return (
-    <div className={cn(
-      "min-h-screen transition-none bg-background",
-      "professional-workspace professional-workspace-mobile",
-      // Mobile-specific styling
-      "touch-manipulation", // Better touch performance
-      "overscroll-behavior-none" // Prevent bounce scrolling
-    )}>
-      {/* Mobile-optimized Professional Workspace */}
-      <ProfessionalWorkspace isMobile={true}>
-        <div className="w-full max-w-none">
+    <div className="professional-workspace min-h-screen bg-background text-foreground">
+      <ProfessionalWorkspace>
+        <div className="professional-workspace-mobile lg:professional-workspace-desktop">
           {children}
         </div>
       </ProfessionalWorkspace>
     </div>
-  )
+  );
 }
