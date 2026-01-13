@@ -1,9 +1,8 @@
+'use client';
+
 // Force dynamic rendering for all customer workspace pages
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
-
-// ===== CUSTOMER WORKSPACE LAYOUT =====
-'use client';
 
 import { useEffect } from 'react';
 import { useTheme } from '@/components/theme-provider';
@@ -12,9 +11,7 @@ import CustomerWorkspaceStructure from '@/components/customer-workspace/Customer
 export default function CustomerWorkspaceLayout({ children }) {
   const { setTheme, actualTheme } = useTheme();
 
-  // Force customer workspace to always use light theme
   useEffect(() => {
-    // Always ensure customer workspace uses light theme
     document.documentElement.classList.remove('dark');
     document.documentElement.classList.add('light', 'customer-workspace');
     console.log('Customer workspace: enforced light theme');
