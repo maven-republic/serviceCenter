@@ -1,9 +1,5 @@
 'use client';
 
-// Force dynamic rendering for all professional workspace pages
-export const dynamic = 'force-dynamic';
-export const revalidate = 0;
-
 import { useEffect } from 'react';
 import { useTheme } from '@/components/theme-provider';
 import ProfessionalWorkspace from '@/components/professional-workspace/ProfessionalWorkspace';

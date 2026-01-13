@@ -1,9 +1,5 @@
 'use client';
 
-// Force dynamic rendering for all customer workspace pages
-export const dynamic = 'force-dynamic';
-export const revalidate = 0;
-
 import { useEffect } from 'react';
 import { useTheme } from '@/components/theme-provider';
 import CustomerWorkspaceStructure from '@/components/customer-workspace/CustomerWorkspaceStructure';
